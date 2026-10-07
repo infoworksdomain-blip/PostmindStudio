@@ -1,65 +1,74 @@
 'use client';
 
-import { Check } from 'lucide-react';
+import { AlertTriangle, Check, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import type { ProjectDetail } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
+import { pipelineView, type StepStatus } from './pipeline-model';
 
-// Where the project is in the pipeline (spec 7.x states), as an ordered list of steps.
+// Where the project is in the pipeline, step by step: done, working now, waiting on a person,
+// failed (the step a stopped run stopped at), or not reached. A draft says how to begin.
 
-export type PipelineStep =
-  'queued' | 'script' | 'shots' | 'render' | 'quality' | 'review' | 'publish';
+export { PIPELINE_STEPS, stepIndex, type PipelineStep } from './pipeline-model';
 
-export const PIPELINE_STEPS: Array<{ key: PipelineStep; states: string[] }> = [
-  { key: 'queued', states: ['QUEUED', 'SCANNING'] },
-  { key: 'script', states: ['PLANNING'] },
-  { key: 'shots', states: ['ASSETS_QUEUED', 'ASSETS_GENERATING'] },
-  { key: 'render', states: ['RENDERING'] },
-  { key: 'quality', states: ['QUALITY_CHECKING', 'QUALITY_FAILED'] },
-  { key: 'review', states: ['READY_FOR_REVIEW', 'REJECTED', 'APPROVED'] },
-  { key: 'publish', states: ['PUBLISHING', 'PARTIALLY_PUBLISHED', 'PUBLISHED'] },
-];
+const BAR: Record<StepStatus, string> = {
+  done: 'bg-foreground',
+  current: 'bg-primary motion-safe:animate-rec',
+  attention: 'bg-warning',
+  failed: 'bg-destructive',
+  todo: 'bg-border',
+};
 
-/** Index of the current step; -1 before the run starts (DRAFT) or when it failed. */
-export function stepIndex(state: string): number {
-  return PIPELINE_STEPS.findIndex((s) => s.states.includes(state));
-}
-
-export function PipelineStrip({ state }: { state: string }) {
+export function PipelineStrip({
+  project,
+}: {
+  project: Pick<ProjectDetail, 'state' | 'errorReason' | 'scripts' | 'renders'>;
+}) {
   const t = useTranslations('review.pipeline');
-  const current = stepIndex(state);
-  const complete = state === 'PUBLISHED';
-  const stalled = ['QUALITY_FAILED', 'REJECTED', 'PARTIALLY_PUBLISHED'].includes(state);
+  const view = pipelineView(project);
   return (
-    <ol aria-label={t('aria')} className="grid grid-cols-7 gap-1 sm:gap-2">
-      {PIPELINE_STEPS.map((step, i) => {
-        const done = complete || i < current;
-        const active = !complete && i === current;
-        return (
-          <li
-            key={step.key}
-            aria-current={active ? 'step' : undefined}
-            className="flex min-w-0 flex-col gap-1.5"
-          >
-            <span
-              className={cn(
-                'h-1 rounded-full bg-border',
-                done && 'bg-foreground',
-                active && (stalled ? 'bg-warning' : 'animate-rec bg-primary'),
-              )}
-            />
-            <span
-              className={cn(
-                'flex items-center gap-1 truncate text-[0.65rem] tracking-wide uppercase sm:text-xs',
-                done || active ? 'text-foreground' : 'text-muted-foreground',
-              )}
+    <div className="flex flex-col gap-2">
+      <ol aria-label={t('aria')} className="grid grid-cols-7 gap-1 sm:gap-1.5">
+        {view.steps.map((step) => {
+          const reached = step.status !== 'todo';
+          return (
+            <li
+              key={step.key}
+              data-status={step.status}
+              aria-current={
+                step.status === 'current' || step.status === 'attention' ? 'step' : undefined
+              }
+              className="flex min-w-0 flex-col gap-1.5"
             >
-              {done && <Check aria-hidden className="hidden size-3 sm:block" />}
-              {t(`steps.${step.key}`)}
-              {done && <span className="sr-only"> {t('done')}</span>}
-            </span>
-          </li>
-        );
-      })}
-    </ol>
+              <span aria-hidden className={cn('h-1 rounded-full', BAR[step.status])} />
+              <span
+                className={cn(
+                  'flex items-center gap-1 truncate text-[0.65rem] tracking-wide uppercase',
+                  reached ? 'text-foreground' : 'text-muted-foreground',
+                  step.status === 'failed' && 'font-medium text-destructive',
+                )}
+              >
+                {step.status === 'done' && (
+                  <Check aria-hidden className="hidden size-3 shrink-0 sm:block" />
+                )}
+                {step.status === 'failed' && <X aria-hidden className="size-3 shrink-0" />}
+                {step.status === 'attention' && (
+                  <AlertTriangle aria-hidden className="hidden size-3 shrink-0 sm:block" />
+                )}
+                <span className="truncate">{t(`steps.${step.key}`)}</span>
+                {step.status === 'done' && <span className="sr-only"> {t('done')}</span>}
+                {step.status === 'failed' && <span className="sr-only"> {t('failedMark')}</span>}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+      {view.phase === 'draft' && <p className="text-xs text-muted-foreground">{t('notStarted')}</p>}
+      {view.phase === 'failed' && view.failedStep && (
+        <p className="text-xs text-destructive">
+          {t('stoppedAt', { step: t(`steps.${view.failedStep}`) })}
+        </p>
+      )}
+    </div>
   );
 }

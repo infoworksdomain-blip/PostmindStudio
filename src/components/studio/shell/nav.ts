@@ -5,6 +5,7 @@ import {
   CalendarRange,
   Clapperboard,
   House,
+  Images,
   Layers,
   LayoutTemplate,
   Library,
@@ -31,6 +32,7 @@ export interface NavItem {
     | 'home'
     | 'create'
     | 'blitz'
+    | 'images'
     | 'templates'
     | 'calendar'
     | 'plans'
@@ -53,6 +55,8 @@ export const NAV: readonly NavItem[] = [
   { href: '/new', key: 'create', icon: Plus, group: 'create' },
   // 22.4: swipe through ready-made posts.
   { href: '/blitz', key: 'blitz', icon: Layers, group: 'create' },
+  // 25.8: the Image Studio (generate images from a prompt; was a dialog in Business → Images).
+  { href: '/images', key: 'images', icon: Images, group: 'create' },
   { href: '/templates', key: 'templates', icon: LayoutTemplate, group: 'create' },
   { href: '/calendar', key: 'calendar', icon: CalendarDays, group: 'plan' },
   // 20.9: Plan my month (it had no way in from the sidebar before 25.4).

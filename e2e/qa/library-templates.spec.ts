@@ -847,7 +847,7 @@ test('staff: the Library tab lists, edits, bulk-reviews and retires; others are 
   const list = page.getByRole('list', { name: 'Corpus items' });
   // The filter box is debounced; filter to one title at a time (the corpus has 32 rows here).
   const find = async (title: string) => {
-    await page.getByLabel('Search').fill(title);
+    await page.getByLabel('Search', { exact: true }).fill(title);
     await expect(list.getByRole('listitem')).toHaveCount(1, { timeout: 60_000 });
   };
   await expect(list).toBeVisible();
@@ -858,7 +858,7 @@ test('staff: the Library tab lists, edits, bulk-reviews and retires; others are 
   await find(titles.expired);
   await expect(list).toContainText('Licence expired');
   // Retired rows are hidden by the default "Live" status filter.
-  await page.getByLabel('Search').fill(titles.retired);
+  await page.getByLabel('Search', { exact: true }).fill(titles.retired);
   await expect(page.getByText('No items match these filters.')).toBeVisible();
   await page.locator('#admin-library-retired').selectOption('true');
   await expect(list).toContainText(titles.retired);

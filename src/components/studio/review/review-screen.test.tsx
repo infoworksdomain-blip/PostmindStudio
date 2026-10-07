@@ -6,9 +6,11 @@ import { ReviewScreen } from './review-screen';
 import { makeProject, makeRender, mockFetch, renderWithSWR, type MockRoute } from './test-helpers';
 import type { ProjectDetail } from '@/lib/client/types';
 
+const nav = vi.hoisted(() => ({ replace: vi.fn(), push: vi.fn(), search: '' }));
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn() }),
-  usePathname: () => '/',
+  useRouter: () => ({ push: nav.push, replace: nav.replace }),
+  usePathname: () => '/projects/proj_1',
+  useSearchParams: () => new URLSearchParams(nav.search),
 }));
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock('sonner', () => ({ toast }));
@@ -37,6 +39,8 @@ function routes(project: ProjectDetail, extra: MockRoute[] = []): MockRoute[] {
 }
 
 beforeEach(() => {
+  nav.search = '';
+  nav.replace.mockReset();
   toast.success.mockReset();
   toast.error.mockReset();
 });
@@ -92,8 +96,9 @@ describe('ReviewScreen', () => {
     expect(screen.getByLabelText('Loading project')).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'Spring menu launch' })).toBeInTheDocument();
     expect(screen.getByText('Ready for review')).toBeInTheDocument();
-    const variant = screen.getByRole('article', { name: 'TikTok variant' });
-    const video = await within(variant).findByLabelText('TikTok preview');
+    expect(screen.getByRole('article', { name: 'TikTok variant' })).toBeInTheDocument();
+    const player = screen.getByRole('region', { name: 'Video player' });
+    const video = await within(player).findByLabelText('TikTok preview');
     expect(video).toHaveAttribute('src', 'https://cdn.test/render.mp4');
     expect(screen.getByRole('list', { name: 'Pipeline progress' })).toBeInTheDocument();
   });

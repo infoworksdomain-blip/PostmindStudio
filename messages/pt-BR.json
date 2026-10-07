@@ -77,7 +77,8 @@
         "blitz": "Blitz",
         "automations": "Automações",
         "home": "Início",
-        "plans": "Planos do mês"
+        "plans": "Planos do mês",
+        "images": "Imagens"
       },
       "newPost": "Criar um novo post",
       "collapse": "Recolher a barra lateral",
@@ -1139,7 +1140,10 @@
         "review": "Revisão",
         "publish": "Publicação"
       },
-      "done": "(concluído)"
+      "done": "(concluído)",
+      "notStarted": "Ainda não iniciado — toque em Gerar para começar.",
+      "stoppedAt": "Parou na etapa “{step}”.",
+      "failedMark": "(parou aqui)"
     },
     "paused": {
       "aria": "Pausado pelo orçamento",
@@ -1377,7 +1381,9 @@
       "staleNote": "O roteiro ou as cenas mudaram depois que esta variante foi renderizada.",
       "rerender": "Renderizar de novo",
       "rerendering": "Renderizando de novo com as suas edições.",
-      "download": "Baixar MP4"
+      "download": "Baixar MP4",
+      "watch": "Assistir",
+      "showing": "Reproduzindo"
     },
     "thumbnail": {
       "aria": "Miniatura",
@@ -1433,6 +1439,50 @@
     "actorFallback": {
       "aria": "Ator indisponível",
       "note": "O ator não estava disponível em alguns momentos deste vídeo, então esses trechos usam clipes com narração."
+    },
+    "attention": {
+      "title": "Precisa da sua atenção",
+      "titleInfo": "Bom saber",
+      "tones": {
+        "action": "precisa de você",
+        "warning": "vale uma olhada",
+        "info": "para sua informação"
+      },
+      "items": {
+        "directions": "Escolha uma direção para este vídeo",
+        "ugcRefused": "Reescreva o briefing sem uma pessoa real",
+        "restrictedTopics": "Confira os temas restritos do seu briefing",
+        "failureFailed": "Este vídeo parou antes de terminar",
+        "failureRejected": "Foram pedidas alterações",
+        "failureQuality": "A verificação de qualidade não passou",
+        "budget": "Pausado no limite deste vídeo",
+        "autoResume": "Pausado no seu limite de geração",
+        "safetyReview": "Aguardando uma revisão de segurança",
+        "automation": "A publicação automática precisa de uma olhada",
+        "music": "Não foi possível adicionar a música de fundo",
+        "sfx": "Não foi possível adicionar os efeitos sonoros",
+        "queued": "Na fila — começa em breve",
+        "fallback": "Feito com um fornecedor alternativo",
+        "presenterFallback": "O apresentador não estava disponível",
+        "actorFallback": "O ator não estava disponível"
+      }
+    },
+    "status": {
+      "publish": "Publicar",
+      "posts": "Posts e agendamento",
+      "announceAttention": "{state}. {count, plural, =0 {} one {# item precisa da sua atenção.} other {# itens precisam da sua atenção.}}",
+      "details": "Detalhes"
+    },
+    "player": {
+      "aria": "Player de vídeo",
+      "formats": "Formatos",
+      "working": "Seu vídeo aparece aqui assim que o primeiro formato ficar pronto.",
+      "none": "Ainda não há vídeo."
+    },
+    "menu": {
+      "trigger": "Mais ações",
+      "download": "Baixar vídeo",
+      "templateDescription": "Guarde os formatos, a estrutura de cenas e as configurações de publicação deste vídeo para criar novos a partir deles."
     }
   },
   "slideshow": {
@@ -2212,7 +2262,8 @@
       "gridAria": "Biblioteca de imagens",
       "newer": "Mais recentes",
       "older": "Mais antigas",
-      "stockNotConfigured": "As fotos de banco de imagens ainda não estão configuradas, então não há nada para atualizar. As fotos do seu site, os envios e as imagens geradas continuam funcionando."
+      "stockNotConfigured": "As fotos de banco de imagens ainda não estão configuradas, então não há nada para atualizar. As fotos do seu site, os envios e as imagens geradas continuam funcionando.",
+      "openStudio": "Estúdio de imagens"
     },
     "profile": {
       "fields": {
@@ -4266,8 +4317,9 @@
   },
   "marketing": {
     "meta": {
-      "title": "PostMind Studio · Vídeos curtos com IA para pequenos negócios",
-      "description": "Transforme uma frase em vídeos curtos com a identidade da sua marca para TikTok, Reels, Shorts, Facebook, LinkedIn e X. Revise, aprove e publique em um só lugar."
+      "title": "PostMind Studio · Vídeos curtos e posts para pequenos negócios",
+      "description": "Crie, planeje e publique vídeos curtos e posts para o seu pequeno negócio a partir de um único briefing: roteiro, vídeo, voz, música e legendas com a sua marca, agendados no TikTok, Instagram, YouTube, Facebook, LinkedIn e X.",
+      "ogAlt": "PostMind Studio: crie, planeje e publique vídeos curtos a partir de um único briefing"
     },
     "nav": {
       "home": "Página inicial do PostMind Studio",
@@ -4277,9 +4329,9 @@
       "startTrial": "Começar teste gratuito"
     },
     "hero": {
-      "eyebrow": "Estúdio de vídeo com IA para pequenos negócios",
-      "title": "Um mês de vídeos curtos, <em>prontos antes do seu café esfriar.</em>",
-      "lede": "Diga ao Studio o que você quer comunicar. Ele escreve o roteiro, filma ou busca cada cena, adiciona sua voz, música e legendas com a identidade da sua marca, e edita para cada plataforma. Você aprova; ele publica.",
+      "eyebrow": "Estúdio de vídeo para pequenos negócios",
+      "title": "Crie, planeje e publique seus vídeos para redes sociais <em>a partir de um único briefing.</em>",
+      "lede": "Diga ao Studio o que você quer comunicar. Ele escreve o roteiro, cria o vídeo, adiciona voz, música e legendas com a sua marca e agenda cada post nas plataformas que você usa. Você aprova; ele publica.",
       "primaryCta": "Começar teste gratuito",
       "secondaryCta": "Ver preços",
       "assurances": {
@@ -4287,146 +4339,171 @@
         "yourBrand": "Suas cores, fontes e voz",
         "cancelAnytime": "Cancele quando quiser"
       },
-      "frames": {
-        "one": "Saindo do forno às 7h",
-        "two": "Conheça os padeiros",
-        "three": "Três pães, um fim de semana"
-      },
-      "slate": {
-        "scene": "Cena 01",
-        "take": "Take 1"
-      },
-      "phoneAlt": "Vídeo vertical de exemplo: um pão de fermentação natural com cortes, sobre papel manteiga, com a legenda “Saindo do forno às 7h”"
-    },
-    "platforms": {
-      "title": "Um briefing, cortado para cada feed"
-    },
-    "steps": {
-      "eyebrow": "Como funciona",
-      "title": "Briefing. Revisão. Publicação.",
-      "brief": {
-        "title": "Escreva uma frase",
-        "body": "Descreva o vídeo, cole uma página da web ou escolha um modelo. O Studio cria o roteiro e a lista de cenas em segundos."
-      },
-      "review": {
-        "title": "Confira o corte",
-        "body": "Veja cada formato lado a lado, troque uma cena, mude uma legenda ou peça outra versão. Nada é publicado até você aprovar."
-      },
-      "publish": {
-        "title": "Publique com agenda",
-        "body": "Publique agora ou planeje o próximo mês. O Studio publica em cada conta e traz de volta visualizações, curtidas e comentários para um único painel."
+      "reelLabel": "Três posts feitos com o PostMind Studio",
+      "madeWith": "Feito com o PostMind Studio. Os negócios mostrados são exemplos.",
+      "alts": {
+        "bread": "Vídeo com IA feito com o Studio: um pão de fermentação natural dourado sobre uma tábua de madeira, soltando vapor, com a câmera se aproximando devagar",
+        "market": "Vídeo com IA feito com o Studio: uma mulher caminha por uma feira ensolarada e sorri para um feirante",
+        "coastline": "Slideshow feito com o Studio para chalés à beira-mar, com a legenda “Chalés com vista para o mar para duas a seis pessoas”"
       }
     },
-    "samples": {
-      "eyebrow": "Contact sheet",
-      "title": "Todos os formatos, a partir de um briefing.",
-      "body": "Vertical para TikTok, Reels e Shorts, quadrado e retrato para feeds, widescreen para YouTube e LinkedIn.",
-      "note": "Fotos de banco de imagens que mostram os formatos que o Studio cria, não vídeos de clientes.",
-      "captions": {
-        "market": "Feira de sábado, 8h",
-        "studio": "Como moldamos um pão de fermentação natural",
-        "salon": "Cortes de sexta, agende já",
-        "gym": "Aula das 6h, restam três vagas"
+    "motion": {
+      "pause": "Pausar vídeos",
+      "play": "Reproduzir vídeos"
+    },
+    "formats": {
+      "eyebrow": "Um briefing, todos os formatos",
+      "title": "Todo tipo de post que um pequeno negócio precisa.",
+      "body": "Vídeo com IA, slideshows e posts de parede de texto, cada um feito para feeds verticais. O Studio fez tudo isso a partir de briefings de uma linha.",
+      "note": "Resultados reais do Studio para negócios de exemplo.",
+      "stripLabel": "Posts de exemplo feitos com o Studio",
+      "kinds": {
+        "aiVideo": "Vídeo com IA",
+        "slideshow": "Slideshow",
+        "wallOfText": "Parede de texto"
+      },
+      "types": {
+        "bakery": "Padaria de fermentação natural",
+        "boutique": "Loja de linho",
+        "gym": "Estúdio de fitness",
+        "cottages": "Chalés à beira-mar",
+        "florist": "Floricultura",
+        "coffee": "Cafeteria"
       },
       "alts": {
-        "market": "Uma barraca de pães em uma feira de rua, pães empilhados sobre uma toalha xadrez vermelha",
-        "studio": "Mãos com farinha modelando a massa sobre uma bancada de madeira",
-        "salon": "Tesouras, uma navalha e um pente sobre um tapete preto",
-        "gym": "Fileiras de halteres em um suporte na academia"
+        "seedanceBread": "Um pão de fermentação natural dourado sobre uma tábua de madeira, soltando vapor",
+        "pulseStudioText": "Post de parede de texto para um estúdio de fitness: três sessões curtas de força valem mais que um treino longo e cansativo, e a primeira aula é grátis",
+        "atelierWren": "Dobras de linho lavado em ferrugem e sálvia, com a legenda “Linho lavado em ferrugem e sálvia”",
+        "greenleafFlorist": "Uma rosa vermelha, com a legenda “Dálias, cosmos e rosas tardias”",
+        "coastlineStaysText": "Post de parede de texto para chalés à beira-mar: outono no litoral, praias vazias, cães são bem-vindos",
+        "harbourCoffee": "Um espresso caindo em uma xícara branca, com a legenda “Espresso de origem única”",
+        "northsideBakery": "Um pão rústico sobre fundo laranja, com a legenda “Pão rústico, assado às 6h”",
+        "pulseStudio": "Um homem treinando com um elástico, com a legenda “Aulas de 45 minutos em grupos pequenos”",
+        "coastlineStays": "Chalés acima de um litoral rochoso, com a legenda “Chalés com vista para o mar para duas a seis pessoas”"
       }
     },
-    "features": {
-      "eyebrow": "Feito para equipes pequenas",
-      "title": "Tudo o que uma equipe de marketing de uma pessoa precisa.",
-      "body": "O Studio faz o trabalho de produção, para você gastar seu tempo com o negócio, não com linhas de edição.",
-      "brand": {
-        "title": "Sua marca, sempre",
-        "body": "Logo, cores, fontes e tom de voz ficam em um kit de marca que todo vídeo segue."
+    "video": {
+      "eyebrow": "Geração de vídeo",
+      "title": "Um vídeo pronto a partir de uma frase.",
+      "body": "O Studio transforma o seu briefing em um roteiro e uma lista de cenas, gera cada cena com modelos de vídeo de ponta, depois adiciona locução, música e legendas com a sua marca e adapta o resultado para cada plataforma.",
+      "briefLabel": "O briefing",
+      "brief": "“Uma mulher caminhando por uma feira ensolarada, sorrindo para um feirante.”",
+      "alt": "Vídeo com IA feito com o Studio a partir desse briefing: uma mulher caminha por uma feira ensolarada e sorri para um feirante",
+      "steps": {
+        "script": {
+          "title": "Roteiro",
+          "body": "Um gancho, uma mensagem principal e as cenas certas, escritos para o seu público e para cada plataforma."
+        },
+        "shots": {
+          "title": "Cenas",
+          "body": "Cada cena gerada a partir do roteiro ou feita com as suas próprias fotos e vídeos."
+        },
+        "sound": {
+          "title": "Voz e música",
+          "body": "Uma locução natural e uma trilha de fundo, com o volume ajustado para alto-falantes de celular."
+        },
+        "captions": {
+          "title": "Legendas",
+          "body": "Legendas sincronizadas palavra por palavra, com as suas fontes e cores, para o vídeo funcionar sem som."
+        }
       },
-      "approvals": {
-        "title": "Aprovações do jeito da sua equipe",
-        "body": "Convide colegas com o papel certo. Criadores fazem os rascunhos, proprietários aprovam, e nada é publicado por acidente."
-      },
-      "calendar": {
-        "title": "Um calendário que publica por você",
-        "body": "Planeje o próximo mês, arraste publicações para novos horários e deixe o Studio publicar no momento certo para cada plataforma."
-      },
-      "languages": {
-        "title": "Onze idiomas",
-        "body": "Trabalhe em inglês, francês, espanhol, árabe, alemão, italiano, português, hindi ou chinês, e crie vídeos para os clientes no idioma deles."
-      },
-      "library": {
-        "title": "Ideias na hora que você precisa",
-        "body": "Explore uma biblioteca de vídeos curtos que já funcionaram e use um deles como ponto de partida para o seu."
-      },
-      "pricing": {
-        "title": "Um preço simples por canal",
-        "body": "Pague um preço fixo para cada canal social que você conectar, com vídeos incluídos. Sem medidores para acompanhar e sem cobranças surpresa."
+      "scriptAlt": "A aba Roteiro de um projeto: gancho, público, tom e os roteiros de TikTok e YouTube Shorts",
+      "scriptCaption": "Você pode ler e alterar cada roteiro e cada lista de cenas."
+    },
+    "plan": {
+      "eyebrow": "Planeje e agende",
+      "title": "O seu mês, em um só calendário.",
+      "body": "Os posts aprovados ocupam os horários livres e são publicados em cada conta na hora certa. Abra qualquer post para ver a prévia, mudar o horário, aprovar ou criar de novo.",
+      "alt": "O calendário de outubro, com posts agendados e publicados ao longo do mês"
+    },
+    "publish": {
+      "eyebrow": "Publique em todo lugar",
+      "title": "Um post, todas as suas plataformas.",
+      "body": "Conecte as suas contas uma vez. O Studio adapta cada post ao formato certo e publica conforme o agendamento.",
+      "platformsLabel": "Plataformas em que o Studio publica",
+      "points": {
+        "auto": {
+          "title": "Publicação automática",
+          "body": "Os posts saem no horário escolhido em cada plataforma, e as visualizações e o engajamento voltam para o Studio."
+        },
+        "drafts": {
+          "title": "Rascunhos quando você quiser",
+          "body": "Envie os posts do TikTok para os seus rascunhos, para adicionar um som em alta no app antes de postar."
+        }
       }
+    },
+    "autopilot": {
+      "eyebrow": "Planejador mensal, Blitz e automações",
+      "title": "Um prompt, um mês de posts.",
+      "body": "Descreva o seu negócio e o que você quer alcançar. O Studio planeja o mês, escreve cada post e cria cada um antes da data.",
+      "gridCaption": "Um mês de posts para negócios de exemplo, todos feitos pelo Studio.",
+      "items": {
+        "planner": {
+          "title": "Planejar meu mês",
+          "body": "Um calendário completo de ideias, legendas e formatos a partir de um prompt. Mude o que quiser antes de aprovar."
+        },
+        "blitz": {
+          "title": "Blitz",
+          "body": "Deslize por ideias de posts prontas: fique com as que você gostar e pule o resto."
+        },
+        "automations": {
+          "title": "Automações",
+          "body": "Publicação semanal ou mensal que continua sozinha, dentro do que o seu plano inclui."
+        }
+      }
+    },
+    "insights": {
+      "eyebrow": "Análises",
+      "title": "Veja o que funciona e faça mais disso.",
+      "body": "Visualizações, tempo de exibição e engajamento de cada post, de todas as plataformas, em um só lugar, para que cada briefing seja melhor que o anterior.",
+      "alt": "A página de análises: visualizações em 30 dias, tempo de exibição, engajamento e um gráfico de atividade diária"
+    },
+    "brand": {
+      "eyebrow": "Kit de marca e aprovações",
+      "title": "Suas cores, sua voz, sua aprovação.",
+      "alt": "A biblioteca de imagens de uma padaria: pães, doces, café e um logotipo",
+      "items": {
+        "brand": {
+          "title": "Sua marca em cada post",
+          "body": "Logo, cores, fontes e tom de voz ficam em um kit de marca que todo post segue, com as suas próprias fotos na biblioteca de imagens."
+        },
+        "approvals": {
+          "title": "Aprovações do jeito da sua equipe",
+          "body": "Convide colegas com o papel certo. Criadores fazem os rascunhos, proprietários aprovam, e nada é publicado por acidente."
+        },
+        "languages": {
+          "title": "Onze idiomas",
+          "body": "Trabalhe em inglês, francês, espanhol, árabe, alemão, italiano, português, hindi ou chinês, e crie vídeos para os clientes no idioma deles."
+        }
+      }
+    },
+    "pricing": {
+      "eyebrow": "Preços",
+      "title": "Um preço simples por canal",
+      "per": "por canal por mês",
+      "body": "Cada canal inclui {videos} vídeos curtos em HD por mês, ou até {quick} posts rápidos: carrosséis, slideshows e vídeos de texto contam como ¼ de vídeo.",
+      "points": {
+        "billing": "Pague por semana, mês ou ano",
+        "vat": "Preços sem impostos",
+        "cancel": "Cancele quando quiser"
+      },
+      "cta": "Ver preços"
     },
     "closing": {
       "eyebrow": "Pronto quando você estiver",
-      "title": "Seu primeiro vídeo está a dez minutos de distância.",
+      "title": "Crie o seu primeiro post hoje.",
       "body": "Crie sua conta, adicione seu negócio e sua marca, conecte uma plataforma e faça seu primeiro vídeo. A configuração guiada te acompanha em cada passo.",
       "primaryCta": "Começar teste gratuito",
-      "secondaryCta": "Comparar planos",
+      "secondaryCta": "Ver preços",
       "fineprint": "Preços sem impostos. Você pode cancelar quando quiser nas configurações de cobrança."
     },
     "footer": {
-      "tagline": "Vídeos curtos com IA e publicação para pequenos negócios.",
+      "tagline": "Vídeos curtos e posts para pequenos negócios: criados, planejados e publicados em um só lugar.",
+      "productAria": "Produto",
+      "productTitle": "Produto",
       "copyright": "© {year} {entity}",
       "legalAria": "Jurídico",
       "legalTitle": "Jurídico"
-    },
-    "flow": {
-      "eyebrow": "Do briefing à publicação",
-      "title": "Veja um vídeo ser feito.",
-      "body": "Seis etapas, uma tela por vez. Estas são telas reais do Studio, com os dados de uma padaria de exemplo.",
-      "note": "Telas da demonstração do Studio, com dados de exemplo da Leeds Sourdough, uma padaria fictícia.",
-      "roleCarousel": "carrossel",
-      "roleSlide": "slide",
-      "stepsLabel": "Etapas",
-      "slideLabel": "{current} de {total}",
-      "previous": "Etapa anterior",
-      "next": "Próxima etapa",
-      "pause": "Pausar a apresentação",
-      "play": "Reproduzir a apresentação",
-      "brief": {
-        "tab": "Briefing",
-        "title": "Escreva uma linha",
-        "body": "Diga do que trata o vídeo ou cole uma página da web. O Studio escolhe as plataformas, a duração e o kit de marca, e você pode mudar qualquer um.",
-        "alt": "A tela Criar com um briefing sobre um pão de centeio e um botão Gerar"
-      },
-      "script": {
-        "tab": "Roteiro",
-        "title": "Leia o roteiro e a lista de cenas",
-        "body": "O Studio escreve um gancho, uma mensagem principal e um roteiro para cada formato, com as cenas certas. Reescreva uma linha ou peça outra versão.",
-        "alt": "A aba Roteiro de um projeto: gancho, público, tom e os roteiros de TikTok e YouTube Shorts"
-      },
-      "generate": {
-        "tab": "Gerar",
-        "title": "Imagens, voz e música",
-        "body": "O Studio gera cada cena com modelos de IA de vídeo e imagem, ou usa suas fotos e imagens de banco, e adiciona voz, música e legendas com a sua marca.",
-        "alt": "A biblioteca de imagens de uma padaria: pães, doces, café e um logotipo"
-      },
-      "review": {
-        "tab": "Revisão",
-        "title": "Confira cada versão antes de publicar",
-        "body": "Assista a cada formato lado a lado. Verificações automáticas, incluindo segurança do conteúdo e seu kit de marca, rodam antes da sua aprovação.",
-        "alt": "Uma variante do TikTok pronta para revisão, com as verificações de qualidade aprovadas, incluindo a segurança do conteúdo"
-      },
-      "calendar": {
-        "tab": "Calendário",
-        "title": "Planeje o próximo mês",
-        "body": "Os vídeos aprovados entram nos horários livres do calendário e são publicados em cada conta no momento certo.",
-        "alt": "O calendário de setembro com posts agendados de manhã e à noite"
-      },
-      "analytics": {
-        "tab": "Análises",
-        "title": "Veja o que funcionou",
-        "body": "Visualizações, tempo de exibição e engajamento de cada vídeo em um só lugar, para o próximo briefing ser melhor.",
-        "alt": "A página de análises: visualizações em 30 dias, tempo de exibição, engajamento e um gráfico de atividade diária"
-      }
     }
   },
   "pricing": {
@@ -4532,7 +4609,7 @@
       "panelLabel": "Sobre o PostMind Studio",
       "valueStatement": "Vídeos curtos para cada canal, feitos a partir de algumas linhas sobre o seu negócio.",
       "valueDetail": "O Studio escreve o roteiro, cria o vídeo com a sua marca e agenda nos canais que você conectar.",
-      "panelAlt": "Um vídeo do TikTok de um pão de fermentação natural no PostMind Studio, com as verificações de qualidade aprovadas."
+      "panelAlt": "Dois posts feitos com o PostMind Studio: um vídeo com IA de um pão de fermentação natural e uma apresentação de chalés à beira-mar."
     },
     "errors": {
       "invalidCredentials": "Esse e-mail e essa senha não correspondem a nenhuma conta.",
@@ -6388,6 +6465,77 @@
       "blitzBody": "Deslize por posts prontos.",
       "templates": "Modelos",
       "templatesBody": "Comece com um formato comprovado."
+    }
+  },
+  "images": {
+    "page": {
+      "title": "Imagens",
+      "description": "Descreva uma imagem e nós a criamos para esta empresa. Cada imagem fica salva na biblioteca dela, pronta para seus vídeos.",
+      "wholeLibrary": "Biblioteca de imagens completa"
+    },
+    "pickFirst": {
+      "title": "Escolha uma empresa primeiro",
+      "body": "As imagens são criadas para uma empresa e ficam na biblioteca dela. Escolha uma empresa no topo da página."
+    },
+    "off": {
+      "title": "As imagens estão desativadas",
+      "body": "A geração de imagens está desativada para sua organização no momento. Seus vídeos não são afetados."
+    },
+    "readOnly": "Você pode ver estas imagens. Quem pode editar projetos pode criar novas.",
+    "locked": {
+      "title": "A geração de imagens não está no seu plano",
+      "body": "Você ainda vê as imagens criadas antes. Veja o que seu plano inclui para criar novas.",
+      "action": "Ver o que está incluído"
+    },
+    "status": {
+      "generating": "Criando sua imagem. Pode levar até um minuto.",
+      "ready": "Sua imagem está pronta — já está na sua biblioteca.",
+      "failed": "Não foi possível criar a imagem."
+    },
+    "form": {
+      "aria": "Descreva sua imagem",
+      "prompt": "Descreva a imagem",
+      "promptPlaceholder": "Um pão de fermentação natural numa tábua de madeira, luz da manhã, close",
+      "promptHint": "Diga o que aparece, onde e o clima. Textos e logotipos são sempre deixados de fora.",
+      "style": "Estilo (opcional)",
+      "stylePlaceholder": "Foto analógica quente",
+      "shape": "Formato",
+      "shapes": {
+        "1x1": "Quadrado",
+        "4x5": "Retrato",
+        "9x16": "Vertical, para stories e reels",
+        "16x9": "Paisagem"
+      },
+      "generate": "Gerar imagem",
+      "generating": "Gerando…",
+      "timing": "Leva até um minuto.",
+      "lastPrompt": "Última: {prompt}",
+      "again": "Gerar de novo"
+    },
+    "results": {
+      "title": "Suas imagens geradas",
+      "aria": "Imagens geradas",
+      "loading": "Carregando imagens",
+      "pending": "Gerando…",
+      "open": "Abrir imagem: {prompt}",
+      "untitled": "Imagem gerada",
+      "noPreview": "Sem prévia",
+      "empty": {
+        "title": "Nenhuma imagem gerada ainda",
+        "body": "Descreva uma imagem e toque em Gerar — suas imagens ficam reunidas aqui."
+      },
+      "newer": "Mais recentes",
+      "older": "Mais antigas"
+    },
+    "preview": {
+      "title": "Imagem gerada",
+      "style": "Estilo",
+      "size": "Tamanho",
+      "dimensions": "{width, number} × {height, number} px",
+      "made": "Criada",
+      "download": "Baixar",
+      "edit": "Editar descrição",
+      "again": "Gerar de novo"
     }
   }
 }

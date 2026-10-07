@@ -147,12 +147,20 @@ export function useReviewReason(): (review: ReviewRecord) => string {
   };
 }
 
+/** "Save as template" needs scripts; a slideshow has none to keep. */
+export function canSaveTemplate(project: Pick<ProjectDetail, 'sourceType' | 'scripts'>): boolean {
+  return project.sourceType !== 'SLIDESHOW' && project.scripts.length > 0;
+}
+
 export function AutomationPanel({
   project,
   onChanged,
+  saveTemplate = true,
 }: {
   project: ProjectDetail;
   onChanged?: () => void;
+  /** 25.8: the review screen offers "Save as template" from its actions menu instead. */
+  saveTemplate?: boolean;
 }) {
   const t = useTranslations('review.automation');
   const origin = approvalOrigin(project.approvals);
@@ -167,7 +175,7 @@ export function AutomationPanel({
     project.publishPolicy === 'SCHEDULED' && project.state === 'APPROVED'
       ? readScheduleIssue(project.metadata)
       : null;
-  const canSave = project.sourceType !== 'SLIDESHOW' && project.scripts.length > 0;
+  const canSave = saveTemplate && canSaveTemplate(project);
   if (!origin && !needsReview && !autoPublish && !canSave) return null;
 
   return (

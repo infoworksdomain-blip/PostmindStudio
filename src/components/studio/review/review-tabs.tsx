@@ -47,7 +47,7 @@ export function ReviewTabs({
     <div
       role="tablist"
       aria-label={t('tabsAria')}
-      className="-mx-1 flex gap-1 overflow-x-auto border-b border-border px-1"
+      className="-mx-1 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-border px-1"
     >
       {tabs.map((tab, i) => {
         const selected = tab.key === active;
