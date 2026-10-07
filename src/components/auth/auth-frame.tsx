@@ -2,7 +2,9 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { LanguageSwitcher } from '@/components/studio/i18n/language-switcher';
-import { FLOW_SCREENS, imgProps } from '@/lib/marketing/media';
+import { imgProps, STUDIO_CLIPS, type StudioClip } from '@/lib/marketing/media';
+import { marketingSrc } from '@/lib/marketing/media-src';
+import { cn } from '@/lib/utils';
 
 // BACKLOG 25.6 — the frame every signed-out screen shares (src/app/(auth)/layout.tsx and the demo's
 // public pages). From lg up it is two panes: the form column (wordmark, generous whitespace, a
@@ -25,10 +27,35 @@ export function AuthWordmark() {
   );
 }
 
-/** The screen behind the form: the review screen, in the theme the visitor is using. */
+/** Two posts made with Studio (25.5 showcase media), shown as phones beside the form. */
+function ClipPhone({ clip, className }: { clip: StudioClip; className?: string }) {
+  const { small, large } = clip.poster;
+  return (
+    <div
+      className={cn(
+        'overflow-hidden rounded-[1.75rem] border-[6px] border-foreground bg-foreground shadow-overlay',
+        className,
+      )}
+    >
+      <picture>
+        <source
+          type="image/webp"
+          srcSet={`${marketingSrc(small.path)} ${small.width}w, ${marketingSrc(large.path)} ${large.width}w`}
+          sizes="(min-width: 1280px) 15rem, 12rem"
+        />
+        <img
+          {...imgProps(clip.poster.fallback)}
+          alt=""
+          decoding="async"
+          className="block aspect-[9/16] h-auto w-full object-cover"
+        />
+      </picture>
+    </div>
+  );
+}
+
 function BrandPanel() {
   const t = useTranslations('auth.shell');
-  const screen = FLOW_SCREENS.review;
   return (
     <aside
       aria-label={t('panelLabel')}
@@ -42,26 +69,14 @@ function BrandPanel() {
           {t('valueDetail')}
         </p>
       </div>
-      {/* The screenshot runs to the window's far edge: product output, not decoration. */}
-      <div className="relative mt-14 flex-1 ps-12 xl:ps-16">
-        <div className="overflow-hidden rounded-ss-panel border-s border-t border-border bg-background shadow-overlay">
-          {/* eslint-disable-next-line @next/next/no-img-element -- the demo inlines these as data: URLs */}
-          <img
-            {...imgProps(screen.light)}
-            alt={t('panelAlt')}
-            loading="lazy"
-            decoding="async"
-            className="block h-auto w-full max-w-none dark:hidden"
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element -- as above */}
-          <img
-            {...imgProps(screen.dark)}
-            alt={t('panelAlt')}
-            loading="lazy"
-            decoding="async"
-            className="hidden h-auto w-full max-w-none dark:block"
-          />
-        </div>
+      {/* Real Studio output, not a mock-up: an AI video and a slideshow. */}
+      <div
+        role="img"
+        aria-label={t('panelAlt')}
+        className="relative mt-12 flex flex-1 items-start justify-center gap-6 px-12 pb-12"
+      >
+        <ClipPhone clip={STUDIO_CLIPS.seedanceBread} className="w-48 xl:w-60" />
+        <ClipPhone clip={STUDIO_CLIPS.coastlineStays} className="mt-16 w-40 xl:w-52" />
       </div>
     </aside>
   );
