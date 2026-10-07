@@ -81,7 +81,6 @@ export default async function OpengraphImage() {
           boxShadow: '0 30px 60px -20px rgba(20,24,31,0.45)',
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element -- rendered by the image renderer, not the browser */}
         <img
           src={posterSrc}
           width={268}
