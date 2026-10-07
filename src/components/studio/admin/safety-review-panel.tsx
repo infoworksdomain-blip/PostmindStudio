@@ -5,11 +5,11 @@ import { ShieldCheck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { EmptyState, ErrorState, Section } from '../primitives';
-import { selectClass } from '../library/library-filters';
 import { ReasonDialog } from './reason-dialog';
 
 // BACKLOG 13.17 / spec 16.4 — content-safety review queue. A script-safety REVIEW verdict or a
@@ -155,9 +155,10 @@ export function SafetyReviewPanel() {
       title={t('title')}
       description={t('description')}
       actions={
-        <select
+        <NativeSelect
+          size="sm"
+          wrapperClassName="w-auto"
           aria-label={t('showAria')}
-          className={selectClass}
           value={state}
           onChange={(e) => setState(e.target.value as ReviewState)}
         >
@@ -168,7 +169,7 @@ export function SafetyReviewPanel() {
           </option>
           <option value="ALLOWED">{t('filterAllowed')}</option>
           <option value="BLOCKED">{t('filterBlocked')}</option>
-        </select>
+        </NativeSelect>
       }
     >
       {res.error ? (

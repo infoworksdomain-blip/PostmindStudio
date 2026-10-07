@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, type FormEvent, type ReactNode } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -12,9 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 
 // Confirmation for kill-switch changes: every change needs a reason (audited, min 3 chars per
 // setKillSwitchInput) and the riskiest ones also need a typed phrase.
@@ -115,9 +114,9 @@ export function ReasonDialog({
             <Button
               type="submit"
               variant={destructive ? 'destructive' : 'default'}
-              disabled={!reasonOk || !phraseOk || pending}
+              disabled={!reasonOk || !phraseOk}
+              loading={pending}
             >
-              {pending && <Loader2 className="animate-spin" />}
               {confirmLabel}
             </Button>
           </DialogFooter>

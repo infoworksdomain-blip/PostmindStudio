@@ -1,18 +1,19 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StatusPill } from '@/components/ui/status-pill';
 import { api, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { EmptyState, ErrorState, Section, Stat } from '../primitives';
-import { selectClass } from '../library/library-filters';
 
 // BACKLOG 14.11 — Admin → Beta: the beta cohort dashboard (GET /admin/beta), enrolling an
 // organisation (PUT /admin/organisations/:id/beta — "Plus for 30 days", playbook 10.4) and the
@@ -127,8 +128,7 @@ function EnrolForm({ onSaved }: { onSaved: () => void }) {
             {t('plus')}
           </Label>
         </div>
-        <Button type="submit" disabled={!orgId.trim() || !cohort.trim() || pending}>
-          {pending && <Loader2 className="animate-spin" />}
+        <Button type="submit" loading={pending} disabled={!orgId.trim() || !cohort.trim()}>
           {t('submit')}
         </Button>
       </div>
@@ -150,9 +150,10 @@ function FeedbackList() {
       title={t('title')}
       description={t('description')}
       actions={
-        <select
+        <NativeSelect
+          size="sm"
+          wrapperClassName="w-auto"
           aria-label={t('kindAria')}
-          className={selectClass}
           value={kind}
           onChange={(e) => setKind(e.target.value)}
         >
@@ -162,7 +163,7 @@ function FeedbackList() {
               {t(`kind.${k}`)}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       }
     >
       {res.error ? (
@@ -176,9 +177,9 @@ function FeedbackList() {
           {res.data.data.map((item) => (
             <li key={item.id} className="rounded-lg border border-border p-3 text-sm">
               <p className="mb-1 text-xs text-muted-foreground">
-                <span className="me-2 rounded bg-muted px-1.5 py-0.5 font-medium text-foreground">
+                <StatusPill size="sm" className="me-2">
                   {t(`kind.${item.kind}`)}
-                </span>
+                </StatusPill>
                 {[
                   item.organisationId,
                   item.screen,
@@ -205,17 +206,67 @@ export function BetaPanel() {
   const [days, setDays] = useState(30);
   const [cohort, setCohort] = useState('');
   const res = useApi<BetaDashboardResponse>('/admin/beta', { days, cohort });
+  const columns: DataTableColumn<BetaOrg>[] = [
+    {
+      id: 'organisation',
+      header: t('col.organisation'),
+      cell: (o) => <span className="font-mono text-xs">{o.organisationId}</span>,
+    },
+    { id: 'cohort', header: t('col.cohort'), cell: (o) => o.cohort },
+    {
+      id: 'plusUntil',
+      header: t('col.plusUntil'),
+      cell: (o) =>
+        o.plusUntil ? (
+          <span className={o.plusActive ? '' : 'text-muted-foreground'}>
+            {o.plusActive ? f.date(o.plusUntil) : t('plusEnded', { date: f.date(o.plusUntil) })}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">{t('noPlus')}</span>
+        ),
+    },
+    {
+      id: 'generated',
+      header: t('col.generated'),
+      align: 'end',
+      cell: (o) => f.number(o.videosGenerated),
+    },
+    {
+      id: 'published',
+      header: t('col.published'),
+      align: 'end',
+      cell: (o) => f.number(o.videosPublished),
+    },
+    {
+      id: 'failureRate',
+      header: t('col.failureRate'),
+      align: 'end',
+      cell: (o) => (
+        <span className={(o.failureRate ?? 0) > 0.2 ? 'text-destructive' : undefined}>
+          {percent(o.failureRate)}
+        </span>
+      ),
+    },
+    { id: 'cost', header: t('col.cost'), align: 'end', cell: (o) => f.pence(o.costPence) },
+    {
+      id: 'feedback',
+      header: t('col.feedback'),
+      align: 'end',
+      cell: (o) => f.number(o.feedbackCount),
+    },
+  ];
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-10">
       <Section
         title={t('title')}
         description={t('description')}
         actions={
           <div className="flex gap-2">
-            <select
+            <NativeSelect
+              size="sm"
+              wrapperClassName="w-auto"
               aria-label={t('cohortAria')}
-              className={selectClass}
               value={cohort}
               onChange={(e) => setCohort(e.target.value)}
             >
@@ -225,10 +276,11 @@ export function BetaPanel() {
                   {c}
                 </option>
               ))}
-            </select>
-            <select
+            </NativeSelect>
+            <NativeSelect
+              size="sm"
+              wrapperClassName="w-auto"
               aria-label={t('windowAria')}
-              className={selectClass}
               value={days}
               onChange={(e) => setDays(Number(e.target.value))}
             >
@@ -237,7 +289,7 @@ export function BetaPanel() {
                   {t('window', { days: d })}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
         }
       >
@@ -265,54 +317,13 @@ export function BetaPanel() {
             {res.data.organisations.length === 0 ? (
               <EmptyState title={t('emptyTitle')} description={t('emptyBody')} />
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-start text-sm">
-                  <thead className="text-xs text-muted-foreground">
-                    <tr>
-                      <th className="py-2 pe-4 text-start font-medium">{t('col.organisation')}</th>
-                      <th className="py-2 pe-4 text-start font-medium">{t('col.cohort')}</th>
-                      <th className="py-2 pe-4 text-start font-medium">{t('col.plusUntil')}</th>
-                      <th className="py-2 pe-4 text-end font-medium">{t('col.generated')}</th>
-                      <th className="py-2 pe-4 text-end font-medium">{t('col.published')}</th>
-                      <th className="py-2 pe-4 text-end font-medium">{t('col.failureRate')}</th>
-                      <th className="py-2 pe-4 text-end font-medium">{t('col.cost')}</th>
-                      <th className="py-2 text-end font-medium">{t('col.feedback')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="tabular">
-                    {res.data.organisations.map((o) => (
-                      <tr key={o.organisationId} className="border-t border-border">
-                        <td className="py-2 pe-4 font-mono text-xs">{o.organisationId}</td>
-                        <td className="py-2 pe-4">{o.cohort}</td>
-                        <td className="py-2 pe-4">
-                          {o.plusUntil ? (
-                            <span className={o.plusActive ? '' : 'text-muted-foreground'}>
-                              {o.plusActive
-                                ? f.date(o.plusUntil)
-                                : t('plusEnded', { date: f.date(o.plusUntil) })}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">{t('noPlus')}</span>
-                          )}
-                        </td>
-                        <td className="py-2 pe-4 text-end">{f.number(o.videosGenerated)}</td>
-                        <td className="py-2 pe-4 text-end">{f.number(o.videosPublished)}</td>
-                        <td
-                          className={
-                            (o.failureRate ?? 0) > 0.2
-                              ? 'py-2 pe-4 text-end text-destructive'
-                              : 'py-2 pe-4 text-end'
-                          }
-                        >
-                          {percent(o.failureRate)}
-                        </td>
-                        <td className="py-2 pe-4 text-end">{f.pence(o.costPence)}</td>
-                        <td className="py-2 text-end">{f.number(o.feedbackCount)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <DataTable
+                caption={t('title')}
+                columns={columns}
+                rows={res.data.organisations}
+                getRowId={(o) => o.organisationId}
+                className="tabular"
+              />
             )}
           </div>
         )}

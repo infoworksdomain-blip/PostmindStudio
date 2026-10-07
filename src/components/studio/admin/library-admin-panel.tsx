@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
@@ -15,7 +16,6 @@ import type { CategoryNode, ListResponse } from '../library/types';
 import { IngestForm } from './ingest-form';
 import { IngestStatus } from './ingest-status';
 import { LibraryEditDialog } from './library-edit-dialog';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { LibraryAdminFilterBar } from './library-admin-filters';
 import { LibraryBulkBar } from './library-bulk-bar';
 import { LicenceAudit } from './licence-audit';
@@ -161,7 +161,7 @@ export function LibraryAdminPanel() {
   };
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-10">
       <IngestForm categories={categories} />
       <IngestStatus />
       <LicenceAudit

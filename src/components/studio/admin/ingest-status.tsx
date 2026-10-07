@@ -4,11 +4,11 @@ import { RotateCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { ErrorState, Section, Stat } from '../primitives';
-import { selectClass } from '../library/library-filters';
 import { ResubmitFailures } from './resubmit-failures';
 import type { IngestRunState, IngestStatusResponse } from './types';
 
@@ -49,9 +49,10 @@ export function IngestStatus() {
           <label htmlFor="ingest-status-window" className="sr-only">
             {t('window')}
           </label>
-          <select
+          <NativeSelect
+            size="sm"
+            wrapperClassName="w-auto"
             id="ingest-status-window"
-            className={selectClass}
             value={windowHours}
             onChange={(e) => setWindowHours(Number(e.target.value))}
           >
@@ -60,7 +61,7 @@ export function IngestStatus() {
                 {t(w.label)}
               </option>
             ))}
-          </select>
+          </NativeSelect>
           <ResubmitFailures failed={data?.counts.FAILED ?? 0} onDone={() => void mutate()} />
           <Button
             size="sm"

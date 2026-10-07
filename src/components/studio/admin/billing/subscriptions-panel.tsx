@@ -2,16 +2,19 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StatusPill } from '@/components/ui/status-pill';
 import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { ErrorState, Section } from '../../primitives';
-import { selectClass } from '../../library/library-filters';
 import {
   isSubscriptionStatus,
   PLAN_TIERS,
   type AdminSubscriptionsResponse,
+  type AdminSubscriptionRow,
   type SubscriptionStatus,
 } from '../../billing/types';
 import { isChannelInterval } from './entitlements-summary';
@@ -45,6 +48,51 @@ export function SubscriptionsPanel() {
   });
   const statusLabel = (s: string) => (isSubscriptionStatus(s) ? tStatus(s) : s);
   const intervalLabel = (i: string | null) => (isChannelInterval(i) ? tInterval(i) : (i ?? '—'));
+
+  const columns: DataTableColumn<AdminSubscriptionRow>[] = [
+    {
+      id: 'organisation',
+      header: t('columns.organisation'),
+      cell: (s) => (
+        <>
+          <span className="block font-medium">{s.organisationName ?? t('unknownOrg')}</span>
+          <span className="block text-xs text-muted-foreground">{s.organisationId}</span>
+        </>
+      ),
+    },
+    {
+      id: 'tier',
+      header: t('columns.tier'),
+      cell: (s) => (s.tier ? tTier(s.tier) : t('unknownTier')),
+    },
+    { id: 'interval', header: t('columns.interval'), cell: (s) => intervalLabel(s.interval) },
+    {
+      id: 'mrr',
+      header: t('columns.mrr'),
+      align: 'end',
+      className: 'tabular-nums',
+      cell: (s) => f.pence(s.mrrPence),
+    },
+    {
+      id: 'periodEnd',
+      header: t('columns.periodEnd'),
+      cell: (s) => f.date(s.currentPeriodEnd, { dateStyle: 'medium' }),
+    },
+    {
+      id: 'status',
+      header: t('columns.status'),
+      cell: (s) => (
+        <>
+          {statusLabel(s.status)}
+          {s.cancelAtPeriodEnd && (
+            <StatusPill tone="warn" size="sm" className="ms-2">
+              {t('cancelling')}
+            </StatusPill>
+          )}
+        </>
+      ),
+    },
+  ];
 
   if (res.error) return <ErrorState error={res.error} onRetry={() => void res.mutate()} />;
   if (!res.data) return <Skeleton aria-label={t('loading')} className="h-64 rounded-xl" />;
@@ -91,9 +139,8 @@ export function SubscriptionsPanel() {
         </div>
         <div className="grid max-w-60 gap-1.5">
           <Label htmlFor="subs-status">{t('filter')}</Label>
-          <select
+          <NativeSelect
             id="subs-status"
-            className={selectClass}
             value={status}
             onChange={(e) => setStatus(e.target.value as SubscriptionStatus | '')}
           >
@@ -103,63 +150,17 @@ export function SubscriptionsPanel() {
                 {tStatus(s)}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
         {subscriptions.length === 0 ? (
           <p className="text-muted-foreground">{t('empty')}</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[40rem]">
-              <caption className="sr-only">{t('caption')}</caption>
-              <thead>
-                <tr className="text-muted-foreground">
-                  {(
-                    ['organisation', 'tier', 'interval', 'mrr', 'periodEnd', 'status'] as const
-                  ).map((col) => (
-                    <th
-                      key={col}
-                      scope="col"
-                      className={
-                        col === 'mrr'
-                          ? 'py-2 pe-3 text-end font-medium'
-                          : 'py-2 pe-3 text-start font-medium'
-                      }
-                    >
-                      {t(`columns.${col}`)}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {subscriptions.map((s) => (
-                  <tr key={s.id} className="border-t border-border">
-                    <td className="py-2 pe-3">
-                      <span className="block font-medium">
-                        {s.organisationName ?? t('unknownOrg')}
-                      </span>
-                      <span className="block text-xs text-muted-foreground">
-                        {s.organisationId}
-                      </span>
-                    </td>
-                    <td className="py-2 pe-3">{s.tier ? tTier(s.tier) : t('unknownTier')}</td>
-                    <td className="py-2 pe-3">{intervalLabel(s.interval)}</td>
-                    <td className="py-2 pe-3 text-end tabular-nums">{f.pence(s.mrrPence)}</td>
-                    <td className="py-2 pe-3">
-                      {f.date(s.currentPeriodEnd, { dateStyle: 'medium' })}
-                    </td>
-                    <td className="py-2 pe-3">
-                      {statusLabel(s.status)}
-                      {s.cancelAtPeriodEnd && (
-                        <span className="ms-2 rounded bg-warning/20 px-1.5 text-xs">
-                          {t('cancelling')}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            caption={t('caption')}
+            columns={columns}
+            rows={subscriptions}
+            getRowId={(s) => s.id}
+          />
         )}
       </div>
     </Section>

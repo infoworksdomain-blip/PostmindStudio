@@ -3,7 +3,9 @@
 import { RotateCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StatusPill, type StatusTone } from '@/components/ui/status-pill';
 import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
@@ -65,8 +67,6 @@ const REFRESH_MS = 30_000;
 const SLOW_WAIT_SEC = 300;
 const NONE = '—';
 
-const QUEUE_COLUMNS = ['waiting', 'active', 'failed', 'delayed', 'oldestWaiting'] as const;
-
 function useWaitText(): (sec: number | null) => string {
   const t = useTranslations('admin.health.queues');
   const f = useFormat();
@@ -88,14 +88,9 @@ function useWaitText(): (sec: number | null) => string {
 function Num({ value, warn }: { value: number; warn?: boolean }) {
   const f = useFormat();
   return (
-    <td
-      className={cn(
-        'tabular py-1.5 text-end',
-        warn && value > 0 && 'font-medium text-warning-foreground',
-      )}
-    >
+    <span className={cn(warn && value > 0 && 'font-medium text-warning-foreground')}>
       {f.number(value)}
-    </td>
+    </span>
   );
 }
 
@@ -114,6 +109,32 @@ export function QueuesPanel() {
   const res = useApi<{ queues: QueueHealth[] }>('/admin/queues', undefined, {
     refreshInterval: REFRESH_MS,
   });
+  const columns: DataTableColumn<QueueHealth>[] = [
+    { id: 'queue', header: t('queue'), className: 'font-medium', cell: (q) => q.name },
+    { id: 'waiting', header: t('waiting'), align: 'end', cell: (q) => <Num value={q.waiting} /> },
+    { id: 'active', header: t('active'), align: 'end', cell: (q) => <Num value={q.active} /> },
+    {
+      id: 'failed',
+      header: t('failed'),
+      align: 'end',
+      cell: (q) => <Num value={q.failed} warn />,
+    },
+    { id: 'delayed', header: t('delayed'), align: 'end', cell: (q) => <Num value={q.delayed} /> },
+    {
+      id: 'oldestWaiting',
+      header: t('oldestWaiting'),
+      align: 'end',
+      cell: (q) => (
+        <span
+          className={cn(
+            (q.oldestWaitingSec ?? 0) > SLOW_WAIT_SEC && 'font-medium text-warning-foreground',
+          )}
+        >
+          {waitText(q.oldestWaitingSec)}
+        </span>
+      ),
+    },
+  ];
   return (
     <Section
       title={t('title')}
@@ -125,62 +146,31 @@ export function QueuesPanel() {
       ) : !res.data ? (
         <Skeleton aria-label={t('loadingAria')} className="h-40" />
       ) : (
-        <table aria-label={t('tableAria')} className="w-full text-sm">
-          <thead>
-            <tr className="text-start text-xs text-muted-foreground">
-              <th scope="col" className="py-1 text-start font-normal">
-                {t('queue')}
-              </th>
-              {QUEUE_COLUMNS.map((h) => (
-                <th key={h} scope="col" className="py-1 text-end font-normal">
-                  {t(h)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {res.data.queues.map((q) => (
-              <tr key={q.name} className="border-t border-border/60">
-                <th scope="row" className="py-1.5 text-start font-medium">
-                  {q.name}
-                </th>
-                <Num value={q.waiting} />
-                <Num value={q.active} />
-                <Num value={q.failed} warn />
-                <Num value={q.delayed} />
-                <td
-                  className={cn(
-                    'tabular py-1.5 text-end',
-                    (q.oldestWaitingSec ?? 0) > SLOW_WAIT_SEC &&
-                      'font-medium text-warning-foreground',
-                  )}
-                >
-                  {waitText(q.oldestWaitingSec)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <DataTable
+          dense
+          caption={t('tableAria')}
+          columns={columns}
+          rows={res.data.queues}
+          getRowId={(q) => q.name}
+          className="tabular"
+        />
       )}
     </Section>
   );
 }
 
+const BREAKER_TONE: Record<ProviderHealth['breaker'], StatusTone> = {
+  open: 'bad',
+  half_open: 'warn',
+  closed: 'good',
+};
+
 function BreakerTag({ state }: { state: ProviderHealth['breaker'] }) {
   const t = useTranslations('admin.health.providers.breakerState');
   return (
-    <span
-      className={cn(
-        'rounded px-1.5 py-px text-xs',
-        state === 'open'
-          ? 'bg-destructive/10 text-destructive'
-          : state === 'half_open'
-            ? 'bg-warning-soft text-warning-foreground'
-            : 'bg-success-soft text-success-foreground',
-      )}
-    >
+    <StatusPill tone={BREAKER_TONE[state]} size="sm">
       {t(state)}
-    </span>
+    </StatusPill>
   );
 }
 
@@ -190,6 +180,67 @@ export function ProvidersPanel() {
   const res = useApi<{ providers: ProviderHealth[] }>('/admin/providers', undefined, {
     refreshInterval: REFRESH_MS,
   });
+  const columns: DataTableColumn<ProviderHealth>[] = [
+    {
+      id: 'provider',
+      header: t('provider'),
+      className: 'font-medium',
+      cell: (p) => (
+        <>
+          {p.id}
+          {!p.configured && (
+            <span className="ms-1.5 text-xs font-normal text-muted-foreground">
+              {t('notConfigured')}
+            </span>
+          )}
+        </>
+      ),
+    },
+    {
+      id: 'breaker',
+      header: t('breaker'),
+      className: 'whitespace-normal',
+      cell: (p) => (
+        <>
+          <BreakerTag state={p.breaker} />
+          {p.accountHold && <AccountHoldNote hold={p.accountHold} />}
+        </>
+      ),
+    },
+    {
+      id: 'errorRate',
+      header: t('errorRate'),
+      align: 'end',
+      cell: (p) => (
+        <span className={cn((p.errorRate1h ?? 0) >= 0.2 && 'font-medium text-destructive')}>
+          {p.errorRate1h === null ? NONE : f.percent(p.errorRate1h, 1)}
+        </span>
+      ),
+    },
+    {
+      id: 'jobs',
+      header: t('jobs'),
+      align: 'end',
+      className: 'text-muted-foreground',
+      cell: (p) =>
+        p.jobs1h.running > 0
+          ? t('jobCountsRunning', {
+              succeeded: f.number(p.jobs1h.succeeded),
+              failed: f.number(p.jobs1h.failed),
+              running: f.number(p.jobs1h.running),
+            })
+          : t('jobCounts', {
+              succeeded: f.number(p.jobs1h.succeeded),
+              failed: f.number(p.jobs1h.failed),
+            }),
+    },
+    {
+      id: 'spendToday',
+      header: t('spendToday'),
+      align: 'end',
+      cell: (p) => f.pence(p.spendTodayPence),
+    },
+  ];
   return (
     <Section
       title={t('title')}
@@ -203,66 +254,14 @@ export function ProvidersPanel() {
       ) : res.data.providers.length === 0 ? (
         <EmptyState title={t('emptyTitle')} description={t('emptyBody')} />
       ) : (
-        <table aria-label={t('tableAria')} className="w-full text-sm">
-          <thead>
-            <tr className="text-start text-xs text-muted-foreground">
-              <th scope="col" className="py-1 text-start font-normal">
-                {t('provider')}
-              </th>
-              <th scope="col" className="py-1 text-start font-normal">
-                {t('breaker')}
-              </th>
-              <th scope="col" className="py-1 text-end font-normal">
-                {t('errorRate')}
-              </th>
-              <th scope="col" className="py-1 text-end font-normal">
-                {t('jobs')}
-              </th>
-              <th scope="col" className="py-1 text-end font-normal">
-                {t('spendToday')}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {res.data.providers.map((p) => (
-              <tr key={p.id} className="border-t border-border/60">
-                <th scope="row" className="py-1.5 text-start font-medium">
-                  {p.id}
-                  {!p.configured && (
-                    <span className="ms-1.5 text-xs font-normal text-muted-foreground">
-                      {t('notConfigured')}
-                    </span>
-                  )}
-                </th>
-                <td className="py-1.5">
-                  <BreakerTag state={p.breaker} />
-                  {p.accountHold && <AccountHoldNote hold={p.accountHold} />}
-                </td>
-                <td
-                  className={cn(
-                    'tabular py-1.5 text-end',
-                    (p.errorRate1h ?? 0) >= 0.2 && 'font-medium text-destructive',
-                  )}
-                >
-                  {p.errorRate1h === null ? NONE : f.percent(p.errorRate1h, 1)}
-                </td>
-                <td className="tabular py-1.5 text-end text-muted-foreground">
-                  {p.jobs1h.running > 0
-                    ? t('jobCountsRunning', {
-                        succeeded: f.number(p.jobs1h.succeeded),
-                        failed: f.number(p.jobs1h.failed),
-                        running: f.number(p.jobs1h.running),
-                      })
-                    : t('jobCounts', {
-                        succeeded: f.number(p.jobs1h.succeeded),
-                        failed: f.number(p.jobs1h.failed),
-                      })}
-                </td>
-                <td className="tabular py-1.5 text-end">{f.pence(p.spendTodayPence)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <DataTable
+          dense
+          caption={t('tableAria')}
+          columns={columns}
+          rows={res.data.providers}
+          getRowId={(p) => p.id}
+          className="tabular"
+        />
       )}
     </Section>
   );

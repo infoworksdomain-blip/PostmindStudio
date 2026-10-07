@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -12,9 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { selectClass } from '../library/library-filters';
 import type { DeadLetterJob } from './dead-letter-panel';
 import { MIN_REASON } from './reason-dialog';
 import { PROVIDER_IDS } from './types';
@@ -70,9 +69,8 @@ export function RequeueDialog({
           {job?.providerOverride && (
             <div className="grid gap-1.5">
               <Label htmlFor="requeue-provider">{t('requeue.preferProvider')}</Label>
-              <select
+              <NativeSelect
                 id="requeue-provider"
-                className={selectClass}
                 value={providerId}
                 onChange={(e) => setProviderId(e.target.value)}
               >
@@ -82,7 +80,7 @@ export function RequeueDialog({
                     {id}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
           )}
           <div className="grid gap-1.5">
@@ -99,8 +97,7 @@ export function RequeueDialog({
             <Button type="button" variant="ghost" onClick={close}>
               {tc('cancel')}
             </Button>
-            <Button type="submit" disabled={!reasonOk || pending}>
-              {pending && <Loader2 className="animate-spin" />}
+            <Button type="submit" disabled={!reasonOk} loading={pending}>
               {t('requeue.submit')}
             </Button>
           </DialogFooter>

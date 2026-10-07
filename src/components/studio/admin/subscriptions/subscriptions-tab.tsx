@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -14,7 +15,6 @@ import {
 } from '@/components/ui/table';
 import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
-import { selectClass } from '../../library/library-filters';
 import { EmptyState, ErrorState, Section, Stat } from '../../primitives';
 import type { AdminSubscription } from '../organisations/organisations-tab';
 import { StatusBadge } from '../organisations/status-badge';
@@ -71,19 +71,14 @@ export function SubscriptionsTab() {
       <div className="flex items-end gap-2">
         <div className="grid gap-1.5">
           <Label htmlFor="sub-status">{t('filter')}</Label>
-          <select
-            id="sub-status"
-            className={selectClass}
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
+          <NativeSelect id="sub-status" value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">{t('all')}</option>
             {SUBSCRIPTION_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {ts(statusKey[s])}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
       </div>
       {error ? (

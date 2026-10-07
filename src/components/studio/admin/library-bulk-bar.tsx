@@ -5,10 +5,10 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Check, RefreshCw, Shuffle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
-import { selectClass } from '../library/library-filters';
-import type { CategoryOption } from '../library/library-utils';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { NativeSelect } from '@/components/ui/native-select';
+import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
+import type { CategoryOption } from '../library/library-utils';
 import type { BulkAction, BulkResponse, ReanalyseResponse } from './library-admin-types';
 
 // 15.D7 / A3.8 — bulk actions on the selected corpus items: accept the automatic category,
@@ -94,9 +94,8 @@ export function LibraryBulkBar({
           <label htmlFor="bulk-category" className="sr-only">
             {t('newCategory')}
           </label>
-          <select
+          <NativeSelect
             id="bulk-category"
-            className={selectClass}
             value={category}
             onChange={(e) => setCategory(e.target.value)}
           >
@@ -106,7 +105,7 @@ export function LibraryBulkBar({
                 {`${'  '.repeat(c.depth)}${c.label}`}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
         <Button
           size="sm"

@@ -1,19 +1,19 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StatusPill } from '@/components/ui/status-pill';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { api, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { ErrorState, Section } from '../primitives';
-import { selectClass } from '../library/library-filters';
 
 // BACKLOG 13.18 / 13.19 — one organisation's review policy (GET|PUT
 // /admin/organisations/:id/policy) and cost cap overrides (GET|PUT …/cost-caps). Studio does not
@@ -101,9 +101,8 @@ function PolicyForm({ orgId }: { orgId: string }) {
     <form onSubmit={save} aria-label={t('formAria')} className="grid gap-4 text-sm">
       <div className="grid gap-1.5">
         <Label htmlFor="org-default-policy">{t('defaultLabel')}</Label>
-        <select
+        <NativeSelect
           id="org-default-policy"
-          className={selectClass}
           value={draft.defaultReviewPolicy}
           onChange={(e) =>
             setDraft({ ...draft, defaultReviewPolicy: e.target.value as ReviewPolicy })
@@ -114,7 +113,7 @@ function PolicyForm({ orgId }: { orgId: string }) {
               {t(`option.${p}`)}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </div>
       <div className="flex items-center gap-3">
         <Switch
@@ -145,8 +144,7 @@ function PolicyForm({ orgId }: { orgId: string }) {
         </p>
       </div>
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={pending}>
-          {pending && <Loader2 className="animate-spin" />}
+        <Button type="submit" loading={pending}>
           {t('save')}
         </Button>
         {res.data.updatedAt && (
@@ -182,9 +180,9 @@ function CapLine({ label, cap }: { label: string; cap: OrgCostCapsResponse['caps
       {cap.source === 'org_override' ? (
         <>
           {f.pence(cap.pence)}{' '}
-          <span className="rounded bg-primary/10 px-1 text-[10px] uppercase text-primary">
+          <StatusPill tone="info" size="sm">
             {t('orgOverride')}
-          </span>
+          </StatusPill>
         </>
       ) : (
         t('planTier', { tiers })
@@ -288,8 +286,7 @@ function CostCapsForm({ orgId }: { orgId: string }) {
         />
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" disabled={pending || !reasonOk}>
-          {pending && <Loader2 className="animate-spin" />}
+        <Button type="submit" disabled={!reasonOk} loading={pending}>
           {t('save')}
         </Button>
         {hasOverride && (

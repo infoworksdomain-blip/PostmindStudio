@@ -1,15 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { ExternalLink, Loader2 } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, useApi, useErrorMessage } from '@/lib/client/api';
 import { safeHttpUrl, useFormat } from '@/lib/client/format';
 import { EmptyState, ErrorState, Section, Stat } from '../primitives';
-import { selectClass } from '../library/library-filters';
 import { ReasonDialog } from './reason-dialog';
 
 // BACKLOG 14.11 — Admin → Safety audit: the Trust & Safety monthly audit (runbooks/
@@ -103,8 +103,7 @@ function AuditCard({
         )}
         {item.result === 'pending' ? (
           <div className="mt-auto flex flex-wrap gap-2 pt-2">
-            <Button size="sm" variant="outline" onClick={onPass} disabled={busy}>
-              {busy && <Loader2 className="animate-spin" />}
+            <Button size="sm" variant="outline" onClick={onPass} loading={busy}>
               {t('pass')}
             </Button>
             <Button size="sm" variant="destructive" onClick={onMiss} disabled={busy}>
@@ -184,9 +183,10 @@ export function SafetyAuditPanel() {
       description={t('description')}
       actions={
         <div className="flex flex-wrap gap-2">
-          <select
+          <NativeSelect
+            size="sm"
+            wrapperClassName="w-auto"
             aria-label={t('monthAria')}
-            className={selectClass}
             value={shown}
             onChange={(e) => setPeriod(e.target.value)}
           >
@@ -195,10 +195,11 @@ export function SafetyAuditPanel() {
                 {p}
               </option>
             ))}
-          </select>
-          <select
+          </NativeSelect>
+          <NativeSelect
+            size="sm"
+            wrapperClassName="w-auto"
             aria-label={t('resultAria')}
-            className={selectClass}
             value={result}
             onChange={(e) => setResult(e.target.value as Result | '')}
           >
@@ -206,9 +207,8 @@ export function SafetyAuditPanel() {
             <option value="miss">{t('filter.miss')}</option>
             <option value="pass">{t('filter.pass')}</option>
             <option value="">{t('filter.all')}</option>
-          </select>
-          <Button size="sm" variant="outline" onClick={() => void drawSample()} disabled={sampling}>
-            {sampling && <Loader2 className="animate-spin" />}
+          </NativeSelect>
+          <Button size="sm" variant="outline" onClick={() => void drawSample()} loading={sampling}>
             {t('drawSample')}
           </Button>
         </div>

@@ -2,15 +2,15 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { SegmentedControl } from '@/components/ui/segmented-control';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { ErrorState, Section, Stat } from '../primitives';
 import { AreaChart, useShortDay } from '../analytics/area-chart';
 import { BarList } from '../analytics/bar-list';
-import { Segmented } from '../analytics/segmented';
 import type { AdminCostResponse, AdminCostRow } from './types';
 import { CostCapsPanel } from './cost-caps-panel';
 
@@ -82,7 +82,7 @@ export function CostReportPanel() {
   };
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-10">
       <CostCapsPanel />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <form onSubmit={applyOrg} aria-label={t('orgFilterAria')} className="flex items-end gap-2">
@@ -102,7 +102,7 @@ export function CostReportPanel() {
             {tc('apply')}
           </Button>
         </form>
-        <Segmented
+        <SegmentedControl
           label={t('windowLabel')}
           value={days}
           onChange={setDays}
@@ -150,7 +150,7 @@ export function CostReportPanel() {
               />
             )}
           </Section>
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-x-8 gap-y-10 md:grid-cols-2">
             <Section title={t('byOrg')}>
               <BarList
                 label={t('byOrgAria')}

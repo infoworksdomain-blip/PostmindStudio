@@ -5,10 +5,10 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
 import { ErrorState, Section } from '../primitives';
-import { selectClass } from '../library/library-filters';
 import { UsageMeters, type UsageResponse } from '../usage-meter';
 
 // Decision P3 — staff view of one organisation's plan usage this month
@@ -82,9 +82,8 @@ export function UsagePanel() {
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="usage-tier">{t('evaluateAgainst')}</Label>
-          <select
+          <NativeSelect
             id="usage-tier"
-            className={selectClass}
             value={tier}
             onChange={(e) => setTier(e.target.value as Tier | '')}
           >
@@ -94,7 +93,7 @@ export function UsagePanel() {
                 {tTier(v)}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
         <Button type="submit" variant="outline" disabled={!input.trim()}>
           {t('show')}

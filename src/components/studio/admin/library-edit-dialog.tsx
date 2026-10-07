@@ -2,9 +2,12 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
-import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -13,11 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
-import { selectClass } from '../library/library-filters';
 import { parseTags, type CategoryOption } from '../library/library-utils';
 import type { LibraryVideoSummary } from '../library/types';
 import type { LibraryPatchBody, LicenseScenario } from './types';
@@ -129,13 +128,13 @@ export function LibraryEditDialog({
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-1.5">
               <Label htmlFor="edit-category">{t('category')}</Label>
-              <select id="edit-category" className={selectClass} {...field('category')}>
+              <NativeSelect id="edit-category" {...field('category')}>
                 {options.map((c) => (
                   <option key={c.slug} value={c.slug}>
                     {`${'  '.repeat(c.depth)}${c.label}`}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="edit-tags">{t('tags')}</Label>
@@ -143,7 +142,7 @@ export function LibraryEditDialog({
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="edit-scenario">{t('licence')}</Label>
-              <select id="edit-scenario" className={selectClass} {...field('scenario')}>
+              <NativeSelect id="edit-scenario" {...field('scenario')}>
                 <option value="">
                   {video.allowedModes.length > 0
                     ? t('unchangedModes', { modes: video.allowedModes.join(' + ') })
@@ -153,7 +152,7 @@ export function LibraryEditDialog({
                 <option value="OWNED">{t('optionOwned')}</option>
                 <option value="SCRAPED">{t('optionScraped')}</option>
                 <option value="NOT_REQUIRED">{t('optionNotRequired')}</option>
-              </select>
+              </NativeSelect>
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="edit-license-source">{t('licenceSource')}</Label>
@@ -169,8 +168,7 @@ export function LibraryEditDialog({
             <Button type="button" variant="ghost" onClick={onClose}>
               {tc('cancel')}
             </Button>
-            <Button type="submit" disabled={!dirty || pending}>
-              {pending && <Loader2 className="animate-spin" />}
+            <Button type="submit" disabled={!dirty} loading={pending}>
               {t('save')}
             </Button>
           </DialogFooter>

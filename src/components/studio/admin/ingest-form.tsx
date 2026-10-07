@@ -2,15 +2,14 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
-import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Textarea } from '@/components/ui/textarea';
 import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
 import { Section } from '../primitives';
-import { selectClass } from '../library/library-filters';
 import { parseTags, type CategoryOption } from '../library/library-utils';
 import type { IngestItem, IngestResponse, LicenseScenario } from './types';
 
@@ -123,9 +122,8 @@ export function IngestForm({ categories }: { categories: CategoryOption[] }) {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="grid gap-1.5">
             <Label htmlFor="ingest-scenario">{t('licence')}</Label>
-            <select
+            <NativeSelect
               id="ingest-scenario"
-              className={selectClass}
               value={scenario}
               onChange={(e) => setScenario(e.target.value as LicenseScenario)}
             >
@@ -134,7 +132,7 @@ export function IngestForm({ categories }: { categories: CategoryOption[] }) {
                   {t(s.label)}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="ingest-source">{t('source')}</Label>
@@ -148,9 +146,8 @@ export function IngestForm({ categories }: { categories: CategoryOption[] }) {
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="ingest-category">{t('category')}</Label>
-            <select
+            <NativeSelect
               id="ingest-category"
-              className={selectClass}
               value={category}
               onChange={(e) => setCategory(e.target.value)}
             >
@@ -160,7 +157,7 @@ export function IngestForm({ categories }: { categories: CategoryOption[] }) {
                   {`${'  '.repeat(c.depth)}${c.label}`}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="ingest-tags">{t('tags')}</Label>
@@ -177,8 +174,7 @@ export function IngestForm({ categories }: { categories: CategoryOption[] }) {
           </div>
         </div>
         <div>
-          <Button type="submit" disabled={!valid || pending}>
-            {pending && <Loader2 className="animate-spin" />}
+          <Button type="submit" disabled={!valid} loading={pending}>
             {t('submit', { count: urls.length })}
           </Button>
         </div>

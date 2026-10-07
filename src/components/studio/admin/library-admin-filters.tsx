@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Input } from '@/components/ui/input';
-import { selectClass } from '../library/library-filters';
+import { NativeSelect } from '@/components/ui/native-select';
 import type { CategoryOption } from '../library/library-utils';
 import type { AdminLibraryFilters } from './library-admin-types';
 
@@ -31,14 +31,9 @@ function Select({
       <label htmlFor={id} className="text-xs text-muted-foreground">
         {label}
       </label>
-      <select
-        id={id}
-        className={selectClass}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
+      <NativeSelect size="sm" id={id} value={value} onChange={(e) => onChange(e.target.value)}>
         {children}
-      </select>
+      </NativeSelect>
     </div>
   );
 }

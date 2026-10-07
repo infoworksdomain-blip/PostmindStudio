@@ -5,11 +5,11 @@ import { Inbox, RotateCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { EmptyState, ErrorState, Section } from '../primitives';
-import { selectClass } from '../library/library-filters';
 import { ReasonDialog } from './reason-dialog';
 import { RequeueDialog } from './requeue-dialog';
 
@@ -188,9 +188,10 @@ export function DeadLetterPanel() {
       description={t('description')}
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          <NativeSelect
+            size="sm"
+            wrapperClassName="w-auto"
             aria-label={t('queueAria')}
-            className={selectClass}
             value={queue}
             onChange={(e) => {
               setQueue(e.target.value);
@@ -202,7 +203,7 @@ export function DeadLetterPanel() {
                 {q}
               </option>
             ))}
-          </select>
+          </NativeSelect>
           <Button variant="outline" size="sm" onClick={() => void res.mutate()}>
             <RotateCw /> {t('refresh')}
           </Button>

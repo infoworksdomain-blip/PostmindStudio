@@ -213,7 +213,7 @@ describe('Organisations tab: plan, trial and caps (20.27)', { timeout: 45_000 },
     await user.type(within(form).getByLabelText('Reason (required)'), 'Operator account');
     await user.click(within(form).getByRole('button', { name: 'Save override' }));
 
-    const dialog = await screen.findByRole('dialog');
+    const dialog = await screen.findByRole('alertdialog');
     expect(dialog).toHaveTextContent('Ending the trial cannot be undone');
     expect(api.calls.some((c) => c.method === 'PUT')).toBe(false);
     await user.click(within(dialog).getByRole('button', { name: 'Yes, save' }));
@@ -238,11 +238,11 @@ describe('Organisations tab: plan, trial and caps (20.27)', { timeout: 45_000 },
     await user.selectOptions(within(form).getByLabelText('Access'), 'none');
     await user.type(within(form).getByLabelText('Reason (required)'), 'Chargeback');
     await user.click(within(form).getByRole('button', { name: 'Save override' }));
-    const dialog = await screen.findByRole('dialog');
+    const dialog = await screen.findByRole('alertdialog');
     expect(dialog).toHaveTextContent('Access None stops everyone in this organisation');
     expect(dialog).not.toHaveTextContent('Ending the trial');
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
     expect(api.calls.some((c) => c.method === 'PUT')).toBe(false);
   });
 
@@ -260,7 +260,7 @@ describe('Organisations tab: plan, trial and caps (20.27)', { timeout: 45_000 },
     await user.type(within(form).getByLabelText('Reason (required)'), 'Goodwill');
     await user.click(within(form).getByRole('button', { name: 'Save override' }));
     await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
-    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(api.calls.find((c) => c.method === 'PUT')?.body).toEqual({
       tier: 'PLUS',
       expiresAt: null,
@@ -300,7 +300,7 @@ describe('Organisations tab: plan, trial and caps (20.27)', { timeout: 45_000 },
     await user.type(within(form).getByLabelText('Reason (required)'), 'Annual deal');
     await user.click(within(form).getByRole('button', { name: 'Save override' }));
     await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
-    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(api.calls.find((c) => c.method === 'PUT')?.body).toEqual({
       channels: 2,
       interval: 'year',
