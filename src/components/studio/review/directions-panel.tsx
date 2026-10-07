@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Compass, Loader2, Play } from 'lucide-react';
+import { Compass, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { parseFailure } from '@/lib/client/failure-reasons';
 import type { ProjectDetail } from '@/lib/client/types';
@@ -72,6 +72,7 @@ export function DirectionsPanel({
               </div>
               {mayWrite && (
                 <Button
+                  loading={pending === `option-${index}`}
                   size="sm"
                   variant="outline"
                   disabled={busy}
@@ -80,7 +81,7 @@ export function DirectionsPanel({
                     void generate(`option-${index}`, { rawInput: option, directionChosen: true })
                   }
                 >
-                  {pending === `option-${index}` ? <Loader2 className="animate-spin" /> : <Play />}
+                  {pending !== `option-${index}` && <Play />}
                   {t('use')}
                 </Button>
               )}

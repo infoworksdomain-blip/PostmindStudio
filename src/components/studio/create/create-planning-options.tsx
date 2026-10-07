@@ -1,15 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { useFormat } from '@/lib/client/format';
 import { LANGUAGES, type StudioLanguage } from '@/lib/studio/languages';
-import { cn } from '@/lib/utils';
 import { DRIP_HORIZON_WEEKS } from '@/lib/studio/drip-presets';
 import { scheduleInputBounds } from '../automation/schedule-bounds';
 import { NativeSelect } from '@/components/ui/native-select';
+import { ChoiceChips } from '@/components/ui/choice-chips';
 import { Field } from '../review/field';
 import { tiersAtOrBelow, type CreateState, type QualityTier } from './body';
 
@@ -36,10 +36,7 @@ export function LanguageOptions({ state, onChange }: { state: CreateState; onCha
   const languageName = useLanguageName();
   const primary = state.language ?? 'en-GB';
   const extras = state.extraLanguages ?? [];
-  const toggle = (code: string) =>
-    onChange({
-      extraLanguages: extras.includes(code) ? extras.filter((c) => c !== code) : [...extras, code],
-    });
+  const alsoId = useId();
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <Field id="create-language" label={t('language')}>
@@ -63,35 +60,21 @@ export function LanguageOptions({ state, onChange }: { state: CreateState; onCha
         </NativeSelect>
       </Field>
       <fieldset>
-        <legend className="mb-2 text-xs font-medium text-muted-foreground">
+        <legend id={alsoId} className="mb-2 text-xs font-medium text-muted-foreground">
           {t('alsoMakeIn')}
         </legend>
-        <div className="flex flex-wrap gap-1.5">
-          {LANGUAGES.filter((l) => l.code !== primary).map((l) => {
-            const checked = extras.includes(l.code);
-            return (
-              <label
-                key={l.code}
-                lang={l.code}
-                className={cn(
-                  'inline-flex cursor-pointer items-center rounded-full border px-2.5 py-1 text-xs transition-colors has-focus-visible:ring-2 has-focus-visible:ring-ring',
-                  checked
-                    ? 'border-foreground bg-foreground text-background'
-                    : 'border-border text-muted-foreground hover:text-foreground',
-                )}
-              >
-                <input
-                  type="checkbox"
-                  className="sr-only"
-                  checked={checked}
-                  disabled={!checked && extras.length >= 4}
-                  onChange={() => toggle(l.code)}
-                />
-                {l.nativeName}
-              </label>
-            );
-          })}
-        </div>
+        <ChoiceChips
+          type="multiple"
+          size="sm"
+          aria-labelledby={alsoId}
+          value={extras}
+          onChange={(extraLanguages) => onChange({ extraLanguages })}
+          options={LANGUAGES.filter((l) => l.code !== primary).map((l) => ({
+            value: l.code,
+            disabled: !extras.includes(l.code) && extras.length >= 4,
+            label: <span lang={l.code}>{l.nativeName}</span>,
+          }))}
+        />
       </fieldset>
     </div>
   );

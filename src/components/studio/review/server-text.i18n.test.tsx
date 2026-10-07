@@ -91,7 +91,7 @@ describe('FailureReason', () => {
     expect(
       reason('ar', 'planning_failed: service_unavailable: Every text_generation provider'),
     ).toBe(
-      'فشل تخطيط الفيديو. خدمة الذكاء الاصطناعي لدينا غير متاحة مؤقتًا، لذا تعذّر إكمال هذا. يُرجى المحاولة لاحقًا، فقد تم إبلاغ فريقنا.',
+      'فشل تخطيط الفيديو. كان الإنشاء غير متاح، لذا تعذّر إكمال هذا. حاول مرة أخرى بعد بضع دقائق.',
     );
     // Rows stored before 20.11 as <provider>/<account class>: <provider text>.
     expect(

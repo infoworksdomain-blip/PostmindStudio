@@ -44,7 +44,7 @@ export function OverlayEditor({
   const stateLabel = f.projectState(project.state).label;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-10">
       {presets.error && <ErrorState error={presets.error} onRetry={() => void presets.mutate()} />}
       {!editable && (
         <p className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">

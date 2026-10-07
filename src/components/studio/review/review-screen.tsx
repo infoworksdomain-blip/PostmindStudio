@@ -242,7 +242,7 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
             )}
             {active === 'script' && <ScriptView project={project} onChanged={refresh} />}
             {active === 'publish' && (
-              <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
+              <div className="grid gap-10 xl:grid-cols-[3fr_2fr]">
                 <Section title={t('publishTitle')} description={t('publishDescription')}>
                   {PUBLISHABLE.has(project.state) ? (
                     isCarousel ? (

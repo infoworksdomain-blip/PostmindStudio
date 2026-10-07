@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { ImageIcon, Loader2, Trash2 } from 'lucide-react';
+import { ImageIcon, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ImagePicker } from '../slideshow/image-picker';
 import { useAction } from './use-action';
@@ -70,12 +70,13 @@ export function ShotSwapDelete({
           />
           <div>
             <Button
+              loading={pending === 'swap'}
               variant="outline"
               size="sm"
               onClick={swap}
               disabled={!editable || !imageId || busy}
             >
-              {pending === 'swap' ? <Loader2 className="animate-spin" /> : <ImageIcon />}
+              {pending !== 'swap' && <ImageIcon />}
               {t('use')}
             </Button>
           </div>
@@ -85,8 +86,14 @@ export function ShotSwapDelete({
         {confirming ? (
           <>
             <span className="text-sm">{t('confirm', { n })}</span>
-            <Button variant="destructive" size="sm" onClick={remove} disabled={busy}>
-              {pending === 'delete' ? <Loader2 className="animate-spin" /> : <Trash2 />}
+            <Button
+              loading={pending === 'delete'}
+              variant="destructive"
+              size="sm"
+              onClick={remove}
+              disabled={busy}
+            >
+              {pending !== 'delete' && <Trash2 />}
               {t('confirmDelete')}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>

@@ -119,8 +119,8 @@ describe('CreateScreen', () => {
     renderWithSWR(<CreateScreen initialReference={null} />);
     await userEvent.type(screen.getByLabelText('What’s the video about?'), 'Launch');
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
-    await userEvent.click(screen.getByLabelText('TikTok'));
-    await userEvent.click(screen.getByLabelText('Long'));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'TikTok' }));
+    await userEvent.click(screen.getByRole('radio', { name: 'Long' }));
     await waitFor(() => expect(screen.getByLabelText('Brand kit')).toHaveValue('kit_1'));
     await userEvent.selectOptions(screen.getByLabelText('Brand kit'), '');
     await userEvent.click(screen.getByRole('button', { name: 'Advanced options' }));

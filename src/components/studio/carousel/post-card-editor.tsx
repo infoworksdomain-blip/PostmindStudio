@@ -2,8 +2,9 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { ArrowDown, ArrowUp, ImageIcon, ListOrdered, Loader2, PenLine, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ImageIcon, ListOrdered, PenLine, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { ImagePicker } from '../slideshow/image-picker';
 import { hasList, MAX_POST_CHARS, roleOf, waterfall, type DraftPost } from './model';
 
@@ -56,36 +57,33 @@ export function PostCardEditor({
           </span>
         </label>
         <div className="flex items-center gap-1">
-          <Button
+          <IconButton
             type="button"
-            variant="ghost"
             size="icon"
-            aria-label={t('moveUp', { n: index + 1 })}
+            label={t('moveUp', { n: index + 1 })}
             disabled={disabled || index === 0}
             onClick={() => onMove(-1)}
           >
             <ArrowUp />
-          </Button>
-          <Button
+          </IconButton>
+          <IconButton
             type="button"
-            variant="ghost"
             size="icon"
-            aria-label={t('moveDown', { n: index + 1 })}
+            label={t('moveDown', { n: index + 1 })}
             disabled={disabled || index === count - 1}
             onClick={() => onMove(1)}
           >
             <ArrowDown />
-          </Button>
-          <Button
+          </IconButton>
+          <IconButton
             type="button"
-            variant="ghost"
             size="icon"
-            aria-label={t('remove', { n: index + 1 })}
+            label={t('remove', { n: index + 1 })}
             disabled={disabled || count <= 1}
             onClick={onRemove}
           >
             <Trash2 />
-          </Button>
+          </IconButton>
         </div>
       </div>
       <textarea
@@ -145,13 +143,14 @@ export function PostCardEditor({
           </Button>
         )}
         <Button
+          loading={rewriting}
           type="button"
           variant="ghost"
           size="sm"
           disabled={disabled || !canRewrite}
           onClick={onRewrite}
         >
-          {rewriting ? <Loader2 className="animate-spin" /> : <PenLine />} {t('rewritePost')}
+          {!rewriting && <PenLine />} {t('rewritePost')}
         </Button>
       </div>
       {picking && businessId && (

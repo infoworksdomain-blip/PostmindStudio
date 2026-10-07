@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Loader2, ShieldAlert, Check } from 'lucide-react';
+import { ShieldAlert, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { parseFailure } from '@/lib/client/failure-reasons';
 import type { ProjectDetail } from '@/lib/client/types';
@@ -77,11 +77,12 @@ export function RestrictedTopicsPanel({
           <div className="flex flex-col gap-1">
             <div>
               <Button
+                loading={pending === 'continue'}
                 variant="outline"
                 disabled={busy}
                 onClick={() => void generate('continue', { confirmRestrictedTopics: true })}
               >
-                {pending === 'continue' ? <Loader2 className="animate-spin" /> : <Check />}
+                {pending !== 'continue' && <Check />}
                 {t('continue')}
               </Button>
             </div>

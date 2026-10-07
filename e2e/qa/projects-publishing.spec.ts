@@ -266,7 +266,7 @@ test.describe('projects search and row actions', () => {
     await page.getByRole('menuitem', { name: 'Archive' }).click();
     await expect(page.getByText('Archived.').first()).toBeVisible();
     await expect(row('QA Draft video (copy)')).toHaveCount(0);
-    await page.getByRole('tab', { name: 'Archived' }).click();
+    await page.getByRole('radio', { name: 'Archived', exact: true }).click();
     await expect(page).toHaveURL(/filter=archived/);
     await expect(row('QA Draft video (copy)')).toBeVisible();
     await expect(row('QA Draft video (copy)')).toContainText('Archived');
@@ -276,7 +276,7 @@ test.describe('projects search and row actions', () => {
     await page.getByRole('menuitem', { name: 'Unarchive' }).click();
     await expect(page.getByText('Restored.').first()).toBeVisible();
     await expect(row('QA Draft video (copy)')).toHaveCount(0);
-    await page.getByRole('tab', { name: 'All' }).click();
+    await page.getByRole('radio', { name: 'All', exact: true }).click();
     await expect(row('QA Draft video (copy)')).toBeVisible();
 
     // Delete asks first; keeping it changes nothing, confirming removes it from every list.
@@ -819,12 +819,12 @@ test.describe('publications page', () => {
       'Cancelled & taken down': { text: 'Cancelled|Taken down' },
     };
     for (const [tab, { text }] of Object.entries(tabs)) {
-      await page.getByRole('tab', { name: tab }).click();
-      await expect(page.getByRole('tab', { name: tab })).toHaveAttribute('aria-selected', 'true');
+      await page.getByRole('radio', { name: tab }).click();
+      await expect(page.getByRole('radio', { name: tab })).toHaveAttribute('aria-checked', 'true');
       await expect(page.getByRole('row').nth(1)).toContainText(new RegExp(text, 'i'));
     }
     // A stored platform failure reads as a sentence (the class), not a bare code.
-    await page.getByRole('tab', { name: 'Failed' }).click();
+    await page.getByRole('radio', { name: 'Failed' }).click();
     await expect(page.getByRole('row').filter({ hasText: 'QA Partly published' })).toContainText(
       /needs to be reconnected/,
     );
@@ -835,7 +835,7 @@ test.describe('publications page', () => {
     await expect(page.locator('body')).not.toContainText(/ECONNREFUSED|access token expired/);
     await w.shot('publications-failed');
     // Platform filter.
-    await page.getByRole('tab', { name: 'All' }).click();
+    await page.getByRole('radio', { name: 'All' }).click();
     await page.getByLabel('Platform').selectOption('x');
     await expect(page.getByRole('row')).toHaveCount(2);
     await page.getByLabel('Platform').selectOption('linkedin_video');
@@ -847,7 +847,7 @@ test.describe('publications page', () => {
     const page = pages.owner;
     const w = new Watcher(page, shotsDir);
     await w.visit('/publications');
-    await page.getByRole('tab', { name: 'Scheduled' }).click();
+    await page.getByRole('radio', { name: 'Scheduled' }).click();
     const cancel = page.getByRole('button', { name: 'Cancel' }).first();
     await cancel.click();
     await expect(page.getByRole('dialog')).toContainText('Cancel this scheduled post?');
@@ -884,7 +884,7 @@ test.describe('publications page', () => {
     const page = pages.owner;
     const w = new Watcher(page, shotsDir);
     await w.visit('/publications');
-    await page.getByRole('tab', { name: 'Failed' }).click();
+    await page.getByRole('radio', { name: 'Failed' }).click();
     const row = page.getByRole('row').filter({ hasText: 'QA Partly published' });
     await expect(row).toContainText(/reconnect/i);
     await row.getByRole('button', { name: 'Retry' }).click();
@@ -914,7 +914,7 @@ test.describe('publications page', () => {
     const page = pages.owner;
     const w = new Watcher(page, shotsDir);
     await w.visit('/publications');
-    await page.getByRole('tab', { name: 'Live' }).click();
+    await page.getByRole('radio', { name: 'Live' }).click();
     await page.getByRole('button', { name: 'Take down' }).first().click();
     await expect(page.getByRole('dialog')).toContainText('cannot be undone');
     await page.getByRole('button', { name: 'Keep it' }).click();

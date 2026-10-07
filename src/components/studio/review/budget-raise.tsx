@@ -2,7 +2,6 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useFormat } from '@/lib/client/format';
@@ -80,8 +79,8 @@ function CarryOn({ project, onChanged }: { project: ProjectDetail; onChanged: ()
       className="flex flex-col items-start gap-2 rounded-xl border border-foreground/15 bg-card p-4"
     >
       <p className="text-sm">{t('limitReached')}</p>
-      <Button onClick={carryOn} disabled={busy}>
-        {busy && <Loader2 className="animate-spin" />} {t('carryOn')}
+      <Button loading={busy} onClick={carryOn} disabled={busy}>
+        {t('carryOn')}
       </Button>
     </section>
   );
@@ -142,8 +141,8 @@ function StaffBudgetRaise({
             onChange={(e) => setPounds(e.target.value)}
           />
         </label>
-        <Button onClick={save} disabled={busy || !valid}>
-          {busy && <Loader2 className="animate-spin" />} {t('raise')}
+        <Button loading={busy} onClick={save} disabled={busy || !valid}>
+          {t('raise')}
         </Button>
       </div>
       {!valid && pounds.trim() !== '' && (

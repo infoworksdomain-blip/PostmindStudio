@@ -2,9 +2,9 @@
 
 import { Clapperboard, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { useApi } from '@/lib/client/api';
-import { cn } from '@/lib/utils';
+import { ChoiceChips } from '@/components/ui/choice-chips';
 import type { Reference, ReferenceMode } from './body';
 
 // A3.9 — shown when Create is opened from the reference library (?reference=<id>&mode=).
@@ -41,33 +41,26 @@ export function ReferenceBanner({
           {error ? t('unavailable') : (video?.title ?? t('loading'))}
         </p>
       </div>
-      <div role="radiogroup" aria-label={t('modesAria')} className="flex gap-1.5">
-        {MODES.map((mode) => {
+      <ChoiceChips
+        type="single"
+        label={t('modesAria')}
+        className="flex-nowrap"
+        value={reference.mode}
+        onChange={onModeChange}
+        options={MODES.map((mode) => {
           const disabled = Boolean(allowed && !allowed.includes(mode));
-          return (
-            <button
-              key={mode}
-              type="button"
-              role="radio"
-              aria-checked={reference.mode === mode}
-              disabled={disabled}
-              title={disabled ? t('modeNotAllowed') : t(`modes.${mode}.hint`)}
-              onClick={() => onModeChange(mode)}
-              className={cn(
-                'rounded-full border px-3 py-1 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-40',
-                reference.mode === mode
-                  ? 'border-foreground bg-foreground text-background'
-                  : 'border-border text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {t(`modes.${mode}.label`)}
-            </button>
-          );
+          const hint = disabled ? t('modeNotAllowed') : t(`modes.${mode}.hint`);
+          return {
+            value: mode,
+            disabled,
+            description: hint,
+            label: <span title={hint}>{t(`modes.${mode}.label`)}</span>,
+          };
         })}
-      </div>
-      <Button variant="ghost" size="icon-sm" aria-label={t('clear')} onClick={onClear}>
+      />
+      <IconButton label={t('clear')} onClick={onClear}>
         <X />
-      </Button>
+      </IconButton>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { CalendarClock, Loader2, Save, Send, Type } from 'lucide-react';
+import { CalendarClock, Save, Send, Type } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
@@ -320,8 +320,14 @@ export function PublishPanel({
       )}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <BusinessHashtagsNote businessId={businessId} />
-        <Button variant="outline" size="sm" onClick={suggest} disabled={suggesting}>
-          {suggesting ? <Loader2 className="animate-spin" /> : <Type />}
+        <Button
+          loading={suggesting}
+          variant="outline"
+          size="sm"
+          onClick={suggest}
+          disabled={suggesting}
+        >
+          {!suggesting && <Type />}
           {t('suggest')}
         </Button>
       </div>
@@ -386,12 +392,13 @@ export function PublishPanel({
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="text-xs text-muted-foreground">{th('suggestedNote')}</p>
                       <Button
+                        loading={savingCopy === render.id}
                         variant="outline"
                         size="sm"
                         onClick={() => void saveCopy(render)}
                         disabled={savingCopy !== null || blocked(render)}
                       >
-                        {savingCopy === render.id ? <Loader2 className="animate-spin" /> : <Save />}
+                        {savingCopy !== render.id && <Save />}
                         {th('save')}
                       </Button>
                     </div>
@@ -425,15 +432,10 @@ export function PublishPanel({
         </Field>
         <Button
           onClick={publish}
+          loading={submitting}
           disabled={submitting || selected.length === 0 || scheduleError !== null || anyBlocked}
         >
-          {submitting ? (
-            <Loader2 className="animate-spin" />
-          ) : scheduleAt ? (
-            <CalendarClock />
-          ) : (
-            <Send />
-          )}
+          {!submitting && (scheduleAt ? <CalendarClock /> : <Send />)}
           {scheduleAt
             ? t('scheduleCount', { count: selected.length })
             : t('publishNowCount', { count: selected.length })}

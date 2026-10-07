@@ -13,16 +13,15 @@ import {
   Clapperboard,
   GalleryHorizontal,
   Layers,
-  Loader2,
   MonitorPlay,
   Upload,
   UserRound,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ChoiceChips } from '@/components/ui/choice-chips';
 import { api, ApiError, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import type { BrandKit, MetaConnectInfo, PlatformConnection, Project } from '@/lib/client/types';
-import { cn } from '@/lib/utils';
 import { useShowCosts } from '../account/use-show-costs';
 import { useBusiness } from '../business-context';
 import { EmptyState } from '../primitives';
@@ -444,15 +443,12 @@ export function CreateScreen({
           <Button
             type="submit"
             size="lg"
-            disabled={submitting || !ready || block === 'read_only'}
+            loading={submitting}
+            disabled={!ready || block === 'read_only'}
             aria-describedby={block ? CREATE_BLOCK_NOTICE_ID : undefined}
             className="px-4"
           >
-            {submitting ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <ArrowRight className="rtl:-scale-x-100" />
-            )}
+            {!submitting && <ArrowRight className="rtl:-scale-x-100" />}
             {isSlideshow ? t('createSlideshow') : isCarousel ? t('createCarousel') : t('generate')}
           </Button>
         </div>
@@ -514,28 +510,23 @@ export function CreateScreen({
       {showOptions && (
         <div id="create-options" className="flex flex-col gap-5">
           {/* 21.4 added a fourth source (UGC): wrap so the row never overflows a 375 px phone. */}
-          <div role="radiogroup" aria-label={t('sourcesAria')} className="flex flex-wrap gap-1.5">
-            {SOURCES.map(({ key, icon: Icon }) => (
-              <button
-                key={key}
-                type="button"
-                role="radio"
-                aria-checked={form.source === key}
-                onClick={() => {
-                  setSourceTouched(true);
-                  patch({ source: key });
-                }}
-                className={cn(
-                  'inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                  form.source === key
-                    ? 'border-foreground'
-                    : 'border-border text-muted-foreground hover:text-foreground',
-                )}
-              >
-                <Icon className="size-4" strokeWidth={1.5} /> {t(`sources.${key}`)}
-              </button>
-            ))}
-          </div>
+          <ChoiceChips
+            type="single"
+            label={t('sourcesAria')}
+            value={form.source}
+            onChange={(key) => {
+              setSourceTouched(true);
+              patch({ source: key });
+            }}
+            options={SOURCES.map(({ key, icon: Icon }) => ({
+              value: key,
+              label: (
+                <>
+                  <Icon strokeWidth={1.5} /> {t(`sources.${key}`)}
+                </>
+              ),
+            }))}
+          />
           {isSlideshow && (
             <TemplatePicker
               value={form.templateId}

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
@@ -137,11 +137,12 @@ export function CarouselPublishPanel({
       </div>
       <div>
         <Button
+          loading={submitting}
           type="button"
           disabled={submitting || picked.length === 0 || scheduleError !== null}
           onClick={() => void publish()}
         >
-          {submitting ? <Loader2 className="animate-spin" /> : <Send />}
+          {!submitting && <Send />}
           {scheduleAt
             ? t('scheduleButton', { count: picked.length })
             : t('publishButton', { count: picked.length })}

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Hash, Loader2, Save } from 'lucide-react';
+import { Hash, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -114,8 +114,8 @@ function HashtagsForm({
         <p className="text-xs text-muted-foreground">{t('alwaysHint', { max: saved.maxAlways })}</p>
       </div>
       <div>
-        <Button onClick={save} disabled={saving || !valid || needsOne}>
-          {saving ? <Loader2 className="animate-spin" /> : <Save />}
+        <Button loading={saving} onClick={save} disabled={saving || !valid || needsOne}>
+          {!saving && <Save />}
           {t('save')}
         </Button>
       </div>

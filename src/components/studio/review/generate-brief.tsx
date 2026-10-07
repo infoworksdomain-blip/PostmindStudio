@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Play } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
@@ -98,8 +98,8 @@ export function BriefEditor({
       />
       <BriefHint text={brief} id={`${id}-hint`} />
       <div>
-        <Button type="submit" disabled={busy || !edited}>
-          {pending ? <Loader2 className="animate-spin" /> : <Play />}
+        <Button loading={pending} type="submit" disabled={busy || !edited}>
+          {!pending && <Play />}
           {t('editSubmit')}
         </Button>
       </div>

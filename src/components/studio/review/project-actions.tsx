@@ -6,7 +6,7 @@ import { useCreateBlock } from '../account/create-access';
 import { useShowCosts } from '../account/use-show-costs';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Check, Loader2, Play, RotateCw, Square, X } from 'lucide-react';
+import { Check, Play, RotateCw, Square, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useFormat } from '@/lib/client/format';
@@ -59,23 +59,18 @@ export function ProjectActions({
   return (
     <>
       {CANCELLABLE.has(state) && (
-        <Button variant="outline" onClick={cancel} disabled={busy}>
-          {pending === 'cancel' ? <Loader2 className="animate-spin" /> : <Square />} {t('cancel')}
+        <Button loading={pending === 'cancel'} variant="outline" onClick={cancel} disabled={busy}>
+          {pending !== 'cancel' && <Square />} {t('cancel')}
         </Button>
       )}
       {GENERATABLE.has(state) && state !== 'READY_FOR_REVIEW' && (
         <Button
           onClick={generate}
+          loading={pending === 'generate'}
           disabled={busy || block === 'read_only'}
           aria-describedby={block ? ACCOUNT_BANNER_ID : undefined}
         >
-          {pending === 'generate' ? (
-            <Loader2 className="animate-spin" />
-          ) : state === 'DRAFT' ? (
-            <Play />
-          ) : (
-            <RotateCw />
-          )}
+          {pending !== 'generate' && (state === 'DRAFT' ? <Play /> : <RotateCw />)}
           {state === 'DRAFT' ? t('generate') : t('generateAgain')}
         </Button>
       )}
@@ -185,11 +180,11 @@ export function ApprovalBar({
               {t('back')}
             </Button>
             <Button
+              loading={pending !== null}
               variant={mode === 'reject' ? 'destructive' : 'default'}
               onClick={submit}
               disabled={busy || (mode === 'reject' && !note.trim())}
             >
-              {pending && <Loader2 className="animate-spin" />}
               {mode === 'reject' ? t('confirmReject') : t('confirmApprove')}
             </Button>
           </div>

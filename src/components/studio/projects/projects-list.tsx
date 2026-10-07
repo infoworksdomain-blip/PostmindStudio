@@ -20,6 +20,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ChoiceChips } from '@/components/ui/choice-chips';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -323,24 +324,14 @@ export function ProjectsList() {
         }
       />
       <SearchBox value={q} onApply={(next) => update({ q: next })} />
-      <div role="tablist" aria-label={t('filtersAria')} className="mb-6 flex flex-wrap gap-1.5">
-        {PROJECT_FILTERS.map((pf) => (
-          <button
-            key={pf.key}
-            role="tab"
-            aria-selected={filter === pf.key}
-            onClick={() => update({ filter: pf.key })}
-            className={cn(
-              'rounded-full border px-3.5 py-1.5 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-              filter === pf.key
-                ? 'border-foreground bg-foreground text-background'
-                : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground',
-            )}
-          >
-            {t(`filters.${pf.key}`)}
-          </button>
-        ))}
-      </div>
+      <ChoiceChips
+        type="single"
+        label={t('filtersAria')}
+        className="mb-6"
+        value={filter}
+        onChange={(next) => update({ filter: next })}
+        options={PROJECT_FILTERS.map((pf) => ({ value: pf.key, label: t(`filters.${pf.key}`) }))}
+      />
 
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
       {isLoading && (

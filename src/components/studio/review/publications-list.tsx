@@ -1,6 +1,6 @@
 'use client';
 
-import { ExternalLink, Loader2, RotateCw, X } from 'lucide-react';
+import { ExternalLink, RotateCw, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { safeHttpUrl, useFormat } from '@/lib/client/format';
@@ -81,10 +81,11 @@ export function PublicationsList({
                 variant="outline"
                 size="sm"
                 disabled={busy}
+                loading={pending === `cancel-${p.id}`}
                 onClick={() => act(p, 'cancel')}
                 aria-label={t('cancelAria', { platform: label })}
               >
-                {pending === `cancel-${p.id}` ? <Loader2 className="animate-spin" /> : <X />}
+                {pending !== `cancel-${p.id}` && <X />}
                 {t('cancel')}
               </Button>
             )}
@@ -93,10 +94,11 @@ export function PublicationsList({
                 variant="outline"
                 size="sm"
                 disabled={busy}
+                loading={pending === `retry-${p.id}`}
                 onClick={() => act(p, 'retry')}
                 aria-label={t('retryAria', { platform: label })}
               >
-                {pending === `retry-${p.id}` ? <Loader2 className="animate-spin" /> : <RotateCw />}
+                {pending !== `retry-${p.id}` && <RotateCw />}
                 {t('retry')}
               </Button>
             )}

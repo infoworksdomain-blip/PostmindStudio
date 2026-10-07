@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, type KeyboardEvent } from 'react';
-import { Eye, Loader2, Redo2, Save, Trash2, Undo2 } from 'lucide-react';
+import { Eye, Redo2, Save, Trash2, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
@@ -268,27 +268,34 @@ export function OverlaySet({
               )}
               <div className="flex flex-wrap gap-2">
                 <Button
+                  loading={pending === 'save'}
                   onClick={save}
                   disabled={!editable || !patch || problems.length > 0 || busy}
                 >
-                  {pending === 'save' ? <Loader2 className="animate-spin" /> : <Save />} {t('save')}
+                  {pending !== 'save' && <Save />} {t('save')}
                 </Button>
                 <Button variant="ghost" onClick={() => discard(selected.id)} disabled={!patch}>
                   <Undo2 /> {t('discard')}
                 </Button>
                 {canPreview && (
                   <Button
+                    loading={pending === 'preview'}
                     variant="outline"
                     onClick={renderPreview}
                     disabled={Boolean(patch) || busy}
                     title={patch ? t('saveFirst') : undefined}
                   >
-                    {pending === 'preview' ? <Loader2 className="animate-spin" /> : <Eye />}
+                    {pending !== 'preview' && <Eye />}
                     {t('preview')}
                   </Button>
                 )}
-                <Button variant="destructive" onClick={remove} disabled={!editable || busy}>
-                  {pending === 'delete' ? <Loader2 className="animate-spin" /> : <Trash2 />}
+                <Button
+                  loading={pending === 'delete'}
+                  variant="destructive"
+                  onClick={remove}
+                  disabled={!editable || busy}
+                >
+                  {pending !== 'delete' && <Trash2 />}
                   {t('delete')}
                 </Button>
               </div>

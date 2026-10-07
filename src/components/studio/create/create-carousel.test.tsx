@@ -45,7 +45,7 @@ describe('Create → Carousel', () => {
     await chooseCarousel();
     expect(screen.getByText('What’s the carousel about?')).toBeInTheDocument();
     // Video-only choices and £ budgets are not offered for a carousel.
-    expect(screen.queryByLabelText('TikTok')).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: 'TikTok' })).not.toBeInTheDocument();
     expect(screen.queryByText(/budget/i)).not.toBeInTheDocument();
     await userEvent.type(screen.getByLabelText('What’s the carousel about?'), 'Bread storage tips');
     const look = screen.getByRole('radiogroup', { name: 'Look' });

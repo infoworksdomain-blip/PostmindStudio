@@ -6,7 +6,9 @@ import type { KeyboardEvent } from 'react';
 
 export function isRtl(element: Element | null): boolean {
   if (!element || typeof window === 'undefined') return false;
-  return window.getComputedStyle(element).direction === 'rtl';
+  if (window.getComputedStyle(element).direction === 'rtl') return true;
+  // jsdom (and very old engines) do not derive `direction` from the dir attribute.
+  return element.closest('[dir]')?.getAttribute('dir') === 'rtl';
 }
 
 /** +1 / -1 for a navigation key (Home and End jump), or null when the key is not one. */

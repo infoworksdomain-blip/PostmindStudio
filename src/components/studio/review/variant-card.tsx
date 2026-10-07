@@ -1,6 +1,6 @@
 'use client';
 
-import { Download, Loader2, RefreshCw } from 'lucide-react';
+import { Download, RefreshCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -142,8 +142,14 @@ export function VariantCard({
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-sm">
             <span>{t('staleNote')}</span>
             {projectState && RERENDERABLE.has(projectState) && (
-              <Button size="sm" variant="outline" onClick={rerender} disabled={rerendering}>
-                {rerendering ? <Loader2 className="animate-spin" /> : <RefreshCw />} {t('rerender')}
+              <Button
+                loading={rerendering}
+                size="sm"
+                variant="outline"
+                onClick={rerender}
+                disabled={rerendering}
+              >
+                {!rerendering && <RefreshCw />} {t('rerender')}
               </Button>
             )}
           </div>
@@ -151,8 +157,14 @@ export function VariantCard({
         <VariantThumbnail render={render} />
         <QualityPanel render={render} onChanged={onChanged} />
         <div>
-          <Button variant="outline" size="sm" onClick={download} disabled={downloading}>
-            {downloading ? <Loader2 className="animate-spin" /> : <Download />} {t('download')}
+          <Button
+            loading={downloading}
+            variant="outline"
+            size="sm"
+            onClick={download}
+            disabled={downloading}
+          >
+            {!downloading && <Download />} {t('download')}
           </Button>
         </div>
       </div>
