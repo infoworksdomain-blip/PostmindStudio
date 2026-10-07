@@ -66,7 +66,7 @@ describe('ScanPanel', () => {
           }),
     );
     renderScreen(<ScanPanel businessId="biz_1" />);
-    const items = await screen.findAllByText(/Our AI service is temporarily unavailable/);
+    const items = await screen.findAllByText(/Generation is unavailable right now/);
     expect(items).toHaveLength(2);
     const list = items[0]!.closest('ul')!;
     expect(list).not.toHaveTextContent('{');

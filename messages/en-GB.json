@@ -251,7 +251,7 @@
     }
   },
   "errors": {
-    "generic": "Something went wrong.",
+    "generic": "That didn’t go through. Check your connection and try again.",
     "sessionExpired": "Your PostMind session has expired. Sign in again.",
     "forbidden": "You don’t have permission to do that.",
     "rateLimited": "Too many requests — try again in a moment.",
@@ -278,12 +278,12 @@
       "upstream_error": "A connected service had a problem. Try again in a moment.",
       "configuration_error": "Studio isn’t fully set up for this yet. Contact PostMind support.",
       "not_implemented": "This isn’t available yet.",
-      "internal_error": "Something went wrong on our side. Try again in a moment.",
+      "internal_error": "We couldn’t finish that on our side. Try again in a moment.",
       "upload_failed": "The upload failed. Try again.",
       "plan_required": "Your organisation doesn’t have a plan yet. Choose a plan to start creating.",
       "billing_required": "Your account is read-only because of a billing problem. Update your payment details to continue.",
       "no_organisation": "Create or join an organisation to continue.",
-      "service_unavailable": "Our AI service is temporarily unavailable. Please try again later — our team has been alerted.",
+      "service_unavailable": "Generation is unavailable right now. Try again in a few minutes.",
       "auto_publish_account_required": "Choose a connected account to post to, or turn auto-publish and the schedule off.",
       "auto_publish_account_unavailable": "A chosen account is no longer connected. Reconnect it or choose another account.",
       "queue_unavailable": "Publishing is temporarily unavailable. Nothing was posted or kept; try again in a moment.",
@@ -293,7 +293,16 @@
   },
   "primitives": {
     "errorTitle": "Couldn’t load this",
-    "retry": "Retry"
+    "retry": "Retry",
+    "table": {
+      "bulkBar": "Actions for the selected rows",
+      "selected": "{count, plural, one {# selected} other {# selected}}",
+      "clearSelection": "Clear selection",
+      "selectAll": "Select all rows",
+      "selectRow": "Select {name}",
+      "selectThisRow": "Select this row",
+      "empty": "Nothing to show yet."
+    }
   },
   "format": {
     "none": "—",
@@ -348,7 +357,7 @@
       "body": "Every variant passed the quality checks. Review it, then approve or publish."
     },
     "generationAutoApproved": {
-      "title": "“{name}” is generated and was auto-approved",
+      "title": "“{name}” is ready and was auto-approved",
       "body": "The video passed every quality check and your review policy approved it automatically."
     },
     "publicationFailed": {
@@ -994,10 +1003,10 @@
     },
     "music": {
       "aria": "Music",
-      "generated": "Background music generated.",
-      "generatedReused": "Background music generated — reused from an earlier render.",
-      "generatedTrack": "Background music generated ({seconds, number} s track).",
-      "generatedTrackReused": "Background music generated ({seconds, number} s track) — reused from an earlier render.",
+      "generated": "Your background music is ready.",
+      "generatedReused": "Your background music is ready — reused from an earlier render.",
+      "generatedTrack": "Your background music is ready ({seconds, number} s track).",
+      "generatedTrackReused": "Your background music is ready ({seconds, number} s track) — reused from an earlier render.",
       "offForPlan": "No background music on this plan — narration only.",
       "failed": "Background music could not be made, so this video has narration only.",
       "none": "Rendered before background music was available — narration only."
@@ -2069,7 +2078,7 @@
       "refreshStarted": "{count, plural, one {Searching stock libraries for # query — new images appear in a few minutes} other {Searching stock libraries for # queries — new images appear in a few minutes}}",
       "refresh": "Refresh stock",
       "generate": "Generate",
-      "generated": "Image generated and added to your library",
+      "generated": "Your image is ready — it’s in your library.",
       "generateTitle": "Generate an image",
       "generateDescription": "Describe the picture. It is saved to this business’s library. Generation can take up to a minute.",
       "prompt": "Prompt",
@@ -2453,7 +2462,7 @@
       "validation_error": "The platform did not grant access (the request was declined or returned an error). Try connecting again.",
       "platform_error": "The platform had a problem completing the connection. Try again shortly.",
       "upstream_error": "The platform had a problem completing the connection. Try again shortly.",
-      "internal_error": "Something went wrong finishing the connection. Try again.",
+      "internal_error": "We couldn’t finish connecting the account. Start the connection again.",
       "unknown": "The connection did not complete ({code}). Try again.",
       "meta_no_accounts": "Meta did not share any Facebook Page you can publish to. Connect again and choose at least one Page (and its Instagram account) in the Meta window.",
       "wrong_user": "This connection was started by a different Studio user. Start it again while signed in as yourself.",
@@ -4097,7 +4106,7 @@
       "scan_images_capped": "The scan reached its cost cap ({amount}): some images were not indexed for search.",
       "ownership_disputed": "Stopped: ownership of the website was disputed.",
       "provider_failure": "{source} reported a problem: {problem}.",
-      "service_unavailable": "Our AI service is temporarily unavailable, so this could not be finished. Please try again later — our team has been alerted.",
+      "service_unavailable": "Generation was unavailable, so this couldn’t be finished. Try again in a few minutes.",
       "scan_pages_skipped": "{count, plural, one {# page could not be read and was skipped.} other {# pages could not be read and were skipped.}}",
       "scan_images_skipped": "{count, plural, one {# image on your site could not be downloaded and was skipped.} other {# images on your site could not be downloaded and were skipped.}}",
       "stock_not_configured": "Stock photos could not be added: no stock photo service is set up yet.",
@@ -4413,7 +4422,7 @@
       "signupsClosed": "New accounts are by invitation only right now.",
       "invalidEmail": "Enter a valid email address.",
       "network": "We couldn’t reach Studio. Check your connection and try again.",
-      "generic": "Something went wrong. Try again.",
+      "generic": "That didn’t go through. Try again in a moment.",
       "seatLimit": "This organisation has no free seats. Ask an admin to upgrade the plan.",
       "inviteNotForYou": "This invitation was sent to a different email address. Sign in with that address to accept it."
     },

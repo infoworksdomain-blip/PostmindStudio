@@ -8,6 +8,8 @@ import { type Page, type Response } from '@playwright/test';
 const ERROR_TEXT = [
   /Couldn[’']t load this/,
   /Something went wrong/,
+  /That didn[’']t go through/,
+  /We couldn[’']t finish that on our side/,
   /Application error/,
   /This page hit a problem/,
   /Internal Server Error/,

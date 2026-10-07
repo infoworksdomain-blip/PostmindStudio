@@ -39,7 +39,7 @@ describe('MusicStatus', () => {
       />,
     );
     expect(screen.getByLabelText('Music')).toHaveTextContent(
-      'Background music generated (15 s track).',
+      'Your background music is ready (15 s track).',
     );
   });
 

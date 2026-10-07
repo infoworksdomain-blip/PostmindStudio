@@ -49,7 +49,7 @@ async function generationComplete(
     userId: project.createdByUserId,
     kind: 'generation_complete',
     title: autoApproved
-      ? `“${projectLabel(project.name)}” is generated and was auto-approved`
+      ? `“${projectLabel(project.name)}” is ready and was auto-approved`
       : `“${projectLabel(project.name)}” is ready for review`,
     body: autoApproved
       ? 'The video passed every quality check and your review policy approved it automatically.'

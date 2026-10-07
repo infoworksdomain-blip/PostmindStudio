@@ -86,7 +86,7 @@ describe('FailureReason', () => {
 
   it('20.11: account problems read as a friendly unavailable sentence in every locale', () => {
     expect(reason('en-GB', 'service_unavailable: anthropic/account_limit')).toBe(
-      'Our AI service is temporarily unavailable, so this could not be finished. Please try again later — our team has been alerted.',
+      'Generation was unavailable, so this couldn’t be finished. Try again in a few minutes.',
     );
     expect(
       reason('ar', 'planning_failed: service_unavailable: Every text_generation provider'),

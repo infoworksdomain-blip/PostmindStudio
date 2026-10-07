@@ -251,7 +251,7 @@
     }
   },
   "errors": {
-    "generic": "出错了。",
+    "generic": "操作未完成。请检查网络连接后重试。",
     "sessionExpired": "您的 PostMind 会话已过期，请重新登录。",
     "forbidden": "您无权执行此操作。",
     "rateLimited": "请求过于频繁，请稍后再试。",
@@ -278,12 +278,12 @@
       "upstream_error": "已连接的服务出现问题，请稍后再试。",
       "configuration_error": "Studio 尚未完成此功能的配置，请联系 PostMind 支持团队。",
       "not_implemented": "此功能暂不可用。",
-      "internal_error": "我们这边出了点问题，请稍后再试。",
+      "internal_error": "我们这边未能完成此操作。请稍后再试。",
       "upload_failed": "上传失败，请重试。",
       "plan_required": "您的组织尚未选择套餐。请选择套餐后开始创作。",
       "billing_required": "由于账单问题，您的账户目前为只读。请更新付款信息以继续。",
       "no_organisation": "请创建或加入一个组织以继续。",
-      "service_unavailable": "我们的 AI 服务暂时不可用。请稍后再试——我们的团队已收到通知。",
+      "service_unavailable": "生成功能暂时不可用。请几分钟后再试。",
       "auto_publish_account_required": "请选择要发布到的已连接账号，或关闭自动发布和排期。",
       "auto_publish_account_unavailable": "所选的某个账号已不再连接。请重新连接，或选择其他账号。",
       "queue_unavailable": "发布功能暂时不可用。没有发布或保存任何内容；请稍后再试。",
@@ -293,7 +293,16 @@
   },
   "primitives": {
     "errorTitle": "无法加载",
-    "retry": "重试"
+    "retry": "重试",
+    "table": {
+      "bulkBar": "对所选行的操作",
+      "selected": "{count, plural, other {已选 # 项}}",
+      "clearSelection": "清除选择",
+      "selectAll": "选择所有行",
+      "selectRow": "选择{name}",
+      "selectThisRow": "选择此行",
+      "empty": "暂无内容。"
+    }
   },
   "format": {
     "none": "—",
@@ -348,7 +357,7 @@
       "body": "所有版本均已通过质量检查。请审核后批准或发布。"
     },
     "generationAutoApproved": {
-      "title": "“{name}”已生成并自动批准",
+      "title": "“{name}”已准备好并已自动批准",
       "body": "该视频已通过全部质量检查，并由您的审核策略自动批准。"
     },
     "publicationFailed": {
@@ -994,10 +1003,10 @@
     },
     "music": {
       "aria": "音乐",
-      "generated": "背景音乐已生成。",
-      "generatedReused": "背景音乐已生成——复用了之前的渲染结果。",
-      "generatedTrack": "背景音乐已生成（{seconds, number} 秒音轨）。",
-      "generatedTrackReused": "背景音乐已生成（{seconds, number} 秒音轨）——复用了之前的渲染结果。",
+      "generated": "背景音乐已准备好。",
+      "generatedReused": "背景音乐已准备好——沿用了之前渲染的音乐。",
+      "generatedTrack": "背景音乐已准备好（{seconds, number} 秒音轨）。",
+      "generatedTrackReused": "背景音乐已准备好（{seconds, number} 秒音轨）——沿用了之前渲染的音乐。",
       "offForPlan": "当前套餐不含背景音乐——仅有旁白。",
       "failed": "背景音乐未能生成，因此此视频仅有旁白。",
       "none": "渲染时尚未提供背景音乐功能——仅有旁白。"
@@ -2069,7 +2078,7 @@
       "refreshStarted": "{count, plural, other {正在按 # 个搜索词检索素材库，新图片将在几分钟内出现}}",
       "refresh": "刷新素材图片",
       "generate": "生成",
-      "generated": "图片已生成并添加到您的图片库",
+      "generated": "图片已准备好，已在你的素材库中。",
       "generateTitle": "生成图片",
       "generateDescription": "描述您想要的画面。图片将保存到此商家的图片库。生成最多可能需要一分钟。",
       "prompt": "提示词",
@@ -2453,7 +2462,7 @@
       "validation_error": "平台未授予访问权限（请求被拒绝或返回了错误）。请重新连接。",
       "platform_error": "平台在完成连接时出现问题，请稍后重试。",
       "upstream_error": "平台在完成连接时出现问题，请稍后重试。",
-      "internal_error": "完成连接时出错，请重试。",
+      "internal_error": "未能完成账号连接。请重新开始连接。",
       "unknown": "连接未完成（{code}）。请重试。",
       "meta_no_accounts": "Meta 未共享任何你可以发布内容的 Facebook 公共主页。请重新连接，并在 Meta 窗口中至少选择一个公共主页（及其 Instagram 账号）。",
       "wrong_user": "此连接由另一位 Studio 用户发起。请以你自己的账号登录后重新开始。",
@@ -4097,7 +4106,7 @@
       "scan_images_capped": "扫描已达到费用上限（{amount}）：部分图片未编入搜索索引。",
       "ownership_disputed": "已停止：网站所有权存在争议。",
       "provider_failure": "{source} 报告了问题：{problem}。",
-      "service_unavailable": "我们的 AI 服务暂时不可用，因此未能完成。请稍后再试——我们的团队已收到通知。",
+      "service_unavailable": "生成功能当时不可用，因此未能完成。请几分钟后再试。",
       "scan_pages_skipped": "{count, plural, other {有 # 个页面无法读取，已跳过。}}",
       "scan_images_skipped": "{count, plural, other {你网站上有 # 张图片无法下载，已跳过。}}",
       "stock_not_configured": "无法添加图库照片：尚未设置图库照片服务。",
@@ -4413,7 +4422,7 @@
       "signupsClosed": "目前仅支持受邀注册新账户。",
       "invalidEmail": "请输入有效的邮箱地址。",
       "network": "无法连接到 Studio，请检查网络后重试。",
-      "generic": "出错了，请重试。",
+      "generic": "操作未完成。请稍后再试。",
       "seatLimit": "该组织没有空余席位。请让管理员升级套餐。",
       "inviteNotForYou": "此邀请发送到了其他邮箱地址。请使用该地址登录后接受。"
     },

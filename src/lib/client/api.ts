@@ -127,7 +127,7 @@ export interface ErrorLocale {
 
 /** Fallback when no catalogue is registered (a plain unit test, or before the provider renders). */
 const ENGLISH: ErrorCatalogue = {
-  generic: 'Something went wrong.',
+  generic: 'That didn’t go through. Check your connection and try again.',
   sessionExpired: 'Your PostMind session has expired. Sign in again.',
   forbidden: 'You don’t have permission to do that.',
   rateLimited: 'Too many requests — try again in a moment.',

@@ -64,6 +64,8 @@ export function openDb(): Db {
 const ERROR_TEXT = [
   /Couldn[’']t load this/,
   /Something went wrong/,
+  /That didn[’']t go through/,
+  /We couldn[’']t finish that on our side/,
   /You don[’']t have permission/,
   /Application error/,
   /This page hit a problem/,

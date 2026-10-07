@@ -28,6 +28,8 @@ const PIXEL = Buffer.from(
 const ERROR_TEXT = [
   /Couldn[’']t load this/,
   /Something went wrong/,
+  /That didn[’']t go through/,
+  /We couldn[’']t finish that on our side/,
   /You don[’']t have permission/,
   /Application error/,
   /Internal Server Error/,

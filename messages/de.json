@@ -251,7 +251,7 @@
     }
   },
   "errors": {
-    "generic": "Etwas ist schiefgelaufen.",
+    "generic": "Das hat nicht geklappt. Prüfe deine Verbindung und versuche es noch einmal.",
     "sessionExpired": "Ihre PostMind-Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
     "forbidden": "Dazu fehlt Ihnen die Berechtigung.",
     "rateLimited": "Zu viele Anfragen – bitte versuchen Sie es gleich noch einmal.",
@@ -278,12 +278,12 @@
       "upstream_error": "Bei einem verbundenen Dienst ist ein Problem aufgetreten. Bitte versuchen Sie es gleich noch einmal.",
       "configuration_error": "Studio ist dafür noch nicht vollständig eingerichtet. Wenden Sie sich an den PostMind-Support.",
       "not_implemented": "Das ist noch nicht verfügbar.",
-      "internal_error": "Bei uns ist etwas schiefgelaufen. Bitte versuchen Sie es gleich noch einmal.",
+      "internal_error": "Das konnten wir auf unserer Seite nicht abschließen. Versuche es gleich noch einmal.",
       "upload_failed": "Der Upload ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
       "plan_required": "Ihre Organisation hat noch keinen Tarif. Wählen Sie einen Tarif, um mit dem Erstellen zu beginnen.",
       "billing_required": "Ihr Konto ist wegen eines Abrechnungsproblems schreibgeschützt. Aktualisieren Sie Ihre Zahlungsdaten, um fortzufahren.",
       "no_organisation": "Erstellen Sie eine Organisation oder treten Sie einer bei, um fortzufahren.",
-      "service_unavailable": "Unser KI-Dienst ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut – unser Team wurde benachrichtigt.",
+      "service_unavailable": "Das Erstellen ist gerade nicht verfügbar. Versuche es in ein paar Minuten noch einmal.",
       "auto_publish_account_required": "Wählen Sie ein verbundenes Konto zum Posten aus, oder deaktivieren Sie die automatische Veröffentlichung und den Termin.",
       "auto_publish_account_unavailable": "Ein gewähltes Konto ist nicht mehr verbunden. Verbinden Sie es erneut oder wählen Sie ein anderes Konto.",
       "queue_unavailable": "Das Veröffentlichen ist vorübergehend nicht verfügbar. Es wurde nichts gepostet oder gespeichert; versuchen Sie es gleich noch einmal.",
@@ -293,7 +293,16 @@
   },
   "primitives": {
     "errorTitle": "Konnte nicht geladen werden",
-    "retry": "Erneut versuchen"
+    "retry": "Erneut versuchen",
+    "table": {
+      "bulkBar": "Aktionen für die ausgewählten Zeilen",
+      "selected": "{count, plural, one {# ausgewählt} other {# ausgewählt}}",
+      "clearSelection": "Auswahl aufheben",
+      "selectAll": "Alle Zeilen auswählen",
+      "selectRow": "{name} auswählen",
+      "selectThisRow": "Diese Zeile auswählen",
+      "empty": "Noch nichts anzuzeigen."
+    }
   },
   "format": {
     "none": "—",
@@ -348,7 +357,7 @@
       "body": "Alle Varianten haben die Qualitätsprüfungen bestanden. Prüfen Sie das Video und geben Sie es frei oder veröffentlichen Sie es."
     },
     "generationAutoApproved": {
-      "title": "„{name}“ wurde generiert und automatisch freigegeben",
+      "title": "„{name}“ ist fertig und wurde automatisch freigegeben",
       "body": "Das Video hat alle Qualitätsprüfungen bestanden und wurde gemäß Ihrer Prüfrichtlinie automatisch freigegeben."
     },
     "publicationFailed": {
@@ -994,10 +1003,10 @@
     },
     "music": {
       "aria": "Musik",
-      "generated": "Hintergrundmusik generiert.",
-      "generatedReused": "Hintergrundmusik generiert – aus einem früheren Rendering wiederverwendet.",
-      "generatedTrack": "Hintergrundmusik generiert (Titel mit {seconds, number} s).",
-      "generatedTrackReused": "Hintergrundmusik generiert (Titel mit {seconds, number} s) – aus einem früheren Rendering wiederverwendet.",
+      "generated": "Deine Hintergrundmusik ist fertig.",
+      "generatedReused": "Deine Hintergrundmusik ist fertig – aus einem früheren Rendering übernommen.",
+      "generatedTrack": "Deine Hintergrundmusik ist fertig ({seconds, number}-s-Track).",
+      "generatedTrackReused": "Deine Hintergrundmusik ist fertig ({seconds, number}-s-Track) – aus einem früheren Rendering übernommen.",
       "offForPlan": "In diesem Tarif gibt es keine Hintergrundmusik – nur Sprecherstimme.",
       "failed": "Die Hintergrundmusik konnte nicht erstellt werden, daher enthält dieses Video nur die Sprecherstimme.",
       "none": "Gerendert, bevor Hintergrundmusik verfügbar war – nur Sprecherstimme."
@@ -2069,7 +2078,7 @@
       "refreshStarted": "{count, plural, one {Stock-Bibliotheken werden nach # Suchbegriff durchsucht – neue Bilder erscheinen in wenigen Minuten} other {Stock-Bibliotheken werden nach # Suchbegriffen durchsucht – neue Bilder erscheinen in wenigen Minuten}}",
       "refresh": "Stockbilder aktualisieren",
       "generate": "Generieren",
-      "generated": "Bild generiert und zu Ihrer Bibliothek hinzugefügt",
+      "generated": "Dein Bild ist fertig – es liegt in deiner Bibliothek.",
       "generateTitle": "Bild generieren",
       "generateDescription": "Beschreiben Sie das Bild. Es wird in der Bibliothek dieses Unternehmens gespeichert. Die Generierung kann bis zu einer Minute dauern.",
       "prompt": "Prompt",
@@ -2453,7 +2462,7 @@
       "validation_error": "Die Plattform hat keinen Zugriff gewährt (die Anfrage wurde abgelehnt oder hat einen Fehler zurückgegeben). Versuchen Sie erneut, die Verbindung herzustellen.",
       "platform_error": "Bei der Plattform ist beim Herstellen der Verbindung ein Problem aufgetreten. Versuchen Sie es gleich noch einmal.",
       "upstream_error": "Bei der Plattform ist beim Herstellen der Verbindung ein Problem aufgetreten. Versuchen Sie es gleich noch einmal.",
-      "internal_error": "Beim Abschließen der Verbindung ist etwas schiefgelaufen. Versuchen Sie es erneut.",
+      "internal_error": "Das Konto konnte nicht fertig verbunden werden. Starte die Verbindung noch einmal.",
       "unknown": "Die Verbindung wurde nicht abgeschlossen ({code}). Versuchen Sie es erneut.",
       "meta_no_accounts": "Meta hat keine Facebook-Seite freigegeben, auf der du veröffentlichen kannst. Verbinde dich erneut und wähle im Meta-Fenster mindestens eine Seite (und ihr Instagram-Konto) aus.",
       "wrong_user": "Diese Verbindung wurde von einem anderen Studio-Nutzer gestartet. Starte sie erneut, während du mit deinem eigenen Konto angemeldet bist.",
@@ -4097,7 +4106,7 @@
       "scan_images_capped": "Der Scan hat seine Kostenobergrenze ({amount}) erreicht: Einige Bilder wurden nicht für die Suche indexiert.",
       "ownership_disputed": "Gestoppt: Die Inhaberschaft der Website wurde angefochten.",
       "provider_failure": "{source} hat ein Problem gemeldet: {problem}.",
-      "service_unavailable": "Unser KI-Dienst ist vorübergehend nicht verfügbar, daher konnte dies nicht abgeschlossen werden. Bitte versuchen Sie es später erneut – unser Team wurde benachrichtigt.",
+      "service_unavailable": "Das Erstellen war nicht verfügbar, deshalb konnte das nicht abgeschlossen werden. Versuche es in ein paar Minuten noch einmal.",
       "scan_pages_skipped": "{count, plural, one {# Seite konnte nicht gelesen werden und wurde übersprungen.} other {# Seiten konnten nicht gelesen werden und wurden übersprungen.}}",
       "scan_images_skipped": "{count, plural, one {# Bild Ihrer Website konnte nicht heruntergeladen werden und wurde übersprungen.} other {# Bilder Ihrer Website konnten nicht heruntergeladen werden und wurden übersprungen.}}",
       "stock_not_configured": "Stockfotos konnten nicht hinzugefügt werden: Es ist noch kein Stockfoto-Dienst eingerichtet.",
@@ -4413,7 +4422,7 @@
       "signupsClosed": "Neue Konten gibt es derzeit nur auf Einladung.",
       "invalidEmail": "Geben Sie eine gültige E-Mail-Adresse ein.",
       "network": "Studio ist nicht erreichbar. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
-      "generic": "Etwas ist schiefgelaufen. Versuchen Sie es erneut.",
+      "generic": "Das hat nicht geklappt. Versuche es gleich noch einmal.",
       "seatLimit": "Diese Organisation hat keine freien Plätze. Bitten Sie eine Administratorin oder einen Administrator, den Tarif zu erweitern.",
       "inviteNotForYou": "Diese Einladung ging an eine andere E-Mail-Adresse. Melden Sie sich mit dieser Adresse an, um sie anzunehmen."
     },

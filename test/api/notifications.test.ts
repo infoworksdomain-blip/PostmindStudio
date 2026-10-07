@@ -231,7 +231,7 @@ describe.skipIf(!hasDb)('notifications API + events', { timeout: 60_000 }, () =>
       });
       const items = (await list('alice')).json.data;
       expect(items.map((n) => n.title)).toEqual([
-        '“Sourdough launch” is generated and was auto-approved',
+        '“Sourdough launch” is ready and was auto-approved',
         '“Sourdough launch” is ready for review',
       ]);
       expect(items[1]).toMatchObject({ kind: 'generation_complete', link: `/projects/${p.id}` });
