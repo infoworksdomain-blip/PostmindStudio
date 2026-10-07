@@ -19,6 +19,7 @@ import { AutomationDetailScreen } from '@/components/studio/automations/automati
 import { AutomationsList } from '@/components/studio/automations/automations-list';
 import { AutomationWizard } from '@/components/studio/automations/automation-wizard';
 import { BlitzScreen } from '@/components/studio/blitz/blitz-screen';
+import { ImageStudioScreen } from '@/components/studio/images/image-studio-screen';
 import { ConnectionsScreen } from '@/components/studio/connections/connections-screen';
 import { ApprovalWorkflowsScreen } from '@/components/studio/approvals/approval-workflows-screen';
 import { parseReference } from '@/components/studio/create/body';
@@ -86,6 +87,8 @@ const RENDER: Record<AppPath, Render> = {
   '/plans/:id': (p) => <PlanScreen planId={p.id ?? ''} />,
   // 22.4 Blitz, 22.5 Automations.
   '/blitz': () => <BlitzScreen />,
+  // 25.8: Image Studio.
+  '/images': () => <ImageStudioScreen />,
   '/automations': () => <AutomationsList />,
   '/automations/new': () => <AutomationWizard />,
   '/automations/:id': (p) => <AutomationDetailScreen automationId={p.id ?? ''} />,

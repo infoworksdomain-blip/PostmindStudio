@@ -76,8 +76,10 @@ export async function staffPage(
   playwrightRequest: Parameters<typeof createUser>[0],
   db: Db,
   viewport?: { width: number; height: number },
+  /** One staff user per spec file: files run in parallel and each cleans up its own user. */
+  label = 'staff',
 ): Promise<{ page: Page; email: string; userId: string }> {
-  const email = `qa-p2-staff-${run}@example.test`;
+  const email = `qa-p2-staff-${label}-${run}@example.test`;
   const userId = await createUser(playwrightRequest, db, baseURL, email, 'QA Staff');
   await db.user.update({ where: { email }, data: { role: 'superadmin' } });
   const page = await signedInPage(browser, baseURL, email, { viewport });

@@ -130,6 +130,8 @@ const KEY_PAGES = (w: World): Array<[string, string, RegExp | string]> => [
   ['project review', `/projects/${w.projects.review}`, 'QA Review video'],
   ['library', '/library', 'Reference library'],
   ['business and images', '/business', 'Business & images'],
+  // 25.8: Image Studio.
+  ['image studio', '/images', 'Images'],
   ['settings', '/settings/organisation', 'Organisation'],
 ];
 

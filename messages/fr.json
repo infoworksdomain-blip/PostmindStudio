@@ -77,7 +77,8 @@
         "blitz": "Blitz",
         "automations": "Automatisations",
         "home": "Accueil",
-        "plans": "Plans du mois"
+        "plans": "Plans du mois",
+        "images": "Images"
       },
       "newPost": "Créer une nouvelle publication",
       "collapse": "Réduire la barre latérale",
@@ -1086,7 +1087,10 @@
         "review": "Examen",
         "publish": "Publication"
       },
-      "done": "(terminé)"
+      "done": "(terminé)",
+      "notStarted": "Pas encore lancé — appuyez sur Générer pour commencer.",
+      "stoppedAt": "Arrêté à l’étape « {step} ».",
+      "failedMark": "(arrêté ici)"
     },
     "paused": {
       "aria": "Suspendu par le budget",
@@ -1324,7 +1328,9 @@
       "staleNote": "Le script ou les plans ont changé après le rendu de cette variante.",
       "rerender": "Refaire le rendu",
       "rerendering": "Nouveau rendu avec vos modifications.",
-      "download": "Télécharger le MP4"
+      "download": "Télécharger le MP4",
+      "watch": "Regarder",
+      "showing": "En lecture"
     },
     "thumbnail": {
       "aria": "Miniature",
@@ -1380,6 +1386,50 @@
     "actorFallback": {
       "aria": "Acteur indisponible",
       "note": "L’acteur n’était pas disponible pour certains moments de cette vidéo : ils utilisent donc des clips avec voix off."
+    },
+    "attention": {
+      "title": "Demande votre attention",
+      "titleInfo": "Bon à savoir",
+      "tones": {
+        "action": "action requise",
+        "warning": "à regarder",
+        "info": "pour information"
+      },
+      "items": {
+        "directions": "Choisissez une direction pour cette vidéo",
+        "ugcRefused": "Réécrivez le brief sans personne réelle",
+        "restrictedTopics": "Vérifiez les sujets sensibles de votre brief",
+        "failureFailed": "Cette vidéo s’est arrêtée avant la fin",
+        "failureRejected": "Des modifications ont été demandées",
+        "failureQuality": "Le contrôle qualité n’est pas passé",
+        "budget": "En pause à la limite de cette vidéo",
+        "autoResume": "En pause à votre limite de génération",
+        "safetyReview": "En attente d’une vérification de sécurité",
+        "automation": "La publication automatique demande un coup d’œil",
+        "music": "La musique de fond n’a pas pu être ajoutée",
+        "sfx": "Les effets sonores n’ont pas pu être ajoutés",
+        "queued": "En file d’attente — démarre bientôt",
+        "fallback": "Réalisée avec un fournisseur de secours",
+        "presenterFallback": "Le présentateur n’était pas disponible",
+        "actorFallback": "L’acteur n’était pas disponible"
+      }
+    },
+    "status": {
+      "publish": "Publier",
+      "posts": "Publications et planning",
+      "announceAttention": "{state}. {count, plural, =0 {} one {# point demande votre attention.} other {# points demandent votre attention.}}",
+      "details": "Détails"
+    },
+    "player": {
+      "aria": "Lecteur vidéo",
+      "formats": "Formats",
+      "working": "Votre vidéo apparaît ici dès que le premier format est prêt.",
+      "none": "Pas encore de vidéo."
+    },
+    "menu": {
+      "trigger": "Plus d’actions",
+      "download": "Télécharger la vidéo",
+      "templateDescription": "Gardez les formats, la structure des plans et les réglages de publication de cette vidéo pour en créer de nouvelles."
     }
   },
   "slideshow": {
@@ -2159,7 +2209,8 @@
       "gridAria": "Bibliothèque d’images",
       "newer": "Plus récentes",
       "older": "Plus anciennes",
-      "stockNotConfigured": "Les photos de banque d’images ne sont pas encore configurées : il n’y a rien à actualiser. Les photos de votre site, vos imports et les images générées fonctionnent toujours."
+      "stockNotConfigured": "Les photos de banque d’images ne sont pas encore configurées : il n’y a rien à actualiser. Les photos de votre site, vos imports et les images générées fonctionnent toujours.",
+      "openStudio": "Studio d’images"
     },
     "profile": {
       "fields": {
@@ -6335,6 +6386,77 @@
       "blitzBody": "Faites défiler des publications prêtes à l’emploi.",
       "templates": "Modèles",
       "templatesBody": "Partez d’un format éprouvé."
+    }
+  },
+  "images": {
+    "page": {
+      "title": "Images",
+      "description": "Décrivez une image et nous la créons pour cette entreprise. Chaque image est enregistrée dans sa bibliothèque, prête pour vos vidéos.",
+      "wholeLibrary": "Toute la bibliothèque d’images"
+    },
+    "pickFirst": {
+      "title": "Choisissez d’abord une entreprise",
+      "body": "Les images sont créées pour une entreprise et gardées dans sa bibliothèque. Choisissez une entreprise en haut de la page."
+    },
+    "off": {
+      "title": "Les images sont désactivées",
+      "body": "La génération d’images est désactivée pour votre organisation pour le moment. Vos vidéos ne sont pas concernées."
+    },
+    "readOnly": "Vous pouvez consulter ces images. Une personne autorisée à modifier les projets peut en créer de nouvelles.",
+    "locked": {
+      "title": "La génération d’images n’est pas incluse dans votre offre",
+      "body": "Vous voyez toujours les images créées auparavant. Vérifiez ce que comprend votre offre pour en créer de nouvelles.",
+      "action": "Voir ce qui est inclus"
+    },
+    "status": {
+      "generating": "Création de votre image. Cela peut prendre jusqu’à une minute.",
+      "ready": "Votre image est prête — elle est dans votre bibliothèque.",
+      "failed": "L’image n’a pas pu être créée."
+    },
+    "form": {
+      "aria": "Décrivez votre image",
+      "prompt": "Décrivez l’image",
+      "promptPlaceholder": "Une miche de pain au levain sur une planche en bois, lumière du matin, gros plan",
+      "promptHint": "Dites ce qu’on y voit, où, et l’ambiance. Le texte et les logos sont toujours exclus.",
+      "style": "Style (facultatif)",
+      "stylePlaceholder": "Photo argentique chaleureuse",
+      "shape": "Format",
+      "shapes": {
+        "1x1": "Carré",
+        "4x5": "Portrait",
+        "9x16": "Vertical, pour les stories et les reels",
+        "16x9": "Paysage"
+      },
+      "generate": "Générer l’image",
+      "generating": "Génération…",
+      "timing": "Jusqu’à une minute.",
+      "lastPrompt": "Dernière : {prompt}",
+      "again": "Générer à nouveau"
+    },
+    "results": {
+      "title": "Vos images générées",
+      "aria": "Images générées",
+      "loading": "Chargement des images",
+      "pending": "Génération…",
+      "open": "Ouvrir l’image : {prompt}",
+      "untitled": "Image générée",
+      "noPreview": "Pas d’aperçu",
+      "empty": {
+        "title": "Aucune image générée pour l’instant",
+        "body": "Décrivez une image et appuyez sur Générer — vos images s’affichent ici."
+      },
+      "newer": "Plus récentes",
+      "older": "Plus anciennes"
+    },
+    "preview": {
+      "title": "Image générée",
+      "style": "Style",
+      "size": "Taille",
+      "dimensions": "{width, number} × {height, number} px",
+      "made": "Créée",
+      "download": "Télécharger",
+      "edit": "Modifier la description",
+      "again": "Générer à nouveau"
     }
   }
 }

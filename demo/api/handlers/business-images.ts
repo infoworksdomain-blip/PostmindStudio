@@ -64,8 +64,14 @@ function fromSeed(s: ImageSeed, createdAt: number): StoredImage {
     heightPx: h,
     fileSizeBytes: Math.round(w * h * 0.21),
     tags: s.tags.map((t) => t.toLowerCase()),
-    altText: s.alt,
-    generatedFromPrompt: s.source === 'GENERATED' ? (s.ref ?? null) : null,
+    // As images/library.ts stores a generated image: the prompt as typed is its alt text (first
+    // 500 characters) and the full provider prompt (with any "Style: …" line) is kept beside it.
+    altText:
+      s.source === 'GENERATED' && s.ref ? (s.ref.split('\n')[0] ?? s.alt).slice(0, 500) : s.alt,
+    generatedFromPrompt:
+      s.source === 'GENERATED' && s.ref
+        ? `${s.ref}\nNo text, logos or watermarks in the image.`
+        : null,
     licenseNotes:
       s.source === 'SCRAPED'
         ? 'From your website (ownership confirmed when the scan started)'
@@ -320,8 +326,8 @@ route('POST', '/image-library/generate', async ({ body }) => {
         source: 'GENERATED',
         scene,
         tags: [...new Set(words(prompt))].slice(0, 4),
-        alt: prompt.length > 90 ? `${prompt.slice(0, 87)}…` : prompt,
-        ref: style ? `${prompt}. Style: ${style}` : prompt,
+        alt: prompt.slice(0, 500),
+        ref: style ? `${prompt}\nStyle: ${style}` : prompt,
         w,
         h,
       },

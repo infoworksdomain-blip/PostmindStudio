@@ -16,13 +16,23 @@ const CATEGORY = /^[a-z0-9_]{1,60}$/;
 export function SaveTemplate({
   projectId,
   defaultName,
+  defaultOpen = false,
+  onDone,
 }: {
   projectId: string;
   defaultName: string;
+  /** 25.8: opened from the review screen's actions menu (a dialog): show the form straight away. */
+  defaultOpen?: boolean;
+  /** Called after saving or cancelling (the dialog closes). */
+  onDone?: () => void;
 }) {
   const t = useTranslations('review.saveTemplate');
   const { pending, run, busy } = useAction();
-  const [open, setOpen] = useState(false);
+  const [open, setOpenState] = useState(defaultOpen);
+  const setOpen = (next: boolean) => {
+    setOpenState(next);
+    if (!next) onDone?.();
+  };
   const [name, setName] = useState(defaultName.slice(0, 120));
   const [category, setCategory] = useState('custom');
   const categoryOk = CATEGORY.test(category);
