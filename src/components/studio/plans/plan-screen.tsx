@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { CalendarDays, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,9 +14,13 @@ import { PlanEditor } from './plan-editor';
 import { PlanStatusBadge } from './plan-parts';
 import { PlanView } from './plan-view';
 import { writtenCount, type Plan } from './plan-model';
+import { idsKey } from '../live/live-model';
+import { LiveProjectsProvider } from '../live/live-projects-context';
+import { useLiveRefetch } from '../live/use-live-refetch';
 
 // 20.9 — /plans/:id: drafting progress while Claude writes (polled), the editor for a DRAFT, and
 // the plan view (item statuses, review window, cancel) once it is generating or scheduled.
+// 24.2: live status chips on its posts (SSE), polling only when the live stream is unavailable.
 
 const DRAFTING_POLL_MS = 3_000;
 const RUNNING_POLL_MS = 15_000;
@@ -29,14 +34,22 @@ export function planRange(plan: Pick<Plan, 'startDate' | 'days'>): { start: stri
 export function PlanScreen({ planId }: { planId: string }) {
   const t = useTranslations('plans');
   const f = useFormat();
+  // 24.2: while the live stream is open, a generating plan is refreshed by its posts' events
+  // instead of every RUNNING_POLL_MS (drafting is not project work, so it still polls).
+  const liveOpen = useRef(false);
   const { data, error, mutate } = useApi<{ plan: Plan }>(`/content-plans/${planId}`, undefined, {
     refreshInterval: (latest) =>
       latest?.plan.status === 'DRAFTING'
         ? DRAFTING_POLL_MS
-        : latest?.plan.status === 'GENERATING'
+        : latest?.plan.status === 'GENERATING' && !liveOpen.current
           ? RUNNING_POLL_MS
           : 0,
   });
+  const live = useLiveRefetch(
+    idsKey((data?.plan.items ?? []).map((i) => i.projectId)),
+    () => void mutate(),
+    liveOpen,
+  );
   if (error) return <ErrorState error={error} onRetry={() => void mutate()} />;
   if (!data) return <Skeleton aria-label={t('loading')} className="h-96 rounded-xl" />;
   const plan = data.plan;
@@ -46,7 +59,7 @@ export function PlanScreen({ planId }: { planId: string }) {
     await mutate();
   };
   return (
-    <>
+    <LiveProjectsProvider value={live}>
       <PageHeader
         eyebrow={t('new.eyebrow')}
         title={t('editor.title', { start: day(range.start), end: day(range.end) })}
@@ -66,7 +79,7 @@ export function PlanScreen({ planId }: { planId: string }) {
       ) : (
         <PlanView plan={plan} onChange={refresh} />
       )}
-    </>
+    </LiveProjectsProvider>
   );
 }
 

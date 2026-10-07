@@ -358,7 +358,15 @@ export async function getUpcomingSlots(
         status: { in: ['QUEUED', 'GENERATING', 'READY', 'HELD'] },
         plan: { businessId: scope.businessId, status: { in: ['GENERATING', 'SCHEDULED'] } },
       },
-      select: { id: true, planId: true, slotAt: true, title: true, kind: true, status: true },
+      select: {
+        id: true,
+        planId: true,
+        slotAt: true,
+        title: true,
+        kind: true,
+        status: true,
+        projectId: true,
+      },
       orderBy: { slotAt: 'asc' },
     }),
   ]);
@@ -392,6 +400,8 @@ export async function getUpcomingSlots(
       title: i.title,
       kind: i.kind,
       status: i.status,
+      // 24.2: the live status chip and the side panel follow the post's project once it has one.
+      projectId: i.projectId,
     })),
   };
 }

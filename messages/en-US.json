@@ -1840,7 +1840,42 @@
       "aria": "Month-plan post at {time}: {title} ({status})",
       "legend": "Boxes marked “Planned” are month-plan posts still being made; once scheduled they show as posts."
     },
-    "timeZone": "Times are shown in your time zone: {zone}."
+    "timeZone": "Times are shown in your time zone: {zone}.",
+    "panel": {
+      "close": "Close",
+      "loading": "Loading the post",
+      "caption": "Caption",
+      "noCaption": "No caption yet.",
+      "platforms": "Networks",
+      "noPlatforms": "Not chosen yet",
+      "scheduled": "Scheduled for",
+      "notScheduled": "Not scheduled yet",
+      "status": "Status",
+      "notMadeYet": "This post hasn’t been made yet. It appears here as soon as its plan starts making it.",
+      "openPlan": "Open the plan",
+      "actions": {
+        "aria": "Post actions",
+        "approve": "Approve",
+        "approved": "Approved.",
+        "reschedule": "Reschedule",
+        "regenerate": "Regenerate",
+        "regenerating": "Making it again.",
+        "open": "Open project"
+      },
+      "preview": {
+        "aria": "Preview of the post ({kind})",
+        "nothingYet": "Nothing to preview yet. The preview appears as soon as the post has slides, text or shots.",
+        "storyboard": "STORYBOARD",
+        "shot": "Shot {n} of {total}",
+        "kind": {
+          "video": "finished video",
+          "slides": "slides",
+          "text": "text",
+          "storyboard": "storyboard",
+          "none": "empty"
+        }
+      }
+    }
   },
   "business": {
     "screen": {
@@ -6149,5 +6184,19 @@
       "done": "All reviewed",
       "doneBody": "Approve to make the posts and schedule them at their times."
     }
+  },
+  "live": {
+    "stage": {
+      "planning": "Planning",
+      "making_clips": "Making clips",
+      "composing": "Composing",
+      "ready": "Ready",
+      "scheduled": "Scheduled",
+      "posted": "Posted",
+      "failed": "Failed"
+    },
+    "eta": "~{minutes} min",
+    "finishing": "almost done",
+    "withEta": "{stage} · {eta}"
   }
 }

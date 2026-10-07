@@ -44,12 +44,14 @@ import {
   type SkipReason,
 } from './blitz-model';
 import { SwipeDeck } from './swipe-deck';
+import { useLiveRefetch } from '../live/use-live-refetch';
 
 // 22.4 — /blitz: swipe through ready-made posts. Keep (→) asks how to post it (next free slot by
 // default, post now, or edit first); skip (←) can say why, which nudges the mix and says so.
 // ?automation=<id> reviews an automation's drafted period instead (automation-review-deck.tsx).
 
 const SKIP_REASON_MS = 6_000;
+const RENDERING_POLL_MS = 8_000;
 const MODE_ICON = { schedule: CalendarClock, post_now: Send, edit: PencilLine } as const;
 
 export function BlitzScreen() {
@@ -67,10 +69,23 @@ function BlitzDeckScreen() {
   const { businessId, ready } = useBusiness();
   const mayKeep = useCan(StudioCapability.ProjectWrite);
   const mayPost = useCan(StudioCapability.PublicationWrite);
+  // 24.2: while the live stream is open, cards still rendering arrive with their project's event
+  // (debounced refresh) instead of a poll every RENDERING_POLL_MS.
+  const liveOpen = useRef(false);
   const { data, error, mutate, isLoading } = useApi<{ deck: BlitzDeck }>(
     businessId ? '/blitz' : null,
     { businessId },
-    { refreshInterval: (latest) => (latest && latest.deck.rendering > 0 ? 8_000 : 0) },
+    {
+      refreshInterval: (latest) =>
+        latest && latest.deck.rendering > 0 && !liveOpen.current ? RENDERING_POLL_MS : 0,
+    },
+  );
+  const rendering = (data?.deck.rendering ?? 0) > 0;
+  useLiveRefetch(
+    '',
+    () => void mutate(),
+    liveOpen,
+    (e) => rendering && e.stage !== null,
   );
   const [decided, setDecided] = useState<ReadonlySet<string>>(new Set());
   const [busy, setBusy] = useState(false);

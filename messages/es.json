@@ -1840,7 +1840,42 @@
       "aria": "Publicación del plan mensual a las {time}: {title} ({status})",
       "legend": "Las casillas marcadas como «Planificada» son publicaciones del plan mensual que aún se están haciendo; una vez programadas, aparecen como publicaciones."
     },
-    "timeZone": "Las horas se muestran en tu zona horaria: {zone}."
+    "timeZone": "Las horas se muestran en tu zona horaria: {zone}.",
+    "panel": {
+      "close": "Cerrar",
+      "loading": "Cargando la publicación",
+      "caption": "Texto",
+      "noCaption": "Todavía no hay texto.",
+      "platforms": "Redes",
+      "noPlatforms": "Aún sin elegir",
+      "scheduled": "Programada para",
+      "notScheduled": "Aún sin programar",
+      "status": "Estado",
+      "notMadeYet": "Esta publicación aún no se ha creado. Aparecerá aquí en cuanto su plan empiece a crearla.",
+      "openPlan": "Abrir el plan",
+      "actions": {
+        "aria": "Acciones de la publicación",
+        "approve": "Aprobar",
+        "approved": "Aprobada.",
+        "reschedule": "Reprogramar",
+        "regenerate": "Volver a generar",
+        "regenerating": "Creándola de nuevo.",
+        "open": "Abrir proyecto"
+      },
+      "preview": {
+        "aria": "Vista previa de la publicación ({kind})",
+        "nothingYet": "Aún no hay nada que previsualizar. La vista previa aparece en cuanto la publicación tiene diapositivas, texto o planos.",
+        "storyboard": "GUION GRÁFICO",
+        "shot": "Plano {n} de {total}",
+        "kind": {
+          "video": "vídeo terminado",
+          "slides": "diapositivas",
+          "text": "texto",
+          "storyboard": "guion gráfico",
+          "none": "vacía"
+        }
+      }
+    }
   },
   "business": {
     "screen": {
@@ -6149,5 +6184,19 @@
       "done": "Todo revisado",
       "doneBody": "Aprueba para crear las publicaciones y programarlas a su hora."
     }
+  },
+  "live": {
+    "stage": {
+      "planning": "Planificando",
+      "making_clips": "Creando clips",
+      "composing": "Montando",
+      "ready": "Lista",
+      "scheduled": "Programada",
+      "posted": "Publicada",
+      "failed": "Error"
+    },
+    "eta": "~{minutes} min",
+    "finishing": "casi lista",
+    "withEta": "{stage} · {eta}"
   }
 }

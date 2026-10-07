@@ -27,6 +27,8 @@ import {
   type Plan,
   type PlanItem,
 } from './plan-model';
+import { useLiveStatus } from '../live/live-projects-context';
+import { StatusChip } from '../live/status-chip';
 
 type Method = 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
@@ -137,6 +139,12 @@ export function PlanView({ plan, onChange }: { plan: Plan; onChange: () => Promi
 
 type Call = (path: string, method: Method, body?: unknown, success?: string) => Promise<boolean>;
 
+/** 24.2: the post's live stage and ETA while its project is being made (SSE). */
+function LiveChip({ projectId }: { projectId: string }) {
+  const live = useLiveStatus(projectId);
+  return live ? <StatusChip live={live} /> : null;
+}
+
 function ItemRow({
   plan,
   item,
@@ -172,7 +180,10 @@ function ItemRow({
           <CreatesAtText item={item} timezone={plan.timezone} now={now} />
           <ReasonText reason={item.statusReason} />
         </div>
-        <ItemStatusBadge status={item.status} />
+        <div className="flex flex-col items-end gap-1">
+          <ItemStatusBadge status={item.status} />
+          {item.projectId && <LiveChip projectId={item.projectId} />}
+        </div>
       </div>
       {swapping ? (
         <ItemForm

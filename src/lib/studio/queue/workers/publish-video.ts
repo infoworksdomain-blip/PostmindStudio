@@ -18,6 +18,7 @@ import { carouselComposition } from '../../carousel/publishing';
 import type { Platform } from '../../services/catalog';
 import { jobIds } from '../enqueue';
 import type { PublishJobData } from '../queues';
+import { announceProjectChange } from '../../live/announce';
 
 // BACKLOG 5.9 — publish one render to one platform account (spec 4.5 step 9, 9.2–9.7):
 // SCHEDULED → PUBLISHING → PUBLISHED | FAILED; Engagement attribution; project roll-up to
@@ -141,10 +142,12 @@ export async function rollUpProject(
       : published > 0
         ? 'PARTIALLY_PUBLISHED'
         : 'PARTIALLY_PUBLISHED';
-  await deps.db.videoProject.updateMany({
+  const rolled = await deps.db.videoProject.updateMany({
     where: { id: projectId, organisationId, state: 'PUBLISHING' },
     data: { state, ...(state === 'PUBLISHED' && { completedAt: new Date() }) },
   });
+  // 24.2: "Posted" on the live calendar (best effort).
+  if (rolled.count > 0) void announceProjectChange(deps.db, { projectId, organisationId });
 }
 
 /** Throws KillSwitchTriggeredError (level 'platform') while publishing to `platform` is halted. */
