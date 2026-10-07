@@ -63,12 +63,7 @@ function TrialBlock({ trial }: { trial: NonNullable<EntitlementView['trial']> })
   return (
     <div className="grid gap-1" data-testid="trial-summary">
       <h3 className="font-medium">{t('title')}</h3>
-      <p
-        className={cn(
-          'font-medium',
-          trial.state === 'running' && 'text-amber-700 dark:text-amber-400',
-        )}
-      >
+      <p className={cn('font-medium', trial.state === 'running' && 'text-warning-foreground')}>
         {trial.state === 'ended'
           ? t('state.ended', { date: f.date(trial.endedAt) })
           : t(`state.${trial.state}`)}
@@ -98,11 +93,7 @@ function TrialBlock({ trial }: { trial: NonNullable<EntitlementView['trial']> })
           <div
             className={cn(
               'h-full rounded-full',
-              spentShare >= 1
-                ? 'bg-destructive'
-                : spentShare >= 0.8
-                  ? 'bg-amber-500'
-                  : 'bg-primary',
+              spentShare >= 1 ? 'bg-destructive' : spentShare >= 0.8 ? 'bg-warning' : 'bg-primary',
             )}
             style={{ width: `${Math.min(100, spentShare * 100)}%` }}
           />

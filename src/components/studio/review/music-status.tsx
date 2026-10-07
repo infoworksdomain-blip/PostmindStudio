@@ -64,7 +64,7 @@ export function MusicStatus({ project }: { project: ProjectDetail }) {
       className="flex items-start gap-2 rounded-lg border border-border/70 px-3 py-2 text-sm"
     >
       <Icon
-        className={`mt-0.5 size-4 shrink-0 ${state.status === 'failed' ? 'text-amber-600' : 'text-muted-foreground'}`}
+        className={`mt-0.5 size-4 shrink-0 ${state.status === 'failed' ? 'text-warning-foreground' : 'text-muted-foreground'}`}
         strokeWidth={1.5}
       />
       <span>

@@ -177,7 +177,7 @@ export function AutomationPanel({
     >
       {origin === 'automatic' && (
         <p className="flex items-center gap-2 text-sm">
-          <BadgeCheck className="size-4 text-emerald-600" strokeWidth={1.5} />
+          <BadgeCheck className="size-4 text-success-foreground" strokeWidth={1.5} />
           {t('approvedAutomatically')}
         </p>
       )}
@@ -188,7 +188,10 @@ export function AutomationPanel({
       )}
       {needsReview && (
         <p className="flex items-start gap-2 text-sm" role="status">
-          <CircleAlert className="mt-0.5 size-4 shrink-0 text-amber-600" strokeWidth={1.5} />
+          <CircleAlert
+            className="mt-0.5 size-4 shrink-0 text-warning-foreground"
+            strokeWidth={1.5}
+          />
           {reviewReason(needsReview)}
         </p>
       )}

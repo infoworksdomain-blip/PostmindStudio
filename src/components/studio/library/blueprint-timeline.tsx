@@ -39,7 +39,7 @@ export function BlueprintTimeline({ blueprint }: { blueprint: Blueprint }) {
               seconds: f.number(shot.durationSec),
             })}
             className={cn(
-              'flex min-w-1 items-end px-1 pb-1 text-[0.6rem] font-semibold text-white',
+              'flex min-w-1 items-end px-1 pb-1 text-[0.6rem] font-semibold text-background',
               SHOT_TONE[i % SHOT_TONE.length],
             )}
             style={{ width: `${(shot.durationSec / total) * 100}%` }}

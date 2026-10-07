@@ -61,8 +61,6 @@
     "shell.nav.items.settings",
     "shell.nav.items.blitz",
     "shell.nav.items.automations",
-    "shell.theme.useLight",
-    "shell.theme.useDark",
     "shell.language.label",
     "shell.language.trigger",
     "shell.language.changed",
@@ -4710,7 +4708,14 @@
     "calendar.panel.preview.kind.slides",
     "calendar.panel.preview.kind.text",
     "calendar.panel.preview.kind.storyboard",
-    "calendar.panel.preview.kind.none"
+    "calendar.panel.preview.kind.none",
+    "shell.theme.label",
+    "shell.theme.light",
+    "shell.theme.dark",
+    "shell.theme.system",
+    "shell.theme.current",
+    "account.profile.appearanceTitle",
+    "account.profile.appearanceDescription"
   ],
   "reviewed": []
 }

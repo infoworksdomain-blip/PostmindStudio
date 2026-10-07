@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
-import { useTheme } from 'next-themes';
 import { useTranslations } from 'next-intl';
 import {
   BarChart3,
@@ -18,17 +17,14 @@ import {
   Link2,
   ListChecks,
   Menu,
-  Moon,
   Plus,
   Repeat,
   Send,
   Settings,
   ShieldAlert,
-  Sun,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { useHydrated } from '@/lib/client/use-hydrated';
 import { directionOf } from '@/lib/i18n/locales';
 import { cn } from '@/lib/utils';
 import { AccountBanners } from './account/account-banners';
@@ -38,6 +34,7 @@ import { BusinessSwitcher } from './business-picker';
 import { FeedbackButton } from './feedback-dialog';
 import { LanguageSwitcher } from './i18n/language-switcher';
 import { useLocaleSwitch } from './i18n/intl-provider';
+import { ThemeMenuButton } from './theme-switcher';
 import { NotificationsBell } from './notifications-bell';
 import { UsageBanner } from './usage-meter';
 import { NoOrganisationRedirect } from './onboarding/no-organisation-redirect';
@@ -154,24 +151,8 @@ function Wordmark({ compact = false }: { compact?: boolean }) {
 
 export { BusinessSwitcher };
 
-export function ThemeToggle() {
-  const t = useTranslations('shell.theme');
-  const { resolvedTheme, setTheme } = useTheme();
-  // The server cannot know the saved theme: render the light-theme button until mounted, or a
-  // dark-theme visitor's first render differs from the HTML (React error #418 on every page
-  // load; found in the 20.10 QA sweep).
-  const dark = useHydrated() && resolvedTheme === 'dark';
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      aria-label={dark ? t('useLight') : t('useDark')}
-      onClick={() => setTheme(dark ? 'light' : 'dark')}
-    >
-      {dark ? <Sun /> : <Moon />}
-    </Button>
-  );
-}
+/** 25.2: the top bar's compact appearance button (Light / Dark / System; theme-switcher.tsx). */
+export const ThemeToggle = ThemeMenuButton;
 
 export function AppShell({ children }: { children: ReactNode }) {
   const t = useTranslations('shell.nav');

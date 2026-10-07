@@ -25,7 +25,8 @@ export function Providers({
   const refresh = useCallback(() => router.refresh(), [router]);
   return (
     <StudioIntlProvider locale={locale} messages={messages} onLocaleChange={refresh}>
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+      {/* 25.2: Light / Dark / System; a new visitor follows their device. */}
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
         <TooltipProvider delayDuration={200}>
           <BusinessProvider>{children}</BusinessProvider>
           <Toaster richColors position="bottom-right" />

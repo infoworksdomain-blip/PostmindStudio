@@ -106,7 +106,7 @@ function HeroVisual() {
       </div>
       <div className="absolute start-[29%] top-0 z-10 w-[42%]">
         <div className="animate-drift">
-          <div className="rounded-[2rem] bg-foreground p-[5%] shadow-[0_40px_80px_-30px_rgb(40_20_10/0.6)] ring-1 ring-black/20">
+          <div className="rounded-[2rem] bg-foreground p-[5%] shadow-[0_40px_80px_-30px_rgb(20_24_31/0.55)] ring-1 ring-border-strong">
             <SceneFrame
               scene="counter"
               photo={MARKETING_PHOTOS.sourdoughLoaf}
@@ -119,7 +119,7 @@ function HeroVisual() {
             >
               <span
                 aria-hidden
-                className="absolute end-3 top-3 inline-flex items-center max-sm:hidden gap-1 rounded-full bg-black/45 px-2 py-0.5 text-[0.6rem] font-semibold tracking-widest text-white uppercase backdrop-blur"
+                className="absolute end-3 top-3 inline-flex items-center max-sm:hidden gap-1 rounded-full bg-scrim/80 px-2 py-0.5 text-[0.6rem] font-semibold tracking-widest text-white uppercase backdrop-blur"
               >
                 <span className="size-1.5 animate-rec rounded-full bg-primary" />
                 Rec

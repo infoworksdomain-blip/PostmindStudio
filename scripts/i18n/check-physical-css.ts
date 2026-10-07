@@ -1,5 +1,5 @@
 // BACKLOG 16.2 — lists Tailwind classes tied to a physical side (ml-/mr-/pl-/pr-/left-/right-/
-// text-left/text-right/border-l/r/rounded-l/r) in src/components/studio/**, with the logical
+// text-left/text-right/border-l/r/rounded-l/r) in src/components/{studio,marketing,auth,ui}/**, with the logical
 // replacement. CI runs the --fail form (Phase 16 closed every hit):
 //
 //   npx tsx scripts/i18n/check-physical-css.ts            → report, exit 0
@@ -16,7 +16,8 @@ import { findPhysicalClasses } from '../../src/lib/i18n/physical-css';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 // Phase 18: the public marketing pages and the auth screens are held to the same rule.
-const targets = ['studio', 'marketing', 'auth']
+// 25.2: the shadcn primitives in src/components/ui too.
+const targets = ['studio', 'marketing', 'auth', 'ui']
   .map((dir) => join(root, 'src', 'components', dir))
   .filter((dir) => existsSync(dir));
 const fail = process.argv.includes('--fail');
@@ -49,6 +50,6 @@ for (const file of targets.flatMap(files)) {
 process.stdout.write(
   total
     ? `\n${total} physical class(es) in ${perFile.length} file(s)${fail ? '' : ' (informational)'}\n`
-    : 'no physical left/right classes in src/components/{studio,marketing,auth}\n',
+    : 'no physical left/right classes in src/components/{studio,marketing,auth,ui}\n',
 );
 process.exit(fail && total > 0 ? 1 : 0);

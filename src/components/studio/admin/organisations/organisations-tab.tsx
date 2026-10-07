@@ -125,7 +125,7 @@ export function TrialLabel({ trial }: { trial: AdminOrgTrial | null }) {
   if (!trial) return <span className="text-muted-foreground">–</span>;
   if (trial.state === 'running')
     return (
-      <span className="font-medium text-amber-700 dark:text-amber-400">
+      <span className="font-medium text-warning-foreground">
         {trial.endsAt
           ? t('running', { date: f.date(trial.endsAt, { dateStyle: 'medium' }) })
           : t('runningNoDate')}

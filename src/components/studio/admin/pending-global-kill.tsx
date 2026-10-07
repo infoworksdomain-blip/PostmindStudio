@@ -37,10 +37,10 @@ export function PendingGlobalKillBanner({
   return (
     <section
       aria-labelledby="pending-global-kill"
-      className="grid gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/8 p-5"
+      className="grid gap-3 rounded-2xl border border-warning/40 bg-warning-soft p-5"
     >
       <div className="flex items-start gap-3">
-        <Hourglass className="mt-1 size-5 shrink-0 text-amber-700 dark:text-amber-400" />
+        <Hourglass className="mt-1 size-5 shrink-0 text-warning-foreground" />
         <div className="min-w-0">
           <h2 id="pending-global-kill" className="font-display text-xl leading-tight">
             {t('title')}

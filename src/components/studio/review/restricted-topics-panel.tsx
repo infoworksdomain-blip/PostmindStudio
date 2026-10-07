@@ -52,7 +52,7 @@ export function RestrictedTopicsPanel({
       panelRef={ref}
       icon={
         <ShieldAlert
-          className="mt-0.5 size-5 shrink-0 text-amber-600"
+          className="mt-0.5 size-5 shrink-0 text-warning-foreground"
           strokeWidth={1.5}
           aria-hidden
         />
@@ -65,7 +65,7 @@ export function RestrictedTopicsPanel({
           {topics.map((topic) => (
             <li
               key={topic}
-              className="rounded-full border border-amber-500/40 bg-card px-3 py-1 text-sm"
+              className="rounded-full border border-warning/40 bg-card px-3 py-1 text-sm"
             >
               <bdi dir="auto">{topic}</bdi>
             </li>

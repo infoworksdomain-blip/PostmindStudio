@@ -32,11 +32,11 @@ export function BriefHint({
       role="status"
       data-testid="brief-hint"
       className={cn(
-        'flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-foreground/80',
+        'flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-foreground/80',
         className,
       )}
     >
-      <Lightbulb className="mt-px size-3.5 shrink-0 text-amber-600" aria-hidden />
+      <Lightbulb className="mt-px size-3.5 shrink-0 text-warning-foreground" aria-hidden />
       <span>{t('briefHint')}</span>
     </p>
   );
