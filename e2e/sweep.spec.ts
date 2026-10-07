@@ -638,7 +638,7 @@ test('a superadmin with no organisation reaches every admin tab', async ({ page 
   w.label('/admin organisations: end trial');
   await page.getByRole('tab', { name: 'Organisations' }).click();
   await page.getByLabel('Search organisations').fill(`Sweep Trial ${run}`);
-  await page.getByRole('button', { name: 'Search' }).click();
+  await page.getByRole('button', { name: 'Search', exact: true }).click();
   await page.getByRole('button', { name: `Open Sweep Trial ${run}` }).click();
   await expect(page.getByText('Running: the trial’s caps apply now.')).toBeVisible();
   const form = page.getByRole('form', { name: 'Set an override' });
