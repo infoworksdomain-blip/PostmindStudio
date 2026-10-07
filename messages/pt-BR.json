@@ -77,7 +77,8 @@
         "blitz": "Blitz",
         "automations": "Automações",
         "home": "Início",
-        "plans": "Planos do mês"
+        "plans": "Planos do mês",
+        "images": "Imagens"
       },
       "newPost": "Criar um novo post",
       "collapse": "Recolher a barra lateral",
@@ -1086,7 +1087,10 @@
         "review": "Revisão",
         "publish": "Publicação"
       },
-      "done": "(concluído)"
+      "done": "(concluído)",
+      "notStarted": "Ainda não iniciado — toque em Gerar para começar.",
+      "stoppedAt": "Parou na etapa “{step}”.",
+      "failedMark": "(parou aqui)"
     },
     "paused": {
       "aria": "Pausado pelo orçamento",
@@ -1324,7 +1328,9 @@
       "staleNote": "O roteiro ou as cenas mudaram depois que esta variante foi renderizada.",
       "rerender": "Renderizar de novo",
       "rerendering": "Renderizando de novo com as suas edições.",
-      "download": "Baixar MP4"
+      "download": "Baixar MP4",
+      "watch": "Assistir",
+      "showing": "Reproduzindo"
     },
     "thumbnail": {
       "aria": "Miniatura",
@@ -1380,6 +1386,50 @@
     "actorFallback": {
       "aria": "Ator indisponível",
       "note": "O ator não estava disponível em alguns momentos deste vídeo, então esses trechos usam clipes com narração."
+    },
+    "attention": {
+      "title": "Precisa da sua atenção",
+      "titleInfo": "Bom saber",
+      "tones": {
+        "action": "precisa de você",
+        "warning": "vale uma olhada",
+        "info": "para sua informação"
+      },
+      "items": {
+        "directions": "Escolha uma direção para este vídeo",
+        "ugcRefused": "Reescreva o briefing sem uma pessoa real",
+        "restrictedTopics": "Confira os temas restritos do seu briefing",
+        "failureFailed": "Este vídeo parou antes de terminar",
+        "failureRejected": "Foram pedidas alterações",
+        "failureQuality": "A verificação de qualidade não passou",
+        "budget": "Pausado no limite deste vídeo",
+        "autoResume": "Pausado no seu limite de geração",
+        "safetyReview": "Aguardando uma revisão de segurança",
+        "automation": "A publicação automática precisa de uma olhada",
+        "music": "Não foi possível adicionar a música de fundo",
+        "sfx": "Não foi possível adicionar os efeitos sonoros",
+        "queued": "Na fila — começa em breve",
+        "fallback": "Feito com um fornecedor alternativo",
+        "presenterFallback": "O apresentador não estava disponível",
+        "actorFallback": "O ator não estava disponível"
+      }
+    },
+    "status": {
+      "publish": "Publicar",
+      "posts": "Posts e agendamento",
+      "announceAttention": "{state}. {count, plural, =0 {} one {# item precisa da sua atenção.} other {# itens precisam da sua atenção.}}",
+      "details": "Detalhes"
+    },
+    "player": {
+      "aria": "Player de vídeo",
+      "formats": "Formatos",
+      "working": "Seu vídeo aparece aqui assim que o primeiro formato ficar pronto.",
+      "none": "Ainda não há vídeo."
+    },
+    "menu": {
+      "trigger": "Mais ações",
+      "download": "Baixar vídeo",
+      "templateDescription": "Guarde os formatos, a estrutura de cenas e as configurações de publicação deste vídeo para criar novos a partir deles."
     }
   },
   "slideshow": {
@@ -2159,7 +2209,8 @@
       "gridAria": "Biblioteca de imagens",
       "newer": "Mais recentes",
       "older": "Mais antigas",
-      "stockNotConfigured": "As fotos de banco de imagens ainda não estão configuradas, então não há nada para atualizar. As fotos do seu site, os envios e as imagens geradas continuam funcionando."
+      "stockNotConfigured": "As fotos de banco de imagens ainda não estão configuradas, então não há nada para atualizar. As fotos do seu site, os envios e as imagens geradas continuam funcionando.",
+      "openStudio": "Estúdio de imagens"
     },
     "profile": {
       "fields": {
@@ -3668,21 +3719,22 @@
       "title": "Boas-vindas"
     },
     "steps": {
-      "connect": "Conectar",
-      "brandKit": "Kit da marca",
+      "connect": "Canais",
+      "brandKit": "Marca",
       "firstVideo": "Primeiro vídeo",
-      "celebrate": "Comemorar",
+      "celebrate": "Pronto",
       "organisation": "Organização",
       "business": "Negócio"
     },
     "stepIndicator": {
       "aria": "Progresso da configuração",
-      "done": "(concluído)"
+      "done": "(concluído)",
+      "position": "Passo {current} de {total}"
     },
     "wizard": {
       "eyebrow": "Boas-vindas",
       "title": "Vamos criar seu primeiro vídeo",
-      "description": "Alguns passos rápidos: sua organização e seu negócio, sua marca, uma conta conectada e, por fim, seu primeiro vídeo.",
+      "description": "Alguns passos rápidos: sua organização e seu negócio, sua marca, seus canais e, por fim, seu primeiro vídeo.",
       "skipSetup": "Pular configuração",
       "loading": "Carregando a configuração",
       "skipped": {
@@ -3697,17 +3749,18 @@
       },
       "currentStep": "Passo atual",
       "saving": "Salvando",
-      "skipStep": "Pular este passo",
+      "skipStep": "Pular por enquanto",
       "finish": "Concluir"
     },
     "connect": {
       "title": "Conecte onde você publica",
       "description": "O Studio publica direto no TikTok, YouTube, Instagram, Facebook, X e LinkedIn. Conecte pelo menos uma conta para que seu primeiro vídeo possa ir ao ar.",
       "loading": "Carregando contas",
-      "connectedAria": "Contas conectadas",
+      "connectedAria": "Seus canais",
       "none": "Nenhuma conta conectada ainda.",
       "connectAnother": "Conectar outra conta",
-      "openConnections": "Abrir Conexões"
+      "openConnections": "Abrir Conexões",
+      "notConnected": "Não conectado"
     },
     "brandKit": {
       "title": "Sua marca em três cliques",
@@ -3740,6 +3793,14 @@
         "calm": "Tranquilo",
         "witty": "Espirituoso",
         "premium": "Premium"
+      },
+      "scanWebsite": "Tem um site? Escaneie para preencher sua biblioteca de imagens",
+      "preview": {
+        "label": "Prévia",
+        "kicker": "Sua marca",
+        "headline": "É assim que seus vídeos vão ficar",
+        "noFont": "Fonte padrão",
+        "noTone": "Nenhum tom escolhido ainda"
       }
     },
     "firstVideo": {
@@ -3779,13 +3840,21 @@
         "body": "“{name}” ainda não foi publicado. Revise, aprove e publique — vamos comemorar aqui assim que ele for ao ar.",
         "action": "Abrir seu vídeo"
       },
-      "planMonth": "Ou deixe o Studio planejar e agendar seu mês inteiro"
+      "planMonth": "Ou deixe o Studio planejar e agendar seu mês inteiro",
+      "next": {
+        "title": "O que acontece agora",
+        "review": "O Studio termina o seu vídeo. Revise quando estiver pronto.",
+        "publish": "Aprove e o Studio publica nos seus canais na hora ou na data agendada.",
+        "insights": "Análises mostra como cada vídeo se sai, para que o próximo funcione ainda melhor.",
+        "home": "Ir para o Início"
+      }
     },
     "finished": {
       "title": "Tudo pronto",
       "description": "O Studio está pronto para criar e publicar vídeos para sua empresa.",
       "makeAnother": "Criar outro vídeo",
-      "goToProjects": "Ir para projetos"
+      "goToProjects": "Ir para projetos",
+      "goHome": "Ir para o Início"
     },
     "organisation": {
       "title": "Dê um nome à sua organização",
@@ -4483,7 +4552,11 @@
   },
   "auth": {
     "shell": {
-      "brand": "PostMind Studio"
+      "brand": "PostMind Studio",
+      "panelLabel": "Sobre o PostMind Studio",
+      "valueStatement": "Vídeos curtos para cada canal, feitos a partir de algumas linhas sobre o seu negócio.",
+      "valueDetail": "O Studio escreve o roteiro, cria o vídeo com a sua marca e agenda nos canais que você conectar.",
+      "panelAlt": "Um vídeo do TikTok de um pão de fermentação natural no PostMind Studio, com as verificações de qualidade aprovadas."
     },
     "errors": {
       "invalidCredentials": "Esse e-mail e essa senha não correspondem a nenhuma conta.",
@@ -4521,7 +4594,8 @@
       "password": "Senha",
       "submit": "Entrar",
       "forgot": "Esqueceu a senha?",
-      "noAccount": "Criar uma conta"
+      "noAccount": "Criar uma conta",
+      "newHere": "Novo no PostMind Studio?"
     },
     "google": {
       "or": "ou",
@@ -4537,7 +4611,9 @@
       "submit": "Criar conta",
       "haveAccount": "Já tem uma conta? Entre",
       "closedTitle": "Somente por convite",
-      "closedDescription": "No momento, novas contas só por convite. Peça a alguém da sua equipe para convidar você."
+      "closedDescription": "No momento, novas contas só por convite. Peça a alguém da sua equipe para convidar você.",
+      "closedNext": "Já foi convidado? Abra o link do e-mail de convite para configurar sua conta.",
+      "closedSignIn": "Entrar"
     },
     "verify": {
       "title": "Confira seu e-mail",
@@ -4549,7 +4625,8 @@
       "resent": "Se esse endereço precisar de confirmação, enviamos um novo link.",
       "email": "E-mail",
       "resend": "Enviar um novo link",
-      "backToSignIn": "Voltar para entrar"
+      "backToSignIn": "Voltar para entrar",
+      "resendPrompt": "Nada ainda? Confira a pasta de spam ou peça um novo link."
     },
     "forgot": {
       "title": "Redefina sua senha",
@@ -4557,7 +4634,10 @@
       "email": "E-mail",
       "submit": "Enviar link",
       "sent": "Se alguma conta usar esse endereço, um link de redefinição está a caminho. Ele vale por 1 hora.",
-      "backToSignIn": "Voltar para entrar"
+      "backToSignIn": "Voltar para entrar",
+      "sentTitle": "Confira sua caixa de entrada",
+      "sentNext": "Abra o link do e-mail para escolher uma nova senha. Nada depois de alguns minutos? Confira a pasta de spam ou tente outro endereço.",
+      "tryAnother": "Usar outro e-mail"
     },
     "reset": {
       "title": "Escolha uma nova senha",
@@ -4568,7 +4648,9 @@
       "signIn": "Entrar",
       "invalidTitle": "Esse link não funcionou",
       "invalidDescription": "Links de redefinição funcionam uma vez, por 1 hora. Peça um novo.",
-      "requestNew": "Receber um novo link"
+      "requestNew": "Receber um novo link",
+      "backToSignIn": "Voltar para entrar",
+      "doneTitle": "Senha alterada"
     },
     "twoFactor": {
       "title": "Verificação em duas etapas",
@@ -4591,7 +4673,10 @@
       "joinNamed": "Você foi convidado para {organisation} no PostMind Studio.",
       "accept": "Aceitar convite",
       "notNow": "Agora não",
-      "unavailable": "Este convite expirou, foi cancelado ou foi enviado para outro e-mail."
+      "unavailable": "Este convite expirou, foi cancelado ou foi enviado para outro e-mail.",
+      "unavailableTitle": "Este convite não pode ser usado",
+      "unavailableNext": "Peça a quem convidou você que envie um novo convite para o endereço com que você entra.",
+      "goToStudio": "Ir para o Studio"
     },
     "support": {
       "noEmail": "Ainda sem e-mail depois de alguns minutos? Escreva para <link>{email}</link>."
@@ -5789,16 +5874,23 @@
   "errorPage": {
     "notFound": {
       "title": "Não encontramos essa página",
-      "body": "O link pode estar desatualizado ou a página foi movida.",
+      "body": "O link pode estar desatualizado ou a página mudou de lugar. Confira o endereço ou continue daqui.",
       "projects": "Ir para projetos",
-      "home": "Ir para a página inicial"
+      "home": "Ir para a página inicial",
+      "label": "Erro 404",
+      "goHome": "Ir para o Início",
+      "signIn": "Entrar"
     },
     "boundary": {
       "title": "Esta página teve um problema",
-      "body": "Registramos o erro. Tente de novo ou volte para seus projetos.",
+      "body": "Não foi nada que você fez, e já registramos o problema. Tente de novo ou volte para o início.",
       "retry": "Tentar de novo",
       "projects": "Ir para projetos",
-      "reference": "Referência: {digest}"
+      "reference": "Referência: {digest}",
+      "label": "Algo deu errado",
+      "goHome": "Ir para o Início",
+      "home": "Ir para a página inicial",
+      "feedback": "Conte para nós o que aconteceu"
     }
   },
   "hashtags": {
@@ -6320,6 +6412,77 @@
       "blitzBody": "Deslize por posts prontos.",
       "templates": "Modelos",
       "templatesBody": "Comece com um formato comprovado."
+    }
+  },
+  "images": {
+    "page": {
+      "title": "Imagens",
+      "description": "Descreva uma imagem e nós a criamos para esta empresa. Cada imagem fica salva na biblioteca dela, pronta para seus vídeos.",
+      "wholeLibrary": "Biblioteca de imagens completa"
+    },
+    "pickFirst": {
+      "title": "Escolha uma empresa primeiro",
+      "body": "As imagens são criadas para uma empresa e ficam na biblioteca dela. Escolha uma empresa no topo da página."
+    },
+    "off": {
+      "title": "As imagens estão desativadas",
+      "body": "A geração de imagens está desativada para sua organização no momento. Seus vídeos não são afetados."
+    },
+    "readOnly": "Você pode ver estas imagens. Quem pode editar projetos pode criar novas.",
+    "locked": {
+      "title": "A geração de imagens não está no seu plano",
+      "body": "Você ainda vê as imagens criadas antes. Veja o que seu plano inclui para criar novas.",
+      "action": "Ver o que está incluído"
+    },
+    "status": {
+      "generating": "Criando sua imagem. Pode levar até um minuto.",
+      "ready": "Sua imagem está pronta — já está na sua biblioteca.",
+      "failed": "Não foi possível criar a imagem."
+    },
+    "form": {
+      "aria": "Descreva sua imagem",
+      "prompt": "Descreva a imagem",
+      "promptPlaceholder": "Um pão de fermentação natural numa tábua de madeira, luz da manhã, close",
+      "promptHint": "Diga o que aparece, onde e o clima. Textos e logotipos são sempre deixados de fora.",
+      "style": "Estilo (opcional)",
+      "stylePlaceholder": "Foto analógica quente",
+      "shape": "Formato",
+      "shapes": {
+        "1x1": "Quadrado",
+        "4x5": "Retrato",
+        "9x16": "Vertical, para stories e reels",
+        "16x9": "Paisagem"
+      },
+      "generate": "Gerar imagem",
+      "generating": "Gerando…",
+      "timing": "Leva até um minuto.",
+      "lastPrompt": "Última: {prompt}",
+      "again": "Gerar de novo"
+    },
+    "results": {
+      "title": "Suas imagens geradas",
+      "aria": "Imagens geradas",
+      "loading": "Carregando imagens",
+      "pending": "Gerando…",
+      "open": "Abrir imagem: {prompt}",
+      "untitled": "Imagem gerada",
+      "noPreview": "Sem prévia",
+      "empty": {
+        "title": "Nenhuma imagem gerada ainda",
+        "body": "Descreva uma imagem e toque em Gerar — suas imagens ficam reunidas aqui."
+      },
+      "newer": "Mais recentes",
+      "older": "Mais antigas"
+    },
+    "preview": {
+      "title": "Imagem gerada",
+      "style": "Estilo",
+      "size": "Tamanho",
+      "dimensions": "{width, number} × {height, number} px",
+      "made": "Criada",
+      "download": "Baixar",
+      "edit": "Editar descrição",
+      "again": "Gerar de novo"
     }
   }
 }

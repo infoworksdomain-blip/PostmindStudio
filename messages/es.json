@@ -77,7 +77,8 @@
         "blitz": "Blitz",
         "automations": "Automatizaciones",
         "home": "Inicio",
-        "plans": "Planes mensuales"
+        "plans": "Planes mensuales",
+        "images": "Imágenes"
       },
       "newPost": "Crear una publicación nueva",
       "collapse": "Contraer la barra lateral",
@@ -1086,7 +1087,10 @@
         "review": "Revisión",
         "publish": "Publicación"
       },
-      "done": "(hecho)"
+      "done": "(hecho)",
+      "notStarted": "Sin empezar: pulsa Generar para comenzar.",
+      "stoppedAt": "Se detuvo en el paso «{step}».",
+      "failedMark": "(se detuvo aquí)"
     },
     "paused": {
       "aria": "En pausa por presupuesto",
@@ -1324,7 +1328,9 @@
       "staleNote": "El guion o los planos cambiaron después de renderizar esta variante.",
       "rerender": "Volver a renderizar",
       "rerendering": "Volviendo a renderizar con tus cambios.",
-      "download": "Descargar MP4"
+      "download": "Descargar MP4",
+      "watch": "Ver",
+      "showing": "Reproduciendo"
     },
     "thumbnail": {
       "aria": "Miniatura",
@@ -1380,6 +1386,50 @@
     "actorFallback": {
       "aria": "Actor no disponible",
       "note": "El actor no estuvo disponible en algunos momentos de este vídeo, así que se usan clips con locución."
+    },
+    "attention": {
+      "title": "Requiere tu atención",
+      "titleInfo": "Para que lo sepas",
+      "tones": {
+        "action": "requiere acción",
+        "warning": "conviene revisarlo",
+        "info": "para tu información"
+      },
+      "items": {
+        "directions": "Elige una dirección para este vídeo",
+        "ugcRefused": "Reescribe el brief sin una persona real",
+        "restrictedTopics": "Revisa los temas restringidos de tu brief",
+        "failureFailed": "Este vídeo se detuvo antes de terminar",
+        "failureRejected": "Se pidieron cambios",
+        "failureQuality": "No superó el control de calidad",
+        "budget": "En pausa por el límite de este vídeo",
+        "autoResume": "En pausa por tu límite de generación",
+        "safetyReview": "Esperando una revisión de seguridad",
+        "automation": "La publicación automática necesita un vistazo",
+        "music": "No se pudo añadir la música de fondo",
+        "sfx": "No se pudieron añadir los efectos de sonido",
+        "queued": "En cola: empieza pronto",
+        "fallback": "Hecho con un proveedor alternativo",
+        "presenterFallback": "El presentador no estaba disponible",
+        "actorFallback": "El actor no estaba disponible"
+      }
+    },
+    "status": {
+      "publish": "Publicar",
+      "posts": "Publicaciones y programación",
+      "announceAttention": "{state}. {count, plural, =0 {} one {# cosa requiere tu atención.} other {# cosas requieren tu atención.}}",
+      "details": "Detalles"
+    },
+    "player": {
+      "aria": "Reproductor de vídeo",
+      "formats": "Formatos",
+      "working": "Tu vídeo aparecerá aquí en cuanto esté listo el primer formato.",
+      "none": "Aún no hay vídeo."
+    },
+    "menu": {
+      "trigger": "Más acciones",
+      "download": "Descargar vídeo",
+      "templateDescription": "Guarda los formatos, la estructura de planos y los ajustes de publicación de este vídeo para crear otros nuevos."
     }
   },
   "slideshow": {
@@ -2159,7 +2209,8 @@
       "gridAria": "Biblioteca de imágenes",
       "newer": "Más recientes",
       "older": "Más antiguas",
-      "stockNotConfigured": "Las fotos de archivo aún no están configuradas, así que no hay nada que actualizar. Las fotos de tu web, las subidas y las imágenes generadas siguen funcionando."
+      "stockNotConfigured": "Las fotos de archivo aún no están configuradas, así que no hay nada que actualizar. Las fotos de tu web, las subidas y las imágenes generadas siguen funcionando.",
+      "openStudio": "Estudio de imágenes"
     },
     "profile": {
       "fields": {
@@ -3668,21 +3719,22 @@
       "title": "Bienvenida"
     },
     "steps": {
-      "connect": "Conectar",
-      "brandKit": "Kit de marca",
+      "connect": "Canales",
+      "brandKit": "Marca",
       "firstVideo": "Primer vídeo",
-      "celebrate": "Celebrar",
+      "celebrate": "Listo",
       "organisation": "Organización",
       "business": "Negocio"
     },
     "stepIndicator": {
       "aria": "Progreso de la configuración",
-      "done": "(hecho)"
+      "done": "(hecho)",
+      "position": "Paso {current} de {total}"
     },
     "wizard": {
       "eyebrow": "Te damos la bienvenida",
       "title": "Hagamos tu primer vídeo",
-      "description": "Unos pasos rápidos: tu organización y tu negocio, tu marca, una cuenta conectada y tu primer vídeo.",
+      "description": "Unos pasos rápidos: tu organización y tu negocio, tu marca, tus canales y tu primer vídeo.",
       "skipSetup": "Omitir configuración",
       "loading": "Cargando la configuración",
       "skipped": {
@@ -3697,17 +3749,18 @@
       },
       "currentStep": "Paso actual",
       "saving": "Guardando",
-      "skipStep": "Omitir este paso",
+      "skipStep": "Omitir por ahora",
       "finish": "Terminar"
     },
     "connect": {
       "title": "Conecta dónde publicas",
       "description": "Studio publica directamente en TikTok, YouTube, Instagram, Facebook, X y LinkedIn. Conecta al menos una cuenta para que tu primer vídeo pueda publicarse.",
       "loading": "Cargando cuentas",
-      "connectedAria": "Cuentas conectadas",
+      "connectedAria": "Tus canales",
       "none": "Aún no hay cuentas conectadas.",
       "connectAnother": "Conectar otra cuenta",
-      "openConnections": "Abrir Conexiones"
+      "openConnections": "Abrir Conexiones",
+      "notConnected": "Sin conectar"
     },
     "brandKit": {
       "title": "Tu marca en tres clics",
@@ -3740,6 +3793,14 @@
         "calm": "Sereno",
         "witty": "Ingenioso",
         "premium": "Premium"
+      },
+      "scanWebsite": "¿Tienes web? Escanéala para llenar tu biblioteca de imágenes",
+      "preview": {
+        "label": "Vista previa",
+        "kicker": "Tu marca",
+        "headline": "Así se verán tus vídeos",
+        "noFont": "Fuente predeterminada",
+        "noTone": "Aún no has elegido un tono"
       }
     },
     "firstVideo": {
@@ -3779,13 +3840,21 @@
         "body": "«{name}» aún no está publicado. Revísalo y apruébalo, y luego publícalo: lo celebraremos aquí en cuanto esté en línea.",
         "action": "Abrir tu vídeo"
       },
-      "planMonth": "O deja que Studio planifique y programe todo tu mes"
+      "planMonth": "O deja que Studio planifique y programe todo tu mes",
+      "next": {
+        "title": "Lo que viene ahora",
+        "review": "Studio termina tu vídeo. Revísalo cuando esté listo.",
+        "publish": "Apruébalo y Studio lo publica en tus canales al momento o según tu calendario.",
+        "insights": "Estadísticas muestra cómo funciona cada vídeo, para que el siguiente salga mejor.",
+        "home": "Ir a Inicio"
+      }
     },
     "finished": {
       "title": "Todo listo",
       "description": "Studio está listo para crear y publicar vídeos para tu negocio.",
       "makeAnother": "Crear otro vídeo",
-      "goToProjects": "Ir a proyectos"
+      "goToProjects": "Ir a proyectos",
+      "goHome": "Ir a Inicio"
     },
     "organisation": {
       "title": "Ponle nombre a tu organización",
@@ -4483,7 +4552,11 @@
   },
   "auth": {
     "shell": {
-      "brand": "PostMind Studio"
+      "brand": "PostMind Studio",
+      "panelLabel": "Acerca de PostMind Studio",
+      "valueStatement": "Vídeos cortos para cada canal, a partir de unas líneas sobre tu negocio.",
+      "valueDetail": "Studio escribe el guion, crea el vídeo con tu marca y lo programa en los canales que conectes.",
+      "panelAlt": "Un vídeo de TikTok de una hogaza de masa madre en PostMind Studio, con las comprobaciones de calidad superadas."
     },
     "errors": {
       "invalidCredentials": "Ese correo y esa contraseña no coinciden con ninguna cuenta.",
@@ -4521,7 +4594,8 @@
       "password": "Contraseña",
       "submit": "Iniciar sesión",
       "forgot": "¿Has olvidado tu contraseña?",
-      "noAccount": "Crear una cuenta"
+      "noAccount": "Crear una cuenta",
+      "newHere": "¿Nuevo en PostMind Studio?"
     },
     "google": {
       "or": "o",
@@ -4537,7 +4611,9 @@
       "submit": "Crear cuenta",
       "haveAccount": "¿Ya tienes cuenta? Inicia sesión",
       "closedTitle": "Solo por invitación",
-      "closedDescription": "Por ahora solo se pueden crear cuentas por invitación. Pide a alguien de tu equipo que te invite."
+      "closedDescription": "Por ahora solo se pueden crear cuentas por invitación. Pide a alguien de tu equipo que te invite.",
+      "closedNext": "¿Ya te han invitado? Abre el enlace del correo de invitación para configurar tu cuenta.",
+      "closedSignIn": "Iniciar sesión"
     },
     "verify": {
       "title": "Revisa tu correo",
@@ -4549,7 +4625,8 @@
       "resent": "Si esa dirección necesita confirmarse, te hemos enviado un enlace nuevo.",
       "email": "Correo electrónico",
       "resend": "Enviar un enlace nuevo",
-      "backToSignIn": "Volver a iniciar sesión"
+      "backToSignIn": "Volver a iniciar sesión",
+      "resendPrompt": "¿Aún nada? Mira en la carpeta de spam o pide un enlace nuevo."
     },
     "forgot": {
       "title": "Restablece tu contraseña",
@@ -4557,7 +4634,10 @@
       "email": "Correo electrónico",
       "submit": "Enviar enlace",
       "sent": "Si alguna cuenta usa esa dirección, te llegará un enlace para restablecerla. Funciona durante 1 hora.",
-      "backToSignIn": "Volver a iniciar sesión"
+      "backToSignIn": "Volver a iniciar sesión",
+      "sentTitle": "Revisa tu bandeja de entrada",
+      "sentNext": "Abre el enlace del correo para elegir una contraseña nueva. ¿No ha llegado nada en unos minutos? Mira en la carpeta de spam o prueba con otra dirección.",
+      "tryAnother": "Usar otro correo"
     },
     "reset": {
       "title": "Elige una contraseña nueva",
@@ -4568,7 +4648,9 @@
       "signIn": "Iniciar sesión",
       "invalidTitle": "Ese enlace no ha funcionado",
       "invalidDescription": "Los enlaces para restablecer funcionan una vez, durante 1 hora. Pide uno nuevo.",
-      "requestNew": "Recibir un enlace nuevo"
+      "requestNew": "Recibir un enlace nuevo",
+      "backToSignIn": "Volver a iniciar sesión",
+      "doneTitle": "Contraseña cambiada"
     },
     "twoFactor": {
       "title": "Verificación en dos pasos",
@@ -4591,7 +4673,10 @@
       "joinNamed": "Te han invitado a unirte a {organisation} en PostMind Studio.",
       "accept": "Aceptar invitación",
       "notNow": "Ahora no",
-      "unavailable": "Esta invitación ha caducado, se ha cancelado o se envió a otro correo."
+      "unavailable": "Esta invitación ha caducado, se ha cancelado o se envió a otro correo.",
+      "unavailableTitle": "Esta invitación no se puede usar",
+      "unavailableNext": "Pide a quien te invitó que envíe una nueva invitación a la dirección con la que inicias sesión.",
+      "goToStudio": "Ir a Studio"
     },
     "support": {
       "noEmail": "¿Sigues sin recibir el correo tras unos minutos? Escribe a <link>{email}</link>."
@@ -5789,16 +5874,23 @@
   "errorPage": {
     "notFound": {
       "title": "No encontramos esa página",
-      "body": "Puede que el enlace esté desactualizado o que la página se haya movido.",
+      "body": "Puede que el enlace esté desactualizado o que la página se haya movido. Revisa la dirección o sigue desde aquí.",
       "projects": "Ir a proyectos",
-      "home": "Ir a la página de inicio"
+      "home": "Ir a la página de inicio",
+      "label": "Error 404",
+      "goHome": "Ir a Inicio",
+      "signIn": "Iniciar sesión"
     },
     "boundary": {
       "title": "Esta página tuvo un problema",
-      "body": "Lo hemos registrado. Inténtalo de nuevo o vuelve a tus proyectos.",
+      "body": "No ha sido por nada que hayas hecho y ya lo hemos registrado. Vuelve a intentarlo o regresa al inicio.",
       "retry": "Reintentar",
       "projects": "Ir a proyectos",
-      "reference": "Referencia: {digest}"
+      "reference": "Referencia: {digest}",
+      "label": "Algo ha fallado",
+      "goHome": "Ir a Inicio",
+      "home": "Ir a la página de inicio",
+      "feedback": "Cuéntanos qué ha pasado"
     }
   },
   "hashtags": {
@@ -6320,6 +6412,77 @@
       "blitzBody": "Desliza entre publicaciones ya hechas.",
       "templates": "Plantillas",
       "templatesBody": "Empieza con un formato probado."
+    }
+  },
+  "images": {
+    "page": {
+      "title": "Imágenes",
+      "description": "Describe una imagen y la creamos para este negocio. Cada imagen se guarda en su biblioteca, lista para tus vídeos.",
+      "wholeLibrary": "Toda la biblioteca de imágenes"
+    },
+    "pickFirst": {
+      "title": "Primero elige un negocio",
+      "body": "Las imágenes se crean para un negocio y se guardan en su biblioteca. Elige un negocio en la parte superior de la página."
+    },
+    "off": {
+      "title": "Las imágenes están desactivadas",
+      "body": "La generación de imágenes está desactivada para tu organización en este momento. Tus vídeos no se ven afectados."
+    },
+    "readOnly": "Puedes ver estas imágenes. Quien pueda editar proyectos puede crear otras nuevas.",
+    "locked": {
+      "title": "La generación de imágenes no está en tu plan",
+      "body": "Sigues viendo las imágenes creadas antes. Consulta qué incluye tu plan para crear nuevas.",
+      "action": "Ver qué incluye"
+    },
+    "status": {
+      "generating": "Creando tu imagen. Puede tardar hasta un minuto.",
+      "ready": "Tu imagen está lista: ya está en tu biblioteca.",
+      "failed": "No se pudo crear la imagen."
+    },
+    "form": {
+      "aria": "Describe tu imagen",
+      "prompt": "Describe la imagen",
+      "promptPlaceholder": "Una hogaza de masa madre sobre una tabla de madera, luz de mañana, primer plano",
+      "promptHint": "Di qué aparece, dónde y el ambiente. El texto y los logotipos siempre se omiten.",
+      "style": "Estilo (opcional)",
+      "stylePlaceholder": "Foto analógica cálida",
+      "shape": "Formato",
+      "shapes": {
+        "1x1": "Cuadrado",
+        "4x5": "Vertical",
+        "9x16": "Alto, para stories y reels",
+        "16x9": "Horizontal"
+      },
+      "generate": "Generar imagen",
+      "generating": "Generando…",
+      "timing": "Tarda hasta un minuto.",
+      "lastPrompt": "Última: {prompt}",
+      "again": "Generar de nuevo"
+    },
+    "results": {
+      "title": "Tus imágenes generadas",
+      "aria": "Imágenes generadas",
+      "loading": "Cargando imágenes",
+      "pending": "Generando…",
+      "open": "Abrir imagen: {prompt}",
+      "untitled": "Imagen generada",
+      "noPreview": "Sin vista previa",
+      "empty": {
+        "title": "Aún no hay imágenes generadas",
+        "body": "Describe una imagen y pulsa Generar: tus imágenes se reúnen aquí."
+      },
+      "newer": "Más recientes",
+      "older": "Más antiguas"
+    },
+    "preview": {
+      "title": "Imagen generada",
+      "style": "Estilo",
+      "size": "Tamaño",
+      "dimensions": "{width, number} × {height, number} px",
+      "made": "Creada",
+      "download": "Descargar",
+      "edit": "Editar descripción",
+      "again": "Generar de nuevo"
     }
   }
 }

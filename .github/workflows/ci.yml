@@ -84,7 +84,28 @@ jobs:
           # + music_library_tracks (23.1 music reuse)
           test "$count" -eq 88
       - name: Install ffmpeg (Ubuntu repository)
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
+        # Ubuntu mirrors stalled for whole jobs on 2026-10-07 (24 min, then cancelled; retries did not
+        # help). Try the Ubuntu package briefly; otherwise use the static build FFmpeg recommends for Linux
+        # (BtbN/FFmpeg-Builds, a GitHub release), verified against its published SHA-256 list.
+        timeout-minutes: 8
+        run: |
+          if timeout 120 sudo apt-get update -qq -o Acquire::Retries=2 &&
+            timeout 150 sudo apt-get install -y -qq ffmpeg fonts-dejavu-core; then
+            echo "ffmpeg from the Ubuntu repository"
+          else
+            echo "Ubuntu repository unavailable; using the BtbN static build"
+            base=https://github.com/BtbN/FFmpeg-Builds/releases/download/latest
+            f=ffmpeg-master-latest-linux64-gpl.tar.xz
+            curl -fsSL --retry 3 -o "$RUNNER_TEMP/$f" "$base/$f"
+            curl -fsSL --retry 3 -o "$RUNNER_TEMP/checksums.sha256" "$base/checksums.sha256"
+            (cd "$RUNNER_TEMP" && grep " $f$" checksums.sha256 | sha256sum -c -)
+            tar -xJf "$RUNNER_TEMP/$f" -C "$RUNNER_TEMP"
+            bin="$RUNNER_TEMP/ffmpeg-master-latest-linux64-gpl/bin"
+            echo "$bin" >> "$GITHUB_PATH"
+            export PATH="$bin:$PATH"
+            fc-list | grep -qi dejavu || echo "::warning::DejaVu fonts not installed"
+          fi
+          ffmpeg -version | head -1
       - name: Full suite with coverage on real Postgres, BullMQ (Redis 7) and ffmpeg
         # Coverage is enforced here, where the DB/queue/media suites run too.
         run: npm run test:coverage
@@ -154,7 +175,28 @@ jobs:
       - run: npm ci
       - run: npx prisma migrate deploy && npx prisma db seed
       - name: Install ffmpeg (Ubuntu repository)
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
+        # Ubuntu mirrors stalled for whole jobs on 2026-10-07 (24 min, then cancelled; retries did not
+        # help). Try the Ubuntu package briefly; otherwise use the static build FFmpeg recommends for Linux
+        # (BtbN/FFmpeg-Builds, a GitHub release), verified against its published SHA-256 list.
+        timeout-minutes: 8
+        run: |
+          if timeout 120 sudo apt-get update -qq -o Acquire::Retries=2 &&
+            timeout 150 sudo apt-get install -y -qq ffmpeg fonts-dejavu-core; then
+            echo "ffmpeg from the Ubuntu repository"
+          else
+            echo "Ubuntu repository unavailable; using the BtbN static build"
+            base=https://github.com/BtbN/FFmpeg-Builds/releases/download/latest
+            f=ffmpeg-master-latest-linux64-gpl.tar.xz
+            curl -fsSL --retry 3 -o "$RUNNER_TEMP/$f" "$base/$f"
+            curl -fsSL --retry 3 -o "$RUNNER_TEMP/checksums.sha256" "$base/checksums.sha256"
+            (cd "$RUNNER_TEMP" && grep " $f$" checksums.sha256 | sha256sum -c -)
+            tar -xJf "$RUNNER_TEMP/$f" -C "$RUNNER_TEMP"
+            bin="$RUNNER_TEMP/ffmpeg-master-latest-linux64-gpl/bin"
+            echo "$bin" >> "$GITHUB_PATH"
+            export PATH="$bin:$PATH"
+            fc-list | grep -qi dejavu || echo "::warning::DejaVu fonts not installed"
+          fi
+          ffmpeg -version | head -1
       - name: Stubbed pipeline scenarios
         run: |
           mkdir -p ops/results/pipeline-e2e

@@ -8,12 +8,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { APP_HOME } from '@/lib/auth/page-guard';
 import { authFetch } from '@/lib/client/auth';
 import { hardNavigate } from '@/lib/client/navigate';
-import { AuthCard, AuthError } from './auth-card';
+import { AuthCard, AuthError, authLinkClass, AuthStatusMark } from './auth-card';
 
 // Phase 18 §2.4 — /invite/[token]: accept an organisation invitation. Only a signed-in user whose
 // VERIFIED email matches the invitation can accept (Better Auth checks it:
 // requireEmailVerificationOnInvitation). Signed-out visitors are sent to sign in or sign up first
 // and come back here.
+// 25.6: an invitation that cannot be used gets its own calm state with the next step (ask for a
+// new invitation, or carry on into Studio).
 
 interface InvitationView {
   id: string;
@@ -65,16 +67,32 @@ export function InviteScreen({
     return (
       <AuthCard title={t('title')} description={t('signedOut')}>
         <div className="flex flex-col gap-3">
-          <Button asChild className="h-10 w-full">
+          <Button asChild size="lg" className="w-full">
             <Link href={`/sign-in?next=${encodeURIComponent(back)}`}>{t('signIn')}</Link>
           </Button>
-          <Button asChild variant="outline" className="h-10 w-full">
+          <Button asChild variant="outline" size="lg" className="w-full">
             <Link href={`/sign-up?next=${encodeURIComponent(back)}`}>{t('signUp')}</Link>
           </Button>
         </div>
       </AuthCard>
     );
   }
+
+  if (!loading && error && !invitation)
+    return (
+      <AuthCard
+        icon={<AuthStatusMark tone="problem" />}
+        title={t('unavailableTitle')}
+        description={t('unavailable')}
+      >
+        <p className="mb-6 text-sm leading-relaxed text-foreground-secondary">
+          {t('unavailableNext')}
+        </p>
+        <Button asChild variant="outline" size="lg" className="w-full">
+          <Link href={APP_HOME}>{t('goToStudio')}</Link>
+        </Button>
+      </AuthCard>
+    );
 
   return (
     <AuthCard
@@ -85,19 +103,17 @@ export function InviteScreen({
           : t('join')
       }
       footer={
-        <Link className="underline-offset-4 hover:underline" href="/projects">
+        <Link className={authLinkClass} href="/projects">
           {t('notNow')}
         </Link>
       }
     >
       {loading ? (
         <Skeleton className="h-10 w-full" />
-      ) : error && !invitation ? (
-        <p className="text-sm text-muted-foreground">{t('unavailable')}</p>
       ) : (
         <>
           <AuthError error={error} />
-          <Button className="h-10 w-full" onClick={() => void accept()} loading={busy}>
+          <Button size="lg" className="w-full" onClick={() => void accept()} loading={busy}>
             {t('accept')}
           </Button>
         </>

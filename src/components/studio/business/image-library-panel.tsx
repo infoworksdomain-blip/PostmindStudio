@@ -1,9 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Loader2, Search, X } from 'lucide-react';
+import { Loader2, Search, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -143,6 +144,12 @@ export function ImageLibraryPanel({ businessId }: { businessId: string }) {
           <div className="flex flex-wrap gap-1">
             <UploadImageButton businessId={businessId} onAdded={added} />
             <GenerateImageButton businessId={businessId} onAdded={added} />
+            {/* 25.8: the full prompt workspace with every generated image. */}
+            <Button asChild variant="ghost">
+              <Link href="/images">
+                <Sparkles /> {t('openStudio')}
+              </Link>
+            </Button>
             <RefreshLibraryButton businessId={businessId} />
           </div>
         </WriteGate>

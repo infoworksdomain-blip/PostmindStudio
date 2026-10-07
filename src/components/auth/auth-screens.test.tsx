@@ -9,6 +9,9 @@ import { ResetPasswordForm } from './reset-password-form';
 import { SignInForm } from './sign-in-form';
 import { SignUpForm } from './sign-up-form';
 import { TwoFactorForm } from './two-factor-form';
+import { InviteScreen } from './invite-screen';
+import { SignUpClosed } from './sign-up-closed';
+import { VerifyEmailScreen } from './verify-email-screen';
 
 // Phase 18 Track A — the sign-in screens against a mocked /api/auth.
 
@@ -184,6 +187,74 @@ describe('two-factor', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Verify' }));
     await waitFor(() => expect(assign).toHaveBeenCalledWith('/projects'));
     expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/auth/two-factor/verify-backup-code');
+  });
+});
+
+describe('25.6 states and field errors', () => {
+  it('shows a breached password under the field, linked and focused', async () => {
+    respond(400, { code: 'PASSWORD_COMPROMISED' });
+    render(<SignUpForm next="/welcome" googleEnabled={false} />);
+    await userEvent.type(screen.getByLabelText('Your name'), 'Ada');
+    await userEvent.type(screen.getByLabelText('Work email'), 'ada@example.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'password12345');
+    await userEvent.click(screen.getByRole('button', { name: 'Create account' }));
+    const message = await screen.findByRole('alert');
+    const password = screen.getByLabelText('Password');
+    expect(password).toHaveAttribute('aria-invalid', 'true');
+    expect(password.getAttribute('aria-describedby')).toContain(message.id);
+    await waitFor(() => expect(password).toHaveFocus());
+  });
+
+  it('labels the email and password fields for password managers', () => {
+    render(signIn());
+    expect(screen.getByLabelText('Email')).toHaveAttribute('autocomplete', 'email');
+    expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'current-password');
+    expect(screen.getByRole('link', { name: 'Forgot your password?' })).toHaveAttribute(
+      'href',
+      '/forgot-password',
+    );
+  });
+
+  it('asks for the 2FA code in one numeric one-time-code field', () => {
+    render(<TwoFactorForm next="/projects" />);
+    const code = screen.getByLabelText('Authentication code');
+    expect(code).toHaveAttribute('inputmode', 'numeric');
+    expect(code).toHaveAttribute('autocomplete', 'one-time-code');
+  });
+
+  it('says what happens next once a reset link is sent, and offers another address', async () => {
+    respond(200, { status: true });
+    render(<ForgotPasswordForm />);
+    await userEvent.type(screen.getByLabelText('Email'), 'a@example.com');
+    await userEvent.click(screen.getByRole('button', { name: 'Send reset link' }));
+    expect(await screen.findByRole('heading', { name: 'Check your inbox' })).toBeInTheDocument();
+    expect(screen.getByText(/choose a new password/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Use a different email' }));
+    expect(screen.getByRole('heading', { name: 'Reset your password' })).toBeInTheDocument();
+  });
+
+  it('makes a new link the next step for an expired verification link', () => {
+    render(<VerifyEmailScreen error="TOKEN_EXPIRED" />);
+    expect(screen.getByRole('heading', { name: 'That link didn’t work' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Send a new link' })).toHaveAttribute(
+      'data-variant',
+      'default',
+    );
+  });
+
+  it('explains an invitation that cannot be used, with the next step', async () => {
+    respond(400, { code: 'INVITATION_NOT_FOUND' });
+    render(<InviteScreen invitationId="inv_1" signedIn />);
+    expect(
+      await screen.findByRole('heading', { name: 'This invitation can’t be used' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Go to Studio' })).toHaveAttribute('href', '/home');
+  });
+
+  it('keeps the closed sign-up screen calm, with sign-in as the way on', () => {
+    render(<SignUpClosed />);
+    expect(screen.getByRole('heading', { name: 'Invitation only' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/sign-in');
   });
 });
 

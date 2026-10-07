@@ -42,7 +42,14 @@ const STATE_TONE = {
 /** Link lifetimes offered, in hours (labels: share.links.expiryDays). */
 export const EXPIRY_OPTIONS = [24, 72, 168] as const;
 
-export function ShareLinksPanel({ projectId }: { projectId: string }) {
+export function ShareLinksPanel({
+  projectId,
+  className,
+}: {
+  projectId: string;
+  /** 25.8: inside the review screen's share dialog the section drops its top rule. */
+  className?: string;
+}) {
   const t = useTranslations('share.links');
   const tc = useTranslations('common.actions');
   const f = useFormat();
@@ -95,6 +102,7 @@ export function ShareLinksPanel({ projectId }: { projectId: string }) {
   const links = data?.data ?? [];
   return (
     <Section
+      className={className}
       title={t('title')}
       description={t('description')}
       actions={

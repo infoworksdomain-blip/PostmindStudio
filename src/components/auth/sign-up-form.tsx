@@ -2,13 +2,12 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useId, useState, type FormEvent } from 'react';
+import { useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { authApi } from '@/lib/client/auth';
-import { AuthCard, AuthError } from './auth-card';
+import { AuthCard, AuthError, authLinkClass } from './auth-card';
+import { AuthTextField } from './auth-fields';
 import { GoogleButton } from './google-button';
 import { PASSWORD_MIN, PasswordField } from './password-field';
 
@@ -19,8 +18,6 @@ import { PASSWORD_MIN, PasswordField } from './password-field';
 export function SignUpForm({ next, googleEnabled }: { next: string; googleEnabled: boolean }) {
   const t = useTranslations('auth.signUp');
   const router = useRouter();
-  const nameId = useId();
-  const emailId = useId();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,74 +37,70 @@ export function SignUpForm({ next, googleEnabled }: { next: string; googleEnable
     }
   };
 
+  const legalLink = (href: string) =>
+    function LegalLink(chunks: ReactNode) {
+      return (
+        <Link className={`${authLinkClass} underline`} href={href}>
+          {chunks}
+        </Link>
+      );
+    };
+
   return (
     <AuthCard
       title={t('title')}
       description={t('description')}
       footer={
-        <Link
-          className="underline-offset-4 hover:underline"
-          href={`/sign-in?next=${encodeURIComponent(next)}`}
-        >
+        <Link className={authLinkClass} href={`/sign-in?next=${encodeURIComponent(next)}`}>
           {t('haveAccount')}
         </Link>
       }
     >
       <AuthError error={error} />
       <form onSubmit={(e) => void submit(e)} className="space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor={nameId}>{t('name')}</Label>
-          <Input
-            id={nameId}
-            autoComplete="name"
-            required
-            maxLength={100}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="h-10"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor={emailId}>{t('email')}</Label>
-          <Input
-            id={emailId}
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="h-10"
-          />
-        </div>
+        <AuthTextField
+          label={t('name')}
+          autoComplete="name"
+          required
+          maxLength={100}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <AuthTextField
+          label={t('email')}
+          type="email"
+          autoComplete="email"
+          inputMode="email"
+          spellCheck={false}
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          error={error}
+          field="email"
+        />
         <PasswordField
           label={t('password')}
           value={password}
           onChange={setPassword}
           autoComplete="new-password"
           showStrength
+          error={error}
         />
-        <p className="text-xs text-muted-foreground">
-          {t.rich('terms', {
-            terms: (chunks) => (
-              <Link className="underline underline-offset-4" href="/legal/terms">
-                {chunks}
-              </Link>
-            ),
-            privacy: (chunks) => (
-              <Link className="underline underline-offset-4" href="/legal/privacy">
-                {chunks}
-              </Link>
-            ),
-          })}
-        </p>
         <Button
           type="submit"
-          className="h-10 w-full"
+          size="lg"
+          className="w-full"
           disabled={password.length < PASSWORD_MIN}
           loading={busy}
         >
           {t('submit')}
         </Button>
+        <p className="text-xs leading-relaxed text-foreground-secondary">
+          {t.rich('terms', {
+            terms: legalLink('/legal/terms'),
+            privacy: legalLink('/legal/privacy'),
+          })}
+        </p>
       </form>
       {googleEnabled && <GoogleButton next="/welcome" />}
     </AuthCard>

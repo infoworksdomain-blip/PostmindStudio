@@ -85,9 +85,9 @@ test('a new visitor goes from the landing page to their first project', async ({
   await expect(
     page.getByRole('heading', { name: 'Your brand in three clicks' }).first(),
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Skip this step' }).click();
+  await page.getByRole('button', { name: 'Skip for now' }).click();
   await expect(page.getByRole('heading', { name: 'Connect where you post' }).first()).toBeVisible();
-  await page.getByRole('button', { name: 'Skip this step' }).click();
+  await page.getByRole('button', { name: 'Skip for now' }).click();
   await expect(page.getByRole('heading', { name: 'Make your first video' }).first()).toBeVisible();
   await page.getByLabel('Anything to mention? (optional)').fill('Family bakery, E2E run');
   await page.getByRole('button', { name: 'Make my intro video' }).click();

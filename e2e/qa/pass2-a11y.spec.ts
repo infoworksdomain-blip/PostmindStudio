@@ -71,6 +71,7 @@ let db: Db;
 let world: World;
 let owner: Page;
 let staff: Page | undefined;
+let staffEmail = '';
 
 test.beforeAll(async ({ browser, playwright }) => {
   test.setTimeout(300_000);
@@ -80,7 +81,9 @@ test.beforeAll(async ({ browser, playwright }) => {
   world = await seedWorld(db, ownerId);
   await addMember(db, world.orgId, ownerId, 'owner');
   owner = await signedInPage(browser, baseURL, emailFor('owner'));
-  staff = (await staffPage(browser, request, db)).page;
+  const made = await staffPage(browser, request, db, undefined, 'a11y');
+  staff = made.page;
+  staffEmail = made.email;
   await request.dispose();
 });
 
@@ -89,7 +92,7 @@ test.afterAll(async () => {
   await staff?.context().close();
   await cleanWorld(db, world);
   const users = await db.user.findMany({
-    where: { OR: [{ email: emailFor('owner') }, { email: { startsWith: 'qa-p2-staff-' } }] },
+    where: { OR: [{ email: emailFor('owner') }, { email: staffEmail }] },
     select: { id: true },
   });
   const ids = users.map((u) => u.id);

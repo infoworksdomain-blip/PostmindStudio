@@ -1,23 +1,21 @@
 'use client';
 
-import { Download, RefreshCw } from 'lucide-react';
+import { Download, Play, RefreshCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
+import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
 import { useFormat, type Tone } from '@/lib/client/format';
 import type { Render } from '@/lib/client/types';
-import { cn } from '@/lib/utils';
 import { useShowCosts } from '../account/use-show-costs';
 import { StateBadge } from '../primitives';
 import { QualityPanel } from './quality-panel';
 import { VariantThumbnail } from './variant-thumbnail';
 import type { SignedUrl } from './types';
 
-// One variant (render) per target format (spec 14.2): inline player from a signed preview URL,
-// download, and its quality panel.
+// One variant (render) per target format (spec 14.2): its details, thumbnail, quality panel and
+// download. 25.8: the video itself plays in the screen's one large player ("Watch" picks it).
 
 const QUALITY_TONE: Record<Render['qualityCheckState'], Tone> = {
   PENDING: 'live',
@@ -25,41 +23,6 @@ const QUALITY_TONE: Record<Render['qualityCheckState'], Tone> = {
   FAILED: 'bad',
   FORCE_APPROVED: 'warn',
 };
-
-const ASPECT_CLASS: Record<string, string> = {
-  '9:16': 'aspect-[9/16] max-w-[18rem]',
-  '16:9': 'aspect-video',
-  '1:1': 'aspect-square max-w-[24rem]',
-  '4:5': 'aspect-[4/5] max-w-[22rem]',
-};
-
-export function VariantPlayer({ render }: { render: Render }) {
-  const t = useTranslations('review.variant');
-  const f = useFormat();
-  const errorMessage = useErrorMessage();
-  const { data, error, isLoading } = useApi<SignedUrl>(`/renders/${render.id}/preview`);
-  const frame = cn(
-    'mx-auto w-full overflow-hidden rounded-lg bg-foreground/90',
-    ASPECT_CLASS[render.aspectRatio] ?? 'aspect-video',
-  );
-  if (isLoading) return <Skeleton className={frame} aria-label={t('loadingPreview')} />;
-  if (error || !data)
-    return (
-      <div className={cn(frame, 'grid place-items-center p-4 text-center text-sm text-background')}>
-        {t('previewUnavailable', { error: errorMessage(error) })}
-      </div>
-    );
-  return (
-    <video
-      className={frame}
-      src={data.url}
-      controls
-      playsInline
-      preload="metadata"
-      aria-label={t('previewAria', { platform: f.platform(render.targetPlatform) })}
-    />
-  );
-}
 
 /** Project states POST /renders/:id/rerender accepts. */
 const RERENDERABLE = new Set(['READY_FOR_REVIEW', 'QUALITY_FAILED', 'REJECTED']);
@@ -69,12 +32,18 @@ export function VariantCard({
   onChanged,
   stale = false,
   projectState,
+  showing = false,
+  onShow,
 }: {
   render: Render;
   onChanged: () => void;
   /** 13.1 / 13.2: the script or shots changed after this render was made. */
   stale?: boolean;
   projectState?: string;
+  /** 25.8: this variant is the one in the player. */
+  showing?: boolean;
+  /** 25.8: show this variant in the player. */
+  onShow?: () => void;
 }) {
   const t = useTranslations('review.variant');
   const f = useFormat();
@@ -119,9 +88,9 @@ export function VariantCard({
   return (
     <article
       aria-label={t('aria', { platform: f.platform(render.targetPlatform) })}
-      className="grid gap-5 rounded-xl border border-border bg-card p-4 md:grid-cols-[minmax(0,20rem)_1fr]"
+      aria-current={showing ? 'true' : undefined}
+      className="rounded-xl border border-border bg-card p-4 aria-[current=true]:border-foreground/30"
     >
-      <VariantPlayer render={render} />
       <div className="flex min-w-0 flex-col gap-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
@@ -156,7 +125,12 @@ export function VariantCard({
         )}
         <VariantThumbnail render={render} />
         <QualityPanel render={render} onChanged={onChanged} />
-        <div>
+        <div className="flex flex-wrap gap-2">
+          {onShow && (
+            <Button variant="outline" size="sm" onClick={onShow} aria-pressed={showing}>
+              <Play /> {showing ? t('showing') : t('watch')}
+            </Button>
+          )}
           <Button
             loading={downloading}
             variant="outline"

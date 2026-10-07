@@ -27,6 +27,8 @@ export const APP_PATHS = [
   '/plans/:id',
   // 22.4 Blitz, 22.5 Automations
   '/blitz',
+  // 25.8 Image Studio
+  '/images',
   '/automations',
   '/automations/new',
   '/automations/:id',

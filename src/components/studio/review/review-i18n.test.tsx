@@ -9,9 +9,11 @@ import type { ProjectDetail } from '@/lib/client/types';
 
 // BACKLOG 16.4 — the Review screen (and its Overlays tab) in Arabic (RTL) and Simplified Chinese.
 
+const nav = vi.hoisted(() => ({ replace: vi.fn(), push: vi.fn(), search: '' }));
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn() }),
-  usePathname: () => '/',
+  useRouter: () => ({ push: nav.push, replace: nav.replace }),
+  usePathname: () => '/projects/proj_1',
+  useSearchParams: () => new URLSearchParams(nav.search),
 }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 

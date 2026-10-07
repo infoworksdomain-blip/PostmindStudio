@@ -77,7 +77,8 @@
         "blitz": "Blitz",
         "automations": "Automations",
         "home": "Home",
-        "plans": "Month plans"
+        "plans": "Month plans",
+        "images": "Images"
       },
       "newPost": "Create a new post",
       "collapse": "Collapse sidebar",
@@ -1086,7 +1087,10 @@
         "review": "Review",
         "publish": "Publish"
       },
-      "done": "(done)"
+      "done": "(done)",
+      "notStarted": "Not started — Generate to begin.",
+      "stoppedAt": "Stopped at the {step} step.",
+      "failedMark": "(stopped here)"
     },
     "paused": {
       "aria": "Paused by budget",
@@ -1324,7 +1328,9 @@
       "staleNote": "The script or shots changed after this variant was rendered.",
       "rerender": "Re-render",
       "rerendering": "Re-rendering with your edits.",
-      "download": "Download MP4"
+      "download": "Download MP4",
+      "watch": "Watch",
+      "showing": "Playing"
     },
     "thumbnail": {
       "aria": "Thumbnail",
@@ -1380,6 +1386,50 @@
     "actorFallback": {
       "aria": "Actor not available",
       "note": "The actor wasn’t available for some moments of this video, so they use narrated clips instead."
+    },
+    "attention": {
+      "title": "Needs your attention",
+      "titleInfo": "Good to know",
+      "tones": {
+        "action": "needs you",
+        "warning": "worth a look",
+        "info": "for your information"
+      },
+      "items": {
+        "directions": "Choose a direction for this video",
+        "ugcRefused": "Rewrite the brief without a real person",
+        "restrictedTopics": "Check the restricted topics in your brief",
+        "failureFailed": "This video stopped before it was finished",
+        "failureRejected": "Changes were requested",
+        "failureQuality": "The quality check didn’t pass",
+        "budget": "Paused at this video’s limit",
+        "autoResume": "Paused at your generation limit",
+        "safetyReview": "Waiting for a safety review",
+        "automation": "Automatic publishing needs a look",
+        "music": "Background music couldn’t be added",
+        "sfx": "Sound effects couldn’t be added",
+        "queued": "Queued — it starts soon",
+        "fallback": "Made with a backup provider",
+        "presenterFallback": "The presenter wasn’t available",
+        "actorFallback": "The actor wasn’t available"
+      }
+    },
+    "status": {
+      "publish": "Publish",
+      "posts": "Posts and schedule",
+      "announceAttention": "{state}. {count, plural, =0 {} one {# thing needs your attention.} other {# things need your attention.}}",
+      "details": "Details"
+    },
+    "player": {
+      "aria": "Video player",
+      "formats": "Formats",
+      "working": "Your video appears here as soon as the first format is ready.",
+      "none": "No video yet."
+    },
+    "menu": {
+      "trigger": "More actions",
+      "download": "Download video",
+      "templateDescription": "Keep this video’s formats, shot structure and publishing defaults, and start new videos from them."
     }
   },
   "slideshow": {
@@ -2159,7 +2209,8 @@
       "gridAria": "Image library",
       "newer": "Newer",
       "older": "Older",
-      "stockNotConfigured": "Stock photos aren’t set up yet, so there is nothing to refresh. Your site photos, uploads and generated images still work."
+      "stockNotConfigured": "Stock photos aren’t set up yet, so there is nothing to refresh. Your site photos, uploads and generated images still work.",
+      "openStudio": "Image Studio"
     },
     "profile": {
       "fields": {
@@ -3668,21 +3719,22 @@
       "title": "Welcome"
     },
     "steps": {
-      "connect": "Connect",
-      "brandKit": "Brand kit",
+      "connect": "Channels",
+      "brandKit": "Brand",
       "firstVideo": "First video",
-      "celebrate": "Celebrate",
+      "celebrate": "Done",
       "organisation": "Organization",
       "business": "Business"
     },
     "stepIndicator": {
       "aria": "Setup progress",
-      "done": "(done)"
+      "done": "(done)",
+      "position": "Step {current} of {total}"
     },
     "wizard": {
       "eyebrow": "Welcome",
       "title": "Let’s make your first video",
-      "description": "A few quick steps: your organization and business, your brand, a connected account, then your first video.",
+      "description": "A few quick steps: your organization and business, your brand, your channels, then your first video.",
       "skipSetup": "Skip setup",
       "loading": "Loading setup",
       "skipped": {
@@ -3697,17 +3749,18 @@
       },
       "currentStep": "Current step",
       "saving": "Saving",
-      "skipStep": "Skip this step",
+      "skipStep": "Skip for now",
       "finish": "Finish"
     },
     "connect": {
       "title": "Connect where you post",
       "description": "Studio publishes straight to TikTok, YouTube, Instagram, Facebook, X and LinkedIn. Connect at least one account so your first video can go live.",
       "loading": "Loading accounts",
-      "connectedAria": "Connected accounts",
+      "connectedAria": "Your channels",
       "none": "No accounts connected yet.",
       "connectAnother": "Connect another account",
-      "openConnections": "Open Connections"
+      "openConnections": "Open Connections",
+      "notConnected": "Not connected"
     },
     "brandKit": {
       "title": "Your brand in three clicks",
@@ -3740,6 +3793,14 @@
         "calm": "Calm",
         "witty": "Witty",
         "premium": "Premium"
+      },
+      "scanWebsite": "Have a website? Scan it to fill your image library",
+      "preview": {
+        "label": "Preview",
+        "kicker": "Your brand",
+        "headline": "This is how your videos will look",
+        "noFont": "Default font",
+        "noTone": "No tone picked yet"
       }
     },
     "firstVideo": {
@@ -3779,13 +3840,21 @@
         "body": "“{name}” isn’t published yet. Review and approve it, then publish — we’ll celebrate here the moment it goes live.",
         "action": "Open your video"
       },
-      "planMonth": "Or let Studio plan and schedule your whole month"
+      "planMonth": "Or let Studio plan and schedule your whole month",
+      "next": {
+        "title": "What happens next",
+        "review": "Studio finishes your video. Review it when it’s ready.",
+        "publish": "Approve it, and Studio posts it to your channels now or on a schedule.",
+        "insights": "Insights shows how each video does, so the next one lands better.",
+        "home": "Go to Home"
+      }
     },
     "finished": {
       "title": "You’re all set",
       "description": "Studio is ready to make and publish videos for your business.",
       "makeAnother": "Make another video",
-      "goToProjects": "Go to projects"
+      "goToProjects": "Go to projects",
+      "goHome": "Go to Home"
     },
     "organisation": {
       "title": "Name your organization",
@@ -4483,7 +4552,11 @@
   },
   "auth": {
     "shell": {
-      "brand": "PostMind Studio"
+      "brand": "PostMind Studio",
+      "panelLabel": "About PostMind Studio",
+      "valueStatement": "Short videos for every channel, made from a few lines about your business.",
+      "valueDetail": "Studio writes the script, makes the video in your brand and schedules it to the channels you connect.",
+      "panelAlt": "A TikTok video of a sourdough loaf in PostMind Studio, with its quality checks passed."
     },
     "errors": {
       "invalidCredentials": "That email and password don’t match an account.",
@@ -4521,7 +4594,8 @@
       "password": "Password",
       "submit": "Sign in",
       "forgot": "Forgot your password?",
-      "noAccount": "Create an account"
+      "noAccount": "Create an account",
+      "newHere": "New to PostMind Studio?"
     },
     "google": {
       "or": "or",
@@ -4537,7 +4611,9 @@
       "submit": "Create account",
       "haveAccount": "Already have an account? Sign in",
       "closedTitle": "Invitation only",
-      "closedDescription": "New accounts are by invitation only right now. Ask a member of your team to invite you."
+      "closedDescription": "New accounts are by invitation only right now. Ask a member of your team to invite you.",
+      "closedNext": "Been invited already? Open the link in your invitation email to set up your account.",
+      "closedSignIn": "Sign in"
     },
     "verify": {
       "title": "Check your email",
@@ -4549,7 +4625,8 @@
       "resent": "If that address needs confirming, we’ve sent a new link.",
       "email": "Email",
       "resend": "Send a new link",
-      "backToSignIn": "Back to sign in"
+      "backToSignIn": "Back to sign in",
+      "resendPrompt": "Nothing yet? Check your spam folder, or send a new link."
     },
     "forgot": {
       "title": "Reset your password",
@@ -4557,7 +4634,10 @@
       "email": "Email",
       "submit": "Send reset link",
       "sent": "If an account uses that address, a reset link is on its way. It works for 1 hour.",
-      "backToSignIn": "Back to sign in"
+      "backToSignIn": "Back to sign in",
+      "sentTitle": "Check your inbox",
+      "sentNext": "Open the link in the email to choose a new password. Nothing after a few minutes? Look in your spam folder, or try another address.",
+      "tryAnother": "Use a different email"
     },
     "reset": {
       "title": "Choose a new password",
@@ -4568,7 +4648,9 @@
       "signIn": "Sign in",
       "invalidTitle": "That link didn’t work",
       "invalidDescription": "Reset links work once, for 1 hour. Ask for a new one.",
-      "requestNew": "Get a new link"
+      "requestNew": "Get a new link",
+      "backToSignIn": "Back to sign in",
+      "doneTitle": "Password changed"
     },
     "twoFactor": {
       "title": "Two-step verification",
@@ -4591,7 +4673,10 @@
       "joinNamed": "You’ve been invited to join {organisation} on PostMind Studio.",
       "accept": "Accept invitation",
       "notNow": "Not now",
-      "unavailable": "This invitation has expired, was cancelled, or was sent to a different email address."
+      "unavailable": "This invitation has expired, was cancelled, or was sent to a different email address.",
+      "unavailableTitle": "This invitation can’t be used",
+      "unavailableNext": "Ask the person who invited you to send a new invitation to the address you sign in with.",
+      "goToStudio": "Go to Studio"
     },
     "support": {
       "noEmail": "Still no email after a few minutes? Contact <link>{email}</link>."
@@ -5789,16 +5874,23 @@
   "errorPage": {
     "notFound": {
       "title": "We couldn’t find that page",
-      "body": "The link may be out of date, or the page has moved.",
+      "body": "The link may be out of date, or the page has moved. Check the address, or carry on from here.",
       "projects": "Go to projects",
-      "home": "Go to the home page"
+      "home": "Go to the home page",
+      "label": "Error 404",
+      "goHome": "Go to Home",
+      "signIn": "Sign in"
     },
     "boundary": {
       "title": "This page hit a problem",
-      "body": "We’ve logged it. Try again, or go back to your projects.",
+      "body": "It wasn’t anything you did, and we’ve logged it. Try again, or head back home.",
       "retry": "Try again",
       "projects": "Go to projects",
-      "reference": "Reference: {digest}"
+      "reference": "Reference: {digest}",
+      "label": "Something went wrong",
+      "goHome": "Go to Home",
+      "home": "Go to the home page",
+      "feedback": "Tell us what happened"
     }
   },
   "hashtags": {
@@ -6320,6 +6412,77 @@
       "blitzBody": "Swipe through ready-made posts.",
       "templates": "Templates",
       "templatesBody": "Start from a proven format."
+    }
+  },
+  "images": {
+    "page": {
+      "title": "Images",
+      "description": "Describe a picture and we’ll make it for this business. Every image is saved to its library, ready to use in your videos.",
+      "wholeLibrary": "Whole image library"
+    },
+    "pickFirst": {
+      "title": "Pick a business first",
+      "body": "Images are made for one business and kept in its library. Choose a business at the top of the page."
+    },
+    "off": {
+      "title": "Images are switched off",
+      "body": "Image generation is turned off for your organisation right now. Your videos aren’t affected."
+    },
+    "readOnly": "You can look at these images. Someone who can edit projects can make new ones.",
+    "locked": {
+      "title": "Image generation isn’t in your plan",
+      "body": "You can still see images made earlier. Check what your plan includes to start making new ones.",
+      "action": "See what’s included"
+    },
+    "status": {
+      "generating": "Making your image. This can take up to a minute.",
+      "ready": "Your image is ready — it’s in your library.",
+      "failed": "The image couldn’t be made."
+    },
+    "form": {
+      "aria": "Describe your image",
+      "prompt": "Describe the picture",
+      "promptPlaceholder": "A sourdough loaf on a wooden board, morning light, close up",
+      "promptHint": "Say what’s in it, where it is and the mood. Text and logos are always left out.",
+      "style": "Style (optional)",
+      "stylePlaceholder": "Warm film photo",
+      "shape": "Shape",
+      "shapes": {
+        "1x1": "Square",
+        "4x5": "Portrait",
+        "9x16": "Tall, for stories and reels",
+        "16x9": "Wide"
+      },
+      "generate": "Generate image",
+      "generating": "Generating…",
+      "timing": "Takes up to a minute.",
+      "lastPrompt": "Last: {prompt}",
+      "again": "Generate again"
+    },
+    "results": {
+      "title": "Your generated images",
+      "aria": "Generated images",
+      "loading": "Loading images",
+      "pending": "Generating…",
+      "open": "Open image: {prompt}",
+      "untitled": "Generated image",
+      "noPreview": "No preview",
+      "empty": {
+        "title": "No generated images yet",
+        "body": "Describe a picture and press Generate — your images collect here."
+      },
+      "newer": "Newer",
+      "older": "Older"
+    },
+    "preview": {
+      "title": "Generated image",
+      "style": "Style",
+      "size": "Size",
+      "dimensions": "{width, number} × {height, number} px",
+      "made": "Made",
+      "download": "Download",
+      "edit": "Edit prompt",
+      "again": "Generate again"
     }
   }
 }

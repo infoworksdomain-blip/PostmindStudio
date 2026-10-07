@@ -74,7 +74,10 @@ export interface TopUpPack {
   validMonths: number;
 }
 
-const common = { shortMaxSec: 30, trialDays: 0 } as const;
+/** Spec 12.4: the longest SHORT video on every plan; longer counts as a long video. */
+export const SHORT_VIDEO_MAX_SEC = 30;
+
+const common = { shortMaxSec: SHORT_VIDEO_MAX_SEC, trialDays: 0 } as const;
 
 export const PLAN_CATALOGUE: Readonly<Record<PlanTier, PlanDefinition>> = {
   BASIC: {

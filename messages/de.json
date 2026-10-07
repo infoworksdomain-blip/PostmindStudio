@@ -77,7 +77,8 @@
         "blitz": "Blitz",
         "automations": "Automatisierungen",
         "home": "Start",
-        "plans": "Monatspläne"
+        "plans": "Monatspläne",
+        "images": "Bilder"
       },
       "newPost": "Neuen Beitrag erstellen",
       "collapse": "Seitenleiste einklappen",
@@ -1086,7 +1087,10 @@
         "review": "Prüfung",
         "publish": "Veröffentlichung"
       },
-      "done": "(fertig)"
+      "done": "(fertig)",
+      "notStarted": "Noch nicht gestartet – zum Beginnen auf „Generieren“ tippen.",
+      "stoppedAt": "Beim Schritt „{step}“ angehalten.",
+      "failedMark": "(hier angehalten)"
     },
     "paused": {
       "aria": "Wegen Budget pausiert",
@@ -1324,7 +1328,9 @@
       "staleNote": "Das Skript oder die Szenen wurden nach dem Rendern dieser Variante geändert.",
       "rerender": "Neu rendern",
       "rerendering": "Wird mit Ihren Änderungen neu gerendert.",
-      "download": "MP4 herunterladen"
+      "download": "MP4 herunterladen",
+      "watch": "Ansehen",
+      "showing": "Läuft"
     },
     "thumbnail": {
       "aria": "Vorschaubild",
@@ -1380,6 +1386,50 @@
     "actorFallback": {
       "aria": "Darsteller nicht verfügbar",
       "note": "Der Darsteller war für einige Momente dieses Videos nicht verfügbar, daher werden dort Clips mit Sprecherstimme verwendet."
+    },
+    "attention": {
+      "title": "Braucht deine Aufmerksamkeit",
+      "titleInfo": "Gut zu wissen",
+      "tones": {
+        "action": "braucht dich",
+        "warning": "einen Blick wert",
+        "info": "zur Info"
+      },
+      "items": {
+        "directions": "Wähle eine Richtung für dieses Video",
+        "ugcRefused": "Schreib das Briefing ohne reale Person neu",
+        "restrictedTopics": "Prüfe die eingeschränkten Themen in deinem Briefing",
+        "failureFailed": "Dieses Video wurde vor dem Ende angehalten",
+        "failureRejected": "Änderungen wurden angefordert",
+        "failureQuality": "Die Qualitätsprüfung ist fehlgeschlagen",
+        "budget": "Am Limit dieses Videos pausiert",
+        "autoResume": "Am Generierungslimit pausiert",
+        "safetyReview": "Wartet auf eine Sicherheitsprüfung",
+        "automation": "Automatisches Veröffentlichen braucht einen Blick",
+        "music": "Hintergrundmusik konnte nicht hinzugefügt werden",
+        "sfx": "Soundeffekte konnten nicht hinzugefügt werden",
+        "queued": "In der Warteschlange – startet bald",
+        "fallback": "Mit einem Ersatzanbieter erstellt",
+        "presenterFallback": "Die Moderation war nicht verfügbar",
+        "actorFallback": "Die Darstellerin bzw. der Darsteller war nicht verfügbar"
+      }
+    },
+    "status": {
+      "publish": "Veröffentlichen",
+      "posts": "Beiträge und Planung",
+      "announceAttention": "{state}. {count, plural, =0 {} one {# Punkt braucht deine Aufmerksamkeit.} other {# Punkte brauchen deine Aufmerksamkeit.}}",
+      "details": "Details"
+    },
+    "player": {
+      "aria": "Videoplayer",
+      "formats": "Formate",
+      "working": "Dein Video erscheint hier, sobald das erste Format fertig ist.",
+      "none": "Noch kein Video."
+    },
+    "menu": {
+      "trigger": "Weitere Aktionen",
+      "download": "Video herunterladen",
+      "templateDescription": "Behalte Formate, Szenenaufbau und Veröffentlichungsvorgaben dieses Videos und starte neue Videos damit."
     }
   },
   "slideshow": {
@@ -2159,7 +2209,8 @@
       "gridAria": "Bildbibliothek",
       "newer": "Neuere",
       "older": "Ältere",
-      "stockNotConfigured": "Stockfotos sind noch nicht eingerichtet, deshalb gibt es nichts zu aktualisieren. Fotos Ihrer Website, Uploads und generierte Bilder funktionieren weiterhin."
+      "stockNotConfigured": "Stockfotos sind noch nicht eingerichtet, deshalb gibt es nichts zu aktualisieren. Fotos Ihrer Website, Uploads und generierte Bilder funktionieren weiterhin.",
+      "openStudio": "Bildstudio"
     },
     "profile": {
       "fields": {
@@ -3668,21 +3719,22 @@
       "title": "Willkommen"
     },
     "steps": {
-      "connect": "Verbinden",
-      "brandKit": "Markenkit",
+      "connect": "Kanäle",
+      "brandKit": "Marke",
       "firstVideo": "Erstes Video",
-      "celebrate": "Feiern",
+      "celebrate": "Fertig",
       "organisation": "Organisation",
       "business": "Unternehmen"
     },
     "stepIndicator": {
       "aria": "Einrichtungsfortschritt",
-      "done": "(erledigt)"
+      "done": "(erledigt)",
+      "position": "Schritt {current} von {total}"
     },
     "wizard": {
       "eyebrow": "Willkommen",
       "title": "Erstellen wir Ihr erstes Video",
-      "description": "Ein paar schnelle Schritte: Ihre Organisation und Ihr Unternehmen, Ihre Marke, ein verbundenes Konto und dann Ihr erstes Video.",
+      "description": "Ein paar schnelle Schritte: Ihre Organisation und Ihr Unternehmen, Ihre Marke, Ihre Kanäle und dann Ihr erstes Video.",
       "skipSetup": "Einrichtung überspringen",
       "loading": "Einrichtung wird geladen",
       "skipped": {
@@ -3697,17 +3749,18 @@
       },
       "currentStep": "Aktueller Schritt",
       "saving": "Wird gespeichert",
-      "skipStep": "Diesen Schritt überspringen",
+      "skipStep": "Vorerst überspringen",
       "finish": "Abschließen"
     },
     "connect": {
       "title": "Verbinden Sie Ihre Kanäle",
       "description": "Studio veröffentlicht direkt auf TikTok, YouTube, Instagram, Facebook, X und LinkedIn. Verbinden Sie mindestens ein Konto, damit Ihr erstes Video online gehen kann.",
       "loading": "Konten werden geladen",
-      "connectedAria": "Verbundene Konten",
+      "connectedAria": "Ihre Kanäle",
       "none": "Noch keine Konten verbunden.",
       "connectAnother": "Weiteres Konto verbinden",
-      "openConnections": "Verbindungen öffnen"
+      "openConnections": "Verbindungen öffnen",
+      "notConnected": "Nicht verbunden"
     },
     "brandKit": {
       "title": "Ihre Marke in drei Klicks",
@@ -3740,6 +3793,14 @@
         "calm": "Ruhig",
         "witty": "Witzig",
         "premium": "Hochwertig"
+      },
+      "scanWebsite": "Sie haben eine Website? Scannen Sie sie, um Ihre Bildbibliothek zu füllen",
+      "preview": {
+        "label": "Vorschau",
+        "kicker": "Ihre Marke",
+        "headline": "So werden Ihre Videos aussehen",
+        "noFont": "Standardschrift",
+        "noTone": "Noch kein Ton gewählt"
       }
     },
     "firstVideo": {
@@ -3779,13 +3840,21 @@
         "body": "„{name}“ ist noch nicht veröffentlicht. Prüfen und genehmigen Sie es und veröffentlichen Sie es dann – wir feiern hier, sobald es online ist.",
         "action": "Ihr Video öffnen"
       },
-      "planMonth": "Oder lassen Sie Studio Ihren ganzen Monat planen und einplanen"
+      "planMonth": "Oder lassen Sie Studio Ihren ganzen Monat planen und einplanen",
+      "next": {
+        "title": "So geht es weiter",
+        "review": "Studio stellt Ihr Video fertig. Prüfen Sie es, sobald es bereit ist.",
+        "publish": "Geben Sie es frei, und Studio veröffentlicht es sofort oder nach Plan auf Ihren Kanälen.",
+        "insights": "Auswertungen zeigen, wie jedes Video ankommt, damit das nächste noch besser wird.",
+        "home": "Zu „Start“"
+      }
     },
     "finished": {
       "title": "Alles bereit",
       "description": "Studio ist bereit, Videos für Ihr Unternehmen zu erstellen und zu veröffentlichen.",
       "makeAnother": "Weiteres Video erstellen",
-      "goToProjects": "Zu den Projekten"
+      "goToProjects": "Zu den Projekten",
+      "goHome": "Zu „Start“"
     },
     "organisation": {
       "title": "Benennen Sie Ihre Organisation",
@@ -4483,7 +4552,11 @@
   },
   "auth": {
     "shell": {
-      "brand": "PostMind Studio"
+      "brand": "PostMind Studio",
+      "panelLabel": "Über PostMind Studio",
+      "valueStatement": "Kurze Videos für jeden Kanal, aus ein paar Zeilen über Ihr Unternehmen.",
+      "valueDetail": "Studio schreibt das Skript, erstellt das Video in Ihrem Markenauftritt und plant es für die Kanäle, die Sie verbinden.",
+      "panelAlt": "Ein TikTok-Video eines Sauerteigbrots in PostMind Studio mit bestandenen Qualitätsprüfungen."
     },
     "errors": {
       "invalidCredentials": "Diese E-Mail-Adresse und dieses Passwort passen zu keinem Konto.",
@@ -4521,7 +4594,8 @@
       "password": "Passwort",
       "submit": "Anmelden",
       "forgot": "Passwort vergessen?",
-      "noAccount": "Konto erstellen"
+      "noAccount": "Konto erstellen",
+      "newHere": "Neu bei PostMind Studio?"
     },
     "google": {
       "or": "oder",
@@ -4537,7 +4611,9 @@
       "submit": "Konto erstellen",
       "haveAccount": "Sie haben schon ein Konto? Anmelden",
       "closedTitle": "Nur auf Einladung",
-      "closedDescription": "Neue Konten gibt es derzeit nur auf Einladung. Bitten Sie jemanden aus Ihrem Team, Sie einzuladen."
+      "closedDescription": "Neue Konten gibt es derzeit nur auf Einladung. Bitten Sie jemanden aus Ihrem Team, Sie einzuladen.",
+      "closedNext": "Schon eingeladen? Öffnen Sie den Link in Ihrer Einladungs-E-Mail, um Ihr Konto einzurichten.",
+      "closedSignIn": "Anmelden"
     },
     "verify": {
       "title": "Prüfen Sie Ihre E-Mails",
@@ -4549,7 +4625,8 @@
       "resent": "Wenn diese Adresse noch bestätigt werden muss, haben wir einen neuen Link gesendet.",
       "email": "E-Mail",
       "resend": "Neuen Link senden",
-      "backToSignIn": "Zurück zur Anmeldung"
+      "backToSignIn": "Zurück zur Anmeldung",
+      "resendPrompt": "Noch nichts da? Sehen Sie im Spam-Ordner nach oder fordern Sie einen neuen Link an."
     },
     "forgot": {
       "title": "Passwort zurücksetzen",
@@ -4557,7 +4634,10 @@
       "email": "E-Mail",
       "submit": "Link senden",
       "sent": "Wenn ein Konto diese Adresse verwendet, ist ein Link zum Zurücksetzen unterwegs. Er gilt 1 Stunde.",
-      "backToSignIn": "Zurück zur Anmeldung"
+      "backToSignIn": "Zurück zur Anmeldung",
+      "sentTitle": "Sehen Sie in Ihr Postfach",
+      "sentNext": "Öffnen Sie den Link in der E-Mail, um ein neues Passwort zu wählen. Nach ein paar Minuten noch nichts da? Sehen Sie im Spam-Ordner nach oder versuchen Sie eine andere Adresse.",
+      "tryAnother": "Andere E-Mail-Adresse verwenden"
     },
     "reset": {
       "title": "Neues Passwort wählen",
@@ -4568,7 +4648,9 @@
       "signIn": "Anmelden",
       "invalidTitle": "Dieser Link hat nicht funktioniert",
       "invalidDescription": "Links zum Zurücksetzen funktionieren einmal, 1 Stunde lang. Fordern Sie einen neuen an.",
-      "requestNew": "Neuen Link anfordern"
+      "requestNew": "Neuen Link anfordern",
+      "backToSignIn": "Zurück zur Anmeldung",
+      "doneTitle": "Passwort geändert"
     },
     "twoFactor": {
       "title": "Bestätigung in zwei Schritten",
@@ -4591,7 +4673,10 @@
       "joinNamed": "Sie wurden eingeladen, {organisation} in PostMind Studio beizutreten.",
       "accept": "Einladung annehmen",
       "notNow": "Nicht jetzt",
-      "unavailable": "Diese Einladung ist abgelaufen, wurde zurückgezogen oder an eine andere E-Mail-Adresse gesendet."
+      "unavailable": "Diese Einladung ist abgelaufen, wurde zurückgezogen oder an eine andere E-Mail-Adresse gesendet.",
+      "unavailableTitle": "Diese Einladung kann nicht verwendet werden",
+      "unavailableNext": "Bitten Sie die Person, die Sie eingeladen hat, eine neue Einladung an die Adresse zu senden, mit der Sie sich anmelden.",
+      "goToStudio": "Zu Studio"
     },
     "support": {
       "noEmail": "Nach einigen Minuten immer noch keine E-Mail? Schreiben Sie an <link>{email}</link>."
@@ -5789,16 +5874,23 @@
   "errorPage": {
     "notFound": {
       "title": "Diese Seite wurde nicht gefunden",
-      "body": "Der Link ist vielleicht veraltet, oder die Seite wurde verschoben.",
+      "body": "Der Link ist vielleicht veraltet oder die Seite wurde verschoben. Prüfen Sie die Adresse oder machen Sie hier weiter.",
       "projects": "Zu den Projekten",
-      "home": "Zur Startseite"
+      "home": "Zur Startseite",
+      "label": "Fehler 404",
+      "goHome": "Zu „Start“",
+      "signIn": "Anmelden"
     },
     "boundary": {
       "title": "Auf dieser Seite ist ein Problem aufgetreten",
-      "body": "Wir haben es protokolliert. Versuchen Sie es erneut oder kehren Sie zu Ihren Projekten zurück.",
+      "body": "Das lag nicht an Ihnen, und wir haben es protokolliert. Versuchen Sie es noch einmal oder kehren Sie zur Startseite zurück.",
       "retry": "Erneut versuchen",
       "projects": "Zu den Projekten",
-      "reference": "Referenz: {digest}"
+      "reference": "Referenz: {digest}",
+      "label": "Etwas ist schiefgelaufen",
+      "goHome": "Zu „Start“",
+      "home": "Zur Startseite",
+      "feedback": "Sagen Sie uns, was passiert ist"
     }
   },
   "hashtags": {
@@ -6320,6 +6412,77 @@
       "blitzBody": "Durch fertige Beiträge wischen.",
       "templates": "Vorlagen",
       "templatesBody": "Mit einem bewährten Format beginnen."
+    }
+  },
+  "images": {
+    "page": {
+      "title": "Bilder",
+      "description": "Beschreib ein Bild und wir erstellen es für dieses Unternehmen. Jedes Bild landet in seiner Bibliothek, bereit für deine Videos.",
+      "wholeLibrary": "Ganze Bildbibliothek"
+    },
+    "pickFirst": {
+      "title": "Wähle zuerst ein Unternehmen",
+      "body": "Bilder werden für ein Unternehmen erstellt und in seiner Bibliothek gespeichert. Wähle oben auf der Seite ein Unternehmen."
+    },
+    "off": {
+      "title": "Bilder sind ausgeschaltet",
+      "body": "Die Bildgenerierung ist für deine Organisation gerade ausgeschaltet. Deine Videos sind nicht betroffen."
+    },
+    "readOnly": "Du kannst dir diese Bilder ansehen. Wer Projekte bearbeiten darf, kann neue erstellen.",
+    "locked": {
+      "title": "Bildgenerierung ist nicht in deinem Tarif",
+      "body": "Früher erstellte Bilder siehst du weiterhin. Prüfe, was dein Tarif enthält, um neue zu erstellen.",
+      "action": "Ansehen, was enthalten ist"
+    },
+    "status": {
+      "generating": "Dein Bild wird erstellt. Das kann bis zu einer Minute dauern.",
+      "ready": "Dein Bild ist fertig – es ist in deiner Bibliothek.",
+      "failed": "Das Bild konnte nicht erstellt werden."
+    },
+    "form": {
+      "aria": "Beschreib dein Bild",
+      "prompt": "Beschreib das Bild",
+      "promptPlaceholder": "Ein Sauerteigbrot auf einem Holzbrett, Morgenlicht, Nahaufnahme",
+      "promptHint": "Sag, was zu sehen ist, wo und welche Stimmung. Text und Logos werden immer weggelassen.",
+      "style": "Stil (optional)",
+      "stylePlaceholder": "Warmes Analogfoto",
+      "shape": "Format",
+      "shapes": {
+        "1x1": "Quadratisch",
+        "4x5": "Hochformat",
+        "9x16": "Hoch, für Stories und Reels",
+        "16x9": "Breit"
+      },
+      "generate": "Bild generieren",
+      "generating": "Wird generiert …",
+      "timing": "Dauert bis zu einer Minute.",
+      "lastPrompt": "Zuletzt: {prompt}",
+      "again": "Erneut generieren"
+    },
+    "results": {
+      "title": "Deine generierten Bilder",
+      "aria": "Generierte Bilder",
+      "loading": "Bilder werden geladen",
+      "pending": "Wird generiert …",
+      "open": "Bild öffnen: {prompt}",
+      "untitled": "Generiertes Bild",
+      "noPreview": "Keine Vorschau",
+      "empty": {
+        "title": "Noch keine generierten Bilder",
+        "body": "Beschreib ein Bild und tippe auf „Generieren“ – deine Bilder sammeln sich hier."
+      },
+      "newer": "Neuere",
+      "older": "Ältere"
+    },
+    "preview": {
+      "title": "Generiertes Bild",
+      "style": "Stil",
+      "size": "Größe",
+      "dimensions": "{width, number} × {height, number} px",
+      "made": "Erstellt",
+      "download": "Herunterladen",
+      "edit": "Prompt bearbeiten",
+      "again": "Erneut generieren"
     }
   }
 }

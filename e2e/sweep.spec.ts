@@ -207,6 +207,8 @@ const WORKSPACE_PAGES = [
   '/calendar',
   '/analytics',
   '/business',
+  // 25.8: Image Studio.
+  '/images',
   '/connections',
   '/approvals',
   '/settings/organisation',
@@ -340,10 +342,10 @@ test('a user with no organisation is sent to the welcome wizard, then sets one u
   // The "… added." toast slides in over the wizard's buttons (bottom corner); wait for it to go
   // so the click is not swallowed by the toast mid-animation.
   await expect(page.locator('[data-sonner-toast]')).toHaveCount(0, { timeout: 15_000 });
-  await page.getByRole('button', { name: 'Skip this step' }).click();
+  await page.getByRole('button', { name: 'Skip for now' }).click();
   await expect(page.getByRole('heading', { name: 'Connect where you post' }).first()).toBeVisible();
   await w.check('/welcome connect');
-  await page.getByRole('button', { name: 'Skip this step' }).click();
+  await page.getByRole('button', { name: 'Skip for now' }).click();
   await expect(page.getByRole('heading', { name: 'Make your first video' }).first()).toBeVisible();
   await w.check('/welcome first video');
   await page.getByRole('button', { name: 'Make my intro video' }).click();
@@ -391,7 +393,7 @@ test('an organisation owner can use every workflow that needs no provider', asyn
   // Projects: every filter tab; a project's panels.
   await w.visit('/projects');
   for (const tab of ['In progress', 'To review', 'Drafts', 'Published', 'Failed', 'All']) {
-    await page.getByRole('tab', { name: tab }).click();
+    await page.getByRole('radio', { name: tab }).click();
     await w.settle();
   }
   await w.check('/projects tabs');
@@ -424,7 +426,7 @@ test('an organisation owner can use every workflow that needs no provider', asyn
   // Publications filters, analytics ranges.
   await w.visit('/publications');
   for (const tab of ['Scheduled', 'Live', 'Failed', 'Cancelled & taken down', 'All']) {
-    await page.getByRole('tab', { name: tab }).click();
+    await page.getByRole('radio', { name: tab }).click();
     await w.settle();
   }
   await w.check('/publications tabs');
@@ -638,7 +640,7 @@ test('a superadmin with no organisation reaches every admin tab', async ({ page 
   w.label('/admin organisations: end trial');
   await page.getByRole('tab', { name: 'Organisations' }).click();
   await page.getByLabel('Search organisations').fill(`Sweep Trial ${run}`);
-  await page.getByRole('button', { name: 'Search' }).click();
+  await page.getByRole('button', { name: 'Search', exact: true }).click();
   await page.getByRole('button', { name: `Open Sweep Trial ${run}` }).click();
   await expect(page.getByText('Running: the trial’s caps apply now.')).toBeVisible();
   const form = page.getByRole('form', { name: 'Set an override' });

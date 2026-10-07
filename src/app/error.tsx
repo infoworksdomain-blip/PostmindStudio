@@ -13,7 +13,7 @@ export default function RootError({
   reset: () => void;
 }) {
   return (
-    <main className="flex min-h-dvh items-center justify-center px-4">
+    <main className="flex min-h-dvh items-center bg-background px-4 sm:px-8">
       <PageErrorView error={error} reset={reset} />
     </main>
   );

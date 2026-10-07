@@ -505,8 +505,11 @@ Plan and audit: the "PostMind Studio Redesign Audit" (Daylight and Darkroom desi
 - [x] **25.4** App shell and navigation: Create / Plan / Library / Insights / Settings, month plans in the nav, mobile business switcher, command menu, sign-in redirect for /blitz, /plans*, /automations*, a home screen.
 - [x] **25.5** Homepage and public site: real renders, pricing and legal restyled, favicon, app icon, link-preview image, optimised media.
 - [ ] **25.6** Sign-in and onboarding: branded auth flows, onboarding progress and skippable steps.
+- [ ] **25.5** Homepage and public site: real renders, pricing and legal restyled, favicon, app icon, link-preview image, optimised media.
+- [x] **25.6** Sign-in and onboarding: branded auth flows, onboarding progress and skippable steps.
 - [ ] **25.7** Create workspace: format rail first, progressive options, live cost and allowance.
 - [ ] **25.8** Video Studio, Image Studio and project review: capability-driven model selector, real job states with measured ETA, player-first review, Image Studio page.
+  - [x] **25.8 (review + Image Studio)** Player-first project review (status & actions column, one "Needs your attention" list, tabs in the URL, pipeline with failed/draft states) and the Image Studio page (/images). The capability-driven model selector is a separate PR.
 - [ ] **25.9** Calendar, month planner, Blitz and automations.
 - [ ] **25.10** Library and My media.
 - [ ] **25.11** Analytics: summary first, scoped to the selected business.

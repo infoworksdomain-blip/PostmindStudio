@@ -77,7 +77,8 @@
         "blitz": "Blitz 快刷",
         "automations": "自动化",
         "home": "首页",
-        "plans": "月度计划"
+        "plans": "月度计划",
+        "images": "图片"
       },
       "newPost": "创建新帖子",
       "collapse": "收起侧边栏",
@@ -1086,7 +1087,10 @@
         "review": "审核",
         "publish": "发布"
       },
-      "done": "（已完成）"
+      "done": "（已完成）",
+      "notStarted": "尚未开始——点击“生成”开始。",
+      "stoppedAt": "在“{step}”步骤停止。",
+      "failedMark": "（在此停止）"
     },
     "paused": {
       "aria": "因预算暂停",
@@ -1324,7 +1328,9 @@
       "staleNote": "此版本渲染后，脚本或镜头已有更改。",
       "rerender": "重新渲染",
       "rerendering": "正在按您的修改重新渲染。",
-      "download": "下载 MP4"
+      "download": "下载 MP4",
+      "watch": "观看",
+      "showing": "播放中"
     },
     "thumbnail": {
       "aria": "封面",
@@ -1380,6 +1386,50 @@
     "actorFallback": {
       "aria": "演员不可用",
       "note": "此视频的部分片段中演员不可用，因此这些片段改用带旁白的视频片段。"
+    },
+    "attention": {
+      "title": "需要你处理",
+      "titleInfo": "供你参考",
+      "tones": {
+        "action": "需要你操作",
+        "warning": "值得一看",
+        "info": "仅供参考"
+      },
+      "items": {
+        "directions": "为这个视频选择一个方向",
+        "ugcRefused": "去掉真实人物后重写简报",
+        "restrictedTopics": "检查简报中的受限话题",
+        "failureFailed": "此视频在完成前停止了",
+        "failureRejected": "有人要求修改",
+        "failureQuality": "质量检查未通过",
+        "budget": "已在此视频的上限处暂停",
+        "autoResume": "已在你的生成上限处暂停",
+        "safetyReview": "正在等待安全审核",
+        "automation": "自动发布需要你看一下",
+        "music": "无法添加背景音乐",
+        "sfx": "无法添加音效",
+        "queued": "排队中——即将开始",
+        "fallback": "使用备用服务商制作",
+        "presenterFallback": "主持人当时不可用",
+        "actorFallback": "演员当时不可用"
+      }
+    },
+    "status": {
+      "publish": "发布",
+      "posts": "帖子与排期",
+      "announceAttention": "{state}。{count, plural, =0 {} other {有 # 项需要你处理。}}",
+      "details": "详情"
+    },
+    "player": {
+      "aria": "视频播放器",
+      "formats": "格式",
+      "working": "第一个格式就绪后，你的视频会显示在这里。",
+      "none": "还没有视频。"
+    },
+    "menu": {
+      "trigger": "更多操作",
+      "download": "下载视频",
+      "templateDescription": "保留此视频的格式、镜头结构和发布设置，用它们开始新视频。"
     }
   },
   "slideshow": {
@@ -2159,7 +2209,8 @@
       "gridAria": "图片库",
       "newer": "较新",
       "older": "较早",
-      "stockNotConfigured": "图库照片尚未设置，因此没有可刷新的内容。你网站上的照片、上传的图片和生成的图片仍可使用。"
+      "stockNotConfigured": "图库照片尚未设置，因此没有可刷新的内容。你网站上的照片、上传的图片和生成的图片仍可使用。",
+      "openStudio": "图片工作室"
     },
     "profile": {
       "fields": {
@@ -3668,21 +3719,22 @@
       "title": "欢迎"
     },
     "steps": {
-      "connect": "连接账号",
-      "brandKit": "品牌套件",
+      "connect": "渠道",
+      "brandKit": "品牌",
       "firstVideo": "首个视频",
-      "celebrate": "庆祝上线",
+      "celebrate": "完成",
       "organisation": "组织",
       "business": "业务"
     },
     "stepIndicator": {
       "aria": "设置进度",
-      "done": "（已完成）"
+      "done": "（已完成）",
+      "position": "第 {current} 步，共 {total} 步"
     },
     "wizard": {
       "eyebrow": "欢迎",
       "title": "一起制作你的第一个视频",
-      "description": "只需几个步骤：您的组织和业务、您的品牌、一个已连接的账号，然后是您的第一个视频。",
+      "description": "只需几个步骤：您的组织和业务、您的品牌、您的渠道，然后是您的第一个视频。",
       "skipSetup": "跳过设置",
       "loading": "正在加载设置",
       "skipped": {
@@ -3697,17 +3749,18 @@
       },
       "currentStep": "当前步骤",
       "saving": "正在保存",
-      "skipStep": "跳过此步骤",
+      "skipStep": "暂时跳过",
       "finish": "完成"
     },
     "connect": {
       "title": "连接你的发布渠道",
       "description": "Studio 可直接发布到 TikTok、YouTube、Instagram、Facebook、X 和 LinkedIn。请至少连接一个账号，以便发布你的第一个视频。",
       "loading": "正在加载账号",
-      "connectedAria": "已连接的账号",
+      "connectedAria": "您的渠道",
       "none": "尚未连接任何账号。",
       "connectAnother": "再连接一个账号",
-      "openConnections": "打开“连接”"
+      "openConnections": "打开“连接”",
+      "notConnected": "未连接"
     },
     "brandKit": {
       "title": "三步设置你的品牌",
@@ -3740,6 +3793,14 @@
         "calm": "沉稳",
         "witty": "风趣",
         "premium": "高端"
+      },
+      "scanWebsite": "有网站吗？扫描网站来充实您的图片库",
+      "preview": {
+        "label": "预览",
+        "kicker": "您的品牌",
+        "headline": "您的视频将是这个样子",
+        "noFont": "默认字体",
+        "noTone": "尚未选择语气"
       }
     },
     "firstVideo": {
@@ -3779,13 +3840,21 @@
         "body": "“{name}”尚未发布。请审阅并批准，然后发布——上线的那一刻我们会在这里庆祝。",
         "action": "打开你的视频"
       },
-      "planMonth": "或者让 Studio 为你规划并排期整个月"
+      "planMonth": "或者让 Studio 为你规划并排期整个月",
+      "next": {
+        "title": "接下来",
+        "review": "Studio 会完成您的视频。准备好后请审阅。",
+        "publish": "批准后，Studio 会立即或按计划发布到您的渠道。",
+        "insights": "洞察会显示每条视频的表现，让下一条更出色。",
+        "home": "前往首页"
+      }
     },
     "finished": {
       "title": "一切就绪",
       "description": "Studio 已准备好为你的商家制作和发布视频。",
       "makeAnother": "再制作一个视频",
-      "goToProjects": "前往项目"
+      "goToProjects": "前往项目",
+      "goHome": "前往首页"
     },
     "organisation": {
       "title": "为您的组织命名",
@@ -4483,7 +4552,11 @@
   },
   "auth": {
     "shell": {
-      "brand": "PostMind Studio"
+      "brand": "PostMind Studio",
+      "panelLabel": "关于 PostMind Studio",
+      "valueStatement": "只需几句话介绍您的业务，就能为每个渠道制作短视频。",
+      "valueDetail": "Studio 会撰写脚本，按您的品牌制作视频，并在您连接的渠道上排期发布。",
+      "panelAlt": "PostMind Studio 中一条酸面包的 TikTok 视频，已通过质量检查。"
     },
     "errors": {
       "invalidCredentials": "该邮箱和密码与任何账户都不匹配。",
@@ -4521,7 +4594,8 @@
       "password": "密码",
       "submit": "登录",
       "forgot": "忘记密码？",
-      "noAccount": "创建账户"
+      "noAccount": "创建账户",
+      "newHere": "第一次使用 PostMind Studio？"
     },
     "google": {
       "or": "或",
@@ -4537,7 +4611,9 @@
       "submit": "创建账户",
       "haveAccount": "已有账户？登录",
       "closedTitle": "仅限受邀",
-      "closedDescription": "目前仅支持受邀注册新账户。请让团队成员邀请您。"
+      "closedDescription": "目前仅支持受邀注册新账户。请让团队成员邀请您。",
+      "closedNext": "已经收到邀请？打开邀请邮件中的链接即可设置您的账号。",
+      "closedSignIn": "登录"
     },
     "verify": {
       "title": "请查收邮件",
@@ -4549,7 +4625,8 @@
       "resent": "如果该地址需要确认，我们已发送新链接。",
       "email": "邮箱",
       "resend": "发送新链接",
-      "backToSignIn": "返回登录"
+      "backToSignIn": "返回登录",
+      "resendPrompt": "还没收到？请查看垃圾邮件文件夹，或重新发送链接。"
     },
     "forgot": {
       "title": "重置密码",
@@ -4557,7 +4634,10 @@
       "email": "邮箱",
       "submit": "发送重置链接",
       "sent": "如果有账户使用该地址，重置链接正在发送中，1 小时内有效。",
-      "backToSignIn": "返回登录"
+      "backToSignIn": "返回登录",
+      "sentTitle": "请查看您的收件箱",
+      "sentNext": "打开邮件中的链接以设置新密码。几分钟后仍未收到？请查看垃圾邮件文件夹，或换一个邮箱地址试试。",
+      "tryAnother": "使用其他邮箱"
     },
     "reset": {
       "title": "设置新密码",
@@ -4568,7 +4648,9 @@
       "signIn": "登录",
       "invalidTitle": "该链接无效",
       "invalidDescription": "重置链接仅可使用一次，1 小时内有效。请重新获取。",
-      "requestNew": "获取新链接"
+      "requestNew": "获取新链接",
+      "backToSignIn": "返回登录",
+      "doneTitle": "密码已更改"
     },
     "twoFactor": {
       "title": "两步验证",
@@ -4591,7 +4673,10 @@
       "joinNamed": "您受邀加入 PostMind Studio 上的 {organisation}。",
       "accept": "接受邀请",
       "notNow": "以后再说",
-      "unavailable": "此邀请已过期、已被撤销，或发送到了其他邮箱。"
+      "unavailable": "此邀请已过期、已被撤销，或发送到了其他邮箱。",
+      "unavailableTitle": "此邀请无法使用",
+      "unavailableNext": "请邀请您的人向您登录所用的邮箱重新发送邀请。",
+      "goToStudio": "前往 Studio"
     },
     "support": {
       "noEmail": "几分钟后仍未收到邮件？请联系 <link>{email}</link>。"
@@ -5789,16 +5874,23 @@
   "errorPage": {
     "notFound": {
       "title": "找不到该页面",
-      "body": "链接可能已过期，或页面已移动。",
+      "body": "链接可能已过期，或页面已移动。请检查地址，或从这里继续。",
       "projects": "前往项目",
-      "home": "前往首页"
+      "home": "前往首页",
+      "label": "错误 404",
+      "goHome": "前往首页",
+      "signIn": "登录"
     },
     "boundary": {
       "title": "此页面出现问题",
-      "body": "我们已记录此问题。请重试，或返回你的项目。",
+      "body": "这不是您的操作导致的，我们已记录此问题。请重试，或返回首页。",
       "retry": "重试",
       "projects": "前往项目",
-      "reference": "参考编号：{digest}"
+      "reference": "参考编号：{digest}",
+      "label": "出了点问题",
+      "goHome": "前往首页",
+      "home": "前往首页",
+      "feedback": "告诉我们发生了什么"
     }
   },
   "hashtags": {
@@ -6320,6 +6412,77 @@
       "blitzBody": "快速浏览现成的帖子。",
       "templates": "模板",
       "templatesBody": "从经过验证的格式开始。"
+    }
+  },
+  "images": {
+    "page": {
+      "title": "图片",
+      "description": "描述一张图片，我们会为这家企业生成。每张图片都会保存到它的图库中，可直接用于你的视频。",
+      "wholeLibrary": "完整图库"
+    },
+    "pickFirst": {
+      "title": "请先选择企业",
+      "body": "图片为某一家企业生成，并保存在它的图库中。请在页面顶部选择一家企业。"
+    },
+    "off": {
+      "title": "图片功能已关闭",
+      "body": "你的组织目前已关闭图片生成。你的视频不受影响。"
+    },
+    "readOnly": "你可以查看这些图片。有项目编辑权限的人可以生成新图片。",
+    "locked": {
+      "title": "你的套餐不包含图片生成",
+      "body": "你仍可查看之前生成的图片。查看套餐包含的内容即可开始生成新图片。",
+      "action": "查看包含内容"
+    },
+    "status": {
+      "generating": "正在生成你的图片，最多需要一分钟。",
+      "ready": "你的图片已就绪——已保存到图库。",
+      "failed": "无法生成图片。"
+    },
+    "form": {
+      "aria": "描述你的图片",
+      "prompt": "描述这张图片",
+      "promptPlaceholder": "木板上的一条酸面包，清晨光线，特写",
+      "promptHint": "说明画面里有什么、在哪里、是什么氛围。文字和标志始终会被省略。",
+      "style": "风格（可选）",
+      "stylePlaceholder": "温暖的胶片照片",
+      "shape": "比例",
+      "shapes": {
+        "1x1": "方形",
+        "4x5": "竖版",
+        "9x16": "高竖版，适合快拍和短视频",
+        "16x9": "横版"
+      },
+      "generate": "生成图片",
+      "generating": "正在生成…",
+      "timing": "最多需要一分钟。",
+      "lastPrompt": "上一次：{prompt}",
+      "again": "再次生成"
+    },
+    "results": {
+      "title": "你生成的图片",
+      "aria": "已生成的图片",
+      "loading": "正在加载图片",
+      "pending": "正在生成…",
+      "open": "打开图片：{prompt}",
+      "untitled": "生成的图片",
+      "noPreview": "无预览",
+      "empty": {
+        "title": "还没有生成的图片",
+        "body": "描述一张图片并点击“生成”——你的图片会汇集在这里。"
+      },
+      "newer": "较新",
+      "older": "较早"
+    },
+    "preview": {
+      "title": "生成的图片",
+      "style": "风格",
+      "size": "尺寸",
+      "dimensions": "{width, number} × {height, number} 像素",
+      "made": "生成时间",
+      "download": "下载",
+      "edit": "编辑提示词",
+      "again": "再次生成"
     }
   }
 }

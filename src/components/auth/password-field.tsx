@@ -1,12 +1,13 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { IconButton } from '@/components/ui/icon-button';
 import { cn } from '@/lib/utils';
+import { authErrorField, FieldError } from './auth-card';
 
 // Phase 18 §5.1: passwords are 12–128 characters. The meter is guidance only; the server rejects
 // short and breached passwords (HIBP) whatever the meter says.
@@ -28,7 +29,8 @@ export function passwordStrength(password: string): Strength {
 }
 
 const LEVELS = ['tooShort', 'weak', 'fair', 'good', 'strong'] as const;
-const BAR = ['bg-muted', 'bg-destructive', 'bg-warning', 'bg-primary', 'bg-success'];
+// 25.6: the signal colour is kept for primary actions; the meter climbs from error to success.
+const BAR = ['bg-muted', 'bg-destructive', 'bg-warning', 'bg-success/60', 'bg-success'];
 
 export function PasswordField({
   value,
@@ -36,23 +38,32 @@ export function PasswordField({
   autoComplete,
   label,
   showStrength = false,
+  error,
 }: {
   value: string;
   onChange: (value: string) => void;
   autoComplete: 'current-password' | 'new-password';
   label: string;
   showStrength?: boolean;
+  /** The last submit's error: shown under the field when it is about the password. */
+  error?: unknown;
 }) {
   const t = useTranslations('auth.password');
   const id = useId();
   const hintId = `${id}-hint`;
+  const errorId = `${id}-error`;
+  const inputRef = useRef<HTMLInputElement>(null);
   const [visible, setVisible] = useState(false);
   const strength = passwordStrength(value);
+  const invalid = authErrorField(error) === 'password';
+  const describedBy =
+    [invalid ? errorId : null, showStrength ? hintId : null].filter(Boolean).join(' ') || undefined;
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
       <div className="relative">
         <Input
+          ref={inputRef}
           id={id}
           type={visible ? 'text' : 'password'}
           value={value}
@@ -61,8 +72,9 @@ export function PasswordField({
           required
           minLength={autoComplete === 'new-password' ? PASSWORD_MIN : undefined}
           maxLength={PASSWORD_MAX}
-          aria-describedby={showStrength ? hintId : undefined}
-          className="h-10 pe-10"
+          aria-describedby={describedBy}
+          aria-invalid={invalid || undefined}
+          className="h-10 pe-11"
         />
         <IconButton
           type="button"
@@ -74,6 +86,7 @@ export function PasswordField({
           {visible ? <EyeOff /> : <Eye />}
         </IconButton>
       </div>
+      <FieldError id={errorId} error={error} field="password" inputRef={inputRef} />
       {showStrength && (
         <div id={hintId} aria-live="polite">
           <div className="flex gap-1" aria-hidden="true">
@@ -87,7 +100,7 @@ export function PasswordField({
               />
             ))}
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1.5 text-xs text-foreground-secondary">
             {t(`strength.${LEVELS[strength]}`)} · {t('rule', { min: PASSWORD_MIN })}
           </p>
         </div>
