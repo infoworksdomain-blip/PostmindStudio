@@ -158,6 +158,40 @@ describe('stockImageForSlide (20.26)', () => {
     expect(vi.mocked(pixabay.search).mock.calls[0]?.[0].query).toHaveLength(100);
   });
 
+  // 25.x: the relevance screen sees the hits before anything is stored.
+  it('stores only hits the screen keeps; all rejected → the next source', async () => {
+    const pixabay = source('pixabay', async () => [hit('pixabay', 'pup'), hit('pixabay', 'gym')]);
+    const unsplash = source('unsplash', async () => [hit('unsplash', 'u1')]);
+    storeMock.mockImplementation(async (_d, _s, _src, h: StockHit) => ({
+      status: 'created',
+      id: `lib-${h.providerImageId}`,
+    }));
+    const keepGym = vi.fn(async (_q: string, hits: readonly StockHit[]) =>
+      hits.filter((h) => h.providerImageId === 'gym'),
+    );
+    const d = deps(() => ({ primary: [pixabay], fallback: [unsplash] }));
+
+    expect(await stockImageForSlide(d, scope, { ...input, screen: keepGym })).toEqual({
+      id: 'lib-gym',
+      provider: 'pixabay',
+    });
+    expect(keepGym).toHaveBeenCalledWith('Open with the outcome', expect.any(Array));
+    expect(storeMock).toHaveBeenCalledTimes(1); // the rejected puppy was never stored
+
+    storeMock.mockClear();
+    const rejectPixabay = vi.fn(async (_q: string, hits: readonly StockHit[]) =>
+      hits.filter((h) => h.provider === 'unsplash'),
+    );
+    expect(await stockImageForSlide(d, scope, { ...input, screen: rejectPixabay })).toEqual({
+      id: 'lib-u1',
+      provider: 'unsplash',
+    });
+    expect(rejectPixabay).toHaveBeenCalledTimes(2);
+
+    const rejectAll = vi.fn(async () => []);
+    expect(await stockImageForSlide(d, scope, { ...input, screen: rejectAll })).toBeNull();
+  });
+
   it('maps aspect ratios to stock orientations', () => {
     expect(orientationFor('16:9')).toBe('landscape');
     expect(orientationFor('1:1')).toBe('square');

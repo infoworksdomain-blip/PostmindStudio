@@ -22,6 +22,8 @@ const LIGHT: readonly TextTask[] = [
   'wall_text',
   'blitz_angles',
   'clip_text_check',
+  'slide_image_query',
+  'slide_image_check',
 ];
 const STANDARD: readonly TextTask[] = [
   'ideation',

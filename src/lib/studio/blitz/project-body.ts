@@ -46,9 +46,13 @@ export interface BodyOptions {
 type ProjectBody = z.input<typeof createProjectInput>;
 
 export const CARD_VIDEO_SEC = 15;
-/** The text a slide's photo is searched by: its own query, else its line. */
-const queryOf = (copy: CardCopy, index: number, fallback: string) =>
-  (copy.imageQueries?.[index] ?? '').trim() || fallback;
+/**
+ * The card writer's visual hint for body line `index`, if any. 25.x: never the line itself — with
+ * no hint the slide has no imageQuery and populate builds one from the topic, the business and
+ * the line (slideshow/visual-query.ts); the caption alone found unrelated stock photos.
+ */
+const hintOf = (copy: CardCopy, index: number): string | undefined =>
+  (copy.imageQueries?.[index] ?? '').trim().slice(0, 300) || undefined;
 
 export function carouselThread(copy: CardCopy): string {
   return [copy.hook, ...copy.body, ...(copy.cta ? [copy.cta] : [])]
@@ -65,11 +69,16 @@ function targetFormats(platforms: readonly Platform[], durationSec: number) {
 }
 
 function slideshowSlides(copy: CardCopy) {
-  const headline = (role: 'hook' | 'cta', text: string, query: string) => ({
+  const headline = (role: 'hook' | 'cta', text: string, query: string | undefined) => ({
     slideType: 'IMAGE_STILL' as const,
     durationSec: PLAN_PHOTO_SLIDE_SEC,
     transitionIn: 'fade' as const,
-    content: { role, text: text.slice(0, 300), imageQuery: query.slice(0, 300), headline: true },
+    content: {
+      role,
+      text: text.slice(0, 300),
+      ...(query && { imageQuery: query }),
+      headline: true,
+    },
   });
   const photo = (text: string, index: number) => ({
     slideType: 'IMAGE_KENBURNS' as const,
@@ -79,13 +88,13 @@ function slideshowSlides(copy: CardCopy) {
     content: {
       role: 'body' as const,
       text: text.slice(0, 300),
-      imageQuery: queryOf(copy, index, text).slice(0, 300),
+      ...(hintOf(copy, index) && { imageQuery: hintOf(copy, index) }),
     },
   });
   return [
-    headline('hook', copy.hook, copy.title),
+    headline('hook', copy.hook, undefined),
     ...copy.body.map(photo),
-    headline('cta', copy.cta || copy.title, queryOf(copy, copy.body.length - 1, copy.title)),
+    headline('cta', copy.cta || copy.title, hintOf(copy, copy.body.length - 1)),
   ];
 }
 
