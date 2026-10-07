@@ -130,7 +130,7 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
   return (
     <LiveProjectsProvider value={live}>
       <PageHeader
-        eyebrow={tn('manage')}
+        eyebrow={tn('plan')}
         title={t('title')}
         description={t('description')}
         actions={

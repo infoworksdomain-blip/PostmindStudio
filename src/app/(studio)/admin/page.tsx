@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
+import { PageSkeleton } from '@/components/studio/page-skeleton';
 import { AdminCentre } from '@/components/studio/admin/admin-centre';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -12,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 // boundary for static rendering.
 export default function AdminPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<PageSkeleton />}>
       <AdminCentre />
     </Suspense>
   );

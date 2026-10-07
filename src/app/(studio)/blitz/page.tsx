@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { PageSkeleton } from '@/components/studio/page-skeleton';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { BlitzScreen } from '@/components/studio/blitz/blitz-screen';
@@ -10,7 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function BlitzPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<PageSkeleton />}>
       <BlitzScreen />
     </Suspense>
   );

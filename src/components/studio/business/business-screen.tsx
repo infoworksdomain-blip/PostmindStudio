@@ -53,7 +53,7 @@ export function BusinessScreen() {
 
   return (
     <>
-      <PageHeader eyebrow={tn('setup')} title={t('title')} description={t('description')} />
+      <PageHeader eyebrow={tn('library')} title={t('title')} description={t('description')} />
       {ready && !businessId && (
         <EmptyState
           media="business"

@@ -142,7 +142,7 @@ export function ConnectionsScreen({
   return (
     <>
       <PageHeader
-        eyebrow={tn('setup')}
+        eyebrow={tn('settings')}
         title={t('title')}
         description={metaInfo?.connect === 'studio' ? t('descriptionStandalone') : t('description')}
       />
