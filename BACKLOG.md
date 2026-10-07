@@ -488,3 +488,23 @@ Plan: `plans/phase-19.md`. Operator instruction (2026-09-29): complete everythin
 
 - [x] **24.1** fal.ai video provider (OPT-IN, plans/24.1-fal-video.md): a `fal` adapter over fal's queue API (`Authorization: Key <FAL_KEY>`, submit → status → response, cancel while queued, pricing-endpoint health check) for MiniMax H3 Max (`minimax/h3-max/text-to-video` / `image-to-video`, $0.08/s at 768p), LTX-2.3 Fast (`fal-ai/ltx-2.3/text-to-video/fast` / `image-to-video/fast`, $0.06/s at 1080p, 6–20 s) and Veo 3.1 Lite (`fal-ai/veo3.1/lite` / `lite/image-to-video`, $0.03/s at 720p silent, 4–8 s); prices in pricing.ts with sources; fal errors mapped (401/403 auth, 402 or balance wording insufficient_credits, 429 rate_limited, 422 invalid_request or content_policy, 504 timeout, runner errors provider_unavailable); clips copied to the assets bucket at once like every clip. Registered only when `STUDIO_FAL_VIDEO_MODELS` lists models (with `FAL_KEY`); then the router's existing `fal` slot (BASIC after Veo) and a new last-resort slot on paid tiers. `createFalModelAdapter(model, …)` targets one model directly for scripts / bake-offs. Not done: no live clip yet (no key), no fal simulation in the load-test harness.
 - [x] **23.6** Capacity under load: rolling generation for month plans and automations (72 h lead window, first 3 posts at once, late posts first; allowance still reserved at approval; "Scheduled to be created on" in the calendars, 11 locales), asynchronous Shotstack renders (compose-video submits and returns; delayed poll-render or the render callback records each render exactly once; timeouts and retries kept), a studio-render lane (WORKER_CONCURRENCY_RENDER) with runners at high priority, smaller BullMQ retention for Redis headroom, and a queue-capacity model (100 orgs × a month: initial backlog 32.7 h → 55 min)
+
+## Phase 25 — Premium redesign (operator request 2026-10-07)
+
+Plan and audit: the "PostMind Studio Redesign Audit" (Daylight and Darkroom design system, phases 2–16). Each phase is its own PR; tokens, layout and behaviour stay test-green and screenshotted light/dark × phone/desktop.
+
+- [x] **25.2** Tokens and themes: Daylight and Darkroom tokens mapped onto the shadcn variables (canvas/surface/raised/active, line/line-strong, ink 1–3, signal, data, success/warning/error with text-safe foregrounds and soft washes, scrim, charts, role radii, elevation, motion, z-index, section rhythm), WCAG AA contrast test for both themes, film grain removed, Geist + Geist Mono replace Inter + Instrument Serif, Light / Dark / System (default System) in the account menu, top bar and a new Appearance section on /account/profile, amber/emerald/black/white chrome replaced with tokens, RTL check extended to `src/components/ui`.
+- [ ] **25.3** Core components: one primitive per job (ConfirmDialog, Select, ChoiceChips, SegmentedControl, Badge/StatusPill, Tooltip, DataTable, MediaTile, …), raw elements migrated.
+- [ ] **25.4** App shell and navigation: Create / Plan / Library / Insights / Settings, month plans in the nav, mobile business switcher, command menu, sign-in redirect for /blitz, /plans*, /automations*, a home screen.
+- [ ] **25.5** Homepage and public site: real renders, pricing and legal restyled, favicon, app icon, link-preview image, optimised media.
+- [ ] **25.6** Sign-in and onboarding: branded auth flows, onboarding progress and skippable steps.
+- [ ] **25.7** Create workspace: format rail first, progressive options, live cost and allowance.
+- [ ] **25.8** Video Studio, Image Studio and project review: capability-driven model selector, real job states with measured ETA, player-first review, Image Studio page.
+- [ ] **25.9** Calendar, month planner, Blitz and automations.
+- [ ] **25.10** Library and My media.
+- [ ] **25.11** Analytics: summary first, scoped to the selected business.
+- [ ] **25.12** Connections, settings, billing and account (regrouped settings).
+- [ ] **25.13** Admin: sectioned side menu, URL-synced tabs, dense tables.
+- [ ] **25.14** Responsive, accessibility (WCAG 2.2 AA, axe on every route) and performance.
+- [ ] **25.15** Regression: every route in four modes, main journeys end to end, old-design sweep.
+- [ ] **25.16** Redesign report (route matrix, scores) and demo + live updated.

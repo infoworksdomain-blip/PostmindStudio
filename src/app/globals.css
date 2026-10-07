@@ -245,6 +245,12 @@
 
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
 
+  /* Section rhythm on the 4px grid (gap-rhythm-section, py-rhythm-page, …). */
+  --spacing-rhythm-tight: 1rem;
+  --spacing-rhythm-base: 1.5rem;
+  --spacing-rhythm-section: 3rem;
+  --spacing-rhythm-page: 5rem;
+
   --animate-rec: rec 1.6s ease-in-out infinite;
   /* Phase 18 landing page: the sample frames drift gently (transform only). */
   --animate-drift: drift 9s ease-in-out infinite;
