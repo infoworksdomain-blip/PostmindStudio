@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { getLocale, getMessages } from 'next-intl/server';
-// Self-hosted fonts (no build-time call to Google Fonts). Two families (web performance rules):
-// Instrument Serif for display, Inter for UI.
-import '@fontsource-variable/inter';
-import '@fontsource/instrument-serif/400.css';
-import '@fontsource/instrument-serif/400-italic.css';
+// Self-hosted fonts (no build-time call to Google Fonts). 25.2: Geist for UI and headlines,
+// Geist Mono for data, timecodes and prices (both OFL-1.1, variable weight).
+import '@fontsource-variable/geist';
+import '@fontsource-variable/geist/wght-italic.css';
+import '@fontsource-variable/geist-mono';
 import { directionOf } from '@/lib/i18n/locales';
 import type { Messages } from '@/lib/i18n/messages';
 import { Providers } from './providers';

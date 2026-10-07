@@ -5,121 +5,216 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * BACKLOG 10.1 — Studio design tokens.
- * PostMind's design-system tokens are not in /docs (playbook Workstream F: "does Studio use
- * PostMind's existing tokens or need extensions?"). These are Studio's own, defined as the
- * shadcn/ui CSS variables so aligning with PostMind later is a one-file change.
+ * BACKLOG 25.2 — "Daylight and Darkroom" design tokens (Phase 25 premium redesign).
  *
- * Direction: an editorial production studio — warm paper canvas, ink text, one vermilion
- * "record" accent reserved for primary actions and live states, deep teal for data.
+ * Neutral, cool-grey canvases and one vermilion "signal" reserved for primary actions and
+ * live / generating states. Teal ("data") is for charts and informational marks only. The
+ * semantic names (canvas, surface, raised, active, line, ink 1–3, signal, data, status) are
+ * mapped onto the existing shadcn variables so every primitive adapts without edits:
+ *
+ *   background = canvas · card = surface · popover = surface (light) / raised (dark)
+ *   primary = signal · secondary = muted = accent = raised (hover wash, no hue)
+ *   muted-foreground = ink-3 · destructive = error · border = line · ring = signal
+ *
+ * Status colours come in three parts: `--x` (fills, icons, borders; ≥3:1 on the canvas),
+ * `--x-foreground` (readable text tone on the canvas, a surface or the soft wash; ≥4.5:1) and
+ * `--x-soft` (a quiet tinted wash for notices). Text on a solid status or signal fill uses
+ * `text-primary-foreground` / `text-background`. test/unit/design-tokens-contrast.test.ts parses
+ * this file and asserts the WCAG AA pairs for both themes: change a value, run it.
+ *
+ * Deliberate deviations from the approved table, all for WCAG AA (PROGRESS 25.2): light ink-3
+ * is L 0.53 not 0.56 (0.56 was 4.45:1 on the canvas); light signal is L 0.56 not 0.58 (text on
+ * signal-soft was 4.0:1); `--input` (form-field edges) is darker than `--border-strong` so a
+ * field's boundary reaches 3:1 (WCAG 1.4.11), while `--border-strong` keeps the approved value.
  */
 :root {
   --radius: 0.625rem;
+  /* Radius by role: rounded-control (buttons, chips), rounded-field (inputs), rounded-panel. */
+  --radius-control-size: 6px;
+  --radius-field-size: 10px;
+  --radius-panel-size: 16px;
 
-  --background: oklch(0.975 0.008 80); /* paper */
-  --foreground: oklch(0.2 0.012 60); /* ink */
-  --card: oklch(0.992 0.004 80);
-  --card-foreground: oklch(0.2 0.012 60);
-  --popover: oklch(0.995 0.003 80);
-  --popover-foreground: oklch(0.2 0.012 60);
+  /* Daylight */
+  --canvas: oklch(0.985 0.002 250);
+  --surface: oklch(1 0 0);
+  --surface-raised: oklch(0.965 0.003 250);
+  --surface-active: oklch(0.94 0.004 250);
+  --line: oklch(0.9 0.004 250);
+  --line-strong: oklch(0.82 0.006 250);
+  --ink: oklch(0.2 0.01 255);
+  --ink-2: oklch(0.42 0.01 255);
+  --ink-3: oklch(0.53 0.01 255);
 
-  /* vermilion — record / primary action. 20.31: darkened from L 0.6 so text-primary meets AA (4.5:1). */
-  --primary: oklch(0.53 0.19 35);
-  --primary-foreground: oklch(0.985 0.005 80);
-  --secondary: oklch(0.93 0.015 75);
-  --secondary-foreground: oklch(0.25 0.015 60);
-  --muted: oklch(0.945 0.01 78);
-  --muted-foreground: oklch(0.47 0.015 65);
-  --accent: oklch(0.92 0.03 190); /* pale teal wash */
-  --accent-foreground: oklch(0.32 0.06 200);
-  --destructive: oklch(0.5 0.22 27);
-  --success: oklch(0.48 0.13 155);
-  --warning: oklch(0.75 0.15 75);
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --foreground-secondary: var(--ink-2);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
 
-  --border: oklch(0.88 0.012 75);
-  --input: oklch(0.86 0.014 75);
-  --ring: oklch(0.6 0.19 35);
+  /* signal — brand vermilion: primary actions and live / generating states only. */
+  --primary: oklch(0.56 0.2 32);
+  --primary-foreground: oklch(0.99 0.003 32);
+  --signal-soft: oklch(0.96 0.022 32);
+  --secondary: var(--surface-raised);
+  --secondary-foreground: var(--ink);
+  --muted: var(--surface-raised);
+  --muted-foreground: var(--ink-3);
+  --accent: var(--surface-raised);
+  --accent-foreground: var(--ink);
 
-  --chart-1: oklch(0.45 0.08 200); /* deep teal */
-  --chart-2: oklch(0.6 0.19 35); /* vermilion */
-  --chart-3: oklch(0.72 0.12 85); /* ochre */
-  --chart-4: oklch(0.55 0.09 150); /* sage */
-  --chart-5: oklch(0.45 0.06 300); /* plum */
+  /* data — teal for charts and informational marks. */
+  --data: oklch(0.5 0.08 205);
+  --data-soft: oklch(0.96 0.02 205);
 
-  --sidebar: oklch(0.955 0.012 78);
-  --sidebar-foreground: oklch(0.25 0.015 60);
-  --sidebar-primary: oklch(0.53 0.19 35);
-  --sidebar-primary-foreground: oklch(0.985 0.005 80);
-  --sidebar-accent: oklch(0.91 0.02 78);
-  --sidebar-accent-foreground: oklch(0.2 0.012 60);
-  --sidebar-border: oklch(0.88 0.012 75);
-  --sidebar-ring: oklch(0.6 0.19 35);
+  --destructive: oklch(0.55 0.19 27);
+  --destructive-foreground: oklch(0.5 0.19 27);
+  --destructive-soft: oklch(0.96 0.022 27);
+  --success: oklch(0.52 0.12 155);
+  --success-foreground: oklch(0.45 0.1 155);
+  --success-soft: oklch(0.96 0.025 155);
+  --warning: oklch(0.62 0.13 70);
+  --warning-foreground: oklch(0.47 0.1 65);
+  --warning-soft: oklch(0.965 0.03 75);
+
+  --border: var(--line);
+  --border-strong: var(--line-strong);
+  --input: oklch(0.65 0.008 250);
+  --ring: oklch(0.56 0.2 32);
+
+  /* Scrim behind text and controls laid over video or images (both themes). */
+  --scrim: oklch(0 0 0 / 55%);
+
+  /* Charts: data teal first, signal second, then muted ochre, sage, slate-violet. */
+  --chart-1: oklch(0.5 0.08 205);
+  --chart-2: oklch(0.56 0.2 32);
+  --chart-3: oklch(0.64 0.12 75);
+  --chart-4: oklch(0.58 0.08 150);
+  --chart-5: oklch(0.5 0.08 290);
+
+  /* The sidebar is a quiet step off the canvas. */
+  --sidebar: oklch(0.975 0.003 250);
+  --sidebar-foreground: var(--ink-2);
+  --sidebar-primary: oklch(0.56 0.2 32);
+  --sidebar-primary-foreground: oklch(0.99 0.003 32);
+  --sidebar-accent: var(--surface-active);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--line);
+  --sidebar-ring: oklch(0.56 0.2 32);
+
+  /* Elevation: soft, low, cool shadows in daylight (shadow-raised / -overlay / -modal). */
+  --elevation-raised: 0 1px 2px oklch(0.2 0.01 255 / 6%), 0 1px 1px oklch(0.2 0.01 255 / 4%);
+  --elevation-overlay:
+    0 8px 24px -6px oklch(0.2 0.01 255 / 14%), 0 2px 6px oklch(0.2 0.01 255 / 6%);
+  --elevation-modal:
+    0 24px 64px -12px oklch(0.2 0.01 255 / 24%), 0 4px 12px oklch(0.2 0.01 255 / 8%);
+
+  /* Motion: duration-(--duration-base) ease-standard. */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+
+  /* Z-index scale: z-(--z-overlay). */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 20;
+  --z-overlay: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+  --z-tooltip: 70;
 }
 
 .dark {
-  --background: oklch(0.17 0.008 60); /* darkroom */
-  --foreground: oklch(0.94 0.01 80);
-  --card: oklch(0.21 0.009 60);
-  --card-foreground: oklch(0.94 0.01 80);
-  --popover: oklch(0.22 0.01 60);
-  --popover-foreground: oklch(0.94 0.01 80);
+  /* Darkroom */
+  --canvas: oklch(0.16 0.005 255);
+  --surface: oklch(0.195 0.006 255);
+  --surface-raised: oklch(0.235 0.007 255);
+  --surface-active: oklch(0.27 0.008 255);
+  --line: oklch(1 0 0 / 9%);
+  --line-strong: oklch(1 0 0 / 16%);
+  --ink: oklch(0.95 0.004 250);
+  --ink-2: oklch(0.76 0.006 250);
+  --ink-3: oklch(0.62 0.008 250);
 
-  --primary: oklch(0.68 0.18 38);
-  --primary-foreground: oklch(0.17 0.008 60);
-  --secondary: oklch(0.27 0.01 60);
-  --secondary-foreground: oklch(0.92 0.01 80);
-  --muted: oklch(0.25 0.009 60);
-  --muted-foreground: oklch(0.7 0.012 70);
-  --accent: oklch(0.3 0.04 200);
-  --accent-foreground: oklch(0.9 0.03 190);
-  --destructive: oklch(0.72 0.17 27); /* 20.31: text-destructive on destructive/10 was 3.9:1 */
-  --success: oklch(0.68 0.13 155);
-  --warning: oklch(0.8 0.14 80);
+  --popover: var(--surface-raised);
 
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.68 0.18 38);
+  --primary: oklch(0.7 0.17 36);
+  --primary-foreground: oklch(0.16 0.005 255);
+  --signal-soft: oklch(0.3 0.06 36);
 
-  --chart-1: oklch(0.72 0.09 195);
-  --chart-2: oklch(0.68 0.18 38);
-  --chart-3: oklch(0.8 0.12 85);
-  --chart-4: oklch(0.7 0.1 150);
-  --chart-5: oklch(0.68 0.08 300);
+  --data: oklch(0.74 0.09 200);
+  --data-soft: oklch(0.27 0.04 205);
 
-  --sidebar: oklch(0.15 0.008 60);
-  --sidebar-foreground: oklch(0.9 0.01 80);
-  --sidebar-primary: oklch(0.68 0.18 38);
-  --sidebar-primary-foreground: oklch(0.17 0.008 60);
-  --sidebar-accent: oklch(0.24 0.01 60);
-  --sidebar-accent-foreground: oklch(0.94 0.01 80);
-  --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.68 0.18 38);
+  --destructive: oklch(0.72 0.17 27);
+  --destructive-foreground: oklch(0.78 0.14 27);
+  --destructive-soft: oklch(0.28 0.06 27);
+  --success: oklch(0.72 0.13 155);
+  --success-foreground: oklch(0.8 0.12 155);
+  --success-soft: oklch(0.27 0.04 155);
+  --warning: oklch(0.8 0.13 75);
+  --warning-foreground: oklch(0.85 0.12 80);
+  --warning-soft: oklch(0.28 0.05 75);
+
+  --input: oklch(1 0 0 / 34%);
+  --ring: oklch(0.7 0.17 36);
+
+  --chart-1: oklch(0.74 0.09 200);
+  --chart-2: oklch(0.7 0.17 36);
+  --chart-3: oklch(0.78 0.12 80);
+  --chart-4: oklch(0.72 0.09 150);
+  --chart-5: oklch(0.68 0.08 290);
+
+  --sidebar: oklch(0.145 0.005 255);
+  --sidebar-primary: oklch(0.7 0.17 36);
+  --sidebar-primary-foreground: oklch(0.16 0.005 255);
+  --sidebar-ring: oklch(0.7 0.17 36);
+
+  /* In the darkroom elevation is mostly a lighter surface and a hairline, not a shadow. */
+  --elevation-raised: 0 0 0 1px oklch(1 0 0 / 6%);
+  --elevation-overlay: 0 0 0 1px oklch(1 0 0 / 9%), 0 12px 32px -8px oklch(0 0 0 / 55%);
+  --elevation-modal: 0 0 0 1px oklch(1 0 0 / 10%), 0 24px 64px -12px oklch(0 0 0 / 70%);
 }
 
 @theme inline {
-  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Instrument Serif', ui-serif, Georgia, serif;
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-active: var(--surface-active);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-signal-soft: var(--signal-soft);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-data: var(--data);
+  --color-data-soft: var(--data-soft);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-soft: var(--destructive-soft);
   --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-scrim: var(--scrim);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -138,6 +233,15 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-control: var(--radius-control-size);
+  --radius-field: var(--radius-field-size);
+  --radius-panel: var(--radius-panel-size);
+
+  --shadow-raised: var(--elevation-raised);
+  --shadow-overlay: var(--elevation-overlay);
+  --shadow-modal: var(--elevation-modal);
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
 
   --animate-rec: rec 1.6s ease-in-out infinite;
   /* Phase 18 landing page: the sample frames drift gently (transform only). */
@@ -192,26 +296,25 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: 'ss01', 'cv11';
-  }
-  /* Film-grain atmosphere on the canvas; decorative only. */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.035;
-    z-index: 0;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    /* Geist: kerning and contextual alternates on, nothing else (the old ss01/cv11 removed). */
+    font-feature-settings:
+      'kern' 1,
+      'calt' 1;
+    font-optical-sizing: auto;
   }
   h1,
   h2,
   h3 {
     @apply tracking-tight;
   }
+  /* 25.2: display type is Geist semibold with tight tracking (was a serif at 400). */
   .font-display {
-    font-weight: 400;
-    letter-spacing: -0.01em;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+  /* Data, timecodes and prices: Geist Mono with tabular figures. */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
   }
   .tabular {
     font-variant-numeric: tabular-nums;
