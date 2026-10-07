@@ -269,7 +269,8 @@ test.describe('dark theme', () => {
       else await expectUsable(page, heading);
     }
     // The toggle goes back to light and remembers it.
-    await page.getByRole('button', { name: 'Use light theme' }).click();
+    await page.getByRole('button', { name: /^Appearance/ }).click();
+    await page.getByRole('menuitemradio', { name: 'Light' }).click();
     await expect(page.locator('html')).not.toHaveClass(/dark/);
     expect(w.issues).toEqual([]);
     await page.context().close();

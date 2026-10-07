@@ -61,8 +61,6 @@
     "shell.nav.items.settings",
     "shell.nav.items.blitz",
     "shell.nav.items.automations",
-    "shell.theme.useLight",
-    "shell.theme.useDark",
     "shell.language.label",
     "shell.language.trigger",
     "shell.language.changed",
@@ -4673,7 +4671,14 @@
     "automations.review.back",
     "automations.review.notInReview",
     "automations.review.done",
-    "automations.review.doneBody"
+    "automations.review.doneBody",
+    "shell.theme.label",
+    "shell.theme.light",
+    "shell.theme.dark",
+    "shell.theme.system",
+    "shell.theme.current",
+    "account.profile.appearanceTitle",
+    "account.profile.appearanceDescription"
   ],
   "reviewed": []
 }

@@ -789,12 +789,13 @@ test('mobile, dark mode and right-to-left render without overflow', async ({ pag
     expect(overflow, `${path} overflows horizontally at 375 px`).toBeLessThanOrEqual(1);
   }
   await page
-    .getByRole('button', { name: 'Use dark theme' })
+    .getByRole('button', { name: /^Appearance/ })
     .click()
     .catch(async () => {
       await page.getByRole('button', { name: /Open (navigation|menu)/i }).click();
-      await page.getByRole('button', { name: 'Use dark theme' }).click();
+      await page.getByRole('button', { name: /^Appearance/ }).click();
     });
+  await page.getByRole('menuitemradio', { name: 'Dark' }).click();
   await expect(page.locator('html')).toHaveClass(/dark/);
   await w.visit('/library');
   await page.getByRole('combobox', { name: /Interface language/ }).click();

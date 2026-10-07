@@ -77,8 +77,11 @@
       }
     },
     "theme": {
-      "useLight": "Utiliser le thème clair",
-      "useDark": "Utiliser le thème sombre"
+      "label": "Apparence",
+      "light": "Clair",
+      "dark": "Sombre",
+      "system": "Système",
+      "current": "Apparence : {theme}"
     },
     "language": {
       "label": "Langue",
@@ -3945,7 +3948,9 @@
       "newEmail": "Nouvelle adresse e-mail",
       "emailHint": "Nous demanderons à votre adresse actuelle d’approuver le changement, puis confirmerons la nouvelle.",
       "changeEmail": "Changer d’adresse",
-      "emailRequested": "Consultez vos e-mails pour approuver le changement."
+      "emailRequested": "Consultez vos e-mails pour approuver le changement.",
+      "appearanceTitle": "Apparence",
+      "appearanceDescription": "Choisissez l’apparence de Studio sur cet appareil. « Système » suit le réglage clair ou sombre de votre appareil."
     }
   },
   "approvals": {

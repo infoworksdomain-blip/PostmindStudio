@@ -77,8 +77,11 @@
       }
     },
     "theme": {
-      "useLight": "Usar tema claro",
-      "useDark": "Usar tema oscuro"
+      "label": "Apariencia",
+      "light": "Claro",
+      "dark": "Oscuro",
+      "system": "Sistema",
+      "current": "Apariencia: {theme}"
     },
     "language": {
       "label": "Idioma",
@@ -3945,7 +3948,9 @@
       "newEmail": "Correo nuevo",
       "emailHint": "Pediremos a tu dirección actual que apruebe el cambio y después confirmaremos la nueva.",
       "changeEmail": "Cambiar correo",
-      "emailRequested": "Revisa tu correo para aprobar el cambio."
+      "emailRequested": "Revisa tu correo para aprobar el cambio.",
+      "appearanceTitle": "Apariencia",
+      "appearanceDescription": "Elige cómo se ve Studio en este dispositivo. «Sistema» sigue el ajuste claro u oscuro de tu dispositivo."
     }
   },
   "approvals": {

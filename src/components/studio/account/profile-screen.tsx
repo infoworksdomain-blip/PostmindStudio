@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { authApi, authFetch, type SessionPayload } from '@/lib/client/auth';
 import { LOCALES } from '@/lib/i18n/locales';
 import { PageHeader, Section } from '../primitives';
+import { ThemeSwitcher } from '../theme-switcher';
 
 // Phase 18 Track A — /account/profile: name, the language Studio emails you in, and email change
 // (§5.5: the current address approves the change, the new one confirms it).
@@ -152,6 +153,9 @@ export function ProfileScreen() {
               {t('changeEmail')}
             </Button>
           </form>
+        </Section>
+        <Section title={t('appearanceTitle')} description={t('appearanceDescription')}>
+          <ThemeSwitcher />
         </Section>
       </div>
     </div>
