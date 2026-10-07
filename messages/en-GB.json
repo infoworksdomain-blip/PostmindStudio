@@ -3011,7 +3011,25 @@
         "forceApprovals": "Force-approvals",
         "beta": "Beta",
         "users": "Users",
-        "subscriptions": "Subscriptions"
+        "subscriptions": "Subscriptions",
+        "billing": "Subscriptions & billing"
+      },
+      "menu": {
+        "label": "Admin sections",
+        "jump": "Go to section",
+        "halted": "Halted",
+        "groups": {
+          "operations": "Operations",
+          "content": "Content",
+          "customers": "Customers",
+          "platform": "Platform"
+        }
+      },
+      "billingViews": {
+        "label": "View",
+        "overview": "Overview and MRR",
+        "records": "Stripe records",
+        "entitlements": "Entitlement overrides"
       }
     },
     "cost": {
@@ -5106,7 +5124,9 @@
           "reason": "Reason for removing",
           "button": "Remove override",
           "cleared": "Override removed",
-          "trialWarning": "Stripe still shows a trial: removing the override brings the trial’s caps back. To keep them off, first save an override with “End the trial now”."
+          "trialWarning": "Stripe still shows a trial: removing the override brings the trial’s caps back. To keep them off, first save an override with “End the trial now”.",
+          "confirmTitle": "Remove this override?",
+          "confirmButton": "Yes, remove"
         },
         "trial": {
           "title": "Trial",

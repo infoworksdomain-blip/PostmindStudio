@@ -3011,7 +3011,25 @@
         "forceApprovals": "Erzwungene Freigaben",
         "beta": "Beta",
         "users": "Benutzer",
-        "subscriptions": "Abonnements"
+        "subscriptions": "Abonnements",
+        "billing": "Abonnements & Abrechnung"
+      },
+      "menu": {
+        "label": "Admin-Bereiche",
+        "jump": "Zu Bereich wechseln",
+        "halted": "Angehalten",
+        "groups": {
+          "operations": "Betrieb",
+          "content": "Inhalte",
+          "customers": "Kunden",
+          "platform": "Plattform"
+        }
+      },
+      "billingViews": {
+        "label": "Ansicht",
+        "overview": "Übersicht und MRR",
+        "records": "Stripe-Datensätze",
+        "entitlements": "Berechtigungs-Overrides"
       }
     },
     "cost": {
@@ -5106,7 +5124,9 @@
           "reason": "Grund für das Entfernen",
           "button": "Override entfernen",
           "cleared": "Override entfernt",
-          "trialWarning": "Stripe zeigt noch eine Testphase: Wird der Override entfernt, gelten ihre Obergrenzen wieder. Damit sie entfallen, speichern Sie zuerst einen Override mit „Testphase jetzt beenden“."
+          "trialWarning": "Stripe zeigt noch eine Testphase: Wird der Override entfernt, gelten ihre Obergrenzen wieder. Damit sie entfallen, speichern Sie zuerst einen Override mit „Testphase jetzt beenden“.",
+          "confirmTitle": "Diesen Override entfernen?",
+          "confirmButton": "Ja, entfernen"
         },
         "trial": {
           "title": "Testphase",

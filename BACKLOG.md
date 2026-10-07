@@ -512,7 +512,7 @@ Plan and audit: the "PostMind Studio Redesign Audit" (Daylight and Darkroom desi
 - [ ] **25.10** Library and My media.
 - [ ] **25.11** Analytics: summary first, scoped to the selected business.
 - [ ] **25.12** Connections, settings, billing and account (regrouped settings).
-- [ ] **25.13** Admin: sectioned side menu, URL-synced tabs, dense tables.
+- [x] **25.13** Admin: sectioned side menu, URL-synced tabs, dense tables.
 - [ ] **25.14** Responsive, accessibility (WCAG 2.2 AA, axe on every route) and performance.
 - [ ] **25.15** Regression: every route in four modes, main journeys end to end, old-design sweep.
 - [ ] **25.16** Redesign report (route matrix, scores) and demo + live updated.

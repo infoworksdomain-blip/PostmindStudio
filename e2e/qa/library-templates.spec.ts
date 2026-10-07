@@ -842,7 +842,10 @@ test('staff: the Library tab lists, edits, bulk-reviews and retires; others are 
   w.noOrganisation = false;
   w.current = '/admin library';
   await page.goto('/admin');
-  await page.getByRole('tab', { name: 'Library' }).click();
+  await page
+    .getByRole('navigation', { name: 'Admin sections' })
+    .getByRole('link', { name: 'Library' })
+    .click();
   await w.settle();
   const list = page.getByRole('list', { name: 'Corpus items' });
   // The filter box is debounced; filter to one title at a time (the corpus has 32 rows here).

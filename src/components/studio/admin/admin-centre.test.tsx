@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { forbidden, mockFetch, renderWithSWR, type MockRoute } from '../library/test-helpers';
@@ -8,6 +8,12 @@ import { GLOBAL_CONFIRM_PHRASE } from './kill-switch-panel';
 import type { KillSwitchState } from './types';
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+const nav = vi.hoisted(() => ({ replace: vi.fn(), search: '' }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), replace: nav.replace }),
+  usePathname: () => '/admin',
+  useSearchParams: () => new URLSearchParams(nav.search),
+}));
 
 const running: KillSwitchState = {
   ok: true,
@@ -34,6 +40,7 @@ function routes(extra: MockRoute[] = []): MockRoute[] {
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.clearAllMocks();
+  nav.search = '';
 });
 
 describe('AdminCentre access', () => {
@@ -85,29 +92,120 @@ describe('AdminCentre access', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Flags unavailable');
     expect(screen.queryByText('PostMind staff only')).not.toBeInTheDocument();
   });
-  it('switches between the admin tabs', async () => {
-    const user = userEvent.setup();
-    mockFetch([
-      ...routes(),
+});
+
+describe('AdminCentre section menu (25.13)', () => {
+  const sectionRoutes = () =>
+    routes([
       { match: '/library/categories', body: { ok: true, data: [] } },
       { match: '/library/videos', body: { ok: true, data: [], nextCursor: null } },
       { match: '/admin/cost', body: { ok: true, days: 30, data: [] } },
+      { match: '/admin/subscriptions', body: { ok: true, total: 0, byStatus: {}, data: [] } },
     ]);
+
+  it('groups every section under Operations, Content, Customers and Platform', async () => {
+    mockFetch(sectionRoutes());
     renderWithSWR(<AdminCentre />);
-    await user.click(await screen.findByRole('tab', { name: 'Library' }));
+    const menu = await screen.findByRole('navigation', { name: 'Admin sections' });
+    const group = (name: string) =>
+      within(within(menu).getByRole('list', { name }))
+        .getAllByRole('link')
+        .map((l) => l.textContent);
+    expect(group('Operations')).toEqual([
+      'Kill switch',
+      'Queues',
+      'Dead letters',
+      'Re-drive',
+      'Providers',
+    ]);
+    expect(group('Content')).toEqual([
+      'Library',
+      'Safety review',
+      'Safety audit',
+      'Force-approvals',
+    ]);
+    expect(group('Customers')).toEqual([
+      'Organisations',
+      'Users',
+      'Subscriptions & billing',
+      'Plan usage',
+      'Beta',
+    ]);
+    expect(group('Platform')).toEqual(['Features', 'Cost report']);
+    expect(within(menu).getByRole('link', { name: 'Kill switch' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+  });
+
+  it('opens a section from the menu and writes ?tab= with replace', async () => {
+    const user = userEvent.setup();
+    mockFetch(sectionRoutes());
+    renderWithSWR(<AdminCentre />);
+    const menu = await screen.findByRole('navigation', { name: 'Admin sections' });
+    const library = within(menu).getByRole('link', { name: 'Library' });
+    expect(library).toHaveAttribute('href', '/admin?tab=library');
+    await user.click(library);
     expect(await screen.findByText('Add to the corpus')).toBeInTheDocument();
-    await user.click(screen.getByRole('tab', { name: 'Cost report' }));
+    expect(screen.getByRole('region', { name: 'Library' })).toBeInTheDocument();
+    expect(nav.replace).toHaveBeenLastCalledWith('/admin?tab=library', { scroll: false });
+    expect(within(menu).getByRole('link', { name: 'Library' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    await user.click(within(menu).getByRole('link', { name: 'Cost report' }));
+    expect(await screen.findByText('No provider usage in this window.')).toBeInTheDocument();
+    expect(nav.replace).toHaveBeenLastCalledWith('/admin?tab=cost', { scroll: false });
+  });
+
+  it('jumps to a section from the phone picker', async () => {
+    const user = userEvent.setup();
+    mockFetch(sectionRoutes());
+    renderWithSWR(<AdminCentre />);
+    const jump = await screen.findByLabelText('Go to section');
+    expect(within(jump).getByRole('group', { name: 'Platform' })).toBeInTheDocument();
+    await user.selectOptions(jump, 'cost');
+    expect(await screen.findByText('No provider usage in this window.')).toBeInTheDocument();
+    expect(nav.replace).toHaveBeenLastCalledWith('/admin?tab=cost', { scroll: false });
+  });
+
+  it('follows ?tab= after load, not only on the first render', async () => {
+    mockFetch(sectionRoutes());
+    nav.search = 'tab=library';
+    const view = renderWithSWR(<AdminCentre />);
+    expect(await screen.findByText('Add to the corpus')).toBeInTheDocument();
+    nav.search = 'tab=cost';
+    act(() => view.rerender(<AdminCentre />));
     expect(await screen.findByText('No provider usage in this window.')).toBeInTheDocument();
   });
 
-  it('wraps the tab row from the start edge so no tab is cut off', async () => {
-    mockFetch(routes());
+  it('opens the old ?tab=subscriptions link on the Stripe records of Subscriptions & billing', async () => {
+    const user = userEvent.setup();
+    mockFetch(sectionRoutes());
+    nav.search = 'tab=subscriptions';
     renderWithSWR(<AdminCentre />);
-    const list = await screen.findByRole('tablist');
-    // A centred row that overflows cannot be scrolled back to its first tabs (20.10).
-    expect(list).toHaveClass('flex-wrap', 'justify-start');
-    expect(list).not.toHaveClass('justify-center');
-    expect(list).not.toHaveClass('h-8');
+    expect(await screen.findByRole('region', { name: 'Subscriptions & billing' })).toBeVisible();
+    const views = screen.getByRole('radiogroup', { name: 'View' });
+    expect(within(views).getByRole('radio', { name: 'Stripe records' })).toBeChecked();
+    expect(await screen.findByText(/Read-only/)).toBeInTheDocument();
+    await user.click(within(views).getByRole('radio', { name: 'Entitlement overrides' }));
+    expect(nav.replace).toHaveBeenLastCalledWith('/admin?tab=billing&view=entitlements', {
+      scroll: false,
+    });
+    expect(await screen.findByLabelText('Organisation id')).toBeInTheDocument();
+  });
+
+  it('marks the kill switch item Halted while the global switch is engaged', async () => {
+    mockFetch([
+      {
+        match: '/admin/kill-switch',
+        body: { ...running, global: { enabled: true, since: '2026-09-27T08:00:00.000Z' } },
+      },
+    ]);
+    renderWithSWR(<AdminCentre />);
+    const menu = await screen.findByRole('navigation', { name: 'Admin sections' });
+    expect(within(menu).getByRole('link', { name: /Kill switch/ })).toHaveTextContent('Halted');
   });
 });
 

@@ -14,6 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableRowHeader,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
@@ -43,6 +44,11 @@ export interface DataTableColumn<Row> {
   mobileLabel?: ReactNode;
   /** Leave the column out of stacked rows (e.g. an action column shown elsewhere). */
   hideWhenStacked?: boolean;
+  /**
+   * The cell names its row (a tier, a queue, a provider): it renders as `<th scope="row">`, so
+   * screen readers announce it with every other cell in the row.
+   */
+  rowHeader?: boolean;
 }
 
 export interface DataTableProps<Row> {
@@ -299,26 +305,29 @@ export function DataTable<Row>({
                       />
                     </TableCell>
                   )}
-                  {columns.map((c) => (
-                    <TableCell
-                      key={c.id}
-                      className={cn(
-                        ALIGN[c.align ?? 'start'],
-                        cellPad,
-                        stack &&
-                          'max-sm:flex max-sm:items-baseline max-sm:justify-between max-sm:gap-3 max-sm:p-0 max-sm:text-end max-sm:whitespace-normal',
-                        stack && c.hideWhenStacked && 'max-sm:hidden',
-                        c.className,
-                      )}
-                    >
-                      {stack && (
-                        <span aria-hidden className="text-xs text-muted-foreground sm:hidden">
-                          {c.mobileLabel ?? c.header}
-                        </span>
-                      )}
-                      {c.cell(row)}
-                    </TableCell>
-                  ))}
+                  {columns.map((c) => {
+                    const Cell = c.rowHeader ? TableRowHeader : TableCell;
+                    return (
+                      <Cell
+                        key={c.id}
+                        className={cn(
+                          ALIGN[c.align ?? 'start'],
+                          cellPad,
+                          stack &&
+                            'max-sm:flex max-sm:items-baseline max-sm:justify-between max-sm:gap-3 max-sm:p-0 max-sm:text-end max-sm:whitespace-normal',
+                          stack && c.hideWhenStacked && 'max-sm:hidden',
+                          c.className,
+                        )}
+                      >
+                        {stack && (
+                          <span aria-hidden className="text-xs text-muted-foreground sm:hidden">
+                            {c.mobileLabel ?? c.header}
+                          </span>
+                        )}
+                        {c.cell(row)}
+                      </Cell>
+                    );
+                  })}
                 </TableRow>
               );
             })

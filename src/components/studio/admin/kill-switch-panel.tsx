@@ -107,9 +107,15 @@ export function KillSwitchPanel() {
       )}
       <section
         aria-labelledby="global-kill"
+        data-halted={halted || undefined}
         className={cn(
-          'flex flex-wrap items-center justify-between gap-6 rounded-2xl border p-6',
-          halted ? 'border-destructive/40 bg-destructive/8' : 'border-border bg-card',
+          // 25.13: the one destructive control on the platform reads as such in both states — a
+          // destructive start edge while Studio runs, a destructive wash once it is halted — but
+          // without alarm colour flooding the page.
+          'flex flex-wrap items-center justify-between gap-6 rounded-panel border border-s-4 p-6',
+          halted
+            ? 'border-destructive/50 border-s-destructive bg-destructive-soft'
+            : 'border-border border-s-destructive bg-card',
         )}
       >
         <div className="flex items-start gap-4">

@@ -3011,7 +3011,25 @@
         "forceApprovals": "Approbations forcées",
         "beta": "Bêta",
         "users": "Utilisateurs",
-        "subscriptions": "Abonnements"
+        "subscriptions": "Abonnements",
+        "billing": "Abonnements et facturation"
+      },
+      "menu": {
+        "label": "Sections d’administration",
+        "jump": "Aller à la section",
+        "halted": "Arrêté",
+        "groups": {
+          "operations": "Exploitation",
+          "content": "Contenu",
+          "customers": "Clients",
+          "platform": "Plateforme"
+        }
+      },
+      "billingViews": {
+        "label": "Vue",
+        "overview": "Aperçu et MRR",
+        "records": "Enregistrements Stripe",
+        "entitlements": "Dérogations de droits"
       }
     },
     "cost": {
@@ -5106,7 +5124,9 @@
           "reason": "Motif de la suppression",
           "button": "Supprimer la dérogation",
           "cleared": "Dérogation supprimée",
-          "trialWarning": "Stripe indique encore un essai : retirer la dérogation rétablit les plafonds de l’essai. Pour les écarter, enregistrez d’abord une dérogation avec « Terminer l’essai maintenant »."
+          "trialWarning": "Stripe indique encore un essai : retirer la dérogation rétablit les plafonds de l’essai. Pour les écarter, enregistrez d’abord une dérogation avec « Terminer l’essai maintenant ».",
+          "confirmTitle": "Supprimer cette dérogation ?",
+          "confirmButton": "Oui, supprimer"
         },
         "trial": {
           "title": "Essai",
