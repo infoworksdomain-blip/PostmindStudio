@@ -1,5 +1,5 @@
 import pino from 'pino';
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import { describe, expect, it, vi } from 'vitest';
 import { QuotaExceededError } from '../../errors';
 import type { NotificationInput, Notifier } from '../notifications/notifier';
@@ -23,6 +23,7 @@ import {
   videoLimitViolations,
 } from './plan-quotas';
 import { monthWindow } from './tier-gates';
+import { buildFormats, PLATFORM_OPTIONS } from '../../../components/studio/create/formats';
 
 const logger = pino({ level: 'silent' });
 const SEPT = Date.parse('2026-09-28T12:00:00Z');
@@ -396,6 +397,39 @@ describe('21.5 per-channel allowance (8 a channel a month; weekly 2 a week; year
       shortVideos: 6,
       period: 'week',
     });
+  });
+
+  it('a Create default video (every platform, Short) counts as short and is allowed', () => {
+    // Regression: YouTube Shorts defaulted to 45 s, over the 30 s short limit, so the video
+    // counted as long and a per-channel plan (no long videos) refused it (long_not_included).
+    const quota = entitlementQuota(base, channelEnt(3, 'month'));
+    const project = {
+      sourceType: 'BRIEF',
+      targetFormats: buildFormats(
+        PLATFORM_OPTIONS.map((o) => o.platform),
+        'short',
+      ) as unknown as Prisma.JsonValue,
+      metadata: null,
+    };
+    expect(videoKind(project, quota)).toBe('short');
+    expect(videoLimitViolations(project, quota, 'STANDARD')).toEqual([]);
+    expect(
+      generateViolations({
+        project,
+        alreadyCounted: false,
+        usage: { short: 0, long: 0 },
+        quota,
+        tier: 'STANDARD',
+      }),
+    ).toEqual([]);
+    // The old 45 s Short would have been refused.
+    const old = {
+      ...project,
+      targetFormats: [{ platform: 'youtube_short', aspectRatio: '9:16', durationSec: 45 }],
+    };
+    expect(videoLimitViolations(old, quota, 'STANDARD').map((v) => v.code)).toEqual([
+      'long_not_included',
+    ]);
   });
 
   it('staff custom limits still win; a trial keeps its own allowance', () => {
