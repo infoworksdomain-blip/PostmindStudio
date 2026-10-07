@@ -77,7 +77,8 @@
         "blitz": "Blitz",
         "automations": "Automations",
         "home": "Home",
-        "plans": "Month plans"
+        "plans": "Month plans",
+        "images": "Images"
       },
       "newPost": "Create a new post",
       "collapse": "Collapse sidebar",
@@ -1086,7 +1087,10 @@
         "review": "Review",
         "publish": "Publish"
       },
-      "done": "(done)"
+      "done": "(done)",
+      "notStarted": "Not started — Generate to begin.",
+      "stoppedAt": "Stopped at the {step} step.",
+      "failedMark": "(stopped here)"
     },
     "paused": {
       "aria": "Paused by budget",
@@ -1324,7 +1328,9 @@
       "staleNote": "The script or shots changed after this variant was rendered.",
       "rerender": "Re-render",
       "rerendering": "Re-rendering with your edits.",
-      "download": "Download MP4"
+      "download": "Download MP4",
+      "watch": "Watch",
+      "showing": "Playing"
     },
     "thumbnail": {
       "aria": "Thumbnail",
@@ -1380,6 +1386,50 @@
     "actorFallback": {
       "aria": "Actor not available",
       "note": "The actor wasn’t available for some moments of this video, so they use narrated clips instead."
+    },
+    "attention": {
+      "title": "Needs your attention",
+      "titleInfo": "Good to know",
+      "tones": {
+        "action": "needs you",
+        "warning": "worth a look",
+        "info": "for your information"
+      },
+      "items": {
+        "directions": "Choose a direction for this video",
+        "ugcRefused": "Rewrite the brief without a real person",
+        "restrictedTopics": "Check the restricted topics in your brief",
+        "failureFailed": "This video stopped before it was finished",
+        "failureRejected": "Changes were requested",
+        "failureQuality": "The quality check didn’t pass",
+        "budget": "Paused at this video’s limit",
+        "autoResume": "Paused at your generation limit",
+        "safetyReview": "Waiting for a safety review",
+        "automation": "Automatic publishing needs a look",
+        "music": "Background music couldn’t be added",
+        "sfx": "Sound effects couldn’t be added",
+        "queued": "Queued — it starts soon",
+        "fallback": "Made with a backup provider",
+        "presenterFallback": "The presenter wasn’t available",
+        "actorFallback": "The actor wasn’t available"
+      }
+    },
+    "status": {
+      "publish": "Publish",
+      "posts": "Posts and schedule",
+      "announceAttention": "{state}. {count, plural, =0 {} one {# thing needs your attention.} other {# things need your attention.}}",
+      "details": "Details"
+    },
+    "player": {
+      "aria": "Video player",
+      "formats": "Formats",
+      "working": "Your video appears here as soon as the first format is ready.",
+      "none": "No video yet."
+    },
+    "menu": {
+      "trigger": "More actions for {name}",
+      "download": "Download video",
+      "templateDescription": "Keep this video’s formats, shot structure and publishing defaults, and start new videos from them."
     }
   },
   "slideshow": {
@@ -2159,7 +2209,8 @@
       "gridAria": "Image library",
       "newer": "Newer",
       "older": "Older",
-      "stockNotConfigured": "Stock photos aren’t set up yet, so there is nothing to refresh. Your site photos, uploads and generated images still work."
+      "stockNotConfigured": "Stock photos aren’t set up yet, so there is nothing to refresh. Your site photos, uploads and generated images still work.",
+      "openStudio": "Image Studio"
     },
     "profile": {
       "fields": {
@@ -6335,6 +6386,77 @@
       "blitzBody": "Swipe through ready-made posts.",
       "templates": "Templates",
       "templatesBody": "Start from a proven format."
+    }
+  },
+  "images": {
+    "page": {
+      "title": "Images",
+      "description": "Describe a picture and we’ll make it for this business. Every image is saved to its library, ready to use in your videos.",
+      "wholeLibrary": "Whole image library"
+    },
+    "pickFirst": {
+      "title": "Pick a business first",
+      "body": "Images are made for one business and kept in its library. Choose a business at the top of the page."
+    },
+    "off": {
+      "title": "Images are switched off",
+      "body": "Image generation is turned off for your organisation right now. Your videos aren’t affected."
+    },
+    "readOnly": "You can look at these images. Someone who can edit projects can make new ones.",
+    "locked": {
+      "title": "Image generation isn’t in your plan",
+      "body": "You can still see images made earlier. Check what your plan includes to start making new ones.",
+      "action": "See what’s included"
+    },
+    "status": {
+      "generating": "Making your image. This can take up to a minute.",
+      "ready": "Your image is ready — it’s in your library.",
+      "failed": "The image couldn’t be made."
+    },
+    "form": {
+      "aria": "Describe your image",
+      "prompt": "Describe the picture",
+      "promptPlaceholder": "A sourdough loaf on a wooden board, morning light, close up",
+      "promptHint": "Say what’s in it, where it is and the mood. Text and logos are always left out.",
+      "style": "Style (optional)",
+      "stylePlaceholder": "Warm film photo",
+      "shape": "Shape",
+      "shapes": {
+        "1x1": "Square",
+        "4x5": "Portrait",
+        "9x16": "Tall, for stories and reels",
+        "16x9": "Wide"
+      },
+      "generate": "Generate image",
+      "generating": "Generating…",
+      "timing": "Takes up to a minute.",
+      "lastPrompt": "Last: {prompt}",
+      "again": "Generate again"
+    },
+    "results": {
+      "title": "Your generated images",
+      "aria": "Generated images",
+      "loading": "Loading images",
+      "pending": "Generating…",
+      "open": "Open image: {prompt}",
+      "untitled": "Generated image",
+      "noPreview": "No preview",
+      "empty": {
+        "title": "No generated images yet",
+        "body": "Describe a picture and press Generate — your images collect here."
+      },
+      "newer": "Newer",
+      "older": "Older"
+    },
+    "preview": {
+      "title": "Generated image",
+      "style": "Style",
+      "size": "Size",
+      "dimensions": "{width, number} × {height, number} px",
+      "made": "Made",
+      "download": "Download",
+      "edit": "Edit prompt",
+      "again": "Generate again"
     }
   }
 }

@@ -17,7 +17,7 @@ describe('navigation map', () => {
     const groups = navSections(true).map((s) => [s.group, s.items.map((i) => i.href)]);
     expect(groups).toEqual([
       ['home', ['/home']],
-      ['create', ['/new', '/blitz', '/templates']],
+      ['create', ['/new', '/blitz', '/images', '/templates']],
       ['plan', ['/calendar', '/plans', '/automations', '/publications']],
       ['library', ['/projects', '/library', '/business']],
       ['insights', ['/analytics']],

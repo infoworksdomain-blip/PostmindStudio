@@ -19,6 +19,7 @@ export const PROTECTED_PAGE_PREFIXES = [
   '/calendar',
   '/connections',
   '/home',
+  '/images',
   '/library',
   '/new',
   '/plans',

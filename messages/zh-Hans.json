@@ -77,7 +77,8 @@
         "blitz": "Blitz 快刷",
         "automations": "自动化",
         "home": "首页",
-        "plans": "月度计划"
+        "plans": "月度计划",
+        "images": "图片"
       },
       "newPost": "创建新帖子",
       "collapse": "收起侧边栏",
@@ -1086,7 +1087,10 @@
         "review": "审核",
         "publish": "发布"
       },
-      "done": "（已完成）"
+      "done": "（已完成）",
+      "notStarted": "尚未开始——点击“生成”开始。",
+      "stoppedAt": "在“{step}”步骤停止。",
+      "failedMark": "（在此停止）"
     },
     "paused": {
       "aria": "因预算暂停",
@@ -1324,7 +1328,9 @@
       "staleNote": "此版本渲染后，脚本或镜头已有更改。",
       "rerender": "重新渲染",
       "rerendering": "正在按您的修改重新渲染。",
-      "download": "下载 MP4"
+      "download": "下载 MP4",
+      "watch": "观看",
+      "showing": "播放中"
     },
     "thumbnail": {
       "aria": "封面",
@@ -1380,6 +1386,50 @@
     "actorFallback": {
       "aria": "演员不可用",
       "note": "此视频的部分片段中演员不可用，因此这些片段改用带旁白的视频片段。"
+    },
+    "attention": {
+      "title": "需要你处理",
+      "titleInfo": "供你参考",
+      "tones": {
+        "action": "需要你操作",
+        "warning": "值得一看",
+        "info": "仅供参考"
+      },
+      "items": {
+        "directions": "为这个视频选择一个方向",
+        "ugcRefused": "去掉真实人物后重写简报",
+        "restrictedTopics": "检查简报中的受限话题",
+        "failureFailed": "此视频在完成前停止了",
+        "failureRejected": "有人要求修改",
+        "failureQuality": "质量检查未通过",
+        "budget": "已在此视频的上限处暂停",
+        "autoResume": "已在你的生成上限处暂停",
+        "safetyReview": "正在等待安全审核",
+        "automation": "自动发布需要你看一下",
+        "music": "无法添加背景音乐",
+        "sfx": "无法添加音效",
+        "queued": "排队中——即将开始",
+        "fallback": "使用备用服务商制作",
+        "presenterFallback": "主持人当时不可用",
+        "actorFallback": "演员当时不可用"
+      }
+    },
+    "status": {
+      "publish": "发布",
+      "posts": "帖子与排期",
+      "announceAttention": "{state}。{count, plural, =0 {} other {有 # 项需要你处理。}}",
+      "details": "详情"
+    },
+    "player": {
+      "aria": "视频播放器",
+      "formats": "格式",
+      "working": "第一个格式就绪后，你的视频会显示在这里。",
+      "none": "还没有视频。"
+    },
+    "menu": {
+      "trigger": "{name} 的更多操作",
+      "download": "下载视频",
+      "templateDescription": "保留此视频的格式、镜头结构和发布设置，用它们开始新视频。"
     }
   },
   "slideshow": {
@@ -2159,7 +2209,8 @@
       "gridAria": "图片库",
       "newer": "较新",
       "older": "较早",
-      "stockNotConfigured": "图库照片尚未设置，因此没有可刷新的内容。你网站上的照片、上传的图片和生成的图片仍可使用。"
+      "stockNotConfigured": "图库照片尚未设置，因此没有可刷新的内容。你网站上的照片、上传的图片和生成的图片仍可使用。",
+      "openStudio": "图片工作室"
     },
     "profile": {
       "fields": {
@@ -6335,6 +6386,77 @@
       "blitzBody": "快速浏览现成的帖子。",
       "templates": "模板",
       "templatesBody": "从经过验证的格式开始。"
+    }
+  },
+  "images": {
+    "page": {
+      "title": "图片",
+      "description": "描述一张图片，我们会为这家企业生成。每张图片都会保存到它的图库中，可直接用于你的视频。",
+      "wholeLibrary": "完整图库"
+    },
+    "pickFirst": {
+      "title": "请先选择企业",
+      "body": "图片为某一家企业生成，并保存在它的图库中。请在页面顶部选择一家企业。"
+    },
+    "off": {
+      "title": "图片功能已关闭",
+      "body": "你的组织目前已关闭图片生成。你的视频不受影响。"
+    },
+    "readOnly": "你可以查看这些图片。有项目编辑权限的人可以生成新图片。",
+    "locked": {
+      "title": "你的套餐不包含图片生成",
+      "body": "你仍可查看之前生成的图片。查看套餐包含的内容即可开始生成新图片。",
+      "action": "查看包含内容"
+    },
+    "status": {
+      "generating": "正在生成你的图片，最多需要一分钟。",
+      "ready": "你的图片已就绪——已保存到图库。",
+      "failed": "无法生成图片。"
+    },
+    "form": {
+      "aria": "描述你的图片",
+      "prompt": "描述这张图片",
+      "promptPlaceholder": "木板上的一条酸面包，清晨光线，特写",
+      "promptHint": "说明画面里有什么、在哪里、是什么氛围。文字和标志始终会被省略。",
+      "style": "风格（可选）",
+      "stylePlaceholder": "温暖的胶片照片",
+      "shape": "比例",
+      "shapes": {
+        "1x1": "方形",
+        "4x5": "竖版",
+        "9x16": "高竖版，适合快拍和短视频",
+        "16x9": "横版"
+      },
+      "generate": "生成图片",
+      "generating": "正在生成…",
+      "timing": "最多需要一分钟。",
+      "lastPrompt": "上一次：{prompt}",
+      "again": "再次生成"
+    },
+    "results": {
+      "title": "你生成的图片",
+      "aria": "已生成的图片",
+      "loading": "正在加载图片",
+      "pending": "正在生成…",
+      "open": "打开图片：{prompt}",
+      "untitled": "生成的图片",
+      "noPreview": "无预览",
+      "empty": {
+        "title": "还没有生成的图片",
+        "body": "描述一张图片并点击“生成”——你的图片会汇集在这里。"
+      },
+      "newer": "较新",
+      "older": "较早"
+    },
+    "preview": {
+      "title": "生成的图片",
+      "style": "风格",
+      "size": "尺寸",
+      "dimensions": "{width, number} × {height, number} 像素",
+      "made": "生成时间",
+      "download": "下载",
+      "edit": "编辑提示词",
+      "again": "再次生成"
     }
   }
 }

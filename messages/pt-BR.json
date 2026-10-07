@@ -77,7 +77,8 @@
         "blitz": "Blitz",
         "automations": "Automações",
         "home": "Início",
-        "plans": "Planos do mês"
+        "plans": "Planos do mês",
+        "images": "Imagens"
       },
       "newPost": "Criar um novo post",
       "collapse": "Recolher a barra lateral",
@@ -1086,7 +1087,10 @@
         "review": "Revisão",
         "publish": "Publicação"
       },
-      "done": "(concluído)"
+      "done": "(concluído)",
+      "notStarted": "Ainda não iniciado — toque em Gerar para começar.",
+      "stoppedAt": "Parou na etapa “{step}”.",
+      "failedMark": "(parou aqui)"
     },
     "paused": {
       "aria": "Pausado pelo orçamento",
@@ -1324,7 +1328,9 @@
       "staleNote": "O roteiro ou as cenas mudaram depois que esta variante foi renderizada.",
       "rerender": "Renderizar de novo",
       "rerendering": "Renderizando de novo com as suas edições.",
-      "download": "Baixar MP4"
+      "download": "Baixar MP4",
+      "watch": "Assistir",
+      "showing": "Reproduzindo"
     },
     "thumbnail": {
       "aria": "Miniatura",
@@ -1380,6 +1386,50 @@
     "actorFallback": {
       "aria": "Ator indisponível",
       "note": "O ator não estava disponível em alguns momentos deste vídeo, então esses trechos usam clipes com narração."
+    },
+    "attention": {
+      "title": "Precisa da sua atenção",
+      "titleInfo": "Bom saber",
+      "tones": {
+        "action": "precisa de você",
+        "warning": "vale uma olhada",
+        "info": "para sua informação"
+      },
+      "items": {
+        "directions": "Escolha uma direção para este vídeo",
+        "ugcRefused": "Reescreva o briefing sem uma pessoa real",
+        "restrictedTopics": "Confira os temas restritos do seu briefing",
+        "failureFailed": "Este vídeo parou antes de terminar",
+        "failureRejected": "Foram pedidas alterações",
+        "failureQuality": "A verificação de qualidade não passou",
+        "budget": "Pausado no limite deste vídeo",
+        "autoResume": "Pausado no seu limite de geração",
+        "safetyReview": "Aguardando uma revisão de segurança",
+        "automation": "A publicação automática precisa de uma olhada",
+        "music": "Não foi possível adicionar a música de fundo",
+        "sfx": "Não foi possível adicionar os efeitos sonoros",
+        "queued": "Na fila — começa em breve",
+        "fallback": "Feito com um fornecedor alternativo",
+        "presenterFallback": "O apresentador não estava disponível",
+        "actorFallback": "O ator não estava disponível"
+      }
+    },
+    "status": {
+      "publish": "Publicar",
+      "posts": "Posts e agendamento",
+      "announceAttention": "{state}. {count, plural, =0 {} one {# item precisa da sua atenção.} other {# itens precisam da sua atenção.}}",
+      "details": "Detalhes"
+    },
+    "player": {
+      "aria": "Player de vídeo",
+      "formats": "Formatos",
+      "working": "Seu vídeo aparece aqui assim que o primeiro formato ficar pronto.",
+      "none": "Ainda não há vídeo."
+    },
+    "menu": {
+      "trigger": "Mais ações para {name}",
+      "download": "Baixar vídeo",
+      "templateDescription": "Guarde os formatos, a estrutura de cenas e as configurações de publicação deste vídeo para criar novos a partir deles."
     }
   },
   "slideshow": {
@@ -2159,7 +2209,8 @@
       "gridAria": "Biblioteca de imagens",
       "newer": "Mais recentes",
       "older": "Mais antigas",
-      "stockNotConfigured": "As fotos de banco de imagens ainda não estão configuradas, então não há nada para atualizar. As fotos do seu site, os envios e as imagens geradas continuam funcionando."
+      "stockNotConfigured": "As fotos de banco de imagens ainda não estão configuradas, então não há nada para atualizar. As fotos do seu site, os envios e as imagens geradas continuam funcionando.",
+      "openStudio": "Estúdio de imagens"
     },
     "profile": {
       "fields": {
@@ -6335,6 +6386,77 @@
       "blitzBody": "Deslize por posts prontos.",
       "templates": "Modelos",
       "templatesBody": "Comece com um formato comprovado."
+    }
+  },
+  "images": {
+    "page": {
+      "title": "Imagens",
+      "description": "Descreva uma imagem e nós a criamos para esta empresa. Cada imagem fica salva na biblioteca dela, pronta para seus vídeos.",
+      "wholeLibrary": "Biblioteca de imagens completa"
+    },
+    "pickFirst": {
+      "title": "Escolha uma empresa primeiro",
+      "body": "As imagens são criadas para uma empresa e ficam na biblioteca dela. Escolha uma empresa no topo da página."
+    },
+    "off": {
+      "title": "As imagens estão desativadas",
+      "body": "A geração de imagens está desativada para sua organização no momento. Seus vídeos não são afetados."
+    },
+    "readOnly": "Você pode ver estas imagens. Quem pode editar projetos pode criar novas.",
+    "locked": {
+      "title": "A geração de imagens não está no seu plano",
+      "body": "Você ainda vê as imagens criadas antes. Veja o que seu plano inclui para criar novas.",
+      "action": "Ver o que está incluído"
+    },
+    "status": {
+      "generating": "Criando sua imagem. Pode levar até um minuto.",
+      "ready": "Sua imagem está pronta — já está na sua biblioteca.",
+      "failed": "Não foi possível criar a imagem."
+    },
+    "form": {
+      "aria": "Descreva sua imagem",
+      "prompt": "Descreva a imagem",
+      "promptPlaceholder": "Um pão de fermentação natural numa tábua de madeira, luz da manhã, close",
+      "promptHint": "Diga o que aparece, onde e o clima. Textos e logotipos são sempre deixados de fora.",
+      "style": "Estilo (opcional)",
+      "stylePlaceholder": "Foto analógica quente",
+      "shape": "Formato",
+      "shapes": {
+        "1x1": "Quadrado",
+        "4x5": "Retrato",
+        "9x16": "Vertical, para stories e reels",
+        "16x9": "Paisagem"
+      },
+      "generate": "Gerar imagem",
+      "generating": "Gerando…",
+      "timing": "Leva até um minuto.",
+      "lastPrompt": "Última: {prompt}",
+      "again": "Gerar de novo"
+    },
+    "results": {
+      "title": "Suas imagens geradas",
+      "aria": "Imagens geradas",
+      "loading": "Carregando imagens",
+      "pending": "Gerando…",
+      "open": "Abrir imagem: {prompt}",
+      "untitled": "Imagem gerada",
+      "noPreview": "Sem prévia",
+      "empty": {
+        "title": "Nenhuma imagem gerada ainda",
+        "body": "Descreva uma imagem e toque em Gerar — suas imagens ficam reunidas aqui."
+      },
+      "newer": "Mais recentes",
+      "older": "Mais antigas"
+    },
+    "preview": {
+      "title": "Imagem gerada",
+      "style": "Estilo",
+      "size": "Tamanho",
+      "dimensions": "{width, number} × {height, number} px",
+      "made": "Criada",
+      "download": "Baixar",
+      "edit": "Editar descrição",
+      "again": "Gerar de novo"
     }
   }
 }

@@ -207,6 +207,8 @@ const WORKSPACE_PAGES = [
   '/calendar',
   '/analytics',
   '/business',
+  // 25.8: Image Studio.
+  '/images',
   '/connections',
   '/approvals',
   '/settings/organisation',
