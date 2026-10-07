@@ -24,6 +24,7 @@ import type { EntitlementsReader } from '../billing/entitlements-reader';
 import { jobIds, type JobQueue } from '../queue/enqueue';
 import { PLATFORM_ORGANISATION } from '../cost/guard';
 import { PLAN_MIN_LEAD_MS } from '../content-plans/slots';
+import { isWaitingForWindow, rollingSettings, selectStarts } from '../content-plans/rolling';
 import {
   FINAL_ITEM_STATUSES,
   isSettled,
@@ -592,9 +593,19 @@ async function advancePlan(
 ): Promise<{ started: number; status: ContentPlan['status'] }> {
   await syncPlanItems(deps.db, plan.id);
   let started = 0;
-  if (plan.status === 'GENERATING') started = await startItems(deps, plan);
+  // 23.6: a scheduled plan still has posts waiting for their window; the runner starts them.
+  const hasQueued =
+    plan.status === 'SCHEDULED' &&
+    (await deps.db.contentPlanItem.count({ where: { planId: plan.id, status: 'QUEUED' } })) > 0;
+  if (plan.status === 'GENERATING' || hasQueued) started = await startItems(deps, plan);
   const items = await deps.db.contentPlanItem.findMany({ where: { planId: plan.id } });
-  if (plan.status === 'GENERATING' && items.every((i) => isSettled(i.status))) {
+  const rolling = rollingSettings(deps.env);
+  const now = deps.now();
+  // A post waiting for its window counts as settled: the plan is SCHEDULED (and the summary sent)
+  // once everything it can make now is made.
+  const settled = (i: ContentPlanItem) =>
+    isSettled(i.status) || isWaitingForWindow(i, items, now, rolling);
+  if (plan.status === 'GENERATING' && items.every(settled)) {
     const moved = await deps.db.contentPlan.updateMany({
       where: { id: plan.id, status: 'GENERATING' },
       data: { status: 'SCHEDULED', scheduledAt: new Date(deps.now()), holdReason: null },
@@ -650,49 +661,76 @@ async function startItems(deps: RunnerDeps, plan: ContentPlan): Promise<number> 
     await hold(deps.db, plan, 'cost_cap');
     return 0;
   }
-  const items = await deps.db.contentPlanItem.findMany({
-    where: { planId: plan.id, status: { in: ['QUEUED', 'GENERATING'] } },
+  const all = await deps.db.contentPlanItem.findMany({
+    where: { planId: plan.id },
     orderBy: [{ slotAt: 'asc' }, { position: 'asc' }],
   });
-  let free = planConcurrency(deps.env) - items.filter((i) => i.status === 'GENERATING').length;
+  // 23.6 rolling generation (content-plans/rolling.ts): only posts due within the lead window,
+  // the plan's first few, and late ones start; the rest wait (their projects stay drafts).
+  const starts = selectStarts(
+    all.filter((i) => i.projectId),
+    deps.now(),
+    rollingSettings(deps.env),
+  );
+  let free = planConcurrency(deps.env) - all.filter((i) => i.status === 'GENERATING').length;
+  let dailyLeft = Infinity;
   const limit = planDailyStartLimit(deps.env);
   if (limit !== null) {
     const today = await deps.db.contentPlanItem.count({
       where: { startedAt: { gte: utcDayStart(deps.now()) } },
     });
-    if (today >= limit && items.some((i) => i.status === 'QUEUED')) {
+    if (today >= limit && starts.urgent.length + starts.ready.length > 0) {
       await hold(deps.db, plan, 'daily_limit');
       return 0;
     }
-    free = Math.min(free, limit - today);
+    dailyLeft = limit - today;
   }
-  let started = 0;
   const tenant = {
     organisationId: plan.organisationId,
     organisation: { id: plan.organisationId, planTier },
   };
-  for (const item of items) {
-    if (started >= free) break;
-    if (item.status !== 'QUEUED' || !item.projectId) continue;
-    if (item.slotAt.getTime() < deps.now() + START_CUTOFF_MS) {
-      await skipItem(deps, item, 'slot_passed');
-      continue;
-    }
-    try {
-      await generateProject(deps, tenant, item.projectId, {}, { batch: true });
-      await setItem(deps.db, item.id, {
-        status: 'GENERATING',
-        statusReason: null,
-        startedAt: new Date(deps.now()),
-      });
-      started += 1;
-    } catch (err) {
-      deps.logger.warn({ err, planId: plan.id, itemId: item.id }, 'month plan item did not start');
-      await setItem(deps.db, item.id, { status: 'FAILED', statusReason: 'not_started' });
-    }
+  let started = 0;
+  // Late posts first, at normal priority and outside the plan's concurrency.
+  for (const item of starts.urgent) {
+    if (started >= dailyLeft) break;
+    if (await startItem(deps, plan, tenant, item, false)) started += 1;
+  }
+  free = Math.min(free, dailyLeft - started);
+  let windowed = 0;
+  for (const { item, priority } of starts.ready) {
+    if (windowed >= free) break;
+    if (await startItem(deps, plan, tenant, item, priority === 'batch')) windowed += 1;
   }
   await hold(deps.db, plan, null);
-  return started;
+  return started + windowed;
+}
+
+/** Start one queued post (or skip it when its slot is too close). True when it started. */
+async function startItem(
+  deps: RunnerDeps,
+  plan: ContentPlan,
+  tenant: Parameters<typeof generateProject>[1],
+  item: ContentPlanItem,
+  batch: boolean,
+): Promise<boolean> {
+  if (!item.projectId) return false;
+  if (item.slotAt.getTime() < deps.now() + START_CUTOFF_MS) {
+    await skipItem(deps, item, 'slot_passed');
+    return false;
+  }
+  try {
+    await generateProject(deps, tenant, item.projectId, {}, { batch });
+    await setItem(deps.db, item.id, {
+      status: 'GENERATING',
+      statusReason: null,
+      startedAt: new Date(deps.now()),
+    });
+    return true;
+  } catch (err) {
+    deps.logger.warn({ err, planId: plan.id, itemId: item.id }, 'month plan item did not start');
+    await setItem(deps.db, item.id, { status: 'FAILED', statusReason: 'not_started' });
+    return false;
+  }
 }
 
 /** A queued item that will not run: give its allowance back and archive its draft project. */
@@ -735,7 +773,8 @@ async function sendSummary(deps: RunnerDeps, plan: ContentPlan, items: ContentPl
       user.email,
       {
         url: `${deps.appUrl.replace(/\/$/, '')}/plans/${plan.id}`,
-        postCount: count('SCHEDULED'),
+        // 23.6: posts waiting for their window are scheduled too (made shortly before).
+        postCount: count('SCHEDULED') + count('QUEUED'),
         needsAttention: count('READY') + count('HELD') + count('FAILED'),
         startDate: `${plan.startDate}T12:00:00.000Z`,
         endDate: lastDay.toISOString(),

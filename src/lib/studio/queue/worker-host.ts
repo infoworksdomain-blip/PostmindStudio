@@ -17,6 +17,10 @@ export const DEFAULT_CONCURRENCY: Record<QueueName, number> = {
   [QUEUES.analytics]: 5,
   [QUEUES.library]: 2,
   [QUEUES.email]: 5,
+  // 23.6: sized for the 2 vCPU production server. A compose job holds its slot only while it
+  // builds and submits the edit (external renders run without a slot), so 3 keeps carousel slides
+  // (sharp, CPU) and mastering (FFmpeg, STUDIO_FFMPEG_MAX_CONCURRENT) from crowding the web process.
+  [QUEUES.render]: 3,
 };
 
 const CONCURRENCY_ENV: Record<QueueName, string> = {
@@ -27,6 +31,7 @@ const CONCURRENCY_ENV: Record<QueueName, string> = {
   [QUEUES.analytics]: 'WORKER_CONCURRENCY_ANALYTICS',
   [QUEUES.library]: 'WORKER_CONCURRENCY_LIBRARY',
   [QUEUES.email]: 'WORKER_CONCURRENCY_EMAIL',
+  [QUEUES.render]: 'WORKER_CONCURRENCY_RENDER',
 };
 
 /** Corpus ingestion throughput knob (runbooks/corpus-ingestion.md); wins over the legacy name. */
@@ -59,7 +64,26 @@ export const PIPELINE_QUEUES: QueueName[] = [
   QUEUES.library,
   QUEUES.analytics,
   QUEUES.email,
+  QUEUES.render,
 ];
+
+/**
+ * 23.6: compose / render jobs moved from orchestration to their own lane. A worker started with an
+ * explicit queue list written before that (STUDIO_WORKER_QUEUES, compose.yml) that runs
+ * orchestration also runs the render lane, so an existing deployment never leaves renders without
+ * a worker. To run renders in another worker only, list studio-render there and set
+ * STUDIO_RENDER_LANE=separate.
+ */
+export function withRenderLane(
+  requested: readonly QueueName[],
+  env: Record<string, string | undefined> = process.env,
+): QueueName[] {
+  if (env.STUDIO_RENDER_LANE?.trim().toLowerCase() === 'separate') return [...requested];
+  if (!requested.includes(QUEUES.orchestration) || requested.includes(QUEUES.render)) {
+    return [...requested];
+  }
+  return [...requested, QUEUES.render];
+}
 
 /**
  * 15.C3 (spec 11.4): a full provider rate window moves the job to the delayed set until the

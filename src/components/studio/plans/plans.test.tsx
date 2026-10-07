@@ -319,6 +319,45 @@ describe('PlanScreen', () => {
     await waitFor(() => expect(api.find('POST', '/content-plans/plan_1/cancel')).toHaveLength(1));
   });
 
+  it('23.6: says when a waiting post will be created and does not count it as being made', async () => {
+    const soon = Date.now() + 10 * 86_400_000;
+    const at = (h: number) => new Date(soon + h * 3_600_000).toISOString();
+    // 08:00 UTC on 10 Oct 2030 is 09:00 in London (BST).
+    const createsAt = '2030-10-10T08:00:00.000Z';
+    const items = [
+      item(0, { status: 'GENERATING', slotAt: at(0) }),
+      item(1, { status: 'QUEUED', slotAt: at(1), createsAt: null }),
+      item(2, { status: 'QUEUED', slotAt: at(2), createsAt }),
+      // Already due: shown like any other queued post.
+      item(3, { status: 'QUEUED', slotAt: at(3), createsAt: '2020-01-01T00:00:00.000Z' }),
+    ];
+    mockFetch(() => ok({ plan: plan({ status: 'GENERATING', items }) }));
+    renderScreen(<PlanScreen planId="plan_1" />);
+    const stats = await screen.findByRole('group', { name: 'Posts by status' });
+    // GENERATING + the two queued posts that are due now; not the waiting one.
+    expect(within(stats).getByText('Being made').nextElementSibling).toHaveTextContent('3');
+    expect(
+      screen.getByText('1 more post will be created closer to its post time.'),
+    ).toBeInTheDocument();
+    const labels = screen.getAllByText(/^Scheduled to be created on /);
+    expect(labels).toHaveLength(1);
+    expect(labels[0]).toHaveTextContent('Scheduled to be created on Thu 10 Oct, 9:00');
+    expect(labels[0]).toHaveAttribute('datetime', createsAt);
+    const row = screen.getByText('Topic 2').closest('li')!;
+    expect(within(row).getByText(/^Scheduled to be created on /)).toBe(labels[0]);
+  });
+
+  it('23.6: no waiting line when nothing is waiting for its creation time', async () => {
+    const soon = new Date(Date.now() + 10 * 86_400_000).toISOString();
+    const items = [item(0, { status: 'QUEUED', slotAt: soon, createsAt: null })];
+    mockFetch(() => ok({ plan: plan({ status: 'GENERATING', items }) }));
+    renderScreen(<PlanScreen planId="plan_1" />);
+    const stats = await screen.findByRole('group', { name: 'Posts by status' });
+    expect(within(stats).getByText('Being made').nextElementSibling).toHaveTextContent('1');
+    expect(screen.queryByText(/Scheduled to be created on/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/closer to (its|their) post time/)).not.toBeInTheDocument();
+  });
+
   it('renders right-to-left in Arabic', async () => {
     mockFetch(() => ok({ plan: plan() }));
     renderScreen(withLocale('ar', <PlanScreen planId="plan_1" />));

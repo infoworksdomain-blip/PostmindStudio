@@ -5681,7 +5681,9 @@
       "remove": "Togli",
       "removeAria": "Togli “{title}”",
       "removeConfirm": "La sua pubblicazione viene annullata e l’orario liberato. Il resto del piano continua.",
-      "removedToast": "Post tolto"
+      "removedToast": "Post tolto",
+      "createsAt": "Creazione prevista il {date}",
+      "createsLater": "{count, plural, one {# altro post verrà creato poco prima del suo orario di pubblicazione.} other {Altri # post verranno creati poco prima del loro orario di pubblicazione.}}"
     },
     "list": {
       "title": "Piani mensili",

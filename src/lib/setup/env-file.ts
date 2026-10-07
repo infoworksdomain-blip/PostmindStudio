@@ -11,6 +11,7 @@ import {
 import { hasModelPricing, MODEL_PRICING_USD_PER_MTOK } from '../studio/providers/anthropic-models';
 import { parseTaskModels } from '../studio/providers/text-tasks';
 import { parseConcurrency } from '../studio/providers/provider-concurrency';
+import { parseFalVideoModels } from '../studio/providers/fal-config';
 
 // Phase 19.2 — the go-live settings file (runbooks/go-live.md): parse a server env file
 // (/etc/postmind-studio/<env>.env, the format of deploy/vps/.env.example), work out which keys it
@@ -366,11 +367,25 @@ export const VALIDATORS: Readonly<Record<string, Validator>> = {
   KLING_RESOLUTION: (v) => (isKlingResolution(v) ? null : 'must be 720p or 1080p (or empty)'),
   KLING_BASE_URL: (v) =>
     isKlingBaseUrl(v) ? null : 'must be an https origin such as https://api-singapore.klingai.com',
+  // 24.1 fal.ai (opt-in video models). fal documents no key format
+  // (https://fal.ai/docs/model-apis/model-endpoints/queue, read 2026-10-06), so only one unbroken
+  // token is checked; the model list must name known models (providers/fal.ts).
+  FAL_KEY: pattern(/^[^\s'"]{16,}$/, 'must be the API key from fal.ai (one unbroken string)'),
+  STUDIO_FAL_VIDEO_MODELS: (v) => {
+    try {
+      parseFalVideoModels(v);
+      return null;
+    } catch (err) {
+      return err instanceof Error ? err.message : 'must list known fal video models';
+    }
+  },
   // 21.4: Kling actor clips with native audio (kling.ts klingOptionsFromEnv).
   KLING_UGC_ACTOR: (v) => (v === '0' || v === '1' ? null : 'must be 1, 0 or empty'),
   // 21.4c: the burned-in text check on UGC actor clips (ugc/clip-text-guard.ts).
   STUDIO_CLIP_TEXT_GUARD: (v) =>
     v === 'true' || v === 'false' ? null : 'must be true, false or empty',
+  // 23.5: Studio's own ffmpeg renderer for slideshows and walls of text (render/local/config.ts).
+  STUDIO_LOCAL_RENDER: (v) => (v === 'on' || v === 'off' ? null : 'must be on, off or empty'),
   // 23.2: per-task Claude models (providers/text-tasks.ts); every model needs a price row.
   ANTHROPIC_MODEL: (v) => anthropicModel(v),
   ANTHROPIC_LIGHT_MODEL: (v) => (v === 'off' ? null : anthropicModel(v)),

@@ -73,7 +73,7 @@ ordering". This runbook quotes no prices.
   | Postgres | 384 MB | shared_buffers 96 MB, work_mem 4 MB, max_connections 40 |
   | Valkey (Redis) | 128 MB | maxmemory 64 MB, `noeviction` |
   | web | 448 MB | V8 heap capped at 288 MB |
-  | worker | 704 MB | all seven queues (incl. studio-email); V8 heap 384 MB; FFmpeg one at a time (`STUDIO_FFMPEG_MAX_CONCURRENT=1`) |
+  | worker | 704 MB | all eight queues (incl. studio-email and the 23.6 studio-render lane); V8 heap 384 MB; FFmpeg one at a time (`STUDIO_FFMPEG_MAX_CONCURRENT=1`) |
   | Caddy | 96 MB | |
   | **Total** | **1,760 MB** | the OS gets the rest; swap absorbs the migration step during deploys |
 
@@ -84,6 +84,24 @@ ordering". This runbook quotes no prices.
     (CPX22). On 2 GB, switch staging on only while you test (section 9).
   - The full 50k corpus ingestion (library jobs buffer up to 200 MB each) and more than one FFmpeg
     at a time.
+- **Queue lanes (23.6).** Renders have their own lane, studio-render (compose-video, poll-render,
+  render-carousel), so planning (plan-project, draft-content-plan) and the runners
+  (dvance-content-plans, dvance-automations, efill-blitz-queue, HIGH priority) on
+  studio-orchestration never wait behind renders. compose-video holds its slot only while it builds
+  and submits the edit; the Shotstack render (p50 49 s) runs without a slot and a delayed
+  poll-render job (or the render callback) records it. A worker that lists studio-orchestration
+  also runs studio-render unless STUDIO_RENDER_LANE=separate (then list it in another worker).
+  Sizes: 1 vCPU / 2 GB WORKER_CONCURRENCY_ORCHESTRATION=2, WORKER_CONCURRENCY_RENDER=1;
+  **2 vCPU / 3.8 GB (production, 2026-10-06)** orchestration 4, render 3, assets 8, publish 2,
+  STUDIO_FFMPEG_MAX_CONCURRENT=2.
+- **Redis headroom (23.6).** BullMQ needs maxmemory-policy noeviction ("the only setting that
+  guarantees the correct behavior of the queues", https://docs.bullmq.io/guide/going-to-production;
+  compose.yml sets it and CI checks it). Completed jobs are kept 6 h / 1 000 per queue and failed
+  jobs the newest 5 000 per queue (queues.ts KEEP_COMPLETED_JOBS / KEEP_FAILED_JOBS), and
+  rolling generation keeps only ~3 days of posts queued, so a busy month fits easily. On the 3.8 GB
+  server: REDIS_MAXMEMORY=256mb, REDIS_MEM_LIMIT=384m (the limit leaves room for the AOF-rewrite
+  fork); with postgres 640m, web 1024m, worker 1152m and caddy 96m that is 3,296 MB of limits.
+  INFO memory used_memory_human above ~200 MB means it is time to raise both.
 - **Signs you have outgrown it** (the health check posts the first three):
   - swap more than half used for a long time (`swapon --show`, `free -m`);
   - a container OOM-killed or restarting (`bash scripts/vps/compose.sh production ps`,

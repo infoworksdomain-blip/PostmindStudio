@@ -2,9 +2,10 @@ import { Queue, type ConnectionOptions } from 'bullmq';
 import {
   DEFAULT_JOB_OPTIONS,
   JOB_QUEUE,
-  priorityFor,
+  jobPriority,
   type JobDataMap,
   type JobName,
+  type ProjectJobData,
   type QueueName,
 } from './queues';
 import { queuePrefix } from './redis';
@@ -28,6 +29,12 @@ export interface JobQueue {
    * ignored), or is unknown to the queue (undefined). Optional: absent = cannot tell.
    */
   jobState?(name: JobName, jobId: string): Promise<JobPresence | undefined>;
+  /**
+   * 23.6: run a DELAYED job now (BullMQ Job#promote, "Promotes a delayed job so that it starts to
+   * be processed as soon as possible"). True when a delayed job was promoted; false when the job
+   * is unknown or not delayed (waiting, active, finished). Optional: absent = cannot promote.
+   */
+  promote?(name: JobName, jobId: string): Promise<boolean>;
 }
 
 export type JobPresence = 'pending' | 'finished';
@@ -37,6 +44,12 @@ export const jobIds = {
   planProject: (d: JobDataMap['plan-project']) => `plan-project__${d.projectId}__${d.runId}`,
   generateAsset: (d: JobDataMap['generate-asset']) => `generate-asset__${d.shotId}__${d.runId}`,
   composeVideo: (d: JobDataMap['compose-video']) => `compose-video__${d.projectId}__${d.runId}`,
+  /** 23.6: a re-submission of a run's failed renders (attempt n ≥ 1, from poll-render). */
+  composeRetry: (d: JobDataMap['compose-video'], attempt: number) =>
+    `compose-video__${d.projectId}__${d.runId}__retry-${attempt}`,
+  /** 23.6: one delayed poll of a run's renders (`poll` numbers the chain), or a callback wake. */
+  pollRender: (d: ProjectJobData, poll: number | string) =>
+    `poll-render__${d.projectId}__${d.runId}__${poll}`,
   generateThumbnail: (d: JobDataMap['generate-thumbnail']) =>
     `generate-thumbnail__${d.projectId}__${d.runId}`,
   publishVideo: (d: JobDataMap['publish-video'], attempt = 0) =>
@@ -98,7 +111,7 @@ export function createBullJobQueue(
   return {
     async add(name, data, options = {}) {
       await queueFor(JOB_QUEUE[name]).add(name, data, {
-        priority: priorityFor(data.planTier, data.batch),
+        priority: jobPriority(name, data),
         ...(options.jobId && { jobId: options.jobId }),
         ...(options.delayMs && { delay: options.delayMs }),
       });
@@ -115,6 +128,18 @@ export function createBullJobQueue(
       if (state === 'unknown') return undefined;
       return state === 'completed' || state === 'failed' ? 'finished' : 'pending';
     },
+    async promote(name, jobId) {
+      // Job#isDelayed / Job#promote (bullmq Job class). A job that left the delayed set between
+      // the two calls makes promote reject: it is already on its way, which is what we wanted.
+      const job = await queueFor(JOB_QUEUE[name]).getJob(jobId);
+      if (!job || !(await job.isDelayed())) return false;
+      try {
+        await job.promote();
+        return true;
+      } catch {
+        return false;
+      }
+    },
     async close() {
       await Promise.all([...queues.values()].map((q) => q.close()));
     },
@@ -125,7 +150,20 @@ export interface InlineJob<N extends JobName = JobName> {
   name: N;
   data: JobDataMap[N];
   jobId?: string;
+  /** The requested delay (drainInline waits it out only for INLINE_DELAYED_JOBS). */
+  delayMs?: number;
 }
+
+/**
+ * 23.6: jobs whose delay drainInline waits out (with the injected sleep) before running them: the
+ * render poll chain re-adds itself with a delay while a render runs, so running it at once would
+ * spin without the clock moving. Other delayed jobs (scheduled publications days ahead, analytics
+ * polls) keep running at once or are held with `defer`, as before.
+ */
+export const INLINE_DELAYED_JOBS: ReadonlySet<JobName> = new Set<JobName>([
+  'poll-render',
+  'compose-video',
+]);
 
 /** A dead-lettered inline job (BullMQ keeps these in the queue's failed set; 15.D4). */
 export interface InlineFailedJob<N extends JobName = JobName> extends InlineJob<N> {
@@ -160,7 +198,12 @@ export class InlineJobQueue implements JobQueue {
       if (this.seen.has(options.jobId)) return;
       this.seen.add(options.jobId);
     }
-    const job = { name, data, jobId: options.jobId } as InlineJob;
+    const job = {
+      name,
+      data,
+      jobId: options.jobId,
+      ...(options.delayMs && { delayMs: options.delayMs }),
+    } as InlineJob;
     if (this.defer.has(name)) this.deferred.push(job);
     else this.pending.push(job);
     this.history.push(job);
@@ -207,6 +250,15 @@ export class InlineJobQueue implements JobQueue {
     const again = { name: job.name, data: job.data, jobId: job.jobId } as InlineJob;
     this.pending.push(again);
     this.history.push(again);
+  }
+
+  /** A held-back (delayed) pending job runs without its delay. */
+  async promote(_name: JobName, jobId: string): Promise<boolean> {
+    const index = this.pending.findIndex((job) => job.jobId === jobId && job.delayMs);
+    const job = this.pending[index];
+    if (!job) return false;
+    this.pending[index] = { name: job.name, data: job.data, jobId: job.jobId } as InlineJob;
+    return true;
   }
 
   async jobState(_name: JobName, jobId: string): Promise<JobPresence | undefined> {

@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { createsAtOf, rollingSettings } from '../content-plans/rolling';
 import type { ContentPlan, ContentPlanItem, Prisma, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import {
@@ -179,8 +180,9 @@ export function planTargets(plan: Pick<ContentPlan, 'targets'>): AutoPublishTarg
 const liveItems = (items: ContentPlanItem[]) =>
   items.filter((i) => i.status !== 'REMOVED' && i.status !== 'SKIPPED');
 
-export function publicPlan(plan: PlanWithItems) {
+export function publicPlan(plan: PlanWithItems, now: number = Date.now()) {
   const tier = toPlanTier(plan.planTier ?? undefined);
+  const rolling = rollingSettings();
   const live = liveItems(plan.items);
   return {
     id: plan.id,
@@ -231,6 +233,8 @@ export function publicPlan(plan: PlanWithItems) {
       status: i.status,
       statusReason: i.statusReason,
       projectId: i.projectId,
+      // 23.6: when a post waiting for its window will be created (the calendar shows it).
+      createsAt: createsAtOf(i, plan.items, now, rolling)?.toISOString() ?? null,
     })),
   };
 }

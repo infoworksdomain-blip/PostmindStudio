@@ -323,7 +323,14 @@ export async function enqueueStage(
     case 'quality':
       return queue.add('run-quality-gate', data, { jobId: jobIds.runQualityGate(data) });
     case 'render':
-      return queue.add('compose-video', data, { jobId: jobIds.composeVideo(data) });
+      await queue.add('compose-video', data, { jobId: jobIds.composeVideo(data) });
+      // 23.6: a run waiting on submitted renders is finished by its poll chain; start a fresh one
+      // (a no-op when nothing is pending; the poll claim keeps two chains from racing).
+      return queue.add(
+        'poll-render',
+        { ...data, chain: 'redrive', poll: 1 },
+        { jobId: jobIds.pollRender(data, 'redrive-1') },
+      );
     case 'assets':
       if (pendingShots.length === 0 || project.sourceType === 'SLIDESHOW') {
         return queue.add('compose-video', data, { jobId: jobIds.composeVideo(data) });

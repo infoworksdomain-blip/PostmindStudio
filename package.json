@@ -32,6 +32,7 @@
     "gate2:anthropic": "dotenv -e .env.local -- tsx scripts/test-anthropic.ts",
     "gate2:runway": "dotenv -e .env.local -- tsx scripts/test-runway.ts",
     "gate2:luma": "dotenv -e .env.local -- tsx scripts/test-luma.ts",
+    "gate2:fal": "dotenv -e .env.local -- tsx scripts/test-fal.ts",
     "gate2:heygen": "dotenv -e .env.local -- tsx scripts/test-heygen.ts",
     "gate2:elevenlabs": "dotenv -e .env.local -- tsx scripts/test-elevenlabs.ts",
     "gate2:shotstack": "dotenv -e .env.local -- tsx scripts/test-shotstack.ts",

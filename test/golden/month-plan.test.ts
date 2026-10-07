@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
 import pino from 'pino';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import * as generatePlanRoute from '../../src/app/api/studio/content-plans/[id]/generate/route';
 import * as planRoute from '../../src/app/api/studio/content-plans/[id]/route';
 import * as itemRoute from '../../src/app/api/studio/content-plans/[id]/items/[itemId]/route';
@@ -33,10 +33,15 @@ describe.skipIf(!hasDb)('20.9 golden: plan my month', { timeout: 300_000 }, () =
   const plannerId = `golden-planner-${randomUUID()}`;
 
   beforeAll(async () => {
+    // 23.6 rolling generation starts an item only within 72 h of its slot; this journey checks the
+    // whole plan is made and scheduled, whatever the time of day the test runs (rolling.test.ts
+    // covers the window itself).
+    vi.stubEnv('STUDIO_PLAN_LEAD_HOURS', '744');
     await seedOverlayPresets(db);
   }, 120_000);
 
   afterAll(async () => {
+    vi.unstubAllEnvs();
     setApiDeps(undefined);
     await db.contentPlan.deleteMany({ where: { organisationId: { startsWith: 'golden-' } } });
     await db.autoPublishOutbox.deleteMany({ where: { organisationId: { startsWith: 'golden-' } } });

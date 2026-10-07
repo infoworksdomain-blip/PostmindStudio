@@ -275,6 +275,7 @@ const PIPELINE_JOBS = new Set<string>([
   'plan-project',
   'generate-asset',
   'compose-video',
+  'poll-render',
   'run-quality-gate',
   'populate-slideshow',
 ]);

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildPlanBody,
   canChangeScheduled,
+  createsLaterCount,
   dayOf,
   groupByDay,
   kindCounts,
@@ -10,6 +11,7 @@ import {
   pointsFromText,
   requestedPosts,
   validatePlanForm,
+  waitingToCreate,
   writtenCount,
   type PlanFormState,
   type PlanItem,
@@ -70,6 +72,22 @@ describe('20.9 plan model', () => {
     expect(
       canChangeScheduled(item('a', '2026-10-01T08:00:00Z', { status: 'SCHEDULED' }), now),
     ).toBe(false);
+  });
+
+  it('23.6: a queued post with a future creation time is waiting, not being made', () => {
+    const now = Date.parse('2026-10-01T09:00:00Z');
+    const slot = '2026-10-09T09:00:00Z';
+    const waiting = item('a', slot, { status: 'QUEUED', createsAt: '2026-10-06T09:00:00Z' });
+    const due = item('b', slot, { status: 'QUEUED', createsAt: '2026-10-01T08:00:00Z' });
+    const unknown = item('c', slot, { status: 'QUEUED', createsAt: null });
+    const legacy = item('d', slot, { status: 'QUEUED' });
+    const making = item('e', slot, { status: 'GENERATING', createsAt: '2026-10-06T09:00:00Z' });
+    const bad = item('f', slot, { status: 'QUEUED', createsAt: 'not a date' });
+    expect(waitingToCreate(waiting, now)).toBe(true);
+    for (const other of [due, unknown, legacy, making, bad])
+      expect(waitingToCreate(other, now)).toBe(false);
+    expect(createsLaterCount([waiting, due, unknown, legacy, making, bad, waiting], now)).toBe(2);
+    expect(createsLaterCount([], now)).toBe(0);
   });
 
   it('moves topics and parses slide points', () => {

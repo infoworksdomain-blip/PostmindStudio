@@ -5681,7 +5681,9 @@
       "remove": "Remover",
       "removeAria": "Remover “{title}”",
       "removeConfirm": "A sua publicação é cancelada e a hora libertada. O resto do plano continua.",
-      "removedToast": "Publicação removida"
+      "removedToast": "Publicação removida",
+      "createsAt": "Agendada para ser criada a {date}",
+      "createsLater": "{count, plural, one {Mais # publicação será criada perto da hora de publicação.} other {Mais # publicações serão criadas perto da hora de publicação.}}"
     },
     "list": {
       "title": "Planos mensais",
