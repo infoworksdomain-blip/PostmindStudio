@@ -73,9 +73,11 @@ export function CreateOrganisationStep() {
   return (
     <div className="grid gap-6 md:grid-cols-[1fr_1.2fr] md:gap-10">
       <div>
-        <Building2 aria-hidden className="size-8 text-primary" strokeWidth={1.5} />
-        <h2 className="mt-4 font-display text-3xl">{t('title')}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">{t('description')}</p>
+        <Building2 aria-hidden className="size-7 text-foreground-secondary" strokeWidth={1.5} />
+        <h2 className="mt-4 font-display text-2xl leading-tight sm:text-[1.75rem]">{t('title')}</h2>
+        <p className="mt-2 text-[0.9375rem] leading-relaxed text-foreground-secondary">
+          {t('description')}
+        </p>
       </div>
       <form onSubmit={(e) => void submit(e)} className="grid gap-5">
         <div className="grid gap-1.5">
@@ -217,9 +219,11 @@ export function FirstBusinessStep() {
   return (
     <div className="grid gap-6 md:grid-cols-[1fr_1.2fr] md:gap-10">
       <div>
-        <Globe2 aria-hidden className="size-8 text-primary" strokeWidth={1.5} />
-        <h2 className="mt-4 font-display text-3xl">{t('title')}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">{t('description')}</p>
+        <Globe2 aria-hidden className="size-7 text-foreground-secondary" strokeWidth={1.5} />
+        <h2 className="mt-4 font-display text-2xl leading-tight sm:text-[1.75rem]">{t('title')}</h2>
+        <p className="mt-2 text-[0.9375rem] leading-relaxed text-foreground-secondary">
+          {t('description')}
+        </p>
       </div>
       {!data && !error ? (
         <Skeleton className="h-48 rounded-lg" aria-label={t('loading')} />

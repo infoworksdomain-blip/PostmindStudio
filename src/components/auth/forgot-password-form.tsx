@@ -1,20 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { useId, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { AuthApiError, authApi } from '@/lib/client/auth';
-import { AuthCard, AuthError, AuthNotice, SupportContact } from './auth-card';
+import { AuthCard, AuthError, AuthStatusMark, authLinkClass, SupportContact } from './auth-card';
+import { AuthTextField } from './auth-fields';
 
 // Phase 18 §5.3 — /forgot-password always answers "if an account exists, we've sent a link".
 // Only a rate limit (429) is shown as an error.
+// 25.6: the sent state says what happens next (open the link, it works for an hour) and offers a
+// different address.
 
 export function ForgotPasswordForm({ supportEmail }: { supportEmail?: string }) {
   const t = useTranslations('auth.forgot');
-  const emailId = useId();
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
@@ -35,43 +35,52 @@ export function ForgotPasswordForm({ supportEmail }: { supportEmail?: string }) 
     }
   };
 
+  const back = (
+    <Link className={authLinkClass} href="/sign-in">
+      {t('backToSignIn')}
+    </Link>
+  );
+
+  if (done)
+    return (
+      <AuthCard
+        icon={<AuthStatusMark tone="success" />}
+        title={t('sentTitle')}
+        description={t('sent')}
+        footer={back}
+      >
+        <p className="text-sm leading-relaxed text-foreground-secondary">{t('sentNext')}</p>
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="mt-6 w-full"
+          onClick={() => setDone(false)}
+        >
+          {t('tryAnother')}
+        </Button>
+        <SupportContact email={supportEmail} />
+      </AuthCard>
+    );
+
   return (
-    <AuthCard
-      title={t('title')}
-      description={t('description')}
-      footer={
-        <Link className="underline-offset-4 hover:underline" href="/sign-in">
-          {t('backToSignIn')}
-        </Link>
-      }
-    >
-      {done ? (
-        <>
-          <AuthNotice>{t('sent')}</AuthNotice>
-          <SupportContact email={supportEmail} />
-        </>
-      ) : (
-        <>
-          <AuthError error={error} />
-          <form onSubmit={(e) => void submit(e)} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor={emailId}>{t('email')}</Label>
-              <Input
-                id={emailId}
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-10"
-              />
-            </div>
-            <Button type="submit" className="h-10 w-full" loading={busy}>
-              {t('submit')}
-            </Button>
-          </form>
-        </>
-      )}
+    <AuthCard title={t('title')} description={t('description')} footer={back}>
+      <AuthError error={error} />
+      <form onSubmit={(e) => void submit(e)} className="space-y-5">
+        <AuthTextField
+          label={t('email')}
+          type="email"
+          autoComplete="email"
+          inputMode="email"
+          spellCheck={false}
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <Button type="submit" size="lg" className="w-full" loading={busy}>
+          {t('submit')}
+        </Button>
+      </form>
     </AuthCard>
   );
 }

@@ -340,10 +340,10 @@ test('a user with no organisation is sent to the welcome wizard, then sets one u
   // The "… added." toast slides in over the wizard's buttons (bottom corner); wait for it to go
   // so the click is not swallowed by the toast mid-animation.
   await expect(page.locator('[data-sonner-toast]')).toHaveCount(0, { timeout: 15_000 });
-  await page.getByRole('button', { name: 'Skip this step' }).click();
+  await page.getByRole('button', { name: 'Skip for now' }).click();
   await expect(page.getByRole('heading', { name: 'Connect where you post' }).first()).toBeVisible();
   await w.check('/welcome connect');
-  await page.getByRole('button', { name: 'Skip this step' }).click();
+  await page.getByRole('button', { name: 'Skip for now' }).click();
   await expect(page.getByRole('heading', { name: 'Make your first video' }).first()).toBeVisible();
   await w.check('/welcome first video');
   await page.getByRole('button', { name: 'Make my intro video' }).click();

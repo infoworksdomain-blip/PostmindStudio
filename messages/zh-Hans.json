@@ -3668,21 +3668,22 @@
       "title": "欢迎"
     },
     "steps": {
-      "connect": "连接账号",
-      "brandKit": "品牌套件",
+      "connect": "渠道",
+      "brandKit": "品牌",
       "firstVideo": "首个视频",
-      "celebrate": "庆祝上线",
+      "celebrate": "完成",
       "organisation": "组织",
       "business": "业务"
     },
     "stepIndicator": {
       "aria": "设置进度",
-      "done": "（已完成）"
+      "done": "（已完成）",
+      "position": "第 {current} 步，共 {total} 步"
     },
     "wizard": {
       "eyebrow": "欢迎",
       "title": "一起制作你的第一个视频",
-      "description": "只需几个步骤：您的组织和业务、您的品牌、一个已连接的账号，然后是您的第一个视频。",
+      "description": "只需几个步骤：您的组织和业务、您的品牌、您的渠道，然后是您的第一个视频。",
       "skipSetup": "跳过设置",
       "loading": "正在加载设置",
       "skipped": {
@@ -3697,17 +3698,18 @@
       },
       "currentStep": "当前步骤",
       "saving": "正在保存",
-      "skipStep": "跳过此步骤",
+      "skipStep": "暂时跳过",
       "finish": "完成"
     },
     "connect": {
       "title": "连接你的发布渠道",
       "description": "Studio 可直接发布到 TikTok、YouTube、Instagram、Facebook、X 和 LinkedIn。请至少连接一个账号，以便发布你的第一个视频。",
       "loading": "正在加载账号",
-      "connectedAria": "已连接的账号",
+      "connectedAria": "您的渠道",
       "none": "尚未连接任何账号。",
       "connectAnother": "再连接一个账号",
-      "openConnections": "打开“连接”"
+      "openConnections": "打开“连接”",
+      "notConnected": "未连接"
     },
     "brandKit": {
       "title": "三步设置你的品牌",
@@ -3740,6 +3742,14 @@
         "calm": "沉稳",
         "witty": "风趣",
         "premium": "高端"
+      },
+      "scanWebsite": "有网站吗？扫描网站来充实您的图片库",
+      "preview": {
+        "label": "预览",
+        "kicker": "您的品牌",
+        "headline": "您的视频将是这个样子",
+        "noFont": "默认字体",
+        "noTone": "尚未选择语气"
       }
     },
     "firstVideo": {
@@ -3779,13 +3789,21 @@
         "body": "“{name}”尚未发布。请审阅并批准，然后发布——上线的那一刻我们会在这里庆祝。",
         "action": "打开你的视频"
       },
-      "planMonth": "或者让 Studio 为你规划并排期整个月"
+      "planMonth": "或者让 Studio 为你规划并排期整个月",
+      "next": {
+        "title": "接下来",
+        "review": "Studio 会完成您的视频。准备好后请审阅。",
+        "publish": "批准后，Studio 会立即或按计划发布到您的渠道。",
+        "insights": "洞察会显示每条视频的表现，让下一条更出色。",
+        "home": "前往首页"
+      }
     },
     "finished": {
       "title": "一切就绪",
       "description": "Studio 已准备好为你的商家制作和发布视频。",
       "makeAnother": "再制作一个视频",
-      "goToProjects": "前往项目"
+      "goToProjects": "前往项目",
+      "goHome": "前往首页"
     },
     "organisation": {
       "title": "为您的组织命名",
@@ -4457,7 +4475,11 @@
   },
   "auth": {
     "shell": {
-      "brand": "PostMind Studio"
+      "brand": "PostMind Studio",
+      "panelLabel": "关于 PostMind Studio",
+      "valueStatement": "只需几句话介绍您的业务，就能为每个渠道制作短视频。",
+      "valueDetail": "Studio 会撰写脚本，按您的品牌制作视频，并在您连接的渠道上排期发布。",
+      "panelAlt": "PostMind Studio 中一条酸面包的 TikTok 视频，已通过质量检查。"
     },
     "errors": {
       "invalidCredentials": "该邮箱和密码与任何账户都不匹配。",
@@ -4495,7 +4517,8 @@
       "password": "密码",
       "submit": "登录",
       "forgot": "忘记密码？",
-      "noAccount": "创建账户"
+      "noAccount": "创建账户",
+      "newHere": "第一次使用 PostMind Studio？"
     },
     "google": {
       "or": "或",
@@ -4511,7 +4534,9 @@
       "submit": "创建账户",
       "haveAccount": "已有账户？登录",
       "closedTitle": "仅限受邀",
-      "closedDescription": "目前仅支持受邀注册新账户。请让团队成员邀请您。"
+      "closedDescription": "目前仅支持受邀注册新账户。请让团队成员邀请您。",
+      "closedNext": "已经收到邀请？打开邀请邮件中的链接即可设置您的账号。",
+      "closedSignIn": "登录"
     },
     "verify": {
       "title": "请查收邮件",
@@ -4523,7 +4548,8 @@
       "resent": "如果该地址需要确认，我们已发送新链接。",
       "email": "邮箱",
       "resend": "发送新链接",
-      "backToSignIn": "返回登录"
+      "backToSignIn": "返回登录",
+      "resendPrompt": "还没收到？请查看垃圾邮件文件夹，或重新发送链接。"
     },
     "forgot": {
       "title": "重置密码",
@@ -4531,7 +4557,10 @@
       "email": "邮箱",
       "submit": "发送重置链接",
       "sent": "如果有账户使用该地址，重置链接正在发送中，1 小时内有效。",
-      "backToSignIn": "返回登录"
+      "backToSignIn": "返回登录",
+      "sentTitle": "请查看您的收件箱",
+      "sentNext": "打开邮件中的链接以设置新密码。几分钟后仍未收到？请查看垃圾邮件文件夹，或换一个邮箱地址试试。",
+      "tryAnother": "使用其他邮箱"
     },
     "reset": {
       "title": "设置新密码",
@@ -4542,7 +4571,9 @@
       "signIn": "登录",
       "invalidTitle": "该链接无效",
       "invalidDescription": "重置链接仅可使用一次，1 小时内有效。请重新获取。",
-      "requestNew": "获取新链接"
+      "requestNew": "获取新链接",
+      "backToSignIn": "返回登录",
+      "doneTitle": "密码已更改"
     },
     "twoFactor": {
       "title": "两步验证",
@@ -4565,7 +4596,10 @@
       "joinNamed": "您受邀加入 PostMind Studio 上的 {organisation}。",
       "accept": "接受邀请",
       "notNow": "以后再说",
-      "unavailable": "此邀请已过期、已被撤销，或发送到了其他邮箱。"
+      "unavailable": "此邀请已过期、已被撤销，或发送到了其他邮箱。",
+      "unavailableTitle": "此邀请无法使用",
+      "unavailableNext": "请邀请您的人向您登录所用的邮箱重新发送邀请。",
+      "goToStudio": "前往 Studio"
     },
     "support": {
       "noEmail": "几分钟后仍未收到邮件？请联系 <link>{email}</link>。"
@@ -5763,16 +5797,23 @@
   "errorPage": {
     "notFound": {
       "title": "找不到该页面",
-      "body": "链接可能已过期，或页面已移动。",
+      "body": "链接可能已过期，或页面已移动。请检查地址，或从这里继续。",
       "projects": "前往项目",
-      "home": "前往首页"
+      "home": "前往首页",
+      "label": "错误 404",
+      "goHome": "前往首页",
+      "signIn": "登录"
     },
     "boundary": {
       "title": "此页面出现问题",
-      "body": "我们已记录此问题。请重试，或返回你的项目。",
+      "body": "这不是您的操作导致的，我们已记录此问题。请重试，或返回首页。",
       "retry": "重试",
       "projects": "前往项目",
-      "reference": "参考编号：{digest}"
+      "reference": "参考编号：{digest}",
+      "label": "出了点问题",
+      "goHome": "前往首页",
+      "home": "前往首页",
+      "feedback": "告诉我们发生了什么"
     }
   },
   "hashtags": {

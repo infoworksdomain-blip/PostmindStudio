@@ -51,8 +51,8 @@ describe('WelcomeWizard localised', () => {
     ).toBeVisible();
     expect(document.documentElement).toHaveAttribute('dir', 'rtl');
     const steps = screen.getByRole('list', { name: 'تقدّم الإعداد' });
-    expect(within(steps).getByText('هوية العلامة')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'تخطي هذه الخطوة' })).toBeEnabled();
+    expect(within(steps).getByText('العلامة')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'التخطي الآن' })).toBeEnabled();
     expect(await screen.findByText('لا توجد حسابات مرتبطة بعد.')).toBeVisible();
   });
 

@@ -150,18 +150,20 @@ export function ConnectionsScreen({
       {notice && (
         <div
           role={notice.tone === 'bad' ? 'alert' : 'status'}
+          // 25.6: the calm notice pattern of the sign-in screens: a soft tonal wash, the tone's
+          // text-safe foreground, the message, and a dismiss.
           className={
             notice.tone === 'good'
-              ? 'mb-6 flex items-start gap-3 rounded-xl border border-success/30 bg-success/8 p-4 text-sm'
-              : 'mb-6 flex items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm'
+              ? 'mb-6 flex items-start gap-2.5 rounded-field bg-success-soft py-2.5 ps-3.5 pe-2 text-sm text-success-foreground'
+              : 'mb-6 flex items-start gap-2.5 rounded-field bg-destructive-soft py-2.5 ps-3.5 pe-2 text-sm text-destructive-foreground'
           }
         >
           {notice.tone === 'good' ? (
-            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />
+            <CheckCircle2 aria-hidden className="mt-0.5 size-4 shrink-0" />
           ) : (
-            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
+            <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
           )}
-          <p className="flex-1">{notice.text}</p>
+          <p className="flex-1 py-px leading-relaxed">{notice.text}</p>
           <IconButton size="icon-xs" label={t('dismiss')} onClick={dismiss}>
             <X />
           </IconButton>

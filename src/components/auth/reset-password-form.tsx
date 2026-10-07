@@ -5,7 +5,7 @@ import { useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { authApi } from '@/lib/client/auth';
-import { AuthCard, AuthError, AuthNotice } from './auth-card';
+import { AuthCard, AuthError, AuthStatusMark, authLinkClass } from './auth-card';
 import { PASSWORD_MIN, PasswordField } from './password-field';
 
 // Phase 18 §5.1 — /reset-password?token=… (Better Auth redirects here from the emailed link, or
@@ -21,15 +21,16 @@ export function ResetPasswordForm({ token, error }: { token?: string; error?: st
   if (!token || error) {
     return (
       <AuthCard
+        icon={<AuthStatusMark tone="problem" />}
         title={t('invalidTitle')}
         description={t('invalidDescription')}
         footer={
-          <Link className="underline-offset-4 hover:underline" href="/forgot-password">
-            {t('requestNew')}
+          <Link className={authLinkClass} href="/sign-in">
+            {t('backToSignIn')}
           </Link>
         }
       >
-        <Button asChild className="h-10 w-full">
+        <Button asChild size="lg" className="w-full">
           <Link href="/forgot-password">{t('requestNew')}</Link>
         </Button>
       </AuthCard>
@@ -50,37 +51,41 @@ export function ResetPasswordForm({ token, error }: { token?: string; error?: st
     }
   };
 
+  if (done)
+    return (
+      <AuthCard
+        icon={<AuthStatusMark tone="success" />}
+        title={t('doneTitle')}
+        description={t('done')}
+      >
+        <Button asChild size="lg" className="w-full">
+          <Link href="/sign-in">{t('signIn')}</Link>
+        </Button>
+      </AuthCard>
+    );
+
   return (
     <AuthCard title={t('title')} description={t('description')}>
-      {done ? (
-        <>
-          <AuthNotice>{t('done')}</AuthNotice>
-          <Button asChild className="h-10 w-full">
-            <Link href="/sign-in">{t('signIn')}</Link>
-          </Button>
-        </>
-      ) : (
-        <>
-          <AuthError error={failure} />
-          <form onSubmit={(e) => void submit(e)} className="space-y-5">
-            <PasswordField
-              label={t('newPassword')}
-              value={password}
-              onChange={setPassword}
-              autoComplete="new-password"
-              showStrength
-            />
-            <Button
-              type="submit"
-              className="h-10 w-full"
-              disabled={password.length < PASSWORD_MIN}
-              loading={busy}
-            >
-              {t('submit')}
-            </Button>
-          </form>
-        </>
-      )}
+      <AuthError error={failure} />
+      <form onSubmit={(e) => void submit(e)} className="space-y-5">
+        <PasswordField
+          label={t('newPassword')}
+          value={password}
+          onChange={setPassword}
+          autoComplete="new-password"
+          showStrength
+          error={failure}
+        />
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full"
+          disabled={password.length < PASSWORD_MIN}
+          loading={busy}
+        >
+          {t('submit')}
+        </Button>
+      </form>
     </AuthCard>
   );
 }
