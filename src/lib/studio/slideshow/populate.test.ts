@@ -1,4 +1,4 @@
-import type { ImageLibraryItem, PrismaClient } from '@prisma/client';
+import type { ImageLibraryItem, Prisma, PrismaClient } from '@prisma/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NoProviderAvailableError, ProviderError } from '../../errors';
 import type { LibraryDeps } from '../images/library';
@@ -12,12 +12,16 @@ import {
   type PopulateDeps,
   type PopulateScope,
 } from './populate';
+import type { SlideContent } from './planner';
 
 vi.mock('../images/library', () => ({
   searchLibrary: vi.fn(),
   generateLibraryImage: vi.fn(),
 }));
-vi.mock('../pipeline/provider-run', () => ({ runProvider: vi.fn() }));
+vi.mock('../pipeline/provider-run', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../pipeline/provider-run')>()),
+  runProvider: vi.fn(),
+}));
 vi.mock('./slide-images', () => ({
   stockImageForSlide: vi.fn(async () => null),
   embedNewImages: vi.fn(async () => undefined),
@@ -75,6 +79,17 @@ function fakeDb(
         sourceProvider: null,
         licenseNotes: null,
       }),
+    ),
+    // 25.x follow-up: library matches are read back for their source; the business's own
+    // uploads are trusted without a relevance check (library-relevance.ts).
+    findMany: vi.fn(async ({ where }: { where: { id: { in: string[] } } }) =>
+      where.id.in.map((id) => ({
+        id,
+        source: 'UPLOAD',
+        s3Bucket: 'b',
+        s3Key: id,
+        publicUrl: null,
+      })),
     ),
     // The daily org-wide count has no businessId; the 15.D2 monthly per-business count does.
     count: vi.fn(async (args?: { where?: { businessId?: string } }) =>
@@ -510,12 +525,13 @@ describe('populateSlideshow — image generation', () => {
     const { db } = fakeDb(rows, { imageThemes: ['bakery', 'bread', 'coffee', 'extra'] });
     searchLibraryMock.mockResolvedValue([{ id: 'img-1', similarity: 0.9 }]);
 
+    // The visual-query call fails (runProvider resolves nothing): its fallback is the themes.
     await populateSlideshow(deps(db), scope, { topic: null, aspectRatio: '9:16' });
 
     expect(searchLibraryMock).toHaveBeenCalledWith(
       expect.anything(),
       scope,
-      'bakery bread coffee',
+      'bakery bread',
       expect.any(Number),
     );
   });
@@ -542,6 +558,14 @@ describe('fillSlideImages — 20.26 on-demand stock and fallbacks', () => {
   it('empty library → stock fetched for each slide → the slides get those images', async () => {
     const rows = [photo('b1', 'Open with the outcome'), photo('b2', 'Name the decision')];
     const { db, slideshowSlide } = fakeDb(rows);
+    runProviderMock.mockResolvedValue(
+      providerJsonResult({
+        queries: [
+          { slide: 1, query: 'business meeting presenter' },
+          { slide: 2, query: 'team decision whiteboard' },
+        ],
+      }),
+    );
     searchLibraryMock.mockResolvedValue([]);
     stockMock
       .mockResolvedValueOnce({ id: 'stock-1', provider: 'pixabay' })
@@ -554,9 +578,10 @@ describe('fillSlideImages — 20.26 on-demand stock and fallbacks', () => {
 
     expect(result).toMatchObject({ imagesMatched: 0, imagesStocked: 2, imagesGenerated: 0 });
     expect(stockMock).toHaveBeenNthCalledWith(1, expect.anything(), scope, {
-      query: 'Open with the outcome',
+      query: 'business meeting presenter',
       aspectRatio: '16:9',
       exclude: expect.any(Set),
+      screen: expect.any(Function),
     });
     // The second search excludes the image the first slide took.
     const second = stockMock.mock.calls[1]?.[2] as { exclude: Set<string> };
@@ -593,8 +618,10 @@ describe('fillSlideImages — 20.26 on-demand stock and fallbacks', () => {
     });
 
     expect(result).toMatchObject({ imagesStocked: 0, imagesGenerated: 1, textCards: 0 });
+    // 25.x: the visual-query call failed (nothing resolved), so the prompt is the fallback:
+    // topic + caption, never the bare caption.
     expect(generateLibraryImageMock).toHaveBeenCalledWith(expect.anything(), scope, {
-      prompt: 'Open with the outcome',
+      prompt: '3 Steps to Nail Your Meeting Opener Open with the outcome',
       aspectRatio: '16:9',
     });
     expect(slideshowSlide.update).toHaveBeenCalledWith({
@@ -671,5 +698,111 @@ describe('fillSlideImages — 20.26 on-demand stock and fallbacks', () => {
     });
     expect(result).toMatchObject({ textCards: 0, unfilled: 1 });
     expect(slideshowSlide.update).not.toHaveBeenCalled();
+  });
+});
+
+// BACKLOG 25.x — production 2026-10-07: photo slides were searched by the bare caption (a bakery's
+// "Seeded rye with a deep crust" → croissants, a gym's "Coaches who know your name" → puppies).
+describe('fillSlideImages — 25.x contextual queries', () => {
+  const bakery = {
+    imageThemes: ['bakery', 'bread loaves'],
+    industry: 'Food & drink',
+    subNiche: 'Artisan bakery',
+    products: ['sourdough'],
+    services: [],
+  };
+  const slide = (id: string, content: SlideContent) => ({
+    id,
+    sortOrder: 0,
+    slideType: 'IMAGE_KENBURNS',
+    imageAssetId: null,
+    metadata: { ...content } as Prisma.JsonObject,
+    content,
+  });
+  const options = { topic: 'Why our bread is different', aspectRatio: '9:16' as const };
+
+  it('rewrites a caption-equal imageQuery with ONE light call and searches every source with it', async () => {
+    const rows = [
+      slide('r1', {
+        role: 'body',
+        text: 'Seeded rye with a deep crust',
+        imageQuery: 'Seeded rye with a deep crust',
+      }),
+      slide('r2', { role: 'body', text: 'Pastries baked next door' }),
+    ];
+    const { db } = fakeDb(rows, bakery);
+    runProviderMock.mockResolvedValue(
+      providerJsonResult({
+        queries: [
+          { slide: 1, query: 'seeded rye sourdough loaf crust bakery' },
+          { slide: 2, query: 'fresh pastries bakery counter' },
+        ],
+      }),
+    );
+    searchLibraryMock.mockResolvedValue([]);
+    generateLibraryImageMock.mockResolvedValue({ status: 'created', id: 'gen-1' });
+
+    await fillSlideImages(deps(db), scope, rows, { ...options, textCardFallback: true });
+
+    expect(runProviderMock).toHaveBeenCalledTimes(1);
+    const request = runProviderMock.mock.calls[0]?.[0].request as { task: string; prompt: string };
+    expect(request.task).toBe('slide_image_query');
+    expect(request.prompt).toContain('Slideshow topic: Why our bread is different');
+    expect(request.prompt).toContain('Business: Artisan bakery — Food & drink');
+    const libraryQueries = searchLibraryMock.mock.calls.map((c) => c[2] as string);
+    expect(libraryQueries).toEqual([
+      'seeded rye sourdough loaf crust bakery',
+      'fresh pastries bakery counter',
+    ]);
+    expect((stockMock.mock.calls[0]?.[2] as { query: string }).query).toBe(
+      'seeded rye sourdough loaf crust bakery',
+    );
+    expect(generateLibraryImageMock).toHaveBeenCalledWith(
+      expect.anything(),
+      scope,
+      expect.objectContaining({ prompt: 'seeded rye sourdough loaf crust bakery' }),
+    );
+  });
+
+  it('keeps an explicit imageQuery that differs from the caption (no model call)', async () => {
+    const rows = [
+      slide('k1', { role: 'body', text: 'Weak starter', imageQuery: 'bubbly starter jar' }),
+    ];
+    const { db } = fakeDb(rows, bakery);
+    searchLibraryMock.mockResolvedValue([{ id: 'own-1', similarity: 0.7 }]);
+
+    await fillSlideImages(deps(db), scope, rows, options);
+
+    expect(runProviderMock).not.toHaveBeenCalled();
+    expect(searchLibraryMock.mock.calls[0]?.[2]).toBe('bubbly starter jar');
+  });
+
+  it('model outage → topic + caption + image themes, never the bare caption', async () => {
+    const rows = [slide('o1', { role: 'body', text: 'Seeded rye with a deep crust' })];
+    const { db } = fakeDb(rows, bakery);
+    runProviderMock.mockRejectedValue(new NoProviderAvailableError('text_generation'));
+    searchLibraryMock.mockResolvedValue([{ id: 'own-1', similarity: 0.7 }]);
+
+    await fillSlideImages(deps(db), scope, rows, options);
+
+    expect(searchLibraryMock.mock.calls[0]?.[2]).toBe(
+      'Why our bread is different Seeded rye with a deep crust bakery loaves',
+    );
+  });
+
+  it('passes the relevance screen to the stock search', async () => {
+    const rows = [slide('s1', { role: 'body', text: 'Coaches who know your name' })];
+    const { db } = fakeDb(rows, bakery);
+    runProviderMock.mockResolvedValue(
+      providerJsonResult({ queries: [{ slide: 1, query: 'gym coach client' }] }),
+    );
+    searchLibraryMock.mockResolvedValue([]);
+    stockMock.mockResolvedValue({ id: 'stock-1', provider: 'pixabay' });
+
+    const result = await fillSlideImages(deps(db), scope, rows, options);
+
+    expect(result.imagesStocked).toBe(1);
+    const screen = (stockMock.mock.calls[0]?.[2] as { screen?: unknown }).screen;
+    expect(typeof screen).toBe('function');
   });
 });

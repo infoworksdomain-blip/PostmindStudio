@@ -52,9 +52,18 @@ describe('ImageLibraryPanel', () => {
       expect(q.get('source')).toBe('generated');
       expect(q.get('tag')).toBe('bread');
     });
-    await screen.findByRole('list', { name: 'Image library' });
+    // The filtered page must have loaded (Older enabled on the NEW list) before paging; on a
+    // loaded CI runner clicking the stale list's button was lost while the filter page loaded.
+    const filteredRequests = api.requests.length;
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Older' })).toBeEnabled());
     await user.click(screen.getByRole('button', { name: 'Older' }));
-    await waitFor(() => expect(lastLibrary().url.searchParams.get('cursor')).toBe('img_1'));
+    await waitFor(
+      () => {
+        expect(api.requests.length).toBeGreaterThan(filteredRequests);
+        expect(api.requests.at(-1)!.url.searchParams.get('cursor')).toBe('img_1');
+      },
+      { timeout: 5_000 },
+    );
   });
 
   it('shows empty and error states', async () => {

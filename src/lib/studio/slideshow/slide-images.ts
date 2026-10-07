@@ -9,6 +9,7 @@ import {
 import type { StockHit, StockSearch } from '../images/stock';
 import type { AspectRatio } from '../providers/interface';
 import { publicErrorText } from '../providers/provider-errors';
+import type { StockScreen } from './image-relevance';
 
 // BACKLOG 20.26 — stock photos for one slide, fetched on demand when the business's own image
 // library has nothing suitable (production 2026-10-03: a library holding one image made every
@@ -19,6 +20,8 @@ import { publicErrorText } from '../providers/provider-errors';
 // as its guidelines require, and its use is reported to download_location when the slide is
 // filled (populate.ts reportStockUse). Pixabay searches go through its 24 h search cache
 // (images/stock-cache.ts) and Pixabay's 100 requests a minute; a run asks one search per slide.
+// 25.x: an optional `screen` (image-relevance.ts) sees each source's hits BEFORE any is stored and
+// keeps only those that fit the slide, so an unrelated photo never enters the library.
 
 /** Hits asked for per slide search: the first usable one is taken (Pixabay's minimum is 3). */
 export const SLIDE_STOCK_PER_PAGE = 3;
@@ -44,7 +47,12 @@ export interface SlideStockResult {
 export async function stockImageForSlide(
   deps: LibraryDeps,
   scope: BusinessScope,
-  input: { query: string; aspectRatio: AspectRatio; exclude: ReadonlySet<string> },
+  input: {
+    query: string;
+    aspectRatio: AspectRatio;
+    exclude: ReadonlySet<string>;
+    screen?: StockScreen;
+  },
 ): Promise<SlideStockResult | null> {
   const query = input.query.trim().slice(0, MAX_QUERY_CHARS);
   if (!query) return null;
@@ -73,6 +81,7 @@ export async function stockImageForSlide(
       );
       continue;
     }
+    if (input.screen) hits = await input.screen(query, hits);
     for (const hit of hits) {
       try {
         const outcome = await storeStockHit(deps, scope, source, hit, normaliseTags([query]));

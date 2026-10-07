@@ -1,4 +1,5 @@
 import type { PlatformConnection } from '@/lib/client/types';
+import { SHORT_VIDEO_MAX_SEC } from '@/lib/studio/billing/catalogue';
 import { belongsToBusiness } from '../connections/platforms';
 
 // Create screen defaults (spec 14.1): platforms map to a format the platform accepts
@@ -17,9 +18,11 @@ export interface PlatformOption {
 export const PLATFORM_OPTIONS: PlatformOption[] = [
   { platform: 'tiktok', aspectRatio: '9:16', shortSec: 30, longSec: 90 },
   { platform: 'instagram_reel', aspectRatio: '9:16', shortSec: 30, longSec: 90 },
-  // 15.C8: spec 5.3 "45-60s for YouTube Shorts".
-  { platform: 'youtube_short', aspectRatio: '9:16', shortSec: 45, longSec: 60 },
-  { platform: 'youtube', aspectRatio: '16:9', shortSec: 60, longSec: 300 },
+  // 15.C8 used spec 5.3's "45-60s for YouTube Shorts" for Short, but every plan counts anything
+  // over SHORT_VIDEO_MAX_SEC (30 s) as a LONG video, and per-channel plans include no long videos
+  // (plan-quotas.ts long_not_included), so a default Short must stay within the short limit.
+  { platform: 'youtube_short', aspectRatio: '9:16', shortSec: SHORT_VIDEO_MAX_SEC, longSec: 60 },
+  { platform: 'youtube', aspectRatio: '16:9', shortSec: SHORT_VIDEO_MAX_SEC, longSec: 300 },
   { platform: 'linkedin_video', aspectRatio: '16:9', shortSec: 30, longSec: 120 },
   { platform: 'x', aspectRatio: '16:9', shortSec: 30, longSec: 120 },
   { platform: 'facebook', aspectRatio: '9:16', shortSec: 30, longSec: 90 },
