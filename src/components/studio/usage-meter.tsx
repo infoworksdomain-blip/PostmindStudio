@@ -49,6 +49,21 @@ function useResetDate(): (iso: string) => string {
   return (iso) => f.date(iso, { day: 'numeric', month: 'short', timeZone: 'UTC' });
 }
 
+/** Meters warn at 80 % of a limit and reach the error tone only at 100 %. */
+export const METER_WARN_AT = 80;
+export const METER_FULL_AT = 100;
+
+/**
+ * 25.12: a meter's fill. Neutral data teal by default (not the vermilion signal: red means a limit),
+ * warning from 80 %, destructive at 100 %. Every fill keeps 3:1 against the track
+ * (test/unit/design-tokens-contrast.test.ts).
+ */
+export function meterFillClass(percent: number): 'bg-data' | 'bg-warning' | 'bg-destructive' {
+  if (percent >= METER_FULL_AT) return 'bg-destructive';
+  if (percent >= METER_WARN_AT) return 'bg-warning';
+  return 'bg-data';
+}
+
 export function MeterRow({ label, meter }: { label: string; meter: QuotaMeterView }) {
   const t = useTranslations('shell.usage');
   const limitText =
@@ -56,7 +71,7 @@ export function MeterRow({ label, meter }: { label: string; meter: QuotaMeterVie
       ? t('usedUnlimited', { used: meter.used })
       : t('usedOf', { used: meter.used, limit: meter.limit });
   const pct = meter.limit === null ? 0 : Math.min(100, meter.percent ?? 0);
-  const tone = pct >= 100 ? 'bg-destructive' : pct >= 80 ? 'bg-warning' : 'bg-primary';
+  const tone = meterFillClass(pct);
   return (
     <div className="grid gap-1.5">
       <div className="flex items-baseline justify-between gap-3 text-sm">

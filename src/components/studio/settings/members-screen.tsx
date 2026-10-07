@@ -16,6 +16,8 @@ import { api, ApiError, useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { EmptyState, ErrorState, PageHeader, Section } from '../primitives';
+import { cn } from '@/lib/utils';
+import { meterFillClass } from '../usage-meter';
 import { useSettingsError } from './settings-errors';
 
 // Phase 18 §3 /settings/members — the members table (role select, remove), pending invitations
@@ -77,10 +79,7 @@ function SeatMeter({ used, limit }: { used: number; limit: number | null }) {
           aria-valuenow={used}
           className="h-1.5 overflow-hidden rounded-full bg-secondary"
         >
-          <div
-            className={full ? 'h-full bg-warning' : 'h-full bg-primary'}
-            style={{ inlineSize: `${pct}%` }}
-          />
+          <div className={cn('h-full', meterFillClass(pct))} style={{ inlineSize: `${pct}%` }} />
         </div>
       )}
       {full && (

@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
-import { MeterRow, type UsageResponse } from '../usage-meter';
+import { MeterRow, meterFillClass, type UsageResponse } from '../usage-meter';
 import { Section } from '../primitives';
 import { allowanceLeft } from './plan-summary';
 import { channelList } from './channel-labels';
@@ -24,7 +24,7 @@ const GB = 1024 ** 3;
 /** A thin meter for values MeterRow cannot show (storage in GB, money). */
 function Meter({ label, text, percent }: { label: string; text: string; percent: number | null }) {
   const pct = Math.min(100, Math.max(0, percent ?? 0));
-  const tone = pct >= 100 ? 'bg-destructive' : pct >= 80 ? 'bg-warning' : 'bg-primary';
+  const tone = meterFillClass(pct);
   return (
     <div className="grid gap-1.5">
       <div className="flex items-baseline justify-between gap-3 text-sm">
