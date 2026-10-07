@@ -90,7 +90,8 @@ export function VideoUploadField({
         {status.state === 'uploading' && t('uploading', { name: status.name })}
         {status.state === 'done' && (
           <span className="inline-flex items-center gap-1 text-foreground">
-            <CheckCircle2 className="size-3.5 text-emerald-600" /> {status.result.upload.fileName}
+            <CheckCircle2 className="size-3.5 text-success-foreground" />{' '}
+            {status.result.upload.fileName}
             {status.result.upload.durationSec !== null &&
               ` · ${f.duration(status.result.upload.durationSec)}`}
             {status.result.upload.width && status.result.upload.height

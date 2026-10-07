@@ -116,7 +116,7 @@ export function KillSwitchPanel() {
           <span
             className={cn(
               'grid size-12 shrink-0 place-items-center rounded-full',
-              halted ? 'bg-destructive text-white' : 'bg-success/15 text-success',
+              halted ? 'bg-destructive text-background' : 'bg-success/15 text-success',
             )}
           >
             {halted ? <OctagonX className="size-6" /> : <Power className="size-6" />}

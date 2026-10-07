@@ -77,8 +77,11 @@
       }
     },
     "theme": {
-      "useLight": "Helles Design verwenden",
-      "useDark": "Dunkles Design verwenden"
+      "label": "Darstellung",
+      "light": "Hell",
+      "dark": "Dunkel",
+      "system": "System",
+      "current": "Darstellung: {theme}"
     },
     "language": {
       "label": "Sprache",
@@ -3980,7 +3983,9 @@
       "newEmail": "Neue E-Mail-Adresse",
       "emailHint": "Wir bitten Ihre aktuelle Adresse, die Änderung zu genehmigen, und bestätigen dann die neue.",
       "changeEmail": "E-Mail ändern",
-      "emailRequested": "Prüfen Sie Ihr Postfach, um die Änderung zu genehmigen."
+      "emailRequested": "Prüfen Sie Ihr Postfach, um die Änderung zu genehmigen.",
+      "appearanceTitle": "Darstellung",
+      "appearanceDescription": "Wähle, wie Studio auf diesem Gerät aussieht. „System“ folgt der Hell- oder Dunkel-Einstellung deines Geräts."
     }
   },
   "approvals": {

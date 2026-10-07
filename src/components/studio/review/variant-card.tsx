@@ -139,7 +139,7 @@ export function VariantCard({
           </span>
         </div>
         {stale && (
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-sm">
             <span>{t('staleNote')}</span>
             {projectState && RERENDERABLE.has(projectState) && (
               <Button size="sm" variant="outline" onClick={rerender} disabled={rerendering}>

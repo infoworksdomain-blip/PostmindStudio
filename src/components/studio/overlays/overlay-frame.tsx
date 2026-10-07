@@ -167,7 +167,7 @@ function SafeAreaGuide({ area }: { area: SafeArea }) {
       data-testid="safe-area"
       className={cn(
         'pointer-events-none absolute border',
-        area.official ? 'border-emerald-300/70' : 'border-dashed border-amber-300/70',
+        area.official ? 'border-success/70' : 'border-dashed border-warning/70',
       )}
       style={{
         top: pct(area.top),

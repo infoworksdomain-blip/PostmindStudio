@@ -89,9 +89,9 @@ export function SafetyReviewNote({ project }: { project: ProjectDetail }) {
   return (
     <p
       role="status"
-      className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-sm"
+      className="flex items-start gap-2 rounded-xl border border-warning/30 bg-warning-soft px-3 py-2 text-sm"
     >
-      <ShieldAlert className="mt-0.5 size-4 shrink-0 text-amber-600" strokeWidth={1.5} />
+      <ShieldAlert className="mt-0.5 size-4 shrink-0 text-warning-foreground" strokeWidth={1.5} />
       {t('safety')}
     </p>
   );
@@ -159,10 +159,10 @@ export function FallbackNote({ project }: { project: ProjectDetail }) {
   return (
     <section
       aria-label={t('aria')}
-      className="flex flex-col gap-1 rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-sm"
+      className="flex flex-col gap-1 rounded-xl border border-warning/30 bg-warning-soft px-3 py-2 text-sm"
     >
       <p className="flex items-start gap-2">
-        <Info className="mt-0.5 size-4 shrink-0 text-amber-600" strokeWidth={1.5} />
+        <Info className="mt-0.5 size-4 shrink-0 text-warning-foreground" strokeWidth={1.5} />
         {t('intro', { layers: f.list(layers) })}
       </p>
       {showDetail && (

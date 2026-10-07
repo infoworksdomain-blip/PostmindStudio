@@ -46,7 +46,11 @@ export function DirectionsPanel({
       id={DIRECTIONS_ANCHOR}
       panelRef={ref}
       icon={
-        <Compass className="mt-0.5 size-5 shrink-0 text-amber-600" strokeWidth={1.5} aria-hidden />
+        <Compass
+          className="mt-0.5 size-5 shrink-0 text-warning-foreground"
+          strokeWidth={1.5}
+          aria-hidden
+        />
       }
       title={t('title')}
       body={t('body')}

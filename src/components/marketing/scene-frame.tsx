@@ -64,7 +64,7 @@ export function SceneFrame({
   return (
     <figure
       className={cn(
-        'relative overflow-hidden rounded-[1.1rem] bg-foreground shadow-[0_30px_60px_-30px_rgb(40_20_10/0.55)] ring-1 ring-black/10',
+        'relative overflow-hidden rounded-[1.1rem] bg-foreground shadow-[0_30px_60px_-30px_rgb(20_24_31/0.5)] ring-1 ring-border',
         className,
       )}
       style={{ aspectRatio: ratio }}
@@ -89,7 +89,7 @@ export function SceneFrame({
         className="absolute inset-x-[7%] inset-y-[9%] rounded-md border border-white/25 border-dashed"
       />
       {label && (
-        <span className="absolute start-3 top-3 rounded-full bg-black/45 px-2 py-0.5 text-[0.65rem] font-medium tracking-wide text-white backdrop-blur">
+        <span className="absolute start-3 top-3 rounded-full bg-scrim/80 px-2 py-0.5 text-[0.65rem] font-medium tracking-wide text-white backdrop-blur">
           {label}
         </span>
       )}

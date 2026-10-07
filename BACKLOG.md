@@ -496,3 +496,22 @@ Plan: `plans/phase-19.md`. Operator instruction (2026-09-29): complete everythin
 ## Phase 25 — Production fixes (2026-10-07)
 
 - [x] **25.x** Music never silent under provider limits (production 2026-10-07: six slideshows started together, ElevenLabs Music refused one with `too_many_concurrent_requests … maximum of 2`, the slideshow rendered with no audio at −70 LUFS and failed the quality gate): ElevenLabs Music holds its own concurrency cap of 2 (`STUDIO_PROVIDER_CONCURRENCY_ELEVENLABS_MUSIC`) inside the ElevenLabs pool of 5, so a burst waits for a slot (compose job delayed) instead of failing; any music generation failure (rate limited, provider down, timeout, no credits, breaker open) falls back to a music-library track (same mood key, then any track long enough, then the longest looped; `music.status 'reused'` with `fallbackFrom`, cost 0); a retried run keeps its track; stubbed pipeline scenario `music-rate-limit`
+## Phase 25 — Premium redesign (operator request 2026-10-07)
+
+Plan and audit: the "PostMind Studio Redesign Audit" (Daylight and Darkroom design system, phases 2–16). Each phase is its own PR; tokens, layout and behaviour stay test-green and screenshotted light/dark × phone/desktop.
+
+- [x] **25.2** Tokens and themes: Daylight and Darkroom tokens mapped onto the shadcn variables (canvas/surface/raised/active, line/line-strong, ink 1–3, signal, data, success/warning/error with text-safe foregrounds and soft washes, scrim, charts, role radii, elevation, motion, z-index, section rhythm), WCAG AA contrast test for both themes, film grain removed, Geist + Geist Mono replace Inter + Instrument Serif, Light / Dark / System (default System) in the account menu, top bar and a new Appearance section on /account/profile, amber/emerald/black/white chrome replaced with tokens, RTL check extended to `src/components/ui`.
+- [ ] **25.3** Core components: one primitive per job (ConfirmDialog, Select, ChoiceChips, SegmentedControl, Badge/StatusPill, Tooltip, DataTable, MediaTile, …), raw elements migrated.
+- [ ] **25.4** App shell and navigation: Create / Plan / Library / Insights / Settings, month plans in the nav, mobile business switcher, command menu, sign-in redirect for /blitz, /plans*, /automations*, a home screen.
+- [ ] **25.5** Homepage and public site: real renders, pricing and legal restyled, favicon, app icon, link-preview image, optimised media.
+- [ ] **25.6** Sign-in and onboarding: branded auth flows, onboarding progress and skippable steps.
+- [ ] **25.7** Create workspace: format rail first, progressive options, live cost and allowance.
+- [ ] **25.8** Video Studio, Image Studio and project review: capability-driven model selector, real job states with measured ETA, player-first review, Image Studio page.
+- [ ] **25.9** Calendar, month planner, Blitz and automations.
+- [ ] **25.10** Library and My media.
+- [ ] **25.11** Analytics: summary first, scoped to the selected business.
+- [ ] **25.12** Connections, settings, billing and account (regrouped settings).
+- [ ] **25.13** Admin: sectioned side menu, URL-synced tabs, dense tables.
+- [ ] **25.14** Responsive, accessibility (WCAG 2.2 AA, axe on every route) and performance.
+- [ ] **25.15** Regression: every route in four modes, main journeys end to end, old-design sweep.
+- [ ] **25.16** Redesign report (route matrix, scores) and demo + live updated.
