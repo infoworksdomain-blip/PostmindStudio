@@ -229,11 +229,7 @@ function BlitzDeckScreen() {
         actions={settings}
       />
       {ready && !businessId && (
-        <EmptyState
-          illustration="business"
-          title={t('page.pickTitle')}
-          description={t('page.pickBody')}
-        />
+        <EmptyState media="business" title={t('page.pickTitle')} description={t('page.pickBody')} />
       )}
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
       {businessId && isLoading && !data && (

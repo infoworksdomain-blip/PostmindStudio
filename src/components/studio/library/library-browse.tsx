@@ -104,7 +104,7 @@ export function LibraryBrowse() {
           )}
           {data && visible.length === 0 && (
             <EmptyState
-              illustration="library"
+              media="library"
               title={searching ? t('noCloseTitle', { query }) : t('emptyTitle')}
               description={searching ? t('noCloseBody') : t('emptyFilters')}
               action={

@@ -8,10 +8,10 @@ import {
   ArrowUp,
   BookmarkPlus,
   ChevronDown,
+  Images,
   Loader2,
   Plus,
   Trash2,
-  Wand2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,8 @@ import type { ProjectDetail } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { PlanLockBadge } from '../billing/plan-lock-badge';
 import { ErrorState } from '../primitives';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import { useAction } from '../review/use-action';
 import { SlideEditor, type SlidePatch } from './slide-editor';
 import { SlideOverlays } from './slide-overlays';
@@ -162,7 +163,7 @@ export function SlideshowBuilder({
           )}
         </p>
         <Button variant="outline" onClick={autoPopulate} disabled={!editable || busy || populating}>
-          {pending === 'populate' || populating ? <Loader2 className="animate-spin" /> : <Wand2 />}
+          {pending === 'populate' || populating ? <Loader2 className="animate-spin" /> : <Images />}
           {populating ? t('autoPopulating') : t('autoPopulate')}
         </Button>
       </div>

@@ -50,11 +50,7 @@ export function AutomationsList() {
         actions={create}
       />
       {ready && !businessId && (
-        <EmptyState
-          illustration="business"
-          title={t('list.pickTitle')}
-          description={t('list.pickBody')}
-        />
+        <EmptyState media="business" title={t('list.pickTitle')} description={t('list.pickBody')} />
       )}
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
       {businessId && !data && !error && (

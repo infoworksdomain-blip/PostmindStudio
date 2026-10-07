@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { CalendarClock, Loader2, Save, Send, Sparkles } from 'lucide-react';
+import { CalendarClock, Loader2, Save, Send, Type } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
@@ -18,7 +18,8 @@ import type {
 import { MAX_SCHEDULE_AHEAD_DAYS } from '@/lib/studio/schedule-window';
 import { scheduleInputBounds, scheduleProblem } from '../automation/schedule-bounds';
 import { belongsToBusiness, isMetaPlatform } from '../connections/platforms';
-import { Field, NativeSelect } from './field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from './field';
 import { RENDER_CONNECTION, RENDER_PUBLISHABLE } from './types';
 import { BusinessHashtagsNote } from '../hashtags/business-hashtags-panel';
 import {
@@ -320,7 +321,7 @@ export function PublishPanel({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <BusinessHashtagsNote businessId={businessId} />
         <Button variant="outline" size="sm" onClick={suggest} disabled={suggesting}>
-          {suggesting ? <Loader2 className="animate-spin" /> : <Sparkles />}
+          {suggesting ? <Loader2 className="animate-spin" /> : <Type />}
           {t('suggest')}
         </Button>
       </div>

@@ -26,7 +26,8 @@ import { defaultZone } from '../calendar/drip-queue';
 import { PlatformChips } from '../create/create-options';
 import { defaultPlatforms } from '../create/formats';
 import { EmptyState, ErrorState, PageHeader } from '../primitives';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import { AllowancePanel } from './plan-parts';
 import {
   buildPlanBody,
@@ -90,7 +91,7 @@ export function PlanMonthForm() {
   if (ready && !businessId)
     return (
       <EmptyState
-        icon={<Building2 className="size-8" strokeWidth={1.5} />}
+        media={<Building2 className="size-8" strokeWidth={1.5} />}
         title={t('noBusiness.title')}
         description={t('noBusiness.description')}
         action={

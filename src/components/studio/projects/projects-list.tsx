@@ -13,10 +13,10 @@ import {
   Clapperboard,
   Copy,
   Layers,
+  Library,
   MoreHorizontal,
   Plus,
   Search,
-  Sparkles,
   Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -73,7 +73,7 @@ export const SEARCH_DEBOUNCE_MS = 300;
 
 const SOURCE_ICON: Record<string, typeof Clapperboard> = {
   SLIDESHOW: Layers,
-  LIBRARY_REFERENCE: Sparkles,
+  LIBRARY_REFERENCE: Library,
 };
 
 function isFilterKey(value: string | null | undefined): value is ProjectFilterKey {
@@ -352,7 +352,7 @@ export function ProjectsList() {
       )}
       {data && data.data.length === 0 && (
         <EmptyState
-          illustration="projects"
+          media="projects"
           title={
             q
               ? t('emptySearch.title')

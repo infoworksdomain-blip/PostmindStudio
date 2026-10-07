@@ -207,7 +207,7 @@ export function FirstBusinessStep() {
   if (error instanceof ApiError && error.status === 501)
     return (
       <EmptyState
-        icon={<Building2 className="size-8" strokeWidth={1.5} />}
+        media={<Building2 className="size-8" strokeWidth={1.5} />}
         title={t('coreTitle')}
         description={t('coreDescription')}
         action={

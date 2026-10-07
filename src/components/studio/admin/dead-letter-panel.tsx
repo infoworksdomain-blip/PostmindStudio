@@ -223,7 +223,7 @@ export function DeadLetterPanel() {
         <Skeleton aria-label={t('loadingAria')} className="h-40" />
       ) : page.jobs.length === 0 ? (
         <EmptyState
-          icon={<Inbox className="size-8" strokeWidth={1.5} />}
+          media={<Inbox className="size-8" strokeWidth={1.5} />}
           title={t('emptyTitle')}
           description={t('emptyBody', { queue })}
         />

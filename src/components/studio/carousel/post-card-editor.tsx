@@ -2,15 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import {
-  ArrowDown,
-  ArrowUp,
-  ImageIcon,
-  ListOrdered,
-  Loader2,
-  Sparkles,
-  Trash2,
-} from 'lucide-react';
+import { ArrowDown, ArrowUp, ImageIcon, ListOrdered, Loader2, PenLine, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ImagePicker } from '../slideshow/image-picker';
 import { hasList, MAX_POST_CHARS, roleOf, waterfall, type DraftPost } from './model';
@@ -159,7 +151,7 @@ export function PostCardEditor({
           disabled={disabled || !canRewrite}
           onClick={onRewrite}
         >
-          {rewriting ? <Loader2 className="animate-spin" /> : <Sparkles />} {t('rewritePost')}
+          {rewriting ? <Loader2 className="animate-spin" /> : <PenLine />} {t('rewritePost')}
         </Button>
       </div>
       {picking && businessId && (

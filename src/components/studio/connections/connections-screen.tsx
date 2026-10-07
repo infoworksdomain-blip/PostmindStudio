@@ -169,7 +169,7 @@ export function ConnectionsScreen({
       )}
       {ready && !businessId && (
         <EmptyState
-          illustration="connections"
+          media="connections"
           title={t('pickFirst.title')}
           description={t('pickFirst.body')}
         />

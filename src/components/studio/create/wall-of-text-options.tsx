@@ -3,7 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { AlignCenter } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import {
   countWords,
   WALL_SECONDS,

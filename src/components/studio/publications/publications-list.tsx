@@ -22,7 +22,7 @@ import { FailureReason } from '../failure-reason';
 import { DEFAULT_LOCALE } from '@/lib/i18n/locales';
 import { cn } from '@/lib/utils';
 import { EmptyState, ErrorState, PageHeader, StateBadge } from '../primitives';
-import { NativeSelect } from './native-select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { PublicationActions } from './publication-actions';
 import { TikTokPublicationNote, usePublicationBadge } from './tiktok-draft';
 import { useProjectName } from '@/lib/client/use-project-name';
@@ -176,6 +176,7 @@ export function PublicationsList() {
             {t('platform')}
           </Label>
           <NativeSelect
+            wrapperClassName="w-auto"
             id="publication-platform"
             value={platform}
             onChange={(e) => {
@@ -203,7 +204,7 @@ export function PublicationsList() {
       )}
       {data && data.data.length === 0 && (
         <EmptyState
-          illustration="publications"
+          media="publications"
           title={unfiltered ? t('empty.title') : t('emptyFiltered.title')}
           description={unfiltered ? t('empty.body') : t('emptyFiltered.body')}
           action={

@@ -230,7 +230,7 @@ export function CreateScreen({
   if (ready && !businessId) {
     return (
       <EmptyState
-        illustration="business"
+        media="business"
         title={t('noBusiness.title')}
         description={t('noBusiness.description')}
         action={

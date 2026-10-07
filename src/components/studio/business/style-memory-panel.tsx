@@ -108,7 +108,7 @@ export function StyleMemoryPanel({ businessId }: { businessId: string }) {
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
       {isLoading && <Skeleton aria-label={t('loading')} className="h-48 rounded-xl" />}
       {data && data.data.length === 0 && (
-        <EmptyState illustration="memory" title={t('empty.title')} description={t('empty.body')} />
+        <EmptyState media="memory" title={t('empty.title')} description={t('empty.body')} />
       )}
       {data && data.data.length > 0 && (
         <ul aria-label={t('listAria')} className="grid gap-3">

@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { api, useApi, useErrorMessage } from '@/lib/client/api';
 import type { Page } from '@/lib/client/types';
 import { EmptyState, ErrorState } from '../primitives';
-import { NativeSelect } from '../publications/native-select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { IMAGE_SOURCES, ImageGrid } from './image-grid';
 import {
   GenerateImageButton,
@@ -169,6 +169,7 @@ export function ImageLibraryPanel({ businessId }: { businessId: string }) {
               {t('source')}
             </Label>
             <NativeSelect
+              wrapperClassName="w-auto"
               id="library-source"
               value={source}
               onChange={(e) => {
@@ -210,7 +211,7 @@ export function ImageLibraryPanel({ businessId }: { businessId: string }) {
           )}
           {data && data.data.length === 0 && (
             <EmptyState
-              illustration="images"
+              media="images"
               title={filtered ? t('emptyFiltered.title') : t('empty.title')}
               description={filtered ? t('emptyFiltered.body') : t('empty.body')}
             />

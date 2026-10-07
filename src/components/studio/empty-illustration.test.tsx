@@ -38,8 +38,8 @@ describe('EmptyState', () => {
   it('shows the illustration in place of the icon, and keeps the title and action', () => {
     const { container } = render(
       <EmptyState
-        illustration="projects"
-        icon={<span data-testid="icon" />}
+        media="projects"
+        media={<span data-testid="icon" />}
         title="No videos yet"
         description="Make your first one."
         action={<button type="button">New video</button>}
@@ -53,7 +53,7 @@ describe('EmptyState', () => {
   });
 
   it('still shows the icon when no illustration is given', () => {
-    render(<EmptyState icon={<span data-testid="icon" />} title="Nothing here" />);
+    render(<EmptyState media={<span data-testid="icon" />} title="Nothing here" />);
     expect(screen.getByTestId('icon')).toBeTruthy();
   });
 });

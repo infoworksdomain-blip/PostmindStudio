@@ -4,7 +4,8 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useFormat } from '@/lib/client/format';
 import type { ProjectDetail } from '@/lib/client/types';
-import { Field, NativeSelect } from './field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from './field';
 import { ShotPanel } from './shot-panel';
 import { ShotStrip } from './shot-strip';
 

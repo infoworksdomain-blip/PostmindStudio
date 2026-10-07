@@ -69,7 +69,7 @@ export function ForceApprovalsPanel() {
         <Skeleton aria-label={t('loadingAria')} className="h-40" />
       ) : res.data.items.length === 0 ? (
         <EmptyState
-          icon={<BadgeCheck className="size-8" strokeWidth={1.5} />}
+          media={<BadgeCheck className="size-8" strokeWidth={1.5} />}
           title={t('emptyTitle')}
           description={t('emptyBody', { days })}
         />

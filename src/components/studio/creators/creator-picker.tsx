@@ -4,7 +4,8 @@ import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useApi } from '@/lib/client/api';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import { creatorsPath, defaultCreatorId, type Creator } from './types';
 
 // BACKLOG 22.3 — the "Creator" picker on Create → UGC: one of the business's READY creators (the

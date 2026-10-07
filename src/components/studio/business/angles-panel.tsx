@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Archive, ArchiveRestore, Loader2, PencilLine, Plus, Sparkles } from 'lucide-react';
+import { Archive, ArchiveRestore, Lightbulb, Loader2, PencilLine, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
@@ -169,7 +169,7 @@ function AnglesList({ businessId }: { businessId: string }) {
             </span>
           )}
           <Button variant="outline" disabled={suggesting} onClick={() => void suggest()}>
-            {suggesting ? <Loader2 className="animate-spin" /> : <Sparkles />}{' '}
+            {suggesting ? <Loader2 className="animate-spin" /> : <Lightbulb />}{' '}
             {suggesting ? t('suggesting') : t('suggest')}
           </Button>
           <Button

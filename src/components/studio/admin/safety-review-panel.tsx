@@ -177,7 +177,7 @@ export function SafetyReviewPanel() {
         <Skeleton aria-label={t('loadingAria')} className="h-40" />
       ) : res.data.data.length === 0 ? (
         <EmptyState
-          icon={<ShieldCheck className="size-8" strokeWidth={1.5} />}
+          media={<ShieldCheck className="size-8" strokeWidth={1.5} />}
           title={state === 'PENDING' ? t('emptyPendingTitle') : t('emptyTitle')}
           description={t('emptyBody')}
         />

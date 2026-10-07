@@ -23,7 +23,8 @@ import { planKindQuarters, quartersToVideos } from '@/lib/studio/billing/allowan
 import { useRouter } from 'next/navigation';
 import { useShowCosts } from '../account/use-show-costs';
 import { ConfirmDialog } from '../publications/confirm-dialog';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import { CappedNotice, ItemMeta } from './plan-parts';
 import { ItemCopyEditor } from './item-copy';
 import { BusinessHashtagsNote } from '../hashtags/business-hashtags-panel';

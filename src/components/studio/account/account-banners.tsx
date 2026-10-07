@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { AlertTriangle, Archive, Clock, Eye, Lock, Sparkles } from 'lucide-react';
+import { AlertTriangle, Archive, Clock, CreditCard, Eye, Lock } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { useFormat } from '@/lib/client/format';
@@ -124,7 +124,7 @@ export function BillingBanner({ banner, now }: { banner: AccountBanner; now: num
         <Banner
           id={ACCOUNT_BANNER_ID}
           tone="info"
-          icon={<Sparkles className="size-4" />}
+          icon={<CreditCard className="size-4" />}
           action={<BillingLink>{t('noPlan.action')}</BillingLink>}
         >
           <strong className="font-semibold">{t('noPlan.title')}</strong> {t('noPlan.body')}

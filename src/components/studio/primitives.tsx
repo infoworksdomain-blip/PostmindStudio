@@ -5,49 +5,54 @@ import type { ReactNode } from 'react';
 import { AlertTriangle, ArrowLeft, Inbox, RotateCw, SearchX } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { StatusPill } from '@/components/ui/status-pill';
 import { ApiError, useErrorMessage } from '@/lib/client/api';
 import type { Tone } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
 import { EmptyIllustration, type IllustrationName } from './empty-illustration';
 
 // Shared building blocks for Studio screens: page header, state badge (with a pulsing
-// "record" light for work in progress), empty and error states, section card.
+// "record" light for work in progress), empty and error states, sections and stats.
+// BACKLOG 25.3: hierarchy comes from the type scale and spacing, not from boxes — a Section is
+// an open block with a hairline above it unless it is genuinely an object (`variant="panel"`).
 
 export function PageHeader({
   eyebrow,
   title,
   description,
   actions,
+  className,
 }: {
   eyebrow?: string;
   title: string;
   description?: ReactNode;
   actions?: ReactNode;
+  className?: string;
 }) {
   return (
-    <header className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-border/70 pb-6">
-      <div className="max-w-2xl">
+    <header
+      data-slot="page-header"
+      className={cn('mb-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-4', className)}
+    >
+      <div className="max-w-2xl min-w-0">
         {eyebrow && (
-          <p className="mb-2 text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
-            {eyebrow}
-          </p>
+          <p className="mb-2 text-xs font-medium tracking-wide text-muted-foreground">{eyebrow}</p>
         )}
-        <h1 className="font-display text-4xl leading-none md:text-5xl">{title}</h1>
-        {description && <p className="mt-3 text-sm text-muted-foreground">{description}</p>}
+        <h1 className="font-display text-[1.75rem] leading-[1.15] md:text-[2.25rem] md:leading-[1.1]">
+          {title}
+        </h1>
+        {description && (
+          <div className="mt-2 text-[0.9375rem] leading-relaxed text-foreground-secondary">
+            {description}
+          </div>
+        )}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
   );
 }
 
-const TONE: Record<Tone, string> = {
-  neutral: 'bg-secondary text-secondary-foreground',
-  live: 'bg-primary/10 text-primary',
-  good: 'bg-success/12 text-success',
-  warn: 'bg-warning/18 text-foreground',
-  bad: 'bg-destructive/12 text-destructive',
-};
-
+/** A state label (project, publication, job) — the StatusPill with the app's tone names. */
 export function StateBadge({
   label,
   tone,
@@ -58,47 +63,73 @@ export function StateBadge({
   className?: string;
 }) {
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap',
-        TONE[tone],
-        className,
-      )}
-    >
-      {tone === 'live' && (
-        <span aria-hidden className="size-1.5 animate-rec rounded-full bg-primary" />
-      )}
+    <StatusPill tone={tone} className={className}>
       {label}
-    </span>
+    </StatusPill>
   );
 }
 
+/**
+ * Nothing here yet. The title says what is missing, the description why and what to do next,
+ * `action` is the one way forward. `media` is an illustration name (a line drawing) or any node
+ * (an icon); it is decorative.
+ */
 export function EmptyState({
   title,
   description,
   action,
-  icon,
-  illustration,
+  secondaryAction,
+  media,
+  size = 'default',
+  className,
 }: {
   title: string;
   description?: ReactNode;
   action?: ReactNode;
-  icon?: ReactNode;
-  /** Phase 20.8: an original line drawing (decorative) in place of the icon. */
-  illustration?: IllustrationName;
+  secondaryAction?: ReactNode;
+  media?: IllustrationName | ReactNode;
+  size?: 'default' | 'compact';
+  className?: string;
 }) {
+  const art =
+    typeof media === 'string' ? (
+      <EmptyIllustration name={media as IllustrationName} />
+    ) : media ? (
+      media
+    ) : (
+      <Inbox className="size-8" strokeWidth={1.5} />
+    );
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border px-6 py-16 text-center">
-      <div className="mb-4 text-muted-foreground">
-        {illustration ? (
-          <EmptyIllustration name={illustration} />
-        ) : (
-          (icon ?? <Inbox className="size-8" strokeWidth={1.5} />)
-        )}
+    <div
+      data-slot="empty-state"
+      className={cn(
+        'flex flex-col items-center justify-center text-center',
+        size === 'compact' ? 'px-4 py-8' : 'px-6 py-16',
+        className,
+      )}
+    >
+      <div aria-hidden className="mb-5 text-muted-foreground">
+        {art}
       </div>
-      <h2 className="font-display text-2xl">{title}</h2>
-      {description && <p className="mt-2 max-w-md text-sm text-muted-foreground">{description}</p>}
-      {action && <div className="mt-6">{action}</div>}
+      <h2
+        className={cn(
+          'font-display text-balance',
+          size === 'compact' ? 'text-lg' : 'text-xl md:text-2xl',
+        )}
+      >
+        {title}
+      </h2>
+      {description && (
+        <div className="mt-2 max-w-md text-sm leading-relaxed text-pretty text-foreground-secondary">
+          {description}
+        </div>
+      )}
+      {(action || secondaryAction) && (
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          {action}
+          {secondaryAction}
+        </div>
+      )}
     </div>
   );
 }
@@ -114,14 +145,11 @@ export interface NotFoundCopy {
 
 export function NotFoundState({ copy }: { copy: NotFoundCopy }) {
   return (
-    <div
-      role="status"
-      className="flex flex-col items-start gap-3 rounded-xl border border-border bg-card p-6 text-sm"
-    >
+    <div role="status" className="flex flex-col items-start gap-3 py-8 text-sm">
       <SearchX className="size-6 text-muted-foreground" aria-hidden />
       <div>
-        <p className="text-base font-medium">{copy.title}</p>
-        <p className="mt-1 text-muted-foreground">{copy.body}</p>
+        <p className="text-lg font-semibold tracking-tight">{copy.title}</p>
+        <p className="mt-1 text-foreground-secondary">{copy.body}</p>
       </div>
       <Button asChild variant="outline" size="sm">
         <Link href={copy.href}>
@@ -133,17 +161,22 @@ export function NotFoundState({ copy }: { copy: NotFoundCopy }) {
 }
 
 /**
- * A failed request. With `notFound`, a 404 becomes a proper "not found" page with a way back
- * instead of "Couldn't load this" and a Retry that can never succeed.
+ * A failed request, in plain words, with a way to try again. With `notFound`, a 404 becomes a
+ * proper "not found" page with a way back instead of a Retry that can never succeed.
  */
 export function ErrorState({
   error,
   onRetry,
   notFound,
+  title,
+  className,
 }: {
   error: unknown;
   onRetry?: () => void;
   notFound?: NotFoundCopy;
+  /** Overrides "Couldn't load this" when the context says more (e.g. "Couldn't load your plan"). */
+  title?: string;
+  className?: string;
 }) {
   const t = useTranslations('primitives');
   const errorMessage = useErrorMessage();
@@ -152,15 +185,19 @@ export function ErrorState({
   return (
     <div
       role="alert"
-      className="flex items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm"
+      data-slot="error-state"
+      className={cn(
+        'flex flex-wrap items-start gap-3 rounded-field bg-destructive-soft px-4 py-3.5 text-sm',
+        className,
+      )}
     >
-      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
-      <div className="flex-1">
-        <p className="font-medium text-destructive">{t('errorTitle')}</p>
-        <p className="mt-1 text-muted-foreground">{errorMessage(error)}</p>
+      <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0 text-destructive" />
+      <div className="min-w-0 flex-1">
+        <p className="font-medium text-destructive-foreground">{title ?? t('errorTitle')}</p>
+        <p className="mt-0.5 text-foreground-secondary">{errorMessage(error)}</p>
       </div>
       {onRetry && (
-        <Button variant="outline" size="sm" onClick={onRetry}>
+        <Button variant="outline" size="sm" onClick={onRetry} className="bg-background">
           <RotateCw /> {t('retry')}
         </Button>
       )}
@@ -168,32 +205,51 @@ export function ErrorState({
   );
 }
 
+/**
+ * A titled block of a page. Open by default: heading, optional description and actions, then
+ * the content, divided from the block above by a hairline and space. `variant="panel"` is for
+ * things that read as an object you pick up or open (a media preview, a form that must read as
+ * one unit): a raised surface with the panel radius.
+ */
 export function Section({
   title,
   description,
   actions,
   children,
   className,
+  variant = 'open',
+  id,
 }: {
   title: string;
   description?: ReactNode;
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
+  variant?: 'open' | 'panel';
+  id?: string;
 }) {
   return (
     <section
+      id={id}
+      data-slot="section"
+      data-variant={variant}
       className={cn(
-        'rounded-xl border border-border bg-card p-5 shadow-[0_1px_0_rgb(0_0_0/0.03)]',
+        variant === 'panel'
+          ? 'rounded-panel border border-border bg-card p-5 shadow-raised md:p-6'
+          : 'border-t border-border pt-6',
         className,
       )}
     >
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-semibold">{title}</h2>
-          {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold tracking-tight">{title}</h2>
+          {description && (
+            <div className="mt-1 max-w-2xl text-sm leading-relaxed text-foreground-secondary">
+              {description}
+            </div>
+          )}
         </div>
-        {actions}
+        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
       {children}
     </section>
@@ -213,7 +269,7 @@ export function Stat({
   return (
     <div>
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="tabular mt-1 font-display text-3xl leading-none">{value}</p>
+      <p className="mt-1 font-display text-3xl leading-none tabular-nums">{value}</p>
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
     </div>
   );

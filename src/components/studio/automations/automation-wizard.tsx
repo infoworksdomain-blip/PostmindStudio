@@ -98,11 +98,7 @@ export function AutomationWizard() {
 
   if (ready && !businessId)
     return (
-      <EmptyState
-        illustration="business"
-        title={t('list.pickTitle')}
-        description={t('list.pickBody')}
-      />
+      <EmptyState media="business" title={t('list.pickTitle')} description={t('list.pickBody')} />
     );
 
   const header = (

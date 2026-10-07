@@ -9,7 +9,8 @@ import { LANGUAGES, type StudioLanguage } from '@/lib/studio/languages';
 import { cn } from '@/lib/utils';
 import { DRIP_HORIZON_WEEKS } from '@/lib/studio/drip-presets';
 import { scheduleInputBounds } from '../automation/schedule-bounds';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import { tiersAtOrBelow, type CreateState, type QualityTier } from './body';
 
 // Phase 15 Track C — Create options: the video's language(s) (15.C5) and the advanced

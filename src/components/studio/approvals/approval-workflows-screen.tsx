@@ -206,7 +206,7 @@ export function ApprovalWorkflowsScreen() {
         ) : workflows.length === 0 ? (
           !editing && (
             <EmptyState
-              illustration="approvals"
+              media="approvals"
               title={t('emptyTitle')}
               description={t('emptyBody')}
               action={

@@ -338,7 +338,7 @@ export function BillingScreen() {
       <>
         {header}
         <EmptyState
-          icon={<CreditCard className="size-8" strokeWidth={1.5} />}
+          media={<CreditCard className="size-8" strokeWidth={1.5} />}
           title={t('notEnabled.title')}
           description={t('notEnabled.body')}
         />

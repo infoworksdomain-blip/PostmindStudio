@@ -40,7 +40,7 @@ export function StaffOnly() {
   if (platformRole === 'staff' || platformRole === 'superadmin')
     return (
       <EmptyState
-        icon={<ShieldAlert className="size-8" strokeWidth={1.5} />}
+        media={<ShieldAlert className="size-8" strokeWidth={1.5} />}
         title={t('needs2faTitle')}
         description={t('needs2faDescription')}
         action={
@@ -55,7 +55,7 @@ export function StaffOnly() {
     );
   return (
     <EmptyState
-      icon={<ShieldAlert className="size-8" strokeWidth={1.5} />}
+      media={<ShieldAlert className="size-8" strokeWidth={1.5} />}
       title={t('title')}
       description={t('description')}
     />

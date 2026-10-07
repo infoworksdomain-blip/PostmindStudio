@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Download, Loader2, Plus, RefreshCw, Save, Sparkles } from 'lucide-react';
+import { Download, Loader2, PenLine, Plus, RefreshCw, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -253,7 +253,7 @@ export function CarouselEditor({
             disabled={!editable || busy || view.rewritesLeft === 0}
             onClick={() => void rewrite()}
           >
-            {pending === 'rewrite' ? <Loader2 className="animate-spin" /> : <Sparkles />}
+            {pending === 'rewrite' ? <Loader2 className="animate-spin" /> : <PenLine />}
             {t('rewriteThread')}
           </Button>
           <span className="self-center text-xs text-muted-foreground">

@@ -18,7 +18,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { api, newIdempotencyKey } from '@/lib/client/api';
 import { UGC_AGE_RANGES, UGC_GENDERS, UGC_SETTINGS } from '../create/ugc-options';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import {
   creatorsPath,
   MAX_PHOTO_BYTES,

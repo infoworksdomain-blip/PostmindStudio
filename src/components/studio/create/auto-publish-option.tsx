@@ -12,7 +12,8 @@ import {
   publishablePlatforms,
 } from '../automation/automation';
 import { isMetaPlatform } from '../connections/platforms';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import type { CreateSource } from './body';
 import { PLATFORM_OPTIONS } from './formats';
 

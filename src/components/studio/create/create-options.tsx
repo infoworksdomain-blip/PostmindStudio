@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { useFormat, type StudioFormat } from '@/lib/client/format';
 import type { BrandKit } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import type { CreateState, QualityTier, ReviewPolicy } from './body';
 import { PlanningAdvancedOptions, type WorkflowOption } from './create-planning-options';
 import {

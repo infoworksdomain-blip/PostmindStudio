@@ -233,7 +233,7 @@ export function ProfilePanel({
   if (error instanceof ApiError && error.status === 404) {
     return (
       <EmptyState
-        icon={<Globe className="size-8" strokeWidth={1.5} />}
+        media={<Globe className="size-8" strokeWidth={1.5} />}
         title={t('empty.title')}
         description={t('empty.body')}
         action={<Button onClick={onGoToScan}>{t('empty.action')}</Button>}

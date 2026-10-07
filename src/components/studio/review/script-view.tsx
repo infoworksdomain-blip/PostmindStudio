@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { Loader2, PencilLine, Save, Sparkles, X } from 'lucide-react';
+import { Loader2, PencilLine, PenLine, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -199,7 +199,7 @@ function RegenerateScript({
         />
       </label>
       <Button variant="outline" onClick={regenerate} disabled={disabled || pending !== null}>
-        {pending ? <Loader2 className="animate-spin" /> : <Sparkles />} {t('button')}
+        {pending ? <Loader2 className="animate-spin" /> : <PenLine />} {t('button')}
       </Button>
     </div>
   );

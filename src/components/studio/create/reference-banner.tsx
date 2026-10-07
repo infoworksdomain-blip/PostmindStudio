@@ -1,6 +1,6 @@
 'use client';
 
-import { Sparkles, X } from 'lucide-react';
+import { Clapperboard, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { useApi } from '@/lib/client/api';
@@ -34,7 +34,7 @@ export function ReferenceBanner({
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-primary/25 bg-primary/5 p-4 sm:flex-row sm:items-center">
-      <Sparkles className="size-5 shrink-0 text-primary" strokeWidth={1.5} />
+      <Clapperboard className="size-5 shrink-0 text-primary" strokeWidth={1.5} />
       <div className="min-w-0 flex-1">
         <p className="text-xs tracking-[0.14em] text-muted-foreground uppercase">{t('eyebrow')}</p>
         <p className="truncate text-sm font-medium">
