@@ -26,6 +26,7 @@ import type { PlanTier } from '../providers/router';
 import { MAX_SCHEDULE_AHEAD_MS, MIN_SCHEDULE_LEAD_MS } from '../schedule-window';
 import { PLATFORMS, toPlanTier } from './catalog';
 import { preparePublicationCopy } from './post-copy';
+import { campaignsForProjects } from './publication-campaigns';
 
 // Publications (spec 8.4, BACKLOG 5.10–5.11): schedule or publish now, read, cancel, retry,
 // take down. Validation happens here so a bad request is a 400, never a failed upload.
@@ -123,10 +124,18 @@ export async function listPublications(
       },
     },
   });
-  const page = rows.slice(0, query.limit).map(({ analytics, ...row }) => {
+  const sliced = rows.slice(0, query.limit);
+  // 25.9: the month plan or automation each post belongs to (calendar labels and source filter).
+  const campaigns = await campaignsForProjects(
+    db,
+    organisationId,
+    sliced.map((r) => r.projectId),
+  );
+  const page = sliced.map(({ analytics, ...row }) => {
     const latest = analytics[0];
     return {
       ...row,
+      campaign: campaigns.get(row.projectId) ?? null,
       latestMetrics: latest
         ? {
             views: latest.views,

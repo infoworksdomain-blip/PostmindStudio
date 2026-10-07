@@ -251,6 +251,19 @@ test.describe('calendar', () => {
     await expect(page.getByRole('heading', { name: /September 2026/ })).toBeVisible();
     await page.getByRole('button', { name: 'Today' }).click();
     await expect(page.getByRole('heading', { name: /October 2026/ })).toBeVisible();
+    // 25.9: the week view asks for Monday to Monday (local midnights) and shows seven days.
+    await page.getByRole('radio', { name: 'Week' }).click();
+    await expect(page).toHaveURL(/view=week/);
+    await expect(page.locator('[data-day]')).toHaveCount(7);
+    await expect
+      .poll(() =>
+        urls.some(
+          (u) =>
+            u.includes('from=2026-09-27T23:00:00.000Z') &&
+            u.includes('to=2026-10-04T23:00:00.000Z'),
+        ),
+      )
+      .toBe(true);
     await page.close();
   });
 
@@ -298,6 +311,8 @@ test.describe('calendar', () => {
     await target.dispatchEvent('dragover', { dataTransfer: transfer });
     await target.dispatchEvent('drop', { dataTransfer: transfer });
     await expect(page.getByText(/Moved to/).first()).toBeVisible();
+    // 25.9: the toast offers Undo (the same PATCH back to the old time).
+    await expect(page.getByRole('button', { name: 'Undo' }).first()).toBeVisible();
     await expect
       .poll(async () =>
         (

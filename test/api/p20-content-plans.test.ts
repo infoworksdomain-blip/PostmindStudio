@@ -399,10 +399,12 @@ describe.skipIf(!hasDb)('20.9 month plans API', { timeout: 180_000 }, () => {
     });
     const view = upcoming.json.upcoming as {
       held: Array<{ slotAt: string }>;
-      planned: Array<{ itemId: string; status: string }>;
+      planned: Array<{ itemId: string; status: string; automationId: string | null }>;
     };
     expect(view.held).toHaveLength(6);
     expect(view.planned.map((p) => p.itemId).sort()).toEqual(items.map((i) => i.id).sort());
+    // 25.9: a hand-made month plan, not an automation's period (the calendar's source filter).
+    expect(view.planned.every((p) => p.automationId === null)).toBe(true);
   });
 
   it('review window: remove a queued post (allowance given back), swap another, cancel the plan', async () => {

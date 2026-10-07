@@ -689,17 +689,59 @@ export function postsPerPeriod(cadence: Cadence, duration: string): number {
     : (cadence.postsPerWeek * days) / 7;
 }
 
+/** Automation states whose current period is posting (a paused or finished one has no next post). */
+const POSTING_STATES: ReadonlySet<string> = new Set(['ACTIVE', 'GENERATING']);
+/** Plan items still to go out. */
+const UPCOMING_ITEM_STATES = ['QUEUED', 'GENERATING', 'READY', 'SCHEDULED'] as const;
+
+/**
+ * 25.9: the next post time of each plan (its earliest item still to go out at or after `now`),
+ * for the Automations list's "Next post" column. One indexed query for the whole page.
+ */
+export async function nextPostTimes(
+  db: Pick<PrismaClient, 'contentPlanItem'>,
+  organisationId: string,
+  planIds: readonly string[],
+  now: Date,
+): Promise<Map<string, string>> {
+  if (planIds.length === 0) return new Map();
+  const rows = await db.contentPlanItem.findMany({
+    where: {
+      organisationId,
+      planId: { in: [...planIds] },
+      slotAt: { gte: now },
+      status: { in: [...UPCOMING_ITEM_STATES] },
+    },
+    orderBy: [{ planId: 'asc' }, { slotAt: 'asc' }],
+    distinct: ['planId'],
+    select: { planId: true, slotAt: true },
+  });
+  return new Map(rows.map((r) => [r.planId, r.slotAt.toISOString()]));
+}
+
 export async function listAutomations(
-  db: Pick<PrismaClient, 'automation'>,
+  db: Pick<PrismaClient, 'automation' | 'contentPlanItem'>,
   organisationId: string,
   query: z.infer<typeof listAutomationsQuery>,
+  now: Date = new Date(),
 ) {
   const rows = await db.automation.findMany({
     where: { organisationId, ...(query.businessId && { businessId: query.businessId }) },
     orderBy: { createdAt: 'desc' },
     take: 50,
   });
-  return rows.map(automationSummary);
+  const posting = rows.filter((a) => POSTING_STATES.has(a.status) && a.currentPlanId);
+  const next = await nextPostTimes(
+    db,
+    organisationId,
+    posting.map((a) => a.currentPlanId as string),
+    now,
+  );
+  return rows.map((a) => ({
+    ...automationSummary(a),
+    nextPostAt:
+      POSTING_STATES.has(a.status) && a.currentPlanId ? (next.get(a.currentPlanId) ?? null) : null,
+  }));
 }
 
 /** The local date after a plan's last day (its windowEnd is local midnight). */

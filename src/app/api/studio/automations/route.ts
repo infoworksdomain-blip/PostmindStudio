@@ -13,7 +13,13 @@ import {
 // GET ?businessId= lists them; POST creates a DRAFT (nothing runs until POST …/:id/start).
 export const GET = withStudioRoute(StudioCapability.ProjectRead, async ({ req, tenant, deps }) => {
   const query = parseQuery(req, listAutomationsQuery);
-  return { body: { automations: await listAutomations(deps.db, tenant.organisationId, query) } };
+  const automations = await listAutomations(
+    deps.db,
+    tenant.organisationId,
+    query,
+    new Date(deps.now()),
+  );
+  return { body: { automations } };
 });
 
 export const POST = withStudioRoute(
