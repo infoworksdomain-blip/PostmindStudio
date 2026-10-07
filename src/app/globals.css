@@ -54,7 +54,7 @@
   --popover-foreground: var(--ink);
 
   /* signal — brand vermilion: primary actions and live / generating states only. */
-  --primary: oklch(0.56 0.2 32);
+  --primary: oklch(0.52 0.19 32);
   --primary-foreground: oklch(0.99 0.003 32);
   --signal-soft: oklch(0.96 0.022 32);
   --secondary: var(--surface-raised);
@@ -68,10 +68,10 @@
   --data: oklch(0.5 0.08 205);
   --data-soft: oklch(0.96 0.02 205);
 
-  --destructive: oklch(0.55 0.19 27);
+  --destructive: oklch(0.51 0.19 27);
   --destructive-foreground: oklch(0.5 0.19 27);
   --destructive-soft: oklch(0.96 0.022 27);
-  --success: oklch(0.52 0.12 155);
+  --success: oklch(0.47 0.11 155);
   --success-foreground: oklch(0.45 0.1 155);
   --success-soft: oklch(0.96 0.025 155);
   --warning: oklch(0.62 0.13 70);
@@ -81,7 +81,7 @@
   --border: var(--line);
   --border-strong: var(--line-strong);
   --input: oklch(0.65 0.008 250);
-  --ring: oklch(0.56 0.2 32);
+  --ring: oklch(0.52 0.19 32);
 
   /* Scrim behind text and controls laid over video or images (both themes). */
   --scrim: oklch(0 0 0 / 55%);
@@ -89,7 +89,7 @@
 
   /* Charts: data teal first, signal second, then muted ochre, sage, slate-violet. */
   --chart-1: oklch(0.5 0.08 205);
-  --chart-2: oklch(0.56 0.2 32);
+  --chart-2: oklch(0.52 0.19 32);
   --chart-3: oklch(0.64 0.12 75);
   --chart-4: oklch(0.58 0.08 150);
   --chart-5: oklch(0.5 0.08 290);
@@ -97,12 +97,12 @@
   /* The sidebar is a quiet step off the canvas. */
   --sidebar: oklch(0.975 0.003 250);
   --sidebar-foreground: var(--ink-2);
-  --sidebar-primary: oklch(0.56 0.2 32);
+  --sidebar-primary: oklch(0.52 0.19 32);
   --sidebar-primary-foreground: oklch(0.99 0.003 32);
   --sidebar-accent: var(--surface-active);
   --sidebar-accent-foreground: var(--ink);
   --sidebar-border: var(--line);
-  --sidebar-ring: oklch(0.56 0.2 32);
+  --sidebar-ring: oklch(0.52 0.19 32);
 
   /* Elevation: soft, low, cool shadows in daylight (shadow-raised / -overlay / -modal). */
   --elevation-raised: 0 1px 2px oklch(0.2 0.01 255 / 6%), 0 1px 1px oklch(0.2 0.01 255 / 4%);

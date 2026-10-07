@@ -1,7 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { contrastRatio } from '@/lib/design/contrast';
+import {
+  composite,
+  contrastRatio,
+  oklchToLinearRgb,
+  parseOklch,
+  relativeLuminance,
+} from '@/lib/design/contrast';
 
 // BACKLOG 25.2 — the "Daylight and Darkroom" tokens in src/app/globals.css meet WCAG AA in both
 // themes: 4.5:1 for text pairs, 3:1 for UI pairs (focus ring, field edges, status icons, chart
@@ -104,6 +110,23 @@ describe.each([
   it.each(PAIRS)('%s on %s ≥ %s:1', (fg, bg, min) => {
     const ratio = contrastRatio(resolve(theme, fg), resolve(theme, bg));
     expect(ratio, `${fg} on ${bg} is ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(min);
+  });
+
+  // Status pills and chips across the app write the status colour on a 10–15% wash of itself
+  // (e.g. `bg-success/12 text-success`), over a card or the canvas; axe measured these in CI.
+  it.each([
+    ['--primary', 0.15],
+    ['--success', 0.15],
+    ['--destructive', 0.15],
+  ])('%s text on a %s wash of itself stays readable', (token, alpha) => {
+    const fg = oklchToLinearRgb(parseOklch(resolve(theme, token)));
+    for (const surface of ['--card', '--background']) {
+      const under = oklchToLinearRgb(parseOklch(resolve(theme, surface)));
+      const wash = relativeLuminance(composite(fg, alpha, under));
+      const text = relativeLuminance(fg);
+      const ratio = (Math.max(wash, text) + 0.05) / (Math.min(wash, text) + 0.05);
+      expect(ratio, ` on its wash over  is :1`).toBeGreaterThanOrEqual(TEXT);
+    }
   });
 
   it('defines every token the Tailwind theme maps', () => {

@@ -440,6 +440,8 @@ test.describe('Admin Centre', () => {
     w.expect4xx(/[/]api[/]studio[/]/, 403);
     await w.visit('/admin');
     await expect(staff.getByRole('heading', { name: 'Admin Centre' })).toBeVisible();
+    // The tab list renders once the staff access probe answers, after the heading.
+    await expect(staff.getByRole('tab', { name: 'Kill switch', exact: true })).toBeVisible();
     const tabs = (await staff.getByRole('tab').allInnerTexts()).map((t) => t.trim());
     expect(tabs).toEqual(
       expect.arrayContaining([
