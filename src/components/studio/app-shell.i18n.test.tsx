@@ -87,7 +87,7 @@ describe('AppShell localisation', () => {
     expect(document.documentElement).toHaveAttribute('dir', 'ltr');
   });
 
-  it('switches language from the header listbox and stores the choice in the cookie', async () => {
+  it('switches language from the account menu and stores the choice in the cookie', async () => {
     mockShellApi();
     const user = userEvent.setup();
     const onLocaleChange = vi.fn();
@@ -101,12 +101,16 @@ describe('AppShell localisation', () => {
         {shell()}
       </StudioIntlProvider>,
     );
-    await user.click(screen.getByRole('combobox', { name: 'Interface language: English (UK)' }));
-    const listbox = await screen.findByRole('listbox');
-    const french = within(listbox).getByRole('option', { name: 'Français' });
+    // 25.4: language moved from the top bar into the account menu (shown even before /me answers).
+    await user.click(screen.getByRole('button', { name: 'Account menu' }));
+    await user.click(await screen.findByRole('menuitem', { name: /^Language/ }));
+    const french = await screen.findByRole('menuitemradio', { name: 'Français' });
     expect(french).toHaveAttribute('lang', 'fr');
-    expect(within(listbox).getByRole('option', { name: 'العربية' })).toHaveAttribute('dir', 'rtl');
-    await user.click(french);
+    expect(screen.getByRole('menuitemradio', { name: 'العربية' })).toHaveAttribute('dir', 'rtl');
+    expect(screen.getByRole('menuitemradio', { name: 'English (UK)' })).toBeChecked();
+    // jsdom has no layout, so Radix's sub-menu pointer grace closes it on a click: use the keyboard.
+    french.focus();
+    await user.keyboard('{Enter}');
     expect(onLocaleChange).toHaveBeenCalledWith('fr');
     expect(document.cookie).toContain(`${LOCALE_COOKIE}=fr`);
   });

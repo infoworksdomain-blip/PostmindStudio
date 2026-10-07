@@ -53,10 +53,12 @@
       "navigationTitle": "Navegação",
       "getStarted": "Primeiros passos",
       "groups": {
-        "make": "Criar",
-        "manage": "Gerenciar",
-        "setup": "Configurar",
-        "staff": "Equipe PostMind"
+        "staff": "Equipe PostMind",
+        "create": "Criar",
+        "plan": "Planejar",
+        "library": "Biblioteca",
+        "insights": "Análises",
+        "settings": "Configurações"
       },
       "items": {
         "create": "Criar",
@@ -73,8 +75,13 @@
         "admin": "Administração",
         "settings": "Configurações",
         "blitz": "Blitz",
-        "automations": "Automações"
-      }
+        "automations": "Automações",
+        "home": "Início",
+        "plans": "Planos do mês"
+      },
+      "newPost": "Criar um novo post",
+      "collapse": "Recolher a barra lateral",
+      "expand": "Expandir a barra lateral"
     },
     "theme": {
       "label": "Aparência",
@@ -211,7 +218,9 @@
       "security": "Segurança e login",
       "signOut": "Sair",
       "signOutFailed": "Não foi possível sair. Tente novamente.",
-      "billing": "Seu plano"
+      "billing": "Seu plano",
+      "feedback": "Enviar feedback",
+      "menuAria": "Menu da conta"
     },
     "banners": {
       "readOnly": {
@@ -248,6 +257,47 @@
         "readOnly": "Sua conta está somente para leitura. Atualize o pagamento para criar vídeos.",
         "readOnlyAction": "Atualizar pagamento"
       }
+    },
+    "crumbs": {
+      "ariaLabel": "Trilha de navegação",
+      "project": "Projeto",
+      "plan": "Plano do mês",
+      "newPlan": "Novo plano do mês",
+      "automation": "Automação",
+      "newAutomation": "Nova automação",
+      "libraryVideo": "Vídeo de referência",
+      "publicationAnalytics": "Análise da publicação"
+    },
+    "command": {
+      "triggerText": "Buscar ou ir para…",
+      "title": "Menu de comandos",
+      "description": "Busque nos seus projetos, abra qualquer página ou execute uma ação. Use as setas para se mover e Enter para escolher.",
+      "inputLabel": "Buscar projetos, páginas e ações",
+      "placeholder": "Buscar projetos, páginas e ações…",
+      "listLabel": "Resultados",
+      "groups": {
+        "projects": "Projetos",
+        "navigate": "Ir para",
+        "create": "Criar",
+        "business": "Negócio",
+        "appearance": "Aparência"
+      },
+      "profile": "Seu perfil",
+      "createNew": "Criar um novo post",
+      "useTemplate": "Começar com um modelo",
+      "planMonth": "Planejar um mês",
+      "switchBusiness": "Mudar para {name}",
+      "theme": "Aparência: {theme}",
+      "searching": "Buscando projetos…",
+      "searchFailed": "Não foi possível buscar os projetos. As páginas e as ações continuam funcionando.",
+      "results": "{count, plural, =0 {Nenhum resultado} one {# resultado} many {# resultados} other {# resultados}}",
+      "empty": "Nada corresponde a “{query}”.",
+      "hint": "↑ ↓ para mover · Enter para abrir · Esc para fechar"
+    },
+    "notices": {
+      "ariaLabel": "Avisos da conta",
+      "more": "Mais {count}",
+      "fewer": "Mostrar menos"
     }
   },
   "errors": {
@@ -6212,5 +6262,38 @@
     "eta": "~{minutes} min",
     "finishing": "quase pronto",
     "withEta": "{stage} · {eta}"
+  },
+  "home": {
+    "title": "Início",
+    "description": "O que precisa de você, o que vem por aí e o que está sendo criado.",
+    "monthPlans": "Planos do mês",
+    "needsYou": {
+      "title": "Precisa de você",
+      "empty": "Nada precisa de você agora. Vídeos prontos para revisão e posts que falharam aparecem aqui.",
+      "reviewMeta": "Criado {when}",
+      "failedMeta": "Não publicado no {platform}"
+    },
+    "comingUp": {
+      "title": "Em breve",
+      "calendar": "Calendário",
+      "empty": "Nada agendado para os próximos 7 dias."
+    },
+    "inProgress": {
+      "title": "Em andamento",
+      "all": "Tudo em andamento",
+      "empty": "Nada está sendo criado agora.",
+      "startedMeta": "Iniciado {when}"
+    },
+    "quick": {
+      "title": "Começar algo",
+      "create": "Criar um post",
+      "createBody": "Um vídeo, slideshow ou carrossel a partir de um briefing.",
+      "plan": "Planejar um mês",
+      "planBody": "Um mês de posts, planejados e agendados.",
+      "blitz": "Blitz",
+      "blitzBody": "Deslize por posts prontos.",
+      "templates": "Modelos",
+      "templatesBody": "Comece com um formato comprovado."
+    }
   }
 }

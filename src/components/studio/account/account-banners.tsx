@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { AlertTriangle, Archive, Clock, CreditCard, Eye, Lock } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
@@ -16,7 +16,8 @@ import { useMe, type AccountBanner } from './use-me';
 
 const DAY_MS = 86_400_000;
 
-type Tone = 'info' | 'warn' | 'bad';
+export type NoticeTone = 'info' | 'warn' | 'bad';
+type Tone = NoticeTone;
 
 const TONE: Record<Tone, string> = {
   info: 'border-data/25 bg-data-soft text-foreground',
@@ -24,10 +25,24 @@ const TONE: Record<Tone, string> = {
   bad: 'border-destructive/30 bg-destructive/8 text-foreground',
 };
 
+// 25.4: inside the app shell's notice strip a banner is one calm row (no card, no margin) whose
+// icon carries the tone; elsewhere (tests, other screens) it keeps the card look.
+const STRIP_ICON: Record<Tone, string> = {
+  info: 'text-data',
+  warn: 'text-warning-foreground',
+  bad: 'text-destructive-foreground',
+};
+
+const StripContext = createContext(false);
+
+export function NoticeStripProvider({ children }: { children: ReactNode }) {
+  return <StripContext.Provider value>{children}</StripContext.Provider>;
+}
+
 /** Id of the billing banner, so a disabled create button can point at it (aria-describedby). */
 export const ACCOUNT_BANNER_ID = 'account-banner';
 
-function Banner({
+export function Banner({
   tone,
   id,
   icon,
@@ -40,16 +55,19 @@ function Banner({
   children: ReactNode;
   action?: ReactNode;
 }) {
+  const strip = useContext(StripContext);
   return (
     <div
       id={id}
       role={tone === 'info' ? 'status' : 'alert'}
+      data-tone={tone}
       className={cn(
-        'mb-6 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border px-4 py-3 text-sm',
-        TONE[tone],
+        'flex flex-wrap items-center gap-x-3 gap-y-2 text-sm',
+        strip ? 'min-h-11 py-2 text-foreground' : 'mb-6 rounded-xl border px-4 py-3',
+        !strip && TONE[tone],
       )}
     >
-      <span aria-hidden className="shrink-0">
+      <span aria-hidden className={cn('shrink-0', strip && STRIP_ICON[tone])}>
         {icon}
       </span>
       <p className="min-w-0 flex-1">{children}</p>

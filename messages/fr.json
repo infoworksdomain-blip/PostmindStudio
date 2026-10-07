@@ -53,10 +53,12 @@
       "navigationTitle": "Navigation",
       "getStarted": "Premiers pas",
       "groups": {
-        "make": "Créer",
-        "manage": "Gérer",
-        "setup": "Configurer",
-        "staff": "Équipe PostMind"
+        "staff": "Équipe PostMind",
+        "create": "Créer",
+        "plan": "Planifier",
+        "library": "Bibliothèque",
+        "insights": "Statistiques",
+        "settings": "Paramètres"
       },
       "items": {
         "create": "Créer",
@@ -73,8 +75,13 @@
         "admin": "Administration",
         "settings": "Paramètres",
         "blitz": "Blitz",
-        "automations": "Automatisations"
-      }
+        "automations": "Automatisations",
+        "home": "Accueil",
+        "plans": "Plans du mois"
+      },
+      "newPost": "Créer une nouvelle publication",
+      "collapse": "Réduire la barre latérale",
+      "expand": "Développer la barre latérale"
     },
     "theme": {
       "label": "Apparence",
@@ -211,7 +218,9 @@
       "security": "Sécurité et connexion",
       "signOut": "Se déconnecter",
       "signOutFailed": "Impossible de vous déconnecter. Veuillez réessayer.",
-      "billing": "Votre abonnement"
+      "billing": "Votre abonnement",
+      "feedback": "Envoyer un avis",
+      "menuAria": "Menu du compte"
     },
     "banners": {
       "readOnly": {
@@ -248,6 +257,47 @@
         "readOnly": "Votre compte est en lecture seule. Mettez à jour votre paiement pour créer des vidéos.",
         "readOnlyAction": "Mettre à jour le paiement"
       }
+    },
+    "crumbs": {
+      "ariaLabel": "Fil d’Ariane",
+      "project": "Projet",
+      "plan": "Plan du mois",
+      "newPlan": "Nouveau plan du mois",
+      "automation": "Automatisation",
+      "newAutomation": "Nouvelle automatisation",
+      "libraryVideo": "Vidéo de référence",
+      "publicationAnalytics": "Statistiques de la publication"
+    },
+    "command": {
+      "triggerText": "Rechercher ou aller à…",
+      "title": "Menu de commandes",
+      "description": "Recherchez vos projets, ouvrez n’importe quelle page ou lancez une action. Utilisez les flèches pour vous déplacer et Entrée pour choisir.",
+      "inputLabel": "Rechercher des projets, des pages et des actions",
+      "placeholder": "Rechercher des projets, des pages et des actions…",
+      "listLabel": "Résultats",
+      "groups": {
+        "projects": "Projets",
+        "navigate": "Aller à",
+        "create": "Créer",
+        "business": "Entreprise",
+        "appearance": "Apparence"
+      },
+      "profile": "Votre profil",
+      "createNew": "Créer une nouvelle publication",
+      "useTemplate": "Partir d’un modèle",
+      "planMonth": "Planifier un mois",
+      "switchBusiness": "Passer à {name}",
+      "theme": "Apparence : {theme}",
+      "searching": "Recherche de projets…",
+      "searchFailed": "Impossible de rechercher les projets. Les pages et les actions fonctionnent toujours.",
+      "results": "{count, plural, =0 {Aucun résultat} one {# résultat} many {# résultats} other {# résultats}}",
+      "empty": "Rien ne correspond à « {query} ».",
+      "hint": "↑ ↓ pour se déplacer · Entrée pour ouvrir · Échap pour fermer"
+    },
+    "notices": {
+      "ariaLabel": "Avis du compte",
+      "more": "{count} de plus",
+      "fewer": "Afficher moins"
     }
   },
   "errors": {
@@ -6212,5 +6262,38 @@
     "eta": "~{minutes} min",
     "finishing": "presque terminé",
     "withEta": "{stage} · {eta}"
+  },
+  "home": {
+    "title": "Accueil",
+    "description": "Ce qui vous attend, ce qui arrive et ce qui est en cours de création.",
+    "monthPlans": "Plans du mois",
+    "needsYou": {
+      "title": "À traiter",
+      "empty": "Rien à traiter pour l’instant. Les vidéos prêtes à relire et les publications en échec apparaissent ici.",
+      "reviewMeta": "Créée {when}",
+      "failedMeta": "Non publiée sur {platform}"
+    },
+    "comingUp": {
+      "title": "À venir",
+      "calendar": "Calendrier",
+      "empty": "Rien n’est programmé pour les 7 prochains jours."
+    },
+    "inProgress": {
+      "title": "En cours",
+      "all": "Tout ce qui est en cours",
+      "empty": "Rien n’est en cours de création.",
+      "startedMeta": "Lancé {when}"
+    },
+    "quick": {
+      "title": "Commencer",
+      "create": "Créer une publication",
+      "createBody": "Une vidéo, un diaporama ou un carrousel à partir d’un brief.",
+      "plan": "Planifier un mois",
+      "planBody": "Un mois de publications, planifiées et programmées.",
+      "blitz": "Blitz",
+      "blitzBody": "Faites défiler des publications prêtes à l’emploi.",
+      "templates": "Modèles",
+      "templatesBody": "Partez d’un format éprouvé."
+    }
   }
 }

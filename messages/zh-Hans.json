@@ -53,10 +53,12 @@
       "navigationTitle": "导航",
       "getStarted": "开始使用",
       "groups": {
-        "make": "创作",
-        "manage": "管理",
-        "setup": "设置",
-        "staff": "PostMind 员工"
+        "staff": "PostMind 员工",
+        "create": "创作",
+        "plan": "计划",
+        "library": "素材库",
+        "insights": "洞察",
+        "settings": "设置"
       },
       "items": {
         "create": "创建",
@@ -73,8 +75,13 @@
         "admin": "管理后台",
         "settings": "设置",
         "blitz": "Blitz 快刷",
-        "automations": "自动化"
-      }
+        "automations": "自动化",
+        "home": "首页",
+        "plans": "月度计划"
+      },
+      "newPost": "创建新帖子",
+      "collapse": "收起侧边栏",
+      "expand": "展开侧边栏"
     },
     "theme": {
       "label": "外观",
@@ -211,7 +218,9 @@
       "security": "安全与登录",
       "signOut": "退出登录",
       "signOutFailed": "无法退出登录，请重试。",
-      "billing": "我的套餐"
+      "billing": "我的套餐",
+      "feedback": "发送反馈",
+      "menuAria": "账户菜单"
     },
     "banners": {
       "readOnly": {
@@ -248,6 +257,47 @@
         "readOnly": "您的账户为只读状态。请更新付款信息以创建视频。",
         "readOnlyAction": "更新付款"
       }
+    },
+    "crumbs": {
+      "ariaLabel": "面包屑导航",
+      "project": "项目",
+      "plan": "月度计划",
+      "newPlan": "新建月度计划",
+      "automation": "自动化",
+      "newAutomation": "新建自动化",
+      "libraryVideo": "参考视频",
+      "publicationAnalytics": "发布数据分析"
+    },
+    "command": {
+      "triggerText": "搜索或跳转到…",
+      "title": "命令菜单",
+      "description": "搜索你的项目、打开任意页面或执行操作。用方向键移动，按 Enter 选择。",
+      "inputLabel": "搜索项目、页面和操作",
+      "placeholder": "搜索项目、页面和操作…",
+      "listLabel": "结果",
+      "groups": {
+        "projects": "项目",
+        "navigate": "前往",
+        "create": "创建",
+        "business": "商家",
+        "appearance": "外观"
+      },
+      "profile": "个人资料",
+      "createNew": "创建新帖子",
+      "useTemplate": "从模板开始",
+      "planMonth": "规划一个月",
+      "switchBusiness": "切换到 {name}",
+      "theme": "外观：{theme}",
+      "searching": "正在搜索项目…",
+      "searchFailed": "无法搜索项目。页面和操作仍可使用。",
+      "results": "{count, plural, =0 {没有结果} other {# 个结果}}",
+      "empty": "没有与“{query}”匹配的内容。",
+      "hint": "↑ ↓ 移动 · Enter 打开 · Esc 关闭"
+    },
+    "notices": {
+      "ariaLabel": "账户通知",
+      "more": "另外 {count} 条",
+      "fewer": "收起"
     }
   },
   "errors": {
@@ -6212,5 +6262,38 @@
     "eta": "约 {minutes} 分钟",
     "finishing": "即将完成",
     "withEta": "{stage} · {eta}"
+  },
+  "home": {
+    "title": "首页",
+    "description": "需要你处理的、即将发布的以及正在制作的内容。",
+    "monthPlans": "月度计划",
+    "needsYou": {
+      "title": "待你处理",
+      "empty": "目前没有需要你处理的事项。待审核的视频和发布失败的帖子会显示在这里。",
+      "reviewMeta": "{when}制作",
+      "failedMeta": "未能发布到 {platform}"
+    },
+    "comingUp": {
+      "title": "即将发布",
+      "calendar": "日历",
+      "empty": "未来 7 天没有安排任何发布。"
+    },
+    "inProgress": {
+      "title": "制作中",
+      "all": "全部制作中",
+      "empty": "目前没有正在制作的内容。",
+      "startedMeta": "{when}开始"
+    },
+    "quick": {
+      "title": "开始创作",
+      "create": "创建帖子",
+      "createBody": "根据简报制作视频、幻灯片或轮播图。",
+      "plan": "规划一个月",
+      "planBody": "一整个月的帖子，规划并排期。",
+      "blitz": "Blitz 快刷",
+      "blitzBody": "快速浏览现成的帖子。",
+      "templates": "模板",
+      "templatesBody": "从经过验证的格式开始。"
+    }
   }
 }

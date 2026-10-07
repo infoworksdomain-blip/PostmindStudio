@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { MessageSquarePlus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -37,12 +37,24 @@ export function projectIdFromPath(pathname: string): string | null {
   return match?.[1] ?? null;
 }
 
-export function FeedbackButton() {
+/**
+ * The dialog itself, controlled (25.4: the account menu opens it). FeedbackButton below is the
+ * stand-alone trigger.
+ */
+export function FeedbackDialog({
+  open,
+  onOpenChange,
+  trigger,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  trigger?: ReactNode;
+}) {
   const t = useTranslations('shell.feedback');
   const tc = useTranslations('common.actions');
   const errorMessage = useErrorMessage();
   const pathname = usePathname() ?? '/';
-  const [open, setOpen] = useState(false);
+  const setOpen = onOpenChange;
   const [kind, setKind] = useState<Kind>('idea');
   const [message, setMessage] = useState('');
   const [attachProject, setAttachProject] = useState(true);
@@ -77,12 +89,7 @@ export function FeedbackButton() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" aria-label={t('buttonAria')}>
-          <MessageSquarePlus />
-          <span className="hidden sm:inline">{t('button')}</span>
-        </Button>
-      </DialogTrigger>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent>
         <form onSubmit={submit} className="grid gap-4">
           <DialogHeader>
@@ -136,5 +143,22 @@ export function FeedbackButton() {
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+export function FeedbackButton() {
+  const t = useTranslations('shell.feedback');
+  const [open, setOpen] = useState(false);
+  return (
+    <FeedbackDialog
+      open={open}
+      onOpenChange={setOpen}
+      trigger={
+        <Button variant="ghost" size="sm" aria-label={t('buttonAria')}>
+          <MessageSquarePlus />
+          <span className="hidden sm:inline">{t('button')}</span>
+        </Button>
+      }
+    />
   );
 }

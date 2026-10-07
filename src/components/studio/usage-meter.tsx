@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
+import { Banner } from './account/account-banners';
 import { UsageBannerActions } from './billing/upgrade-dialog';
 
 // Decision P3 — the plan usage meter (GET /api/studio/usage). The app shell shows the banner from
@@ -182,5 +183,46 @@ export function UsageBanner() {
         )}
       </div>
     </section>
+  );
+}
+
+/** The usage read the app shell shares between the notice strip and its priority order. */
+export function useUsage(): UsageResponse['usage'] | undefined {
+  return useApi<UsageResponse>('/usage').data?.usage;
+}
+
+/**
+ * 25.4: the usage warning as one row of the app shell's notice strip (the full banner with meters
+ * stays above for screens that show it on its own). Rendered only while usage is not `ok`.
+ */
+export function UsageNotice({ usage }: { usage: UsageResponse['usage'] }) {
+  const t = useTranslations('shell.usage');
+  const resetDate = useResetDate();
+  const exceeded = usage.status === 'exceeded';
+  const blocked = exceeded && usage.mode === 'enforce';
+  const period = usage.period ?? 'month';
+  const title = usage.channelPlan
+    ? exceeded
+      ? t('planExceededTitle', { period })
+      : t('planWarningTitle', { period })
+    : exceeded
+      ? t('exceededTitle', { tier: t(`tiers.${usage.planTier}`) })
+      : t('warningTitle', { tier: t(`tiers.${usage.planTier}`) });
+  const date = resetDate(usage.resetsAt);
+  const body = usage.channelPlan
+    ? blocked
+      ? t('planBlockedBody', { date })
+      : t('planResetBody', { date })
+    : blocked
+      ? t('blockedBody', { date })
+      : t('resetBody', { date });
+  return (
+    <Banner
+      tone={exceeded ? 'bad' : 'warn'}
+      icon={<Gauge className="size-4" />}
+      action={<UsageBannerActions compact />}
+    >
+      <strong className="font-semibold">{title}</strong> {body}
+    </Banner>
   );
 }
