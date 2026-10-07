@@ -35,18 +35,16 @@ describe('EmptyIllustration', () => {
 });
 
 describe('EmptyState', () => {
-  it('shows the illustration in place of the icon, and keeps the title and action', () => {
+  it('draws an illustration when media names one, and keeps the title and action', () => {
     const { container } = render(
       <EmptyState
         media="projects"
-        media={<span data-testid="icon" />}
         title="No videos yet"
         description="Make your first one."
         action={<button type="button">New video</button>}
       />,
     );
     expect(container.querySelector('[data-illustration="projects"]')).not.toBeNull();
-    expect(screen.queryByTestId('icon')).toBeNull();
     expect(screen.getByRole('heading', { name: 'No videos yet' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'New video' })).toBeVisible();
     expect(screen.queryByRole('img')).toBeNull();

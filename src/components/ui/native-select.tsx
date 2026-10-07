@@ -8,7 +8,7 @@ import { fieldBase } from './field-styles';
 // `id` and pair it with a <Label htmlFor> (or an aria-label) so it keeps its name. For a short
 // list with rich items use `Select` (Radix) instead.
 
-type NativeSelectProps = React.ComponentProps<'select'> & {
+type NativeSelectProps = Omit<React.ComponentProps<'select'>, 'size'> & {
   /** `sm` for dense toolbars and table filters. */
   size?: 'sm' | 'default';
   /** Classes for the wrapper (width, margins); `className` styles the select itself. */
