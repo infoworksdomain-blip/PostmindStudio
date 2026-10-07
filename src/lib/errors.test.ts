@@ -99,7 +99,7 @@ describe('toErrorResponse', () => {
     expect(res.status).toBe(503);
     const body = await res.json();
     expect(body.error).toBe('service_unavailable');
-    expect(body.message).toMatch(/temporarily unavailable/);
+    expect(body.message).toMatch(/Generation is unavailable right now/);
     expect(JSON.stringify(body)).not.toContain('anthropic');
   });
 });
