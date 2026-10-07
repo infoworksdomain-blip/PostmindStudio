@@ -78,7 +78,8 @@
         "automations": "Automatisierungen",
         "home": "Start",
         "plans": "Monatspläne",
-        "images": "Bilder"
+        "images": "Bilder",
+        "media": "Meine Medien"
       },
       "newPost": "Neuen Beitrag erstellen",
       "collapse": "Seitenleiste einklappen",
@@ -2653,7 +2654,10 @@
       "emptyFilters": "Versuchen Sie eine allgemeinere Kategorie oder weniger Tags.",
       "more": "Weitere Referenzen",
       "noCloseTitle": "Keine nahen Treffer für „{query}“",
-      "noCloseBody": "Nichts in der Bibliothek passt gut zu dieser Suche. Versuchen Sie andere Wörter oder stöbern Sie in einer Kategorie:"
+      "noCloseBody": "Nichts in der Bibliothek passt gut zu dieser Suche. Versuchen Sie andere Wörter oder stöbern Sie in einer Kategorie:",
+      "gridAria": "Referenzvideos",
+      "pagesAria": "Seiten",
+      "page": "Seite {page}"
     },
     "filters": {
       "formAria": "Bibliothek filtern",
@@ -6457,6 +6461,81 @@
       "download": "Herunterladen",
       "edit": "Prompt bearbeiten",
       "again": "Erneut generieren"
+    }
+  },
+  "media": {
+    "page": {
+      "title": "Meine Medien",
+      "description": "Ihre fertigen Videos, Ihre hochgeladenen Videos und Ihre Bildbibliothek an einem Ort."
+    },
+    "actions": {
+      "uploadVideo": "Video hochladen",
+      "addImages": "Bilder hinzufügen"
+    },
+    "filters": {
+      "label": "Anzeigen",
+      "all": "Alle",
+      "video": "Videos",
+      "image": "Bilder",
+      "upload": "Uploads"
+    },
+    "scope": {
+      "business": "Das oben gewählte Unternehmen.",
+      "all": "Alle Unternehmen. Wählen Sie oben eines aus, um einzugrenzen."
+    },
+    "grid": {
+      "aria": "Medien",
+      "loading": "Medien werden geladen",
+      "pagesAria": "Seiten",
+      "page": "Seite {page}",
+      "more": "Weiter"
+    },
+    "type": {
+      "video": "Video",
+      "upload": "Upload",
+      "image": "Bild"
+    },
+    "uploadKind": {
+      "source_video": "Hochgeladenes Video",
+      "demo_video": "Demovideo"
+    },
+    "imageSource": {
+      "UPLOAD": "Hochgeladen",
+      "GENERATED": "Generiert",
+      "SCRAPED": "Von Ihrer Website",
+      "STOCK": "Stockfoto"
+    },
+    "untitledVideo": "Video ohne Titel",
+    "untitledImage": "Bild ohne Titel",
+    "empty": {
+      "all": {
+        "title": "Noch nichts hier",
+        "body": "Fertige Videos, Uploads und Bilder erscheinen hier, sobald Sie sie erstellen."
+      },
+      "video": {
+        "title": "Noch keine fertigen Videos",
+        "body": "Ein Video erscheint hier, sobald es seine Prüfungen bestanden hat."
+      },
+      "image": {
+        "title": "Noch keine Bilder",
+        "body": "Fügen Sie Fotos unter Unternehmen & Bilder hinzu oder erstellen Sie welche im Image Studio."
+      },
+      "upload": {
+        "title": "Noch keine Uploads",
+        "body": "Laden Sie Ihr eigenes Video unter Erstellen hoch. Nach der Verarbeitung erscheint es hier."
+      }
+    },
+    "preview": {
+      "loading": "Video wird geladen",
+      "playerAria": "{title} abspielen",
+      "type": "Art",
+      "format": "Format",
+      "length": "Länge",
+      "size": "Größe",
+      "dimensions": "{width} × {height}",
+      "added": "Hinzugefügt",
+      "download": "Herunterladen",
+      "openProject": "Projekt öffnen"
     }
   }
 }

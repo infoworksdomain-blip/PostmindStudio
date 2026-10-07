@@ -48,13 +48,20 @@ export function BlueprintTimeline({ blueprint }: { blueprint: Blueprint }) {
           </div>
         ))}
       </div>
-      <ol aria-label={t('shotList')} className="mt-4 divide-y divide-border/70">
+      <div
+        aria-hidden
+        className="mt-1.5 flex justify-between font-mono text-[0.6875rem] text-muted-foreground"
+      >
+        <span>{t('seconds', { seconds: seconds(0) })}</span>
+        <span>{t('seconds', { seconds: seconds(blueprint.totalDurationSec) })}</span>
+      </div>
+      <ol aria-label={t('shotList')} className="mt-4 divide-y divide-border">
         {blueprint.shots.map((shot, i) => (
           <li
             key={i}
             className="grid grid-cols-[1.75rem_1fr_auto] items-baseline gap-2 py-2.5 text-sm"
           >
-            <span className="tabular text-xs text-muted-foreground">
+            <span className="font-mono text-xs text-muted-foreground">
               {f.number(i + 1, { minimumIntegerDigits: 2 })}
             </span>
             <span className="min-w-0">
@@ -75,7 +82,7 @@ export function BlueprintTimeline({ blueprint }: { blueprint: Blueprint }) {
               {shot.hasOnScreenText && (
                 <Type className="size-3.5" aria-label={t('onScreenText')} role="img" />
               )}
-              <span className="tabular">
+              <span className="font-mono">
                 {t('seconds', { seconds: seconds(shot.durationSec) })}
               </span>
             </span>

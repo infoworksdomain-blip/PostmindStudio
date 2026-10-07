@@ -78,7 +78,8 @@
         "automations": "Automações",
         "home": "Início",
         "plans": "Planos do mês",
-        "images": "Imagens"
+        "images": "Imagens",
+        "media": "Minhas mídias"
       },
       "newPost": "Criar um novo post",
       "collapse": "Recolher a barra lateral",
@@ -2653,7 +2654,10 @@
       "emptyFilters": "Tente uma categoria mais ampla ou menos tags.",
       "more": "Mais referências",
       "noCloseTitle": "Nenhum resultado próximo para “{query}”",
-      "noCloseBody": "Nada na biblioteca se aproxima dessa busca. Tente outras palavras ou explore uma categoria:"
+      "noCloseBody": "Nada na biblioteca se aproxima dessa busca. Tente outras palavras ou explore uma categoria:",
+      "gridAria": "Vídeos de referência",
+      "pagesAria": "Páginas",
+      "page": "Página {page}"
     },
     "filters": {
       "formAria": "Filtrar a biblioteca",
@@ -6457,6 +6461,81 @@
       "download": "Baixar",
       "edit": "Editar descrição",
       "again": "Gerar de novo"
+    }
+  },
+  "media": {
+    "page": {
+      "title": "Minhas mídias",
+      "description": "Seus vídeos prontos, os vídeos que você enviou e sua biblioteca de imagens, em um só lugar."
+    },
+    "actions": {
+      "uploadVideo": "Enviar um vídeo",
+      "addImages": "Adicionar imagens"
+    },
+    "filters": {
+      "label": "Mostrar",
+      "all": "Tudo",
+      "video": "Vídeos",
+      "image": "Imagens",
+      "upload": "Envios"
+    },
+    "scope": {
+      "business": "Mostrando a empresa escolhida na barra superior.",
+      "all": "Mostrando todas as empresas. Escolha uma na barra superior para filtrar."
+    },
+    "grid": {
+      "aria": "Mídias",
+      "loading": "Carregando mídias",
+      "pagesAria": "Páginas",
+      "page": "Página {page}",
+      "more": "Mais"
+    },
+    "type": {
+      "video": "Vídeo",
+      "upload": "Envio",
+      "image": "Imagem"
+    },
+    "uploadKind": {
+      "source_video": "Vídeo enviado",
+      "demo_video": "Vídeo de demonstração"
+    },
+    "imageSource": {
+      "UPLOAD": "Enviada",
+      "GENERATED": "Gerada",
+      "SCRAPED": "Do seu site",
+      "STOCK": "Banco de imagens"
+    },
+    "untitledVideo": "Vídeo sem título",
+    "untitledImage": "Imagem sem título",
+    "empty": {
+      "all": {
+        "title": "Ainda não há nada",
+        "body": "Vídeos prontos, envios e imagens aparecem aqui conforme você os cria."
+      },
+      "video": {
+        "title": "Ainda não há vídeos prontos",
+        "body": "Um vídeo aparece aqui depois de passar nas verificações."
+      },
+      "image": {
+        "title": "Ainda não há imagens",
+        "body": "Adicione fotos em Empresa e imagens, ou crie algumas no Image Studio."
+      },
+      "upload": {
+        "title": "Ainda não há envios",
+        "body": "Envie seu próprio vídeo em Criar. Ele aparece aqui depois de processado."
+      }
+    },
+    "preview": {
+      "loading": "Carregando o vídeo",
+      "playerAria": "Reproduzir {title}",
+      "type": "Tipo",
+      "format": "Formato",
+      "length": "Duração",
+      "size": "Tamanho",
+      "dimensions": "{width} × {height}",
+      "added": "Adicionado",
+      "download": "Baixar",
+      "openProject": "Abrir projeto"
     }
   }
 }

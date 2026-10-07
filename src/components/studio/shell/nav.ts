@@ -4,6 +4,7 @@ import {
   CalendarDays,
   CalendarRange,
   Clapperboard,
+  FolderOpen,
   House,
   Images,
   Layers,
@@ -40,6 +41,7 @@ export interface NavItem {
     | 'publications'
     | 'projects'
     | 'library'
+    | 'media'
     | 'business'
     | 'analytics'
     | 'connections'
@@ -66,6 +68,8 @@ export const NAV: readonly NavItem[] = [
   { href: '/publications', key: 'publications', icon: Send, group: 'plan' },
   { href: '/projects', key: 'projects', icon: Clapperboard, group: 'library' },
   { href: '/library', key: 'library', icon: Library, group: 'library' },
+  // 25.10: My media — finished videos, uploads and images in one place.
+  { href: '/media', key: 'media', icon: FolderOpen, group: 'library' },
   { href: '/business', key: 'business', icon: Building2, group: 'library' },
   { href: '/analytics', key: 'analytics', icon: BarChart3, group: 'insights' },
   { href: '/connections', key: 'connections', icon: Link2, group: 'settings' },

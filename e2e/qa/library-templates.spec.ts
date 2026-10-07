@@ -450,6 +450,11 @@ test('browse: grid, filters, search, pagination and empty states', async ({ page
   await page.getByLabel('Length').selectOption('long');
   await expect(grid.getByRole('link', { name: new RegExp(titles.gym) })).toBeVisible();
   await expect(grid.getByRole('link', { name: new RegExp(titles.bakery) })).toHaveCount(0);
+  // 25.10: the filters live in the URL, so a filtered view survives a reload.
+  await expect(page).toHaveURL(/[?&]length=long/);
+  await page.reload();
+  await expect(page.getByLabel('Length')).toHaveValue('long');
+  await expect(grid.getByRole('link', { name: new RegExp(titles.gym) })).toBeVisible();
   await page.getByLabel('Length').selectOption('medium');
   await expect(grid.getByRole('link', { name: new RegExp(titles.bakery) })).toBeVisible();
   await page.getByLabel('Length').selectOption('any');

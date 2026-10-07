@@ -55,6 +55,8 @@ import './p22-formats';
 import './p22-creators';
 // Phase 22.4 / 22.5: Blitz (a deck of carousel, slideshow and preview cards) and Automations.
 import './p22-blitz-automations';
+// 25.10: My media (renders, uploads and images in one feed).
+import './p25-media';
 // Phase 18 Track E: /me, organisation settings, members, audit, admin directory, legal readiness,
 // and sample data for Track C's billing contract.
 import './p18-org';

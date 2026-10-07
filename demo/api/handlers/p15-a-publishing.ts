@@ -219,12 +219,18 @@ function thumbnailSvg(text: string, aspect: string): string {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
-route('GET', '/renders/:id', ({ params }) => {
-  const { project, render } = findRender(params.id ?? '');
-  const url =
+/** 25.10: a render's current thumbnail (an uploaded / regenerated one, else the drawn card). */
+export function demoRenderThumbnail(renderId: string): string {
+  const { project, render } = findRender(renderId);
+  return (
     thumbnails.get(render.id) ??
-    thumbnailSvg(project.brief?.hook ?? project.name ?? '', render.aspectRatio);
-  return { render: { ...render, thumbnailUrl: url } };
+    thumbnailSvg(project.brief?.hook ?? project.name ?? '', render.aspectRatio)
+  );
+}
+
+route('GET', '/renders/:id', ({ params }) => {
+  const { render } = findRender(params.id ?? '');
+  return { render: { ...render, thumbnailUrl: demoRenderThumbnail(render.id) } };
 });
 
 route('POST', '/renders/:id/thumbnail', ({ params, body }) => {

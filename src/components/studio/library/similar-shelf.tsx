@@ -25,7 +25,7 @@ export function SimilarShelf({ id }: { id: string }) {
   );
   return (
     <section aria-labelledby="library-similar" className="min-w-0">
-      <h2 id="library-similar" className="mb-4 font-display text-2xl">
+      <h2 id="library-similar" className="mb-3 text-lg font-semibold tracking-tight">
         {t('heading')}
       </h2>
       {error ? (

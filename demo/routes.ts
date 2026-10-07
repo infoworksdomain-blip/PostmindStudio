@@ -29,6 +29,8 @@ export const APP_PATHS = [
   '/blitz',
   // 25.8 Image Studio
   '/images',
+  // 25.10 My media
+  '/media',
   '/automations',
   '/automations/new',
   '/automations/:id',

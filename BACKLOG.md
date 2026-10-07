@@ -509,7 +509,7 @@ Plan and audit: the "PostMind Studio Redesign Audit" (Daylight and Darkroom desi
 - [ ] **25.8** Video Studio, Image Studio and project review: capability-driven model selector, real job states with measured ETA, player-first review, Image Studio page.
   - [x] **25.8 (review + Image Studio)** Player-first project review (status & actions column, one "Needs your attention" list, tabs in the URL, pipeline with failed/draft states) and the Image Studio page (/images). The capability-driven model selector is a separate PR.
 - [ ] **25.9** Calendar, month planner, Blitz and automations.
-- [ ] **25.10** Library and My media.
+- [x] **25.10** Library and My media.
 - [ ] **25.11** Analytics: summary first, scoped to the selected business.
 - [ ] **25.12** Connections, settings, billing and account (regrouped settings).
 - [ ] **25.13** Admin: sectioned side menu, URL-synced tabs, dense tables.
