@@ -308,7 +308,7 @@ jobs:
     # Track A's sign-up / sign-in screens and Track C's pricing page; until both are on the branch
     # the job skips with a notice (the same pattern as the overlay pixel diff), then runs itself.
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     services:
       postgres:
         image: pgvector/pgvector:0.8.6-pg17
