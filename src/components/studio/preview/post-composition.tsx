@@ -29,11 +29,17 @@ export interface PostCompositionProps extends Record<string, unknown> {
   labels: PostCompositionLabels;
 }
 
+/**
+ * The browser's own UI font stack (the app's Inter first). A browser-only preview, never sent to
+ * a renderer, so it is not one of the self-hosted render fonts in public/fonts.
+ */
+const PREVIEW_FONT = ['Inter Variable', 'system-ui', 'sans-serif'].join(', ');
+
 /** TikTok-classic text: white, heavy, black outline, no box (formats/caption-style.ts). */
 const CLASSIC: CSSProperties = {
   color: 'white',
   fontWeight: 800,
-  fontFamily: 'system-ui, sans-serif',
+  fontFamily: PREVIEW_FONT,
   textAlign: 'center',
   WebkitTextStroke: '6px black',
   paintOrder: 'stroke fill',
@@ -107,7 +113,7 @@ function Shot({ shot, label, heading }: { shot: StoryboardShot; label: string; h
           backgroundColor: '#000a',
           color: 'white',
           fontSize: 36,
-          fontFamily: 'system-ui, sans-serif',
+          fontFamily: PREVIEW_FONT,
         }}
       >
         {label}
@@ -126,7 +132,7 @@ function CaptionStrip({ caption }: { caption: string }) {
         margin: 0,
         color: 'white',
         fontSize: 38,
-        fontFamily: 'system-ui, sans-serif',
+        fontFamily: PREVIEW_FONT,
         textShadow: '0 2px 6px #000c',
         display: '-webkit-box',
         WebkitLineClamp: 2,
