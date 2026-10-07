@@ -329,7 +329,7 @@ export function CommandMenu() {
           // The visible text is the name (hidden on phones, where the icon stands alone).
           aria-label={t('triggerText')}
           aria-keyshortcuts="Control+K Meta+K"
-          className="gap-2 text-muted-foreground max-md:size-9 max-md:px-0 md:min-w-52 md:justify-start md:border md:border-border md:bg-surface-raised/50"
+          className="gap-2 text-muted-foreground max-md:size-9 max-md:px-0 md:w-60 md:justify-start md:border md:border-border md:bg-surface-raised/50"
         >
           <Search aria-hidden className="size-4" />
           <span className="hidden md:inline">{t('triggerText')}</span>

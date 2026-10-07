@@ -30,6 +30,7 @@ import { AuditScreen } from '@/components/studio/settings/audit-screen';
 import { MembersScreen } from '@/components/studio/settings/members-screen';
 import { OrganisationSettingsScreen } from '@/components/studio/settings/organisation-settings';
 import { ProjectsList } from '@/components/studio/projects/projects-list';
+import { HomeScreen } from '@/components/studio/home/home-screen';
 import { PublicationsList } from '@/components/studio/publications/publications-list';
 import { ReviewScreen } from '@/components/studio/review/review-screen';
 import { StudioIntlProvider } from '@/components/studio/i18n/intl-provider';
@@ -72,6 +73,7 @@ const RENDER: Record<AppPath, Render> = {
       initialReference={parseReference(q.get('reference') ?? undefined, q.get('mode') ?? undefined)}
     />
   ),
+  '/home': () => <HomeScreen />,
   '/projects': () => <ProjectsList />,
   '/projects/:id': (p) => <ReviewScreen projectId={p.id ?? ''} />,
   '/library': () => <LibraryBrowse />,
@@ -178,8 +180,8 @@ function DemoShell() {
   const signedInAtRoot = signedIn && (pathname === '/' || pathname === '');
   const bounceToSignIn = !signedIn && !isPublicPath(pathname) && !OPEN_WHEN_SIGNED_OUT(pathname);
   useEffect(() => {
-    // "/" is the landing page; as in the app, a signed-in visitor goes on to Projects.
-    if (signedInAtRoot) navigate('/projects', { replace: true });
+    // "/" is the landing page; as in the app, a signed-in visitor goes on to Home (25.4).
+    if (signedInAtRoot) navigate('/home', { replace: true });
     // The app's page guard sends a signed-out visitor to sign in, then back.
     else if (bounceToSignIn)
       navigate(`/sign-in?next=${encodeURIComponent(`${pathname}${search}`)}`, { replace: true });

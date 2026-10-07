@@ -165,7 +165,8 @@ export function UsageBannerActions({ compact = false }: { compact?: boolean }) {
   const size = compact ? 'xs' : 'sm';
   return (
     <div className={compact ? 'flex flex-wrap gap-2' : 'mt-3 flex flex-wrap gap-2'}>
-      <Button asChild size={size}>
+      {/* In the calm strip both actions are quiet; the full banner keeps the primary one. */}
+      <Button asChild size={size} variant={compact ? 'outline' : 'default'}>
         <Link href="/settings/billing#change">{t('addChannel')}</Link>
       </Button>
       <Button asChild size={size} variant="outline">

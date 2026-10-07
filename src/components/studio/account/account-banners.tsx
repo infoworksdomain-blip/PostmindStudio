@@ -70,7 +70,7 @@ export function Banner({
       <span aria-hidden className={cn('shrink-0', strip && STRIP_ICON[tone])}>
         {icon}
       </span>
-      <p className="min-w-0 flex-1">{children}</p>
+      <p className="min-w-0 flex-1 basis-64">{children}</p>
       {action}
     </div>
   );
