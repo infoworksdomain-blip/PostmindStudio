@@ -41,7 +41,7 @@ test.beforeAll(async ({ browser, playwright }) => {
   world = await seedWorld(db, ownerId);
   await addMember(db, world.orgId, ownerId, 'owner');
   owner = await signedInPage(browser, baseURL, emailFor('p2-billing'));
-  const made = await staffPage(browser, request, db);
+  const made = await staffPage(browser, request, db, undefined, 'billing');
   staff = made.page;
   staffEmail = made.email;
   await request.dispose();

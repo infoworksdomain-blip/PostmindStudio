@@ -1427,7 +1427,7 @@
       "none": "Ancora nessun video."
     },
     "menu": {
-      "trigger": "Altre azioni per {name}",
+      "trigger": "Altre azioni",
       "download": "Scarica il video",
       "templateDescription": "Conserva formati, struttura delle inquadrature e impostazioni di pubblicazione di questo video per crearne di nuovi."
     }

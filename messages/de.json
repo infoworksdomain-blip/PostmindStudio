@@ -1427,7 +1427,7 @@
       "none": "Noch kein Video."
     },
     "menu": {
-      "trigger": "Weitere Aktionen für {name}",
+      "trigger": "Weitere Aktionen",
       "download": "Video herunterladen",
       "templateDescription": "Behalte Formate, Szenenaufbau und Veröffentlichungsvorgaben dieses Videos und starte neue Videos damit."
     }

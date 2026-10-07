@@ -1427,7 +1427,7 @@
       "none": "Ainda não há vídeo."
     },
     "menu": {
-      "trigger": "Mais ações para {name}",
+      "trigger": "Mais ações",
       "download": "Transferir vídeo",
       "templateDescription": "Guarde os formatos, a estrutura de planos e as definições de publicação deste vídeo para criar novos a partir deles."
     }

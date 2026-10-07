@@ -1427,7 +1427,7 @@
       "none": "还没有视频。"
     },
     "menu": {
-      "trigger": "{name} 的更多操作",
+      "trigger": "更多操作",
       "download": "下载视频",
       "templateDescription": "保留此视频的格式、镜头结构和发布设置，用它们开始新视频。"
     }

@@ -1427,7 +1427,7 @@
       "none": "No video yet."
     },
     "menu": {
-      "trigger": "More actions for {name}",
+      "trigger": "More actions",
       "download": "Download video",
       "templateDescription": "Keep this video’s formats, shot structure and publishing defaults, and start new videos from them."
     }
