@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
-import { ConfirmDialog } from '../admin/confirm-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { EmptyState, ErrorState, PageHeader, Section } from '../primitives';
 import { useTemplateCategory } from './category';
 import {
@@ -221,7 +221,7 @@ export function TemplatesScreen() {
           </Section>
           <Section title={t('builtInTitle')} className="lg:col-span-2">
             {builtIns.length === 0 ? (
-              <EmptyState illustration="templates" title={t('noBuiltIns')} />
+              <EmptyState media="templates" title={t('noBuiltIns')} />
             ) : (
               <BuiltInList rows={builtIns} />
             )}

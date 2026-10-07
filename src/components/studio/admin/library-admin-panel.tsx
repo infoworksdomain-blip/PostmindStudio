@@ -15,7 +15,7 @@ import type { CategoryNode, ListResponse } from '../library/types';
 import { IngestForm } from './ingest-form';
 import { IngestStatus } from './ingest-status';
 import { LibraryEditDialog } from './library-edit-dialog';
-import { ConfirmDialog } from './confirm-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { LibraryAdminFilterBar } from './library-admin-filters';
 import { LibraryBulkBar } from './library-bulk-bar';
 import { LicenceAudit } from './licence-audit';

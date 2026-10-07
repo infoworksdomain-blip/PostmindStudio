@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/table';
 import { api, ApiError, useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
-import { ConfirmDialog } from '../admin/confirm-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { selectClass } from '../library/library-filters';
 import { EmptyState, ErrorState, PageHeader, Section } from '../primitives';
 import { useSettingsError } from './settings-errors';

@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
 import { Section } from '../primitives';
 import { selectClass } from '../library/library-filters';
-import { ConfirmDialog } from './confirm-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { RedriveResults } from './redrive-results';
 import type { KillLevel, RedriveBody, RedriveResponse } from './types';
 

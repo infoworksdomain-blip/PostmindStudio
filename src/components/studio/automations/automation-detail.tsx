@@ -11,12 +11,12 @@ import {
   Pause,
   Play,
   RefreshCw,
-  Sparkles,
   Trash2,
   TrendingUp,
   XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
@@ -64,9 +64,14 @@ export function AutomationDetailScreen({ automationId }: { automationId: string 
     },
   );
   const [busy, setBusy] = useState(false);
+  const [confirm, confirmDialog] = useConfirm();
 
   const run = async (action: string, done?: string) => {
-    if (action === 'cancel' && !window.confirm(t('detail.cancelConfirm'))) return;
+    if (
+      action === 'cancel' &&
+      !(await confirm({ title: t('detail.cancelConfirm'), confirmLabel: t('detail.cancel') }))
+    )
+      return;
     setBusy(true);
     try {
       await api(`/automations/${automationId}/${action}`, {
@@ -139,6 +144,7 @@ export function AutomationDetailScreen({ automationId }: { automationId: string 
         }
         actions={back}
       />
+      {confirmDialog}
       <WriteGate>
         <div className="mb-6 flex flex-wrap gap-2">
           {a.status === 'DRAFT' && (
@@ -221,7 +227,7 @@ export function AutomationDetailScreen({ automationId }: { automationId: string 
               disabled={busy}
               onClick={() => void run('more-like-this', t('detail.moreDone'))}
             >
-              <Sparkles /> {t('detail.moreLikeThis')}
+              <TrendingUp /> {t('detail.moreLikeThis')}
             </Button>
           </WriteGate>
         </section>

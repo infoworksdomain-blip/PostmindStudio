@@ -20,7 +20,7 @@ import {
   type ChannelInterval,
   type PlanTier,
 } from '../../billing/types';
-import { ConfirmDialog } from '../confirm-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   ACCESS,
   CHANNEL_INTERVALS,

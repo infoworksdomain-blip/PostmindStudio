@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
 import { selectClass } from '../library/library-filters';
 import type { CategoryOption } from '../library/library-utils';
-import { ConfirmDialog } from './confirm-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import type { BulkAction, BulkResponse, ReanalyseResponse } from './library-admin-types';
 
 // 15.D7 / A3.8 — bulk actions on the selected corpus items: accept the automatic category,
