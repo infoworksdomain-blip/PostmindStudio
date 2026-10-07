@@ -80,6 +80,17 @@ function fakeDb(
         licenseNotes: null,
       }),
     ),
+    // 25.x follow-up: library matches are read back for their source; the business's own
+    // uploads are trusted without a relevance check (library-relevance.ts).
+    findMany: vi.fn(async ({ where }: { where: { id: { in: string[] } } }) =>
+      where.id.in.map((id) => ({
+        id,
+        source: 'UPLOAD',
+        s3Bucket: 'b',
+        s3Key: id,
+        publicUrl: null,
+      })),
+    ),
     // The daily org-wide count has no businessId; the 15.D2 monthly per-business count does.
     count: vi.fn(async (args?: { where?: { businessId?: string } }) =>
       args?.where?.businessId ? generatedThisMonthForBusiness : generatedToday,

@@ -8,7 +8,8 @@ import type { ProviderRunDeps } from '../pipeline/provider-run';
 import { runProvider } from '../pipeline/provider-run';
 import { imageGenerationUsage } from '../services/tier-gates';
 import { parseSlideContent, type SlideContent } from './planner';
-import { createStockScreen } from './image-relevance';
+import { createRelevanceGate, stockScreenOf, type RelevanceGate } from './image-relevance';
+import { relevantLibraryImage } from './library-relevance';
 import { embedNewImages, stockImageForSlide } from './slide-images';
 import { visualQueriesFor } from './visual-query';
 import { clampDuration, IMAGE_SLIDE_TYPES, OPTIONAL_IMAGE_SLIDE_TYPES } from './templates';
@@ -222,15 +223,22 @@ export async function generationBudget(deps: PopulateDeps, scope: PopulateScope)
   );
 }
 
-/** Library search for one slide; with `bestEffort`, an embedding outage is a miss. */
+/**
+ * Library search for one slide; with `bestEffort`, an embedding outage is a miss. With a `gate`
+ * (25.x follow-up), auto-stored stock / generated matches must fit the slide
+ * (library-relevance.ts); the business's own pictures are trusted.
+ */
 export async function libraryMatch(
   deps: PopulateDeps,
   scope: PopulateScope,
-  input: { query: string; used: ReadonlySet<string>; bestEffort: boolean },
+  input: { query: string; used: ReadonlySet<string>; bestEffort: boolean; gate?: RelevanceGate },
 ): Promise<string | undefined> {
+  let ids: string[];
   try {
     const hits = await searchLibrary(deps.library, scope, input.query, SEARCH_CANDIDATES);
-    return hits.find((h) => h.similarity >= MIN_SIMILARITY && !input.used.has(h.id))?.id;
+    ids = hits
+      .filter((h) => h.similarity >= MIN_SIMILARITY && !input.used.has(h.id))
+      .map((h) => h.id);
   } catch (err) {
     if (!input.bestEffort || !isBestEffortMiss(err)) throw err;
     deps.library.logger.warn(
@@ -239,6 +247,9 @@ export async function libraryMatch(
     );
     return undefined;
   }
+  if (!input.gate) return ids[0];
+  const libraryDeps = { ...deps.library, db: deps.db };
+  return relevantLibraryImage(libraryDeps, scope, { query: input.query, ids, gate: input.gate });
 }
 
 /** A generated image for the slide within the budget, or undefined. */
@@ -328,18 +339,17 @@ export async function fillSlideImages(
     scope,
     { topic: input.topic, profile, slides: pending },
   );
-  const screen = createStockScreen(
-    { providers: deps.providers, fetchImpl: deps.library.fetchImpl, logger: deps.library.logger },
-    scope,
-    [profile?.subNiche, profile?.industry].filter(Boolean).join(' — '),
-  );
+  // One gate per run: library and stock checks share the cost cap (image-relevance.ts).
+  const business = [profile?.subNiche, profile?.industry].filter(Boolean).join(' — ');
+  const gate = createRelevanceGate(deps.library, scope, business);
+  const screen = stockScreenOf(gate, deps.library);
 
   for (const slide of pending) {
     const query = visual.get(slide.id) ?? fallbackQuery;
     const required = IMAGE_SLIDE_TYPES.has(slide.slideType as SlideType);
     let chosen: string | undefined;
     if (query) {
-      chosen = await libraryMatch(deps, scope, { query, used, bestEffort });
+      chosen = await libraryMatch(deps, scope, { query, used, bestEffort, gate });
       if (chosen) result.imagesMatched += 1;
     }
     if (!chosen && query) {
