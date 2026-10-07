@@ -38,7 +38,7 @@ export function LanguageOptions({ state, onChange }: { state: CreateState; onCha
   const extras = state.extraLanguages ?? [];
   const alsoId = useId();
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-4 @lg:grid-cols-2">
       <Field id="create-language" label={t('language')}>
         <NativeSelect
           id="create-language"
@@ -80,111 +80,135 @@ export function LanguageOptions({ state, onChange }: { state: CreateState; onCha
   );
 }
 
-export function PlanningAdvancedOptions({
+/** 15.C4: a lower quality tier for this run (never above the plan). */
+export function TierSelect({
   state,
   onChange,
   planTier,
-  workflows,
-  canSchedule = true,
 }: {
   state: CreateState;
   onChange: Patch;
   planTier: QualityTier | undefined;
-  workflows: WorkflowOption[] | undefined;
+}) {
+  const t = useTranslations('create.planning');
+  return (
+    <Field id="create-tier" label={t('tier')} hint={t('tierHint')}>
+      <NativeSelect
+        id="create-tier"
+        value={state.qualityTier ?? ''}
+        disabled={!planTier || state.source === 'SLIDESHOW'}
+        onChange={(e) => onChange({ qualityTier: e.target.value as QualityTier | '' })}
+      >
+        <option value="">
+          {planTier ? t('tierPlan', { tier: t(`tiers.${planTier}`) }) : t('tierPlanUnknown')}
+        </option>
+        {planTier &&
+          tiersAtOrBelow(planTier)
+            .filter((tier) => tier !== planTier)
+            .reverse()
+            .map((tier) => (
+              <option key={tier} value={tier}>
+                {t(`tiers.${tier}`)}
+              </option>
+            ))}
+      </NativeSelect>
+    </Field>
+  );
+}
+
+/** 15.C4 / 20.3: publish at a date-time, or at the drip queue's next free slot. */
+export function ScheduleField({
+  state,
+  onChange,
+  canSchedule = true,
+}: {
+  state: CreateState;
+  onChange: Patch;
   /** 20.12: a schedule posts automatically, so it needs a connected account. */
   canSchedule?: boolean;
 }) {
   const t = useTranslations('create.planning');
-  const isSlideshow = state.source === 'SLIDESHOW';
   // 20.3: the API's window (a minute to 180 days ahead), fixed when the options open.
   const [bounds] = useState(() => scheduleInputBounds(Date.now()));
   return (
-    <>
-      <Field id="create-tier" label={t('tier')} hint={t('tierHint')}>
-        <NativeSelect
-          id="create-tier"
-          value={state.qualityTier ?? ''}
-          disabled={!planTier || isSlideshow}
-          onChange={(e) => onChange({ qualityTier: e.target.value as QualityTier | '' })}
-        >
-          <option value="">
-            {planTier ? t('tierPlan', { tier: t(`tiers.${planTier}`) }) : t('tierPlanUnknown')}
-          </option>
-          {planTier &&
-            tiersAtOrBelow(planTier)
-              .filter((t) => t !== planTier)
-              .reverse()
-              .map((tier) => (
-                <option key={tier} value={tier}>
-                  {t(`tiers.${tier}`)}
-                </option>
-              ))}
-        </NativeSelect>
-      </Field>
-      <Field
+    <Field
+      id="create-schedule"
+      label={t('schedule')}
+      hint={
+        canSchedule ? (
+          t('scheduleHint')
+        ) : (
+          <>
+            {t('scheduleNeedsAccount')}{' '}
+            <Link href="/connections" className="underline">
+              {t('connectAccount')}
+            </Link>
+          </>
+        )
+      }
+    >
+      <Input
         id="create-schedule"
-        label={t('schedule')}
-        hint={
-          canSchedule ? (
-            t('scheduleHint')
-          ) : (
-            <>
-              {t('scheduleNeedsAccount')}{' '}
-              <Link href="/connections" className="underline">
-                {t('connectAccount')}
-              </Link>
-            </>
-          )
-        }
-      >
-        <Input
-          id="create-schedule"
-          type="datetime-local"
-          min={bounds.min}
-          max={bounds.max}
-          value={state.scheduleNextSlot ? '' : (state.scheduleAt ?? '')}
-          disabled={!canSchedule || state.scheduleNextSlot}
-          onChange={(e) => onChange({ scheduleAt: e.target.value })}
+        type="datetime-local"
+        min={bounds.min}
+        max={bounds.max}
+        value={state.scheduleNextSlot ? '' : (state.scheduleAt ?? '')}
+        disabled={!canSchedule || state.scheduleNextSlot}
+        onChange={(e) => onChange({ scheduleAt: e.target.value })}
+      />
+      <label className="mt-2 flex items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          className="mt-0.5 size-4 accent-foreground"
+          checked={Boolean(state.scheduleNextSlot)}
+          disabled={!canSchedule}
+          onChange={(e) =>
+            onChange({
+              scheduleNextSlot: e.target.checked,
+              ...(e.target.checked && { scheduleAt: '' }),
+            })
+          }
         />
-        <label className="mt-2 flex items-start gap-2 text-sm">
-          <input
-            type="checkbox"
-            className="mt-0.5 size-4 accent-foreground"
-            checked={Boolean(state.scheduleNextSlot)}
-            disabled={!canSchedule}
-            onChange={(e) =>
-              onChange({
-                scheduleNextSlot: e.target.checked,
-                ...(e.target.checked && { scheduleAt: '' }),
-              })
-            }
-          />
-          <span>
-            {t('scheduleNextSlot')}
-            <span className="block text-xs text-muted-foreground">
-              {t('scheduleNextSlotHint', { weeks: DRIP_HORIZON_WEEKS })}
-            </span>
+        <span>
+          {t('scheduleNextSlot')}
+          <span className="block text-xs text-muted-foreground">
+            {t('scheduleNextSlotHint', { weeks: DRIP_HORIZON_WEEKS })}
           </span>
-        </label>
-      </Field>
-      <Field id="create-workflow" label={t('workflow')}>
-        <NativeSelect
-          id="create-workflow"
-          value={state.approvalWorkflowId ?? ''}
-          disabled={!workflows || workflows.length === 0}
-          onChange={(e) => onChange({ approvalWorkflowId: e.target.value })}
-        >
-          <option value="">
-            {workflows && workflows.length === 0 ? t('workflowNone') : t('workflowOrg')}
+        </span>
+      </label>
+    </Field>
+  );
+}
+
+/** 15.C4 / 15.D3: an approval workflow ('' = the organisation's matching rule). */
+export function WorkflowSelect({
+  state,
+  onChange,
+  workflows,
+}: {
+  state: CreateState;
+  onChange: Patch;
+  workflows: WorkflowOption[] | undefined;
+}) {
+  const t = useTranslations('create.planning');
+  return (
+    <Field id="create-workflow" label={t('workflow')}>
+      <NativeSelect
+        id="create-workflow"
+        value={state.approvalWorkflowId ?? ''}
+        disabled={!workflows || workflows.length === 0}
+        onChange={(e) => onChange({ approvalWorkflowId: e.target.value })}
+      >
+        <option value="">
+          {workflows && workflows.length === 0 ? t('workflowNone') : t('workflowOrg')}
+        </option>
+        {workflows?.map((w) => (
+          <option key={w.id} value={w.id}>
+            {w.name}
           </option>
-          {workflows?.map((w) => (
-            <option key={w.id} value={w.id}>
-              {w.name}
-            </option>
-          ))}
-        </NativeSelect>
-      </Field>
-    </>
+        ))}
+      </NativeSelect>
+    </Field>
   );
 }
 

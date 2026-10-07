@@ -620,19 +620,9 @@
       "summaryPlatforms": "{count, plural, =0 {لا توجد منصات} zero {لا توجد منصات} one {منصة واحدة} two {منصتان} few {# منصات} many {# منصة} other {# منصة}}",
       "summaryAutoPublish": "{count, plural, =0 {نشر تلقائي: لم يُختر أي حساب} zero {نشر تلقائي: لم يُختر أي حساب} one {يُنشر على حساب واحد} two {يُنشر على حسابين} few {يُنشر على # حسابات} many {يُنشر على # حسابًا} other {يُنشر على # حساب}}",
       "summaryBrandKit": "هوية العلامة التجارية مفعّلة",
-      "options": "الخيارات",
       "generate": "إنشاء",
       "createSlideshow": "إنشاء عرض شرائح",
       "sourcesAria": "ما الذي تريد إنشاءه",
-      "sources": {
-        "BRIEF": "فيديو",
-        "SLIDESHOW": "عرض شرائح",
-        "UPLOAD": "رفع فيديو",
-        "UGC": "ممثل UGC",
-        "CAROUSEL": "كاروسيل (بطاقات منشورات)",
-        "HOOK_DEMO": "خطّاف + عرض توضيحي",
-        "WALL_OF_TEXT": "جدار نصّي"
-      },
       "templatedNote": "تأتي المنصات والمدة من القالب. النص أعلاه اختياري — يضيف تفاصيل إلى مخطط القالب.",
       "noBusiness": {
         "title": "اختر نشاطًا تجاريًا أولًا",
@@ -641,18 +631,61 @@
       },
       "toast": {
         "slideshowDrafted": "تمت صياغة مسودة عرض الشرائح — راجع الشرائح، ثم ابدأ الإنشاء.",
-        "generatingUpload": "جارٍ الإنشاء — يضيف Studio الترجمة النصية إلى الفيديو.",
-        "generatingScript": "جارٍ الإنشاء — يكتب Studio النص.",
+        "generatingUpload": "جارٍ صنع الفيديو — إضافة الترجمة النصية…",
+        "generatingScript": "جارٍ صنع الفيديو…",
         "draftNotStarted": "تم الحفظ كمسودة، لكن الإنشاء لم يبدأ: {error}",
         "generatingCarousel": "جارٍ كتابة الكاروسيل…",
-        "generatingFormat": "جارٍ الإنشاء: يكتب Studio النص ويصنع الفيديو."
+        "generatingFormat": "جارٍ صنع الفيديو…"
       },
       "planMonth": "أو خطط لشهر كامل من الفيديوهات وعروض الشرائح",
       "summaryNoAccounts": "لا توجد حسابات مرتبطة: يُحفظ للمراجعة",
       "summaryForReview": "يُحفظ للمراجعة",
       "createCarousel": "إنشاء الكاروسيل",
       "summaryCarousel": "{count} منشورات · بطاقات {theme, select, dark {داكنة} other {فاتحة}}",
-      "summarySeconds": "{count, number} ث"
+      "summarySeconds": "{count, number} ث",
+      "formats": {
+        "BRIEF": {
+          "name": "فيديو بالذكاء الاصطناعي",
+          "line": "نص وتصوير وتعليق صوتي جاهز لك"
+        },
+        "SLIDESHOW": {
+          "name": "عرض شرائح",
+          "line": "صور مع تعليقات وموسيقى"
+        },
+        "CAROUSEL": {
+          "name": "كاروسيل",
+          "line": "منشور يُتصفَّح بالسحب"
+        },
+        "UPLOAD": {
+          "name": "الفيديو الخاص بك",
+          "line": "ترجمة نصية وتنسيقات لفيديو من عندك"
+        },
+        "UGC": {
+          "name": "فيديو صانع محتوى (UGC)",
+          "line": "صانع محتوى بالذكاء الاصطناعي يتحدث عن منتجك"
+        },
+        "HOOK_DEMO": {
+          "name": "خطّاف + عرض توضيحي",
+          "line": "ردّ فعل يجذب الانتباه، ثم عرضك التوضيحي"
+        },
+        "WALL_OF_TEXT": {
+          "name": "جدار نصّي",
+          "line": "كتلة نص واحدة فوق فيديو هادئ"
+        }
+      },
+      "basicDefault": "تبدأ خطتك بعرض الشرائح، الذي يستهلك ¼ فيديو من رصيدك. يمكنك اختيار أي تنسيق.",
+      "moreOptions": "خيارات إضافية",
+      "usesQuick": "يستهلك ¼ فيديو",
+      "usesVideos": "يستهلك {count, number} من مقاطع الفيديو المتاحة لك",
+      "allowanceLeft": "يتبقى {left} من {limit} {period, select, week {هذا الأسبوع} other {هذا الشهر}}",
+      "submitShortcut": "Ctrl أو ⌘ + Enter للإنشاء",
+      "groups": {
+        "format": "المنصات والمدة",
+        "brand": "العلامة التجارية واللغة",
+        "message": "الجمهور والدعوة إلى الإجراء",
+        "publishing": "الموافقة والجدولة",
+        "quality": "الجودة"
+      }
     },
     "problems": {
       "businessRequired": "اختر نشاطًا تجاريًا أولًا.",
@@ -692,7 +725,6 @@
         "defaultKit": "{name} (الافتراضية)"
       },
       "advanced": {
-        "toggle": "خيارات متقدمة",
         "audience": "الجمهور المستهدف",
         "audiencePlaceholder": "مثلًا: من يشترون منزلهم الأول",
         "cta": "دعوة إلى اتخاذ إجراء",
@@ -893,6 +925,27 @@
       },
       "length": "المدة",
       "seconds": "{count, number} ث"
+    },
+    "videoModel": {
+      "legend": "نموذج الفيديو",
+      "automatic": "تلقائي (موصى به)",
+      "automaticLine": "يختار Studio نموذجًا متاحًا لكل مقطع ويبدّله إذا كان مشغولًا.",
+      "speed": "{minutes, number} دقيقة لكل مقطع",
+      "maxClip": "حتى {seconds, number} ث",
+      "costStaff": "{amount} لكل مقطع مدته 6 ث",
+      "droppedChoice": "النموذج الذي اخترته غير متاح في مستوى الجودة هذا، لذا يُستخدم الوضع التلقائي.",
+      "hint": {
+        "BRIEF": "يصنع مقاطع الذكاء الاصطناعي في هذا الفيديو.",
+        "UGC": "يصنع المشاهد المولّدة. مقاطع صانع المحتوى نفسها تستخدم دائمًا نماذج صنّاع المحتوى.",
+        "HOOK_DEMO": "يصنع ردّ الفعل الافتتاحي."
+      },
+      "capability": {
+        "text_to_video": "نص فقط",
+        "image_to_video": "صورة فقط",
+        "both": "نص أو صورة"
+      },
+      "change": "تغيير النموذج",
+      "hide": "إخفاء النماذج"
     }
   },
   "review": {

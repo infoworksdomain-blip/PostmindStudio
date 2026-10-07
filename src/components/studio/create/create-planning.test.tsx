@@ -3,15 +3,11 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockFetch, renderWithSWR, type MockRoute } from '../review/test-helpers';
-import {
-  buildCreateBody,
-  buildGenerateBody,
-  tiersAtOrBelow,
-  validateCreate,
-  type CreateState,
-} from './body';
+import { buildCreateBody, tiersAtOrBelow, validateCreate, type CreateState } from './body';
 import { CreateScreen } from './create-screen';
+import { openMoreOptions } from './create-test-helpers';
 import { defaultSourceFor } from './create-planning-options';
+import { buildGenerateBody } from './generate-body';
 
 // Phase 15 Track C — Create inputs: language(s) (15.C5), tier override, schedule and approval
 // workflow (15.C4), and the Basic plan's Slideshow default (P5).
@@ -55,8 +51,8 @@ describe('Create — planning options', () => {
     mockFetch(routes('BASIC'));
     renderWithSWR(<CreateScreen initialReference={null} />);
     expect(await screen.findByLabelText('What’s the slideshow about?')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
-    await userEvent.click(screen.getByRole('radio', { name: /Video/ }));
+    await openMoreOptions();
+    await userEvent.click(screen.getByRole('radio', { name: 'AI video' }));
     expect(screen.getByLabelText('What’s the video about?')).toBeInTheDocument();
   });
 
@@ -64,10 +60,9 @@ describe('Create — planning options', () => {
     const api = mockFetch(routes('PLUS'));
     renderWithSWR(<CreateScreen initialReference={null} />);
     await userEvent.type(await screen.findByLabelText('What’s the video about?'), 'Launch');
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    await openMoreOptions();
     await userEvent.selectOptions(screen.getByLabelText('Language'), 'fr');
     await userEvent.click(screen.getByRole('checkbox', { name: 'العربية' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Advanced options' }));
     await waitFor(() => expect(screen.getByLabelText('Quality tier')).not.toBeDisabled());
     // never above the plan
     expect(screen.queryByRole('option', { name: 'Enterprise' })).toBeNull();
@@ -155,8 +150,7 @@ describe('create body helpers', () => {
     mockFetch(routes('PLUS', [TIKTOK]));
     renderWithSWR(<CreateScreen initialReference={null} />);
     await userEvent.type(await screen.findByLabelText('What’s the video about?'), 'Launch');
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
-    await userEvent.click(screen.getByRole('button', { name: 'Advanced options' }));
+    await openMoreOptions();
     const input = screen.getByLabelText('Schedule');
     expect(input.getAttribute('min')).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
     const max = Date.parse(input.getAttribute('max') ?? '');

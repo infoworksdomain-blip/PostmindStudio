@@ -620,19 +620,9 @@
       "summaryPlatforms": "{count, plural, =0 {Nenhuma plataforma} one {# plataforma} other {# plataformas}}",
       "summaryAutoPublish": "{count, plural, =0 {publicação automática: nenhuma conta escolhida} one {publica em # conta} other {publica em # contas}}",
       "summaryBrandKit": "kit de marca ativado",
-      "options": "Opções",
       "generate": "Gerar",
       "createSlideshow": "Criar apresentação de diapositivos",
       "sourcesAria": "O que criar",
-      "sources": {
-        "BRIEF": "Vídeo",
-        "SLIDESHOW": "Apresentação de diapositivos",
-        "UPLOAD": "Carregar um vídeo",
-        "UGC": "Ator UGC",
-        "CAROUSEL": "Carrossel (cartões de publicação)",
-        "HOOK_DEMO": "Gancho + demo",
-        "WALL_OF_TEXT": "Parede de texto"
-      },
       "templatedNote": "As plataformas e a duração provêm do modelo. O texto acima é opcional — acrescenta pormenores à estrutura do modelo.",
       "noBusiness": {
         "title": "Escolha primeiro uma empresa",
@@ -641,18 +631,61 @@
       },
       "toast": {
         "slideshowDrafted": "Rascunho da apresentação criado — verifique os diapositivos e, em seguida, gere.",
-        "generatingUpload": "A gerar — o Studio está a legendar o seu vídeo.",
-        "generatingScript": "A gerar — o Studio está a escrever o guião.",
+        "generatingUpload": "A criar o seu vídeo — a adicionar legendas…",
+        "generatingScript": "A criar o seu vídeo…",
         "draftNotStarted": "Guardado como rascunho, mas a geração não começou: {error}",
         "generatingCarousel": "A escrever o seu carrossel…",
-        "generatingFormat": "A gerar: o Studio está a escrever o texto e a criar o seu vídeo."
+        "generatingFormat": "A criar o seu vídeo…"
       },
       "planMonth": "Ou planeie um mês inteiro de vídeos e apresentações",
       "summaryNoAccounts": "nenhuma conta ligada: guardado para revisão",
       "summaryForReview": "guardado para revisão",
       "createCarousel": "Criar carrossel",
       "summaryCarousel": "{count} publicações · cartões {theme, select, dark {escuros} other {claros}}",
-      "summarySeconds": "{count, number} s"
+      "summarySeconds": "{count, number} s",
+      "formats": {
+        "BRIEF": {
+          "name": "Vídeo com IA",
+          "line": "Guião, cenas e narração por si"
+        },
+        "SLIDESHOW": {
+          "name": "Apresentação de diapositivos",
+          "line": "Fotografias com legendas e música"
+        },
+        "CAROUSEL": {
+          "name": "Carrossel",
+          "line": "Uma publicação para deslizar"
+        },
+        "UPLOAD": {
+          "name": "O seu vídeo",
+          "line": "Legendas e formatos para o seu próprio vídeo"
+        },
+        "UGC": {
+          "name": "Vídeo de criador (UGC)",
+          "line": "Um criador de IA fala sobre o seu produto"
+        },
+        "HOOK_DEMO": {
+          "name": "Gancho + demo",
+          "line": "Uma reação como gancho e depois a sua demo"
+        },
+        "WALL_OF_TEXT": {
+          "name": "Parede de texto",
+          "line": "Um bloco de texto sobre um vídeo calmo"
+        }
+      },
+      "basicDefault": "O seu plano começa em Apresentação de diapositivos, que usa ¼ de vídeo da sua quota. Pode escolher qualquer formato.",
+      "moreOptions": "Mais opções",
+      "usesQuick": "Usa ¼ de vídeo",
+      "usesVideos": "Usa {count, number} dos seus vídeos",
+      "allowanceLeft": "{left} de {limit} restantes {period, select, week {esta semana} other {este mês}}",
+      "submitShortcut": "Ctrl ou ⌘ + Enter para gerar",
+      "groups": {
+        "format": "Plataformas e duração",
+        "brand": "Marca e idioma",
+        "message": "Público e apelo à ação",
+        "publishing": "Aprovação e agendamento",
+        "quality": "Qualidade"
+      }
     },
     "problems": {
       "businessRequired": "Escolha primeiro uma empresa.",
@@ -692,7 +725,6 @@
         "defaultKit": "{name} (predefinido)"
       },
       "advanced": {
-        "toggle": "Opções avançadas",
         "audience": "Público-alvo",
         "audiencePlaceholder": "p. ex., quem compra casa pela primeira vez",
         "cta": "Apelo à ação",
@@ -893,6 +925,27 @@
       },
       "length": "Duração",
       "seconds": "{count, number} s"
+    },
+    "videoModel": {
+      "legend": "Modelo de vídeo",
+      "automatic": "Automático (recomendado)",
+      "automaticLine": "O Studio escolhe um modelo disponível para cada clipe e muda se algum estiver ocupado.",
+      "speed": "{minutes, number} min por clipe",
+      "maxClip": "até {seconds, number} s",
+      "costStaff": "{amount} por clipe de 6 s",
+      "droppedChoice": "O modelo escolhido não está disponível neste nível de qualidade, pelo que é usado o Automático.",
+      "hint": {
+        "BRIEF": "Cria os clipes de IA deste vídeo.",
+        "UGC": "Cria as cenas de IA. Os clipes do criador usam sempre os modelos de criador.",
+        "HOOK_DEMO": "Cria a reação do gancho."
+      },
+      "capability": {
+        "text_to_video": "Só texto",
+        "image_to_video": "Só fotografia",
+        "both": "Texto ou fotografia"
+      },
+      "change": "Mudar de modelo",
+      "hide": "Ocultar modelos"
     }
   },
   "review": {

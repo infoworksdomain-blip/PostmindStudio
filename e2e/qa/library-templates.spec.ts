@@ -703,7 +703,7 @@ test('templates: list, delete, empty states, error retry and the Create picker',
 
   // The Create screen offers the saved project template.
   await page.goto('/new');
-  await page.getByRole('button', { name: /Options/ }).click();
+  await page.getByRole('button', { name: 'More options' }).click();
   const picker = page.getByRole('radiogroup', { name: 'Video template' });
   await expect(picker.getByRole('radio', { name: /No template/ })).toHaveAttribute(
     'aria-checked',

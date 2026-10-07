@@ -378,9 +378,9 @@ test('an organisation owner can use every workflow that needs no provider', asyn
 
   // Create: every source, then a slideshow draft (a new organisation stops at the plan gate).
   await w.visit('/new');
-  await page.getByRole('button', { name: /Options/ }).click();
-  for (const source of ['Video', 'Slideshow', 'Upload']) {
-    const radio = page.getByRole('radio', { name: new RegExp(source, 'i') }).first();
+  // 25.7: the formats are a rail of radios above the brief.
+  for (const source of ['AI video', 'Slideshow', 'Your video']) {
+    const radio = page.getByRole('radio', { name: source, exact: true });
     if (await radio.count()) await radio.click();
     // 20.12: with no connected account the form says the work is saved for review (it never
     // blocks on "choose an account to auto-publish to").

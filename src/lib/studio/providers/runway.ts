@@ -31,12 +31,15 @@ export const IMAGE_TO_VIDEO_MODEL = 'gen4_turbo';
 const USD_PER_CREDIT = 0.01;
 const CREDITS_PER_SEC: Record<string, number> = { 'gen4.5': 12, gen4_turbo: 5 };
 const MIN_DURATION_SEC = 2;
-const MAX_DURATION_SEC = 10;
+export const MAX_DURATION_SEC = 10;
 const TYPICAL_LATENCY_SEC = 120;
 const TIMEOUT_MS = 30_000;
 
 // Allowed `ratio` values per model/endpoint. 1:1 and 4:5 are image-to-video only.
-const RATIO: Record<'text_to_video' | 'image_to_video', Partial<Record<AspectRatio, string>>> = {
+export const RATIO: Record<
+  'text_to_video' | 'image_to_video',
+  Partial<Record<AspectRatio, string>>
+> = {
   text_to_video: { '16:9': '1280:720', '9:16': '720:1280' },
   image_to_video: { '16:9': '1280:720', '9:16': '720:1280', '1:1': '960:960', '4:5': '832:1104' },
 };

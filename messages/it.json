@@ -620,19 +620,9 @@
       "summaryPlatforms": "{count, plural, =0 {Nessuna piattaforma} one {# piattaforma} other {# piattaforme}}",
       "summaryAutoPublish": "{count, plural, =0 {pubblicazione automatica: nessun account scelto} one {pubblica su # account} other {pubblica su # account}}",
       "summaryBrandKit": "kit del brand attivo",
-      "options": "Opzioni",
       "generate": "Genera",
       "createSlideshow": "Crea presentazione",
       "sourcesAria": "Cosa creare",
-      "sources": {
-        "BRIEF": "Video",
-        "SLIDESHOW": "Presentazione",
-        "UPLOAD": "Carica un video",
-        "UGC": "Attore UGC",
-        "CAROUSEL": "Carosello (schede post)",
-        "HOOK_DEMO": "Hook + demo",
-        "WALL_OF_TEXT": "Muro di testo"
-      },
       "templatedNote": "Piattaforme e durata dipendono dal modello. Il testo qui sopra è facoltativo: aggiunge dettagli alla struttura del modello.",
       "noBusiness": {
         "title": "Prima scegli un’attività",
@@ -641,18 +631,61 @@
       },
       "toast": {
         "slideshowDrafted": "Bozza della presentazione pronta: controlla le slide, poi genera.",
-        "generatingUpload": "Generazione in corso: Studio sta sottotitolando il tuo video.",
-        "generatingScript": "Generazione in corso: Studio sta scrivendo il copione.",
+        "generatingUpload": "Sto creando il tuo video: aggiungo i sottotitoli…",
+        "generatingScript": "Sto creando il tuo video…",
         "draftNotStarted": "Salvato come bozza, ma la generazione non è partita: {error}",
         "generatingCarousel": "Sto scrivendo il tuo carosello…",
-        "generatingFormat": "Generazione in corso: Studio sta scrivendo il testo e creando il tuo video."
+        "generatingFormat": "Sto creando il tuo video…"
       },
       "planMonth": "Oppure pianifica un mese intero di video e slideshow",
       "summaryNoAccounts": "nessun account collegato: salvato per la revisione",
       "summaryForReview": "salvato per la revisione",
       "createCarousel": "Crea carosello",
       "summaryCarousel": "{count} post · schede {theme, select, dark {scure} other {chiare}}",
-      "summarySeconds": "{count, number} s"
+      "summarySeconds": "{count, number} s",
+      "formats": {
+        "BRIEF": {
+          "name": "Video IA",
+          "line": "Copione, riprese e voce per te"
+        },
+        "SLIDESHOW": {
+          "name": "Presentazione",
+          "line": "Foto con didascalie e musica"
+        },
+        "CAROUSEL": {
+          "name": "Carosello",
+          "line": "Un post da scorrere"
+        },
+        "UPLOAD": {
+          "name": "Il tuo video",
+          "line": "Sottotitoli e formati per il tuo video"
+        },
+        "UGC": {
+          "name": "Video creator (UGC)",
+          "line": "Un creator IA parla del tuo prodotto"
+        },
+        "HOOK_DEMO": {
+          "name": "Hook + demo",
+          "line": "Una reazione come hook, poi la tua demo"
+        },
+        "WALL_OF_TEXT": {
+          "name": "Muro di testo",
+          "line": "Un blocco di testo su un video tranquillo"
+        }
+      },
+      "basicDefault": "Il tuo piano parte da Presentazione, che usa ¼ di video della tua quota. Puoi scegliere qualsiasi formato.",
+      "moreOptions": "Altre opzioni",
+      "usesQuick": "Usa ¼ di video",
+      "usesVideos": "Usa {count, number} dei tuoi video",
+      "allowanceLeft": "{left} su {limit} rimasti {period, select, week {questa settimana} other {questo mese}}",
+      "submitShortcut": "Ctrl o ⌘ + Invio per generare",
+      "groups": {
+        "format": "Piattaforme e durata",
+        "brand": "Brand e lingua",
+        "message": "Pubblico e invito all’azione",
+        "publishing": "Approvazione e programmazione",
+        "quality": "Qualità"
+      }
     },
     "problems": {
       "businessRequired": "Prima scegli un’attività.",
@@ -692,7 +725,6 @@
         "defaultKit": "{name} (predefinito)"
       },
       "advanced": {
-        "toggle": "Opzioni avanzate",
         "audience": "Pubblico di riferimento",
         "audiencePlaceholder": "es. chi compra casa per la prima volta",
         "cta": "Invito all’azione",
@@ -893,6 +925,27 @@
       },
       "length": "Durata",
       "seconds": "{count, number} s"
+    },
+    "videoModel": {
+      "legend": "Modello video",
+      "automatic": "Automatico (consigliato)",
+      "automaticLine": "Studio sceglie un modello disponibile per ogni clip e cambia se uno è occupato.",
+      "speed": "{minutes, number} min per clip",
+      "maxClip": "fino a {seconds, number} s",
+      "costStaff": "{amount} per clip da 6 s",
+      "droppedChoice": "Il modello scelto non è disponibile a questo livello di qualità, quindi si usa Automatico.",
+      "hint": {
+        "BRIEF": "Crea le clip IA di questo video.",
+        "UGC": "Crea le scene IA. Le clip del creator usano sempre i modelli dedicati.",
+        "HOOK_DEMO": "Crea la reazione dell’hook."
+      },
+      "capability": {
+        "text_to_video": "Solo testo",
+        "image_to_video": "Solo foto",
+        "both": "Testo o foto"
+      },
+      "change": "Cambia modello",
+      "hide": "Nascondi modelli"
     }
   },
   "review": {

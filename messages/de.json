@@ -620,19 +620,9 @@
       "summaryPlatforms": "{count, plural, =0 {Keine Plattformen} one {# Plattform} other {# Plattformen}}",
       "summaryAutoPublish": "{count, plural, =0 {automatische Veröffentlichung: kein Konto gewählt} one {wird auf # Konto gepostet} other {wird auf # Konten gepostet}}",
       "summaryBrandKit": "Brand-Kit aktiv",
-      "options": "Optionen",
       "generate": "Generieren",
       "createSlideshow": "Diashow erstellen",
       "sourcesAria": "Was möchten Sie erstellen?",
-      "sources": {
-        "BRIEF": "Video",
-        "SLIDESHOW": "Diashow",
-        "UPLOAD": "Video hochladen",
-        "UGC": "UGC-Darsteller",
-        "CAROUSEL": "Karussell (Post-Karten)",
-        "HOOK_DEMO": "Hook + Demo",
-        "WALL_OF_TEXT": "Textwand"
-      },
       "templatedNote": "Plattformen und Länge werden von der Vorlage vorgegeben. Ihr Text oben ist optional – er ergänzt die Gliederung der Vorlage um Details.",
       "noBusiness": {
         "title": "Wählen Sie zuerst ein Unternehmen aus",
@@ -641,18 +631,61 @@
       },
       "toast": {
         "slideshowDrafted": "Diashow entworfen – prüfen Sie die Folien und starten Sie dann die Generierung.",
-        "generatingUpload": "Wird generiert – Studio untertitelt Ihr Video.",
-        "generatingScript": "Wird generiert – Studio schreibt das Skript.",
+        "generatingUpload": "Ihr Video wird erstellt – Untertitel werden hinzugefügt …",
+        "generatingScript": "Ihr Video wird erstellt …",
         "draftNotStarted": "Als Entwurf gespeichert, aber die Generierung wurde nicht gestartet: {error}",
         "generatingCarousel": "Dein Karussell wird geschrieben …",
-        "generatingFormat": "Wird erstellt – Studio schreibt den Text und erstellt dein Video."
+        "generatingFormat": "Ihr Video wird erstellt …"
       },
       "planMonth": "Oder planen Sie einen ganzen Monat mit Videos und Diashows",
       "summaryNoAccounts": "keine verbundenen Konten: zur Prüfung gespeichert",
       "summaryForReview": "zur Prüfung gespeichert",
       "createCarousel": "Karussell erstellen",
       "summaryCarousel": "{count} Posts · {theme, select, dark {dunkle} other {helle}} Karten",
-      "summarySeconds": "{count, number} s"
+      "summarySeconds": "{count, number} s",
+      "formats": {
+        "BRIEF": {
+          "name": "KI-Video",
+          "line": "Skript, Aufnahmen und Stimme für Sie"
+        },
+        "SLIDESHOW": {
+          "name": "Diashow",
+          "line": "Fotos mit Bildtexten und Musik"
+        },
+        "CAROUSEL": {
+          "name": "Karussell",
+          "line": "Ein Beitrag zum Durchwischen"
+        },
+        "UPLOAD": {
+          "name": "Ihr Video",
+          "line": "Untertitel und Formate für Ihr eigenes Video"
+        },
+        "UGC": {
+          "name": "Creator-Video (UGC)",
+          "line": "Eine KI-Person spricht über Ihr Produkt"
+        },
+        "HOOK_DEMO": {
+          "name": "Hook + Demo",
+          "line": "Erst eine Reaktion als Hook, dann Ihre Demo"
+        },
+        "WALL_OF_TEXT": {
+          "name": "Textwand",
+          "line": "Ein Textblock über einem ruhigen Video"
+        }
+      },
+      "basicDefault": "Ihr Tarif beginnt mit „Diashow“ – sie verbraucht ¼ eines Videos Ihres Kontingents. Sie können jedes Format wählen.",
+      "moreOptions": "Weitere Optionen",
+      "usesQuick": "Verbraucht ¼ Video",
+      "usesVideos": "Verbraucht {count, number} Ihrer Videos",
+      "allowanceLeft": "{left} von {limit} übrig {period, select, week {diese Woche} other {diesen Monat}}",
+      "submitShortcut": "Strg oder ⌘ + Eingabe zum Generieren",
+      "groups": {
+        "format": "Plattformen und Länge",
+        "brand": "Marke und Sprache",
+        "message": "Zielgruppe und Handlungsaufforderung",
+        "publishing": "Freigabe und Zeitplan",
+        "quality": "Qualität"
+      }
     },
     "problems": {
       "businessRequired": "Wählen Sie zuerst ein Unternehmen aus.",
@@ -692,7 +725,6 @@
         "defaultKit": "{name} (Standard)"
       },
       "advanced": {
-        "toggle": "Erweiterte Optionen",
         "audience": "Zielgruppe",
         "audiencePlaceholder": "z. B. Erstkäufer von Wohneigentum",
         "cta": "Call-to-Action",
@@ -893,6 +925,27 @@
       },
       "length": "Länge",
       "seconds": "{count, number} s"
+    },
+    "videoModel": {
+      "legend": "Videomodell",
+      "automatic": "Automatisch (empfohlen)",
+      "automaticLine": "Studio wählt für jeden Clip ein verfügbares Modell und wechselt, wenn eines ausgelastet ist.",
+      "speed": "{minutes, number} Min. pro Clip",
+      "maxClip": "bis {seconds, number} s",
+      "costStaff": "{amount} pro 6-s-Clip",
+      "droppedChoice": "Das gewählte Modell ist in dieser Qualitätsstufe nicht verfügbar, daher wird „Automatisch“ verwendet.",
+      "hint": {
+        "BRIEF": "Erstellt die KI-Clips in diesem Video.",
+        "UGC": "Erstellt die KI-Szenen. Die Clips der KI-Person nutzen immer die Creator-Modelle.",
+        "HOOK_DEMO": "Erstellt die Reaktion als Hook."
+      },
+      "capability": {
+        "text_to_video": "Nur Text",
+        "image_to_video": "Nur Foto",
+        "both": "Text oder Foto"
+      },
+      "change": "Modell ändern",
+      "hide": "Modelle ausblenden"
     }
   },
   "review": {

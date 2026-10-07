@@ -620,19 +620,9 @@
       "summaryPlatforms": "{count, plural, =0 {No platforms} one {# platform} other {# platforms}}",
       "summaryAutoPublish": "{count, plural, =0 {auto-publish: no account picked} one {posts to # account} other {posts to # accounts}}",
       "summaryBrandKit": "brand kit on",
-      "options": "Options",
       "generate": "Generate",
       "createSlideshow": "Create slideshow",
       "sourcesAria": "What to make",
-      "sources": {
-        "BRIEF": "Video",
-        "SLIDESHOW": "Slideshow",
-        "UPLOAD": "Upload a video",
-        "UGC": "UGC actor",
-        "CAROUSEL": "Carousel (post cards)",
-        "HOOK_DEMO": "Hook + demo",
-        "WALL_OF_TEXT": "Wall of text"
-      },
       "templatedNote": "Platforms and length come from the template. Your text above is optional — it adds specifics to the template’s outline.",
       "noBusiness": {
         "title": "Pick a business first",
@@ -641,18 +631,61 @@
       },
       "toast": {
         "slideshowDrafted": "Slideshow drafted — check the slides, then generate.",
-        "generatingUpload": "Generating — Studio is captioning your video.",
-        "generatingScript": "Generating — Studio is writing the script.",
+        "generatingUpload": "Making your video — adding captions…",
+        "generatingScript": "Making your video…",
         "draftNotStarted": "Saved as a draft, but generation didn’t start: {error}",
         "generatingCarousel": "Writing your carousel…",
-        "generatingFormat": "Generating — Studio is writing the text and making your video."
+        "generatingFormat": "Making your video…"
       },
       "planMonth": "Or plan a whole month of videos and slideshows",
       "summaryNoAccounts": "no connected accounts: saved for review",
       "summaryForReview": "saved for review",
       "createCarousel": "Create carousel",
       "summaryCarousel": "{count} posts · {theme, select, dark {dark} other {light}} cards",
-      "summarySeconds": "{count, number} s"
+      "summarySeconds": "{count, number} s",
+      "formats": {
+        "BRIEF": {
+          "name": "AI video",
+          "line": "Scripted, shot and voiced for you"
+        },
+        "SLIDESHOW": {
+          "name": "Slideshow",
+          "line": "Photos with captions and music"
+        },
+        "CAROUSEL": {
+          "name": "Carousel",
+          "line": "A swipeable post"
+        },
+        "UPLOAD": {
+          "name": "Your video",
+          "line": "Captions and formats for your own video"
+        },
+        "UGC": {
+          "name": "Creator video (UGC)",
+          "line": "An AI creator talks about your product"
+        },
+        "HOOK_DEMO": {
+          "name": "Hook + demo",
+          "line": "A reaction hook, then your demo"
+        },
+        "WALL_OF_TEXT": {
+          "name": "Wall of text",
+          "line": "One block of text over a calm video"
+        }
+      },
+      "basicDefault": "Your plan starts on Slideshow, which uses ¼ of a video from your allowance. You can pick any format.",
+      "moreOptions": "More options",
+      "usesQuick": "Uses ¼ of a video",
+      "usesVideos": "Uses {count, number} of your videos",
+      "allowanceLeft": "{left} of {limit} left this {period, select, week {week} other {month}}",
+      "submitShortcut": "Ctrl or ⌘ + Enter to generate",
+      "groups": {
+        "format": "Platforms and length",
+        "brand": "Brand and language",
+        "message": "Audience and call to action",
+        "publishing": "Approval and schedule",
+        "quality": "Quality"
+      }
     },
     "problems": {
       "businessRequired": "Choose a business first.",
@@ -692,7 +725,6 @@
         "defaultKit": "{name} (default)"
       },
       "advanced": {
-        "toggle": "Advanced options",
         "audience": "Target audience",
         "audiencePlaceholder": "e.g. first-time home buyers",
         "cta": "Call to action",
@@ -893,6 +925,27 @@
       },
       "length": "Length",
       "seconds": "{count, number} s"
+    },
+    "videoModel": {
+      "legend": "Video model",
+      "automatic": "Automatic (recommended)",
+      "automaticLine": "Studio picks an available model for each clip and switches if one is busy.",
+      "speed": "{minutes, number} min a clip",
+      "maxClip": "up to {seconds, number} s",
+      "costStaff": "{amount} per 6 s clip",
+      "droppedChoice": "The model you picked isn’t available at this quality tier, so Automatic is used.",
+      "hint": {
+        "BRIEF": "Makes the AI clips in this video.",
+        "UGC": "Makes the AI scenes. The creator’s own clips always use the creator models.",
+        "HOOK_DEMO": "Makes the reaction hook."
+      },
+      "capability": {
+        "text_to_video": "Text only",
+        "image_to_video": "Photo only",
+        "both": "Text or photo"
+      },
+      "change": "Change model",
+      "hide": "Hide models"
     }
   },
   "review": {
