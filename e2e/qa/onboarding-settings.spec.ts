@@ -24,6 +24,7 @@ import {
   waitForEmail,
   Watcher,
 } from './onboarding-settings.support';
+import { chooseLanguage, chooseTheme } from './shell.support';
 
 // QA agent 1 — sign-up, sign-in, sign-out, password reset, email verification, two-step sign-in,
 // invitations and the /welcome onboarding wizard (organisation, business, brand kit, connect, first
@@ -372,7 +373,8 @@ test.describe('invitations', () => {
       new URL(link).pathname,
     );
     await ip.getByRole('button', { name: 'Accept invitation' }).click();
-    await expect(ip).toHaveURL(/\/projects/);
+    // 25.4: accepting an invitation lands on Home.
+    await expect(ip).toHaveURL(/\/home$/);
     const member = await db.member.findFirstOrThrow({
       where: { organizationId: org.id, user: { email: invitedEmail } },
     });
@@ -638,12 +640,10 @@ test.describe('the /welcome wizard', () => {
     );
     expect(overflow).toBeLessThanOrEqual(0);
     await shot(page, 'welcome-mobile');
-    await page.getByRole('button', { name: /^Appearance/ }).click();
-    await page.getByRole('menuitemradio', { name: 'Dark' }).click();
+    await chooseTheme(page, 'Dark');
     await expect(page.locator('html')).toHaveClass(/dark/);
     await shot(page, 'welcome-dark');
-    await page.getByRole('combobox', { name: /Interface language/ }).click();
-    await page.getByRole('option', { name: /العربية/ }).click();
+    await chooseLanguage(page, /العربية/);
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     const rtlOverflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

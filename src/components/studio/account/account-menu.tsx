@@ -155,6 +155,7 @@ function MenuTrigger({ me }: { me: Me | undefined }) {
       <Button
         variant="ghost"
         size="icon"
+        data-shell="account-menu"
         aria-label={
           me
             ? t('userMenuAria', { name: me.user.name ?? me.user.email ?? me.user.id })

@@ -72,7 +72,7 @@ export function LanguageMenuSub() {
   const current = LOCALE_INFO[locale];
   return (
     <DropdownMenuSub>
-      <DropdownMenuSubTrigger>
+      <DropdownMenuSubTrigger data-shell="language-menu">
         <Languages aria-hidden className="text-muted-foreground" />
         <span>{t('label')}</span>
         <span lang={current.code} className="ms-auto ps-3 text-xs text-muted-foreground">
