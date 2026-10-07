@@ -21,8 +21,15 @@ import { safeGet } from '../scan/safe-fetch';
 // Haiku 4.5 ($1 / $5 per MTok) — ≤ $0.012 for a full slideshow. Beyond the cap, and on any
 // outage (thumbnail download, routing, the model, a malformed answer), the best candidate is
 // accepted unchecked: the check never blocks a slideshow.
+//
+// 25.x follow-up (production re-run 2026-10-07: the gym still got the SAME puppies): the first,
+// pre-fix runs had stored those stock photos in each business's library, and the library is
+// searched before stock, so they were reused forever. Library matches now go through the same
+// gate (slideshow/library-relevance.ts): the business's own images (UPLOAD, SCRAPED) are trusted,
+// auto-stored STOCK and GENERATED images must pass the check. Library and stock checks share one
+// cap per slideshow, raised to 12 calls (a slide can need one of each) ≈ ≤ $0.018.
 
-export const MAX_RELEVANCE_CHECKS_PER_RUN = 8;
+export const MAX_RELEVANCE_CHECKS_PER_RUN = 12;
 /** Thumbnails sent to the model: big enough to recognise the subject, cheap in tokens. */
 export const RELEVANCE_THUMB_PX = 384;
 const THUMB_MAX_BYTES = 8 * 1024 * 1024;
@@ -100,18 +107,31 @@ export interface RelevanceScope {
 export type RelevanceVerdict =
   { status: 'checked'; relevant: boolean[] } | { status: 'skipped'; reason: string };
 
-/** A small JPEG of the hit's picture (SSRF-guarded download), or null if it can't be read. */
-async function thumbnail(deps: RelevanceDeps, hit: StockHit): Promise<string | null> {
+/** Loads one candidate's picture (bytes), or null when it cannot be read. */
+export type ImageLoader = () => Promise<Uint8Array | null>;
+
+/** An SSRF-guarded download of a stock or hotlinked picture. */
+export async function fetchImage(deps: RelevanceDeps, url: string): Promise<Uint8Array | null> {
+  const res = await safeGet(url, {
+    fetchImpl: deps.fetchImpl,
+    userAgent: SCAN_USER_AGENT,
+    timeoutMs: THUMB_TIMEOUT_MS,
+    maxBytes: THUMB_MAX_BYTES,
+    accept: 'image/*',
+  });
+  if (res.status >= 400 || res.truncated || res.body.byteLength === 0) return null;
+  return res.body;
+}
+
+/** The largest picture read for a check (stored library objects are capped the same way). */
+export const RELEVANCE_MAX_IMAGE_BYTES = THUMB_MAX_BYTES;
+
+/** A small base64 JPEG of the candidate, or null if it can't be read. */
+async function thumbnail(load: ImageLoader): Promise<string | null> {
   try {
-    const res = await safeGet(hit.imageUrl, {
-      fetchImpl: deps.fetchImpl,
-      userAgent: SCAN_USER_AGENT,
-      timeoutMs: THUMB_TIMEOUT_MS,
-      maxBytes: THUMB_MAX_BYTES,
-      accept: 'image/*',
-    });
-    if (res.status >= 400 || res.truncated || res.body.byteLength === 0) return null;
-    const jpeg = await sharp(res.body)
+    const bytes = await load();
+    if (!bytes || bytes.byteLength === 0) return null;
+    const jpeg = await sharp(bytes)
       .resize(RELEVANCE_THUMB_PX, RELEVANCE_THUMB_PX, { fit: 'inside', withoutEnlargement: true })
       .jpeg({ quality: 70 })
       .toBuffer();
@@ -122,16 +142,16 @@ async function thumbnail(deps: RelevanceDeps, hit: StockHit): Promise<string | n
 }
 
 /**
- * Asks the light model whether each hit fits `query` for `business`. A hit whose picture cannot
- * be downloaded counts as "no"; when none can, or the call fails, the verdict is `skipped`.
+ * Asks the light model whether each picture fits `query` for `business`. A picture that cannot
+ * be read counts as "no"; when none can, or the call fails, the verdict is `skipped`.
  */
-export async function checkStockRelevance(
+export async function checkRelevance(
   deps: RelevanceDeps,
   scope: RelevanceScope,
-  input: { query: string; business: string; hits: readonly StockHit[] },
+  input: { query: string; business: string; images: readonly ImageLoader[] },
 ): Promise<RelevanceVerdict> {
   try {
-    const thumbs = await Promise.all(input.hits.map((hit) => thumbnail(deps, hit)));
+    const thumbs = await Promise.all(input.images.map((load) => thumbnail(load)));
     const shown = thumbs.flatMap((data, index) => (data ? [{ data, index }] : []));
     if (shown.length === 0) return { status: 'skipped', reason: 'no thumbnail could be read' };
     const run = await runProvider(
@@ -144,7 +164,11 @@ export async function checkStockRelevance(
           organisationId: scope.organisationId,
           projectId: scope.projectId,
           system: RELEVANCE_SYSTEM_PROMPT,
-          prompt: relevancePrompt({ ...input, count: shown.length }),
+          prompt: relevancePrompt({
+            query: input.query,
+            business: input.business,
+            count: shown.length,
+          }),
           images: shown.map((s) => ({ mediaType: 'image/jpeg' as const, data: s.data })),
           maxTokens: MAX_TOKENS,
           outputSchema: RELEVANCE_SCHEMA as unknown as Record<string, unknown>,
@@ -153,7 +177,7 @@ export async function checkStockRelevance(
       deps.providers,
     );
     const verdicts = parseRelevance(jsonOutput(run.output), shown.length);
-    const relevant = input.hits.map(() => false);
+    const relevant = input.images.map(() => false);
     shown.forEach((s, i) => {
       relevant[s.index] = verdicts[i] === true;
     });
@@ -163,37 +187,82 @@ export async function checkStockRelevance(
   }
 }
 
+/** checkRelevance for stock hits (their picture is downloaded from imageUrl). */
+export function checkStockRelevance(
+  deps: RelevanceDeps,
+  scope: RelevanceScope,
+  input: { query: string; business: string; hits: readonly StockHit[] },
+): Promise<RelevanceVerdict> {
+  return checkRelevance(deps, scope, {
+    query: input.query,
+    business: input.business,
+    images: input.hits.map((hit) => () => fetchImage(deps, hit.imageUrl)),
+  });
+}
+
+/**
+ * One slideshow run's relevance gate, shared by library matches and stock hits so the cost cap
+ * covers both: `screen` keeps the relevant items, in order; after `maxChecks` checks, or when a
+ * check is skipped (outage), the items pass unchanged (the best candidate is accepted).
+ */
+export interface RelevanceGate {
+  screen<T>(
+    query: string,
+    items: readonly T[],
+    loader: (item: T) => ImageLoader,
+    what: 'stock' | 'library',
+  ): Promise<T[]>;
+}
+
+export function createRelevanceGate(
+  deps: RelevanceDeps,
+  scope: RelevanceScope,
+  business: string,
+  maxChecks: number = MAX_RELEVANCE_CHECKS_PER_RUN,
+): RelevanceGate {
+  let checks = 0;
+  return {
+    async screen(query, items, loader, what) {
+      if (items.length === 0 || checks >= maxChecks) return [...items];
+      checks += 1;
+      const verdict = await checkRelevance(deps, scope, {
+        query,
+        business,
+        images: items.map(loader),
+      });
+      if (verdict.status === 'skipped') {
+        deps.logger.warn(
+          { projectId: scope.projectId, what, reason: verdict.reason },
+          'slide photo relevance not checked; using the best candidate',
+        );
+        return [...items];
+      }
+      const kept = items.filter((_, i) => verdict.relevant[i] === true);
+      if (kept.length < items.length)
+        deps.logger.warn(
+          { projectId: scope.projectId, what, query, rejected: items.length - kept.length },
+          'slide photos rejected as unrelated to the slide',
+        );
+      return kept;
+    },
+  };
+}
+
 /** Orders/filters a source's hits before any is stored (slide-images.ts stockImageForSlide). */
 export type StockScreen = (query: string, hits: readonly StockHit[]) => Promise<StockHit[]>;
 
-/**
- * The screen for one slideshow run: relevant hits only, in order; after
- * MAX_RELEVANCE_CHECKS_PER_RUN checks, or when a check is skipped, the hits pass unchanged.
- */
+/** The stock screen of a gate: stock hits are judged by their downloaded picture. */
+export function stockScreenOf(gate: RelevanceGate, deps: RelevanceDeps): StockScreen {
+  return (query, hits) =>
+    gate.screen(query, hits, (hit) => () => fetchImage(deps, hit.imageUrl), 'stock');
+}
+
+/** A stock screen with its own gate (one slideshow run). */
 export function createStockScreen(
   deps: RelevanceDeps,
   scope: RelevanceScope,
   business: string,
   maxChecks: number = MAX_RELEVANCE_CHECKS_PER_RUN,
 ): StockScreen {
-  let checks = 0;
-  return async (query, hits) => {
-    if (hits.length === 0 || checks >= maxChecks) return [...hits];
-    checks += 1;
-    const verdict = await checkStockRelevance(deps, scope, { query, business, hits });
-    if (verdict.status === 'skipped') {
-      deps.logger.warn(
-        { projectId: scope.projectId, reason: verdict.reason },
-        'stock photo relevance not checked; using the best candidate',
-      );
-      return [...hits];
-    }
-    const kept = hits.filter((_, i) => verdict.relevant[i] === true);
-    if (kept.length < hits.length)
-      deps.logger.warn(
-        { projectId: scope.projectId, query, rejected: hits.length - kept.length },
-        'stock photos rejected as unrelated to the slide',
-      );
-    return kept;
-  };
+  return stockScreenOf(createRelevanceGate(deps, scope, business, maxChecks), deps);
 }
