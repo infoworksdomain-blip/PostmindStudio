@@ -4218,14 +4218,14 @@
       },
       "frames": {
         "one": "Fresh out at 7am",
-        "two": "Meet the bakers",
-        "three": "Three loaves, one weekend"
+        "two": "See you at the market",
+        "three": "Sea-view cottages for two to six"
       },
       "slate": {
         "scene": "Scene 01",
         "take": "Take 1"
       },
-      "phoneAlt": "Sample vertical video: a scored sourdough loaf on baking paper, captioned “Fresh out at 7am”"
+      "phoneAlt": "Sample vertical video made with PostMind Studio: steam rising from a freshly baked loaf on a wooden board, captioned “Fresh out at 7am”"
     },
     "platforms": {
       "title": "One brief, cut for every feed"
@@ -4250,18 +4250,18 @@
       "eyebrow": "Contact sheet",
       "title": "Every shape, from one brief.",
       "body": "Vertical for TikTok, Reels and Shorts, square and portrait for feeds, widescreen for YouTube and LinkedIn.",
-      "note": "Stock photos showing the shapes Studio renders, not customer videos.",
+      "note": "Made with PostMind Studio. The businesses shown are examples.",
       "captions": {
-        "market": "Saturday market, 8am",
-        "studio": "How we shape a sourdough",
-        "salon": "Friday cuts, book now",
-        "gym": "6am class, three spaces left"
+        "wren": "Washed linen in rust and sage",
+        "harbour": "Single-origin espresso",
+        "greenleaf": "Dahlias, cosmos and late roses",
+        "pulse": "45-minute small-group classes"
       },
       "alts": {
-        "market": "A bread stall at a street market, loaves piled on a red checked cloth",
-        "studio": "Floury hands shaping dough on a wooden bench",
-        "salon": "Scissors, a razor and a comb laid out on a black mat",
-        "gym": "Rows of dumbbells on a rack in a gym"
+        "wren": "Folds of washed linen in rust and sage green",
+        "harbour": "Espresso pouring from a machine into a small white cup held in one hand",
+        "greenleaf": "A single red rose in bloom against a soft, blurred garden",
+        "pulse": "A man training with resistance bands, seen from above in low light"
       }
     },
     "features": {

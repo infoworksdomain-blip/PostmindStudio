@@ -2,8 +2,10 @@ import { marketingSrc } from './media-src';
 
 // Phase 20.8 — every file under public/marketing/ that a page shows, with its pixel size (for the
 // img width/height attributes, so nothing shifts while it loads). Photos are Unsplash-licensed
-// (public/marketing/SOURCES.md records each one); screens are captured from the demo build by
-// scripts/marketing/capture-screens.mjs. test/unit/marketing-media.test.ts checks that each file
+// (public/marketing/SOURCES.md records each one) and only the demo's sample media use them now;
+// screens are captured from the demo build by scripts/marketing/capture-screens.mjs; studio/ is
+// real PostMind Studio output (made on production on 2026-10-07; the businesses are fictional),
+// the posters the landing page shows. test/unit/marketing-media.test.ts checks that each file
 // exists with this size, is listed in SOURCES.md and is inlined by the demo shim.
 
 export interface MarketingImage {
@@ -24,11 +26,24 @@ export const MARKETING_PHOTOS = {
   cake: { path: 'photos/cake.webp', width: 900, height: 600 },
   doughBalls: { path: 'photos/dough-balls.webp', width: 600, height: 900 },
   breakfast: { path: 'photos/breakfast.webp', width: 600, height: 900 },
-  gym: { path: 'photos/gym.webp', width: 900, height: 598 },
-  salonTools: { path: 'photos/salon-tools.webp', width: 900, height: 774 },
 } as const satisfies Record<string, MarketingImage>;
 
 export type MarketingPhoto = keyof typeof MARKETING_PHOTOS;
+
+/** Posters (9:16) of real PostMind Studio output; the hero cards use the 360 px ones. */
+export const MARKETING_STUDIO = {
+  seedanceBread: { path: 'studio/seedance-bread-720.webp', width: 720, height: 1280 },
+  seedanceMarket: { path: 'studio/seedance-market-360.webp', width: 360, height: 640 },
+  coastlineStays: { path: 'studio/coastline-stays-slideshow-360.webp', width: 360, height: 640 },
+  atelierWren: { path: 'studio/atelier-wren-slideshow-720.webp', width: 720, height: 1280 },
+  harbourCoffee: { path: 'studio/harbour-coffee-slideshow-720.webp', width: 720, height: 1280 },
+  greenleafFlorist: {
+    path: 'studio/greenleaf-florist-slideshow-720.webp',
+    width: 720,
+    height: 1280,
+  },
+  pulseStudio: { path: 'studio/pulse-studio-slideshow-720.webp', width: 720, height: 1280 },
+} as const satisfies Record<string, MarketingImage>;
 
 /** The product flow the landing page's slides walk through, in order. */
 export const FLOW_STEPS = [
@@ -58,6 +73,7 @@ export const FLOW_SCREENS: Record<FlowStep, { light: MarketingImage; dark: Marke
 /** Every image the pages use (the test walks this list). */
 export const ALL_MARKETING_IMAGES: readonly MarketingImage[] = [
   ...Object.values(MARKETING_PHOTOS),
+  ...Object.values(MARKETING_STUDIO),
   ...FLOW_STEPS.flatMap((s) => [FLOW_SCREENS[s].light, FLOW_SCREENS[s].dark]),
 ];
 

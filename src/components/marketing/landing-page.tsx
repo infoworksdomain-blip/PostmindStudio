@@ -11,14 +11,15 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { MARKETING_PHOTOS } from '@/lib/marketing/media';
+import { MARKETING_STUDIO } from '@/lib/marketing/media';
 import { FlowCarousel } from './flow-carousel';
 import { SceneFrame } from './scene-frame';
 
 // Phase 18 §3 — the public landing page at `/`. Direction: the Studio's own "editorial production
 // studio" (paper, ink, one vermilion record light) pushed into a call sheet: a slate strip, a
 // timeline for the three steps, a contact sheet of sample renders. Phase 20.8 adds the product
-// flow slides (real demo screens) and licensed photos in the hero phone and the contact sheet. Every string is in the
+// flow slides (real demo screens); the hero phone, its cards and the contact sheet show real PostMind
+// Studio output (posters made on production on 2026-10-07; the businesses are fictional). Every string is in the
 // `marketing` namespace; platform and product names are not translated. Pricing is Track C's
 // page, so this only links to /pricing (no amounts here: prices live in Stripe).
 
@@ -74,8 +75,8 @@ function Hero() {
   );
 }
 
-/** Phase 20.8: a vertical video in a phone (a licensed photo with the caption and playback bar a
- *  Studio render carries) between two other cuts of the same brief, over the clapperboard slate. */
+/** Phase 20.8: a vertical video in a phone (a Studio AI video poster with the caption and playback
+ *  bar a Studio render carries) between two other Studio renders, over the clapperboard slate. */
 function HeroVisual() {
   const t = useTranslations('marketing.hero');
   return (
@@ -85,7 +86,8 @@ function HeroVisual() {
           <SceneFrame
             scene="market"
             ratio="4/5"
-            photo={MARKETING_PHOTOS.marketStall}
+            photo={MARKETING_STUDIO.seedanceMarket}
+            photoClassName="object-top"
             caption={t('frames.two')}
             label="Reels · 4:5"
             compact
@@ -97,7 +99,8 @@ function HeroVisual() {
           <SceneFrame
             scene="studio"
             ratio="1/1"
-            photo={MARKETING_PHOTOS.sourdoughBoard}
+            photo={MARKETING_STUDIO.coastlineStays}
+            photoClassName="object-top"
             caption={t('frames.three')}
             label="Feed · 1:1"
             compact
@@ -109,7 +112,7 @@ function HeroVisual() {
           <div className="rounded-[2rem] bg-foreground p-[5%] shadow-[0_40px_80px_-30px_rgb(20_24_31/0.55)] ring-1 ring-border-strong">
             <SceneFrame
               scene="counter"
-              photo={MARKETING_PHOTOS.sourdoughLoaf}
+              photo={MARKETING_STUDIO.seedanceBread}
               alt={t('phoneAlt')}
               priority
               caption={t('frames.one')}
@@ -228,36 +231,40 @@ function ContactSheet() {
       <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-6 md:gap-5">
         <SceneFrame
           scene="market"
-          photo={MARKETING_PHOTOS.marketStall}
-          alt={t('alts.market')}
-          caption={t('captions.market')}
+          photo={MARKETING_STUDIO.atelierWren}
+          photoClassName="origin-top scale-[1.14]"
+          alt={t('alts.wren')}
+          caption={t('captions.wren')}
           label="9:16 · 0:24"
           className="md:col-span-2 md:row-span-2"
         />
         <SceneFrame
           scene="studio"
           ratio="16/9"
-          photo={MARKETING_PHOTOS.doughKneading}
-          alt={t('alts.studio')}
-          caption={t('captions.studio')}
+          photo={MARKETING_STUDIO.harbourCoffee}
+          photoClassName="object-[50%_75%]"
+          alt={t('alts.harbour')}
+          caption={t('captions.harbour')}
           label="16:9 · 2:40"
           className="col-span-2 md:col-span-4"
         />
         <SceneFrame
           scene="workshop"
           ratio="1/1"
-          photo={MARKETING_PHOTOS.salonTools}
-          alt={t('alts.salon')}
-          caption={t('captions.salon')}
+          photo={MARKETING_STUDIO.greenleafFlorist}
+          photoClassName="object-[50%_35%]"
+          alt={t('alts.greenleaf')}
+          caption={t('captions.greenleaf')}
           label="1:1 · 0:15"
           className="md:col-span-2"
         />
         <SceneFrame
           scene="dusk"
           ratio="4/5"
-          photo={MARKETING_PHOTOS.gym}
-          alt={t('alts.gym')}
-          caption={t('captions.gym')}
+          photo={MARKETING_STUDIO.pulseStudio}
+          photoClassName="object-top"
+          alt={t('alts.pulse')}
+          caption={t('captions.pulse')}
           label="4:5 · 0:30"
           className="md:col-span-2"
         />

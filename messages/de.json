@@ -4218,14 +4218,14 @@
       },
       "frames": {
         "one": "Frisch um 7 Uhr",
-        "two": "Lernen Sie die Bäcker kennen",
-        "three": "Drei Laibe, ein Wochenende"
+        "two": "Wir sehen uns auf dem Markt",
+        "three": "Cottages mit Meerblick für zwei bis sechs"
       },
       "slate": {
         "scene": "Szene 01",
         "take": "Take 1"
       },
-      "phoneAlt": "Beispiel für ein Hochformat-Video: ein eingeschnittenes Sauerteigbrot auf Backpapier, mit der Einblendung „Frisch aus dem Ofen um 7“"
+      "phoneAlt": "Beispiel für ein Hochformat-Video, gemacht mit PostMind Studio: Dampf steigt von einem frisch gebackenen Brot auf einem Holzbrett auf, mit der Einblendung „Frisch aus dem Ofen um 7“"
     },
     "platforms": {
       "title": "Ein Briefing, für jeden Feed geschnitten"
@@ -4250,18 +4250,18 @@
       "eyebrow": "Kontaktbogen",
       "title": "Jedes Format, aus einem Briefing.",
       "body": "Hochformat für TikTok, Reels und Shorts, quadratisch und Hochformat für Feeds, Breitbild für YouTube und LinkedIn.",
-      "note": "Stockfotos, die die Formate von Studio zeigen, keine Kundenvideos.",
+      "note": "Gemacht mit PostMind Studio. Die gezeigten Unternehmen sind Beispiele.",
       "captions": {
-        "market": "Samstagsmarkt, 8 Uhr",
-        "studio": "So formen wir ein Sauerteigbrot",
-        "salon": "Freitagsschnitte, jetzt buchen",
-        "gym": "Kurs um 6 Uhr, noch drei Plätze frei"
+        "wren": "Gewaschenes Leinen in Rost und Salbei",
+        "harbour": "Single-Origin-Espresso",
+        "greenleaf": "Dahlien, Schmuckkörbchen und späte Rosen",
+        "pulse": "45-minütige Kurse in kleinen Gruppen"
       },
       "alts": {
-        "market": "Ein Brotstand auf einem Straßenmarkt, Laibe auf einer rot karierten Decke gestapelt",
-        "studio": "Bemehlte Hände formen Teig auf einer Holzplatte",
-        "salon": "Scheren, ein Rasiermesser und ein Kamm auf einer schwarzen Matte",
-        "gym": "Reihen von Kurzhanteln in einem Ständer im Fitnessstudio"
+        "wren": "Falten aus gewaschenem Leinen in Rostrot und Salbeigrün",
+        "harbour": "Espresso läuft aus einer Maschine in eine kleine weiße Tasse, die eine Hand hält",
+        "greenleaf": "Eine einzelne rote Rose in Blüte vor einem weich verschwommenen Garten",
+        "pulse": "Ein Mann trainiert mit Widerstandsbändern, von oben in gedämpftem Licht"
       }
     },
     "features": {

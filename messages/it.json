@@ -4218,14 +4218,14 @@
       },
       "frames": {
         "one": "Appena sfornato alle 7 del mattino",
-        "two": "Conosci i panettieri",
-        "three": "Tre pagnotte, un weekend"
+        "two": "Ci vediamo al mercato",
+        "three": "Cottage vista mare da due a sei persone"
       },
       "slate": {
         "scene": "Scena 01",
         "take": "Ciak 1"
       },
-      "phoneAlt": "Video verticale di esempio: una pagnotta di lievito madre incisa su carta forno, con la didascalia «Appena sfornato alle 7»"
+      "phoneAlt": "Video verticale di esempio realizzato con PostMind Studio: vapore che sale da una pagnotta appena sfornata su un tagliere di legno, con la didascalia «Appena sfornato alle 7»"
     },
     "platforms": {
       "title": "Un’idea, adattata a ogni piattaforma"
@@ -4250,18 +4250,18 @@
       "eyebrow": "Provino",
       "title": "Ogni formato, da un’unica idea.",
       "body": "Verticale per TikTok, Reels e Shorts, quadrato e verticale per i feed, panoramico per YouTube e LinkedIn.",
-      "note": "Foto d’archivio che mostrano i formati creati da Studio, non video di clienti.",
+      "note": "Realizzato con PostMind Studio. Le attività mostrate sono esempi.",
       "captions": {
-        "market": "Mercato del sabato, alle 8",
-        "studio": "Come lavoriamo la pasta madre",
-        "salon": "Tagli del venerdì, prenota ora",
-        "gym": "Lezione delle 6, ultimi tre posti"
+        "wren": "Lino lavato ruggine e salvia",
+        "harbour": "Espresso monorigine",
+        "greenleaf": "Dalie, cosmos e rose tardive",
+        "pulse": "Lezioni di 45 minuti in piccoli gruppi"
       },
       "alts": {
-        "market": "Un banco del pane in un mercato all’aperto, pagnotte impilate su una tovaglia a quadri rossi",
-        "studio": "Mani infarinate che formano l’impasto su un banco di legno",
-        "salon": "Forbici, un rasoio e un pettine su un tappetino nero",
-        "gym": "File di manubri su una rastrelliera in palestra"
+        "wren": "Pieghe di lino lavato color ruggine e verde salvia",
+        "harbour": "Un espresso scende dalla macchina in una tazzina bianca tenuta in mano",
+        "greenleaf": "Una sola rosa rossa sbocciata davanti a un giardino sfocato",
+        "pulse": "Un uomo si allena con elastici di resistenza, visto dall’alto in luce soffusa"
       }
     },
     "features": {
