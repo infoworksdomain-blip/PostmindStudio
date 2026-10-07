@@ -4168,14 +4168,14 @@
       },
       "frames": {
         "one": "Saindo do forno às 7h",
-        "two": "Conheça os padeiros",
-        "three": "Três pães, um fim de semana"
+        "two": "Nos vemos na feira",
+        "three": "Chalés com vista para o mar para duas a seis pessoas"
       },
       "slate": {
         "scene": "Cena 01",
         "take": "Take 1"
       },
-      "phoneAlt": "Vídeo vertical de exemplo: um pão de fermentação natural com cortes, sobre papel manteiga, com a legenda “Saindo do forno às 7h”"
+      "phoneAlt": "Vídeo vertical de exemplo feito com o PostMind Studio: vapor saindo de um pão recém-assado sobre uma tábua de madeira, com a legenda “Saindo do forno às 7h”"
     },
     "platforms": {
       "title": "Um briefing, cortado para cada feed"
@@ -4200,18 +4200,18 @@
       "eyebrow": "Contact sheet",
       "title": "Todos os formatos, a partir de um briefing.",
       "body": "Vertical para TikTok, Reels e Shorts, quadrado e retrato para feeds, widescreen para YouTube e LinkedIn.",
-      "note": "Fotos de banco de imagens que mostram os formatos que o Studio cria, não vídeos de clientes.",
+      "note": "Feito com o PostMind Studio. Os negócios mostrados são exemplos.",
       "captions": {
-        "market": "Feira de sábado, 8h",
-        "studio": "Como moldamos um pão de fermentação natural",
-        "salon": "Cortes de sexta, agende já",
-        "gym": "Aula das 6h, restam três vagas"
+        "wren": "Linho lavado em ferrugem e sálvia",
+        "harbour": "Espresso de origem única",
+        "greenleaf": "Dálias, cosmos e rosas tardias",
+        "pulse": "Aulas de 45 minutos em grupos pequenos"
       },
       "alts": {
-        "market": "Uma barraca de pães em uma feira de rua, pães empilhados sobre uma toalha xadrez vermelha",
-        "studio": "Mãos com farinha modelando a massa sobre uma bancada de madeira",
-        "salon": "Tesouras, uma navalha e um pente sobre um tapete preto",
-        "gym": "Fileiras de halteres em um suporte na academia"
+        "wren": "Dobras de linho lavado em cor de ferrugem e verde-sálvia",
+        "harbour": "Espresso caindo da máquina em uma xícara branca pequena segurada por uma mão",
+        "greenleaf": "Uma única rosa vermelha aberta diante de um jardim desfocado",
+        "pulse": "Um homem treinando com elásticos, visto de cima com pouca luz"
       }
     },
     "features": {

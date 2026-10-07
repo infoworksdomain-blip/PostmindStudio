@@ -25,7 +25,7 @@ describe('LandingPage images', () => {
       expect(img.hasAttribute('alt')).toBe(true);
       expect(Number(img.getAttribute('width'))).toBeGreaterThan(0);
       expect(Number(img.getAttribute('height'))).toBeGreaterThan(0);
-      expect(img.getAttribute('src')).toMatch(/^\/marketing\/(photos|screens)\/[\w-]+\.webp$/);
+      expect(img.getAttribute('src')).toMatch(/^\/marketing\/(studio|screens)\/[\w-]+\.webp$/);
     }
   });
 
@@ -36,16 +36,21 @@ describe('LandingPage images', () => {
     );
     expect(eager).toHaveLength(1);
     expect(eager[0]).toHaveAttribute('fetchpriority', 'high');
-    expect(eager[0]).toHaveAttribute('src', '/marketing/photos/sourdough-loaf.webp');
-    expect(screen.getByRole('img', { name: /sourdough loaf on baking paper/ })).toBe(eager[0]);
+    expect(eager[0]).toHaveAttribute('src', '/marketing/studio/seedance-bread-720.webp');
+    expect(screen.getByRole('img', { name: /steam rising from a freshly baked loaf/ })).toBe(
+      eager[0],
+    );
   });
 
-  it('describes the contact sheet photos', () => {
+  it('shows real Studio output in the contact sheet and says the businesses are examples', () => {
     render(<LandingPage />);
-    expect(screen.getByRole('img', { name: /bread stall at a street market/ })).toBeTruthy();
-    expect(screen.getByRole('img', { name: /dumbbells/ })).toBeTruthy();
-    expect(screen.getByText('Friday cuts, book now')).toBeVisible();
-    expect(screen.getByText(/Stock photos showing the shapes/)).toBeVisible();
+    expect(screen.getByRole('img', { name: /washed linen in rust and sage green/ })).toBeTruthy();
+    expect(screen.getByRole('img', { name: /resistance bands/ })).toBeTruthy();
+    expect(screen.getByText('Single-origin espresso')).toBeVisible();
+    expect(
+      screen.getByText('Made with PostMind Studio. The businesses shown are examples.'),
+    ).toBeVisible();
+    expect(screen.queryByText(/Stock photos/)).toBeNull();
   });
 });
 

@@ -10,6 +10,10 @@ import { cn } from '@/lib/utils';
 // Phase 20.8: a frame can show a licensed photo instead (`photo`, public/marketing/SOURCES.md) with
 // its alt text; the gradient stays underneath as the colour while the photo loads. Only the hero's
 // photo is `priority` (eager, fetchpriority high); every other one loads lazily.
+//
+// Hotfix (2026-10-07): the landing page shows real Studio posters instead. Slideshow posters carry
+// their own burnt-in caption at the bottom; `photoClassName` positions or scales the poster so that
+// strip falls outside the frame and the caption chip here is the only one.
 
 export type Scene = 'counter' | 'dusk' | 'flatlay' | 'workshop' | 'market' | 'studio';
 
@@ -47,12 +51,15 @@ export function SceneFrame({
   photo,
   alt = '',
   priority = false,
+  photoClassName,
 }: {
   scene: Scene;
   photo?: MarketingImage;
   /** Alt text for the photo; empty when the photo is decorative. */
   alt?: string;
   priority?: boolean;
+  /** Extra classes for the photo (object-position or a scale to crop it). */
+  photoClassName?: string;
   caption?: string;
   label?: string;
   ratio?: '9/16' | '1/1' | '16/9' | '4/5';
@@ -80,7 +87,7 @@ export function SceneFrame({
           loading={priority ? 'eager' : 'lazy'}
           decoding={priority ? 'sync' : 'async'}
           fetchPriority={priority ? 'high' : 'auto'}
-          className="absolute inset-0 size-full object-cover"
+          className={cn('absolute inset-0 size-full object-cover', photoClassName)}
         />
       )}
       {/* Safe-area guides, as in the review screen's frame overlay. */}
