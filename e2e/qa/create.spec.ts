@@ -44,7 +44,8 @@ async function account(
 }
 
 async function openOptions(page: import('@playwright/test').Page): Promise<void> {
-  const toggle = page.getByRole('button', { name: /Options/ });
+  // 25.7: one "More options" disclosure (the formats are a rail above the brief).
+  const toggle = page.getByRole('button', { name: 'More options' });
   if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
 }
 
@@ -83,8 +84,7 @@ test.describe('Create /new with a plan', () => {
     await page.getByRole('checkbox', { name: 'TikTok' }).setChecked(true, { force: true });
 
     // 21.5: generation cost is never shown to customers, so the per-video budget field is staff-only
-    // (create-options showCosts); this owner sees the advanced options without it.
-    await page.getByRole('button', { name: 'Advanced options' }).click();
+    // (create-options showCosts); this owner sees More options without it.
     await expect(page.locator('#create-budget')).toHaveCount(0);
 
     // Too-long brief is capped by maxlength (4000).
@@ -113,8 +113,7 @@ test.describe('Create /new with a plan', () => {
     const w = new Watcher(page);
     await signIn(page, a.email);
     await page.goto('/new');
-    await openOptions(page);
-    await page.getByRole('radio', { name: /Slideshow/ }).click();
+    await page.getByRole('radio', { name: 'Slideshow' }).click();
     await page.locator('#create-brief').fill('Five reasons to try sourdough');
     await page.getByRole('button', { name: 'Create slideshow' }).click();
     await expect(page.locator('ul[role="alert"]')).toContainText('Pick a slideshow template.');
@@ -154,8 +153,7 @@ test.describe('Create /new with a plan', () => {
     const w = new Watcher(page);
     await signIn(page, a.email);
     await page.goto('/new');
-    await openOptions(page);
-    await page.getByRole('radio', { name: /Upload/ }).click();
+    await page.getByRole('radio', { name: 'Your video' }).click();
     await page.getByRole('button', { name: 'Generate' }).click();
     await expect(page.locator('ul[role="alert"]')).toContainText('Upload your video first.');
 
@@ -191,8 +189,7 @@ test.describe('Create and Plan my month without a plan', () => {
     await signIn(page, a.email);
     await page.goto('/new');
     await page.locator('#create-brief').fill('Our spring menu');
-    await openOptions(page);
-    await page.getByRole('radio', { name: /Video/ }).click();
+    await page.getByRole('radio', { name: 'AI video' }).click();
     await page.getByRole('button', { name: 'Generate' }).click();
     await expect(
       page.getByRole('dialog', { name: 'Choose a plan to start creating' }),
@@ -210,9 +207,7 @@ test.describe('Create and Plan my month without a plan', () => {
     await signIn(page, a.email);
     await page.goto('/plans/new');
     await expect(page.getByRole('heading', { name: 'Plan my month' }).first()).toBeVisible();
-    await page
-      .getByRole('combobox', { name: /TikTok account/ })
-      .selectOption({ label: 'Bakery TikTok' });
+    // 25.9: the only connected TikTok account is picked for you (accounts sit under More options).
     await page.getByRole('button', { name: 'Draft my month' }).click();
     await expect(
       page.getByRole('dialog', { name: 'Choose a plan to start creating' }),
@@ -234,6 +229,8 @@ test.describe('Plan my month with a plan', () => {
     const w = new Watcher(page, queueUp ? [] : QUEUE_DOWN);
     await signIn(page, a.email);
     await page.goto('/plans/new');
+    // 25.9: posts a day, the mix and accounts sit behind More options.
+    await page.getByRole('button', { name: 'More options' }).click();
     await expect(page.getByRole('radio', { name: '4 a day' })).toBeVisible();
     await expect(page.getByRole('radio', { name: 'Use my posting times' })).toBeDisabled();
     await page.getByRole('radio', { name: '4 a day' }).click();

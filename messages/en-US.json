@@ -621,19 +621,9 @@
       "summaryPlatforms": "{count, plural, =0 {No platforms} one {# platform} other {# platforms}}",
       "summaryAutoPublish": "{count, plural, =0 {auto-publish: no account picked} one {posts to # account} other {posts to # accounts}}",
       "summaryBrandKit": "brand kit on",
-      "options": "Options",
       "generate": "Generate",
       "createSlideshow": "Create slideshow",
       "sourcesAria": "What to make",
-      "sources": {
-        "BRIEF": "Video",
-        "SLIDESHOW": "Slideshow",
-        "UPLOAD": "Upload a video",
-        "UGC": "UGC actor",
-        "CAROUSEL": "Carousel (post cards)",
-        "HOOK_DEMO": "Hook + demo",
-        "WALL_OF_TEXT": "Wall of text"
-      },
       "templatedNote": "Platforms and length come from the template. Your text above is optional — it adds specifics to the template’s outline.",
       "noBusiness": {
         "title": "Pick a business first",
@@ -642,18 +632,61 @@
       },
       "toast": {
         "slideshowDrafted": "Slideshow drafted — check the slides, then generate.",
-        "generatingUpload": "Generating — Studio is captioning your video.",
-        "generatingScript": "Generating — Studio is writing the script.",
+        "generatingUpload": "Making your video — adding captions…",
+        "generatingScript": "Making your video…",
         "draftNotStarted": "Saved as a draft, but generation didn’t start: {error}",
         "generatingCarousel": "Writing your carousel…",
-        "generatingFormat": "Generating — Studio is writing the text and making your video."
+        "generatingFormat": "Making your video…"
       },
       "planMonth": "Or plan a whole month of videos and slideshows",
       "summaryNoAccounts": "no connected accounts: saved for review",
       "summaryForReview": "saved for review",
       "createCarousel": "Create carousel",
       "summaryCarousel": "{count} posts · {theme, select, dark {dark} other {light}} cards",
-      "summarySeconds": "{count, number} s"
+      "summarySeconds": "{count, number} s",
+      "formats": {
+        "BRIEF": {
+          "name": "AI video",
+          "line": "Scripted, shot and voiced for you"
+        },
+        "SLIDESHOW": {
+          "name": "Slideshow",
+          "line": "Photos with captions and music"
+        },
+        "CAROUSEL": {
+          "name": "Carousel",
+          "line": "A swipeable post"
+        },
+        "UPLOAD": {
+          "name": "Your video",
+          "line": "Captions and formats for your own video"
+        },
+        "UGC": {
+          "name": "Creator video (UGC)",
+          "line": "An AI creator talks about your product"
+        },
+        "HOOK_DEMO": {
+          "name": "Hook + demo",
+          "line": "A reaction hook, then your demo"
+        },
+        "WALL_OF_TEXT": {
+          "name": "Wall of text",
+          "line": "One block of text over a calm video"
+        }
+      },
+      "basicDefault": "Your plan starts on Slideshow, which uses ¼ of a video from your allowance. You can pick any format.",
+      "moreOptions": "More options",
+      "usesQuick": "Uses ¼ of a video",
+      "usesVideos": "Uses {count, number} of your videos",
+      "allowanceLeft": "{left} of {limit} left this {period, select, week {week} other {month}}",
+      "submitShortcut": "Ctrl or ⌘ + Enter to generate",
+      "groups": {
+        "format": "Platforms and length",
+        "brand": "Brand and language",
+        "message": "Audience and call to action",
+        "publishing": "Approval and schedule",
+        "quality": "Quality"
+      }
     },
     "problems": {
       "businessRequired": "Choose a business first.",
@@ -693,7 +726,6 @@
         "defaultKit": "{name} (default)"
       },
       "advanced": {
-        "toggle": "Advanced options",
         "audience": "Target audience",
         "audiencePlaceholder": "e.g. first-time home buyers",
         "cta": "Call to action",
@@ -894,6 +926,27 @@
       },
       "length": "Length",
       "seconds": "{count, number} s"
+    },
+    "videoModel": {
+      "legend": "Video model",
+      "automatic": "Automatic (recommended)",
+      "automaticLine": "Studio picks an available model for each clip and switches if one is busy.",
+      "speed": "{minutes, number} min a clip",
+      "maxClip": "up to {seconds, number} s",
+      "costStaff": "{amount} per 6 s clip",
+      "droppedChoice": "The model you picked isn’t available at this quality tier, so Automatic is used.",
+      "hint": {
+        "BRIEF": "Makes the AI clips in this video.",
+        "UGC": "Makes the AI scenes. The creator’s own clips always use the creator models.",
+        "HOOK_DEMO": "Makes the reaction hook."
+      },
+      "capability": {
+        "text_to_video": "Text only",
+        "image_to_video": "Photo only",
+        "both": "Text or photo"
+      },
+      "change": "Change model",
+      "hide": "Hide models"
     }
   },
   "review": {
@@ -1427,7 +1480,7 @@
       "none": "No video yet."
     },
     "menu": {
-      "trigger": "More actions for {name}",
+      "trigger": "More actions",
       "download": "Download video",
       "templateDescription": "Keep this video’s formats, shot structure and publishing defaults, and start new videos from them."
     }
@@ -1841,7 +1894,15 @@
       "agendaAria": "Agenda",
       "emptyMonth": "Nothing scheduled or published this month.",
       "moreOpen": "{count, plural, one {+# open slot} other {+# open slots}}",
-      "morePlanned": "+{count} planned"
+      "morePlanned": "+{count} planned",
+      "moreAria": "Show everything on {date} ({count, number} more)",
+      "dayAria": "Posts on this day",
+      "weekAria": "Days of the week",
+      "todayAria": "{date}, today",
+      "today": "Today",
+      "quietDay": "Nothing planned",
+      "emptyWeek": "Nothing scheduled or published this week.",
+      "emptyDayView": "Nothing scheduled or published on this day."
     },
     "event": {
       "untitled": "Untitled project",
@@ -1863,7 +1924,11 @@
       "newTime": "New time",
       "cancel": "Cancel",
       "moving": "Moving…",
-      "submit": "Move"
+      "submit": "Move",
+      "undo": "Undo",
+      "undone": "Moved back to {date}",
+      "movedLive": "Moved “{name}” to {date}. Undo is in the notification.",
+      "undoneLive": "Moved “{name}” back to {date}."
     },
     "drip": {
       "title": "Drip queue",
@@ -1987,6 +2052,48 @@
           "none": "empty"
         }
       }
+    },
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "previousDay": "Previous day",
+    "nextDay": "Next day",
+    "views": {
+      "label": "Calendar view",
+      "month": "Month",
+      "week": "Week",
+      "day": "Day"
+    },
+    "filters": {
+      "label": "Filters",
+      "platformLabel": "Platform",
+      "statusLabel": "Status",
+      "sourceLabel": "Source",
+      "allPlatforms": "All platforms",
+      "anyStatus": "Any status",
+      "anySource": "Any source",
+      "clear": "Clear filters",
+      "showing": "Showing {shown, number} of {total, number} posts",
+      "status": {
+        "SCHEDULED": "Scheduled",
+        "PUBLISHING": "Publishing",
+        "PUBLISHED": "Published",
+        "FAILED": "Failed",
+        "PLANNED": "Being made (month plan)"
+      },
+      "source": {
+        "plan": "Month plan",
+        "automation": "Automation",
+        "manual": "Made by hand"
+      }
+    },
+    "postingTimes": {
+      "open": "Posting times",
+      "title": "Posting times",
+      "description": "When this business’s approved videos with no date go out. Saved times show on the calendar as open slots."
+    },
+    "campaign": {
+      "plan": "Month plan · {date}",
+      "automation": "Automation · {name}"
     }
   },
   "business": {
@@ -2788,44 +2895,55 @@
     "dashboard": {
       "eyebrow": "Manage",
       "title": "Analytics",
-      "description": "How your published videos are doing, and what they cost to make.",
       "rangeLabel": "Date range",
       "rangeOption": "{days, plural, one {# day} other {# days}}",
-      "descriptionNoCost": "How your published videos are doing."
+      "scopeAll": "All businesses",
+      "scopeBusiness": "{name}",
+      "scopeSelected": "Selected business",
+      "window": "last {days, plural, one {day} other {# days}}",
+      "costScope": "Spend covers every business in your organization.",
+      "loadingAria": "Loading analytics"
     },
     "metrics": {
       "views": "Views",
-      "watchTime": "Watch time",
-      "engagement": "Engagement"
+      "watchTime": "Watch time"
     },
     "overview": {
       "loadingAria": "Loading overview",
-      "viewsHeading": "Views · last {days, plural, one {day} other {# days}}",
-      "summary": "across {publications, plural, one {# publication} other {# publications}} · {projects, plural, one {# project} other {# projects}} started",
+      "summary": "Your {posts, plural, one {# post} other {# posts}} from the last {days, plural, one {day} other {# days}} reached {count, plural, one {{views} view} other {{views} views}}, with {rate} engagement.",
       "watchTime": "Watch time",
-      "engagement": "Engagement",
-      "engagementHint": "{rate} of views",
-      "shares": "Shares",
-      "savesHint": "{saves, plural, one {{formatted} save} other {{formatted} saves}}",
-      "spend": "Spend",
-      "spendHint": "provider costs",
-      "pending": "…"
+      "engagementHint": "{count} likes, comments, shares and saves",
+      "regionLabel": "Summary",
+      "summaryNoViews": "{posts, plural, one {# post} other {# posts}} went out in the last {days, plural, one {day} other {# days}}. Views usually appear about a day after a post goes live.",
+      "summaryLead": "{platform} brought in {share} of the views.",
+      "views": "Views",
+      "viewsHint": "{publications, plural, one {# post} other {# posts}} · {projects, plural, one {# project} other {# projects}} started",
+      "watchTimeHint": "{avg} per view on average",
+      "engagementRate": "Engagement rate",
+      "sharesSaves": "Shares and saves",
+      "sharesSavesHint": "{shares} shares · {saves} saves",
+      "empty": {
+        "title": "No posts published in the last {days, plural, one {day} other {# days}}",
+        "body": "Analytics appear about a day after a post goes out. Try a longer period, or publish a video from one of your projects.",
+        "action": "Go to projects"
+      },
+      "windowNote": "Totals for the posts published in this period, counted up to now."
     },
     "trend": {
-      "title": "Daily activity",
+      "title": "Growth and reach",
       "metricLabel": "Metric",
       "loadingAria": "Loading chart",
       "total": {
-        "views": "{count, plural, one {{value} view} other {{value} views}} in the window",
-        "watchTime": "{value} watch time in the window",
-        "engagement": "{value} engagement in the window"
+        "views": "{count, plural, one {{value} view} other {{value} views}} gained in this period",
+        "watchTime": "{value} of watch time gained in this period"
       },
       "chartLabel": {
         "views": "Views per day, last {days, plural, one {day} other {# days}}",
-        "watchTime": "Watch time per day, last {days, plural, one {day} other {# days}}",
-        "engagement": "Engagement per day, last {days, plural, one {day} other {# days}}"
+        "watchTime": "Watch time per day, last {days, plural, one {day} other {# days}}"
       },
-      "estimated": "Some days are estimates: snapshots were missing, so growth is spread evenly over the gap."
+      "estimated": "Some days are estimates: snapshots were missing, so growth is spread evenly over the gap.",
+      "description": "Views gained per day across your posts",
+      "quiet": "Nothing new in this period yet. The chart fills in as people watch your posts."
     },
     "platforms": {
       "title": "By platform",
@@ -2835,15 +2953,16 @@
       "hint": "{posts, plural, one {# post} other {# posts}} · {engagement} eng."
     },
     "leaderboard": {
-      "title": "Top videos",
-      "description": "Publications ranked by views",
+      "title": "Top posts",
+      "description": "This period’s posts with the most views",
       "empty": "Nothing published in this window.",
       "listLabel": "Top publications",
       "untitled": "Untitled post",
       "meta": "{platform} · {date}",
       "openOn": "Open on {platform}",
       "analyticsFor": "Analytics for {caption}",
-      "analyticsForUntitled": "Analytics for untitled post"
+      "analyticsForUntitled": "Analytics for untitled post",
+      "views": "views"
     },
     "cost": {
       "title": "Spend",
@@ -2892,7 +3011,8 @@
         "avgWatched": "Avg. watched",
         "likes": "Likes",
         "commentsShares": "Comments · shares",
-        "commentsSharesValue": "{comments} · {shares}"
+        "commentsSharesValue": "{comments} · {shares}",
+        "saves": "Saves"
       },
       "viewsOverTime": {
         "title": "Views over time",
@@ -2928,6 +3048,39 @@
         "body": "It may have been removed, or the link may be wrong.",
         "action": "Back to analytics"
       }
+    },
+    "change": {
+      "up": "Up <n>{pct}</n> on the previous period",
+      "down": "Down <n>{pct}</n> on the previous period",
+      "flat": "Level with the previous period"
+    },
+    "engagement": {
+      "title": "Engagement",
+      "description": "Likes, comments, shares and saves gained per day",
+      "total": "Interactions gained in this period: {value}",
+      "chartLabel": "Interactions per day, last {days, plural, one {day} other {# days}}",
+      "quiet": "No likes, comments, shares or saves in this period yet.",
+      "mixTitle": "What it was made of",
+      "mixRate": "{rate} of views on this period’s posts",
+      "mixNoViews": "No views on this period’s posts yet.",
+      "mixLabel": "Engagement by type",
+      "mixEmpty": "No interactions on this period’s posts yet.",
+      "parts": {
+        "likes": "Likes",
+        "comments": "Comments",
+        "shares": "Shares",
+        "saves": "Saves"
+      }
+    },
+    "bestTimes": {
+      "title": "Best times to post",
+      "description": "When your posts have drawn the most views, compared with the best slot",
+      "listLabel": "Best posting times",
+      "slot": "{day}, {time}",
+      "empty": "No posts from the last 180 days to learn from yet.",
+      "basis": "Based on {videos, plural, one {# post} other {# posts}} from the last 180 days. Times in {timezone}. A guide, not a rule.",
+      "fromMemory": "Too few posts yet, so this is your business’s usual posting time. Times in {timezone}.",
+      "littleData": "Only {videos, plural, one {# post} other {# posts}} so far, so treat these as early hints; they firm up after {min}. Times in {timezone}."
     }
   },
   "admin": {
@@ -3018,7 +3171,25 @@
         "forceApprovals": "Force-approvals",
         "beta": "Beta",
         "users": "Users",
-        "subscriptions": "Subscriptions"
+        "subscriptions": "Subscriptions",
+        "billing": "Subscriptions & billing"
+      },
+      "menu": {
+        "label": "Admin sections",
+        "jump": "Go to section",
+        "halted": "Halted",
+        "groups": {
+          "operations": "Operations",
+          "content": "Content",
+          "customers": "Customers",
+          "platform": "Platform"
+        }
+      },
+      "billingViews": {
+        "label": "View",
+        "overview": "Overview and MRR",
+        "records": "Stripe records",
+        "entitlements": "Entitlement overrides"
       }
     },
     "cost": {
@@ -4271,8 +4442,9 @@
   },
   "marketing": {
     "meta": {
-      "title": "PostMind Studio · AI short videos for small businesses",
-      "description": "Turn a one-line brief into on-brand short videos for TikTok, Reels, Shorts, Facebook, LinkedIn and X. Review, approve and publish from one place."
+      "title": "PostMind Studio · Short videos and posts for small businesses",
+      "description": "Create, plan and publish short videos and posts for your small business from one brief: script, video, voice, music and captions in your brand, scheduled to TikTok, Instagram, YouTube, Facebook, LinkedIn and X.",
+      "ogAlt": "PostMind Studio: create, plan and publish short videos from one brief"
     },
     "nav": {
       "home": "PostMind Studio home",
@@ -4282,9 +4454,9 @@
       "startTrial": "Start free trial"
     },
     "hero": {
-      "eyebrow": "AI video studio for small businesses",
-      "title": "A month of short videos, <em>made before your coffee cools.</em>",
-      "lede": "Tell Studio what you want to say. It writes the script, shoots or sources every scene, adds your voice, music and captions in your brand, and cuts it for every platform. You approve; it publishes.",
+      "eyebrow": "Video studio for small businesses",
+      "title": "Create, plan and publish your social videos <em>from one brief.</em>",
+      "lede": "Tell Studio what you want to say. It writes the script, makes the video, adds voice, music and captions in your brand, and schedules each post for the platforms you use. You approve; it publishes.",
       "primaryCta": "Start free trial",
       "secondaryCta": "See pricing",
       "assurances": {
@@ -4292,146 +4464,171 @@
         "yourBrand": "Your colors, fonts and voice",
         "cancelAnytime": "Cancel anytime"
       },
-      "frames": {
-        "one": "Fresh out at 7am",
-        "two": "Meet the bakers",
-        "three": "Three loaves, one weekend"
-      },
-      "slate": {
-        "scene": "Scene 01",
-        "take": "Take 1"
-      },
-      "phoneAlt": "Sample vertical video: a scored sourdough loaf on baking paper, captioned “Fresh out at 7am”"
-    },
-    "platforms": {
-      "title": "One brief, cut for every feed"
-    },
-    "steps": {
-      "eyebrow": "How it works",
-      "title": "Brief. Review. Publish.",
-      "brief": {
-        "title": "Write a line",
-        "body": "Describe the video, paste a web page or pick a template. Studio drafts the script and shot list in seconds."
-      },
-      "review": {
-        "title": "Check the cut",
-        "body": "Watch every format side by side, swap a shot, change a caption or ask for another take. Nothing goes out until you approve."
-      },
-      "publish": {
-        "title": "Post on schedule",
-        "body": "Publish now or plan the month ahead. Studio posts to each account and brings the views, likes and comments back to one dashboard."
+      "reelLabel": "Three posts made with PostMind Studio",
+      "madeWith": "Made with PostMind Studio. The businesses shown are examples.",
+      "alts": {
+        "bread": "AI video made with Studio: a golden sourdough loaf on a wooden board, steam rising, the camera slowly pushing in",
+        "market": "AI video made with Studio: a woman walks through a sunlit food market, smiling at a vendor",
+        "coastline": "Slideshow made with Studio for a seaside cottage business, captioned “Sea-view cottages for two to six”"
       }
     },
-    "samples": {
-      "eyebrow": "Contact sheet",
-      "title": "Every shape, from one brief.",
-      "body": "Vertical for TikTok, Reels and Shorts, square and portrait for feeds, widescreen for YouTube and LinkedIn.",
-      "note": "Stock photos showing the shapes Studio renders, not customer videos.",
-      "captions": {
-        "market": "Saturday market, 8am",
-        "studio": "How we shape a sourdough",
-        "salon": "Friday cuts, book now",
-        "gym": "6am class, three spaces left"
+    "motion": {
+      "pause": "Pause videos",
+      "play": "Play videos"
+    },
+    "formats": {
+      "eyebrow": "One brief, every format",
+      "title": "Every kind of post a small business needs.",
+      "body": "AI video, slideshows and wall-of-text posts, each made for vertical feeds. Studio made all of these from one-line briefs.",
+      "note": "Real Studio output for example businesses.",
+      "stripLabel": "Example posts made with Studio",
+      "kinds": {
+        "aiVideo": "AI video",
+        "slideshow": "Slideshow",
+        "wallOfText": "Wall of text"
+      },
+      "types": {
+        "bakery": "Sourdough bakery",
+        "boutique": "Linen boutique",
+        "gym": "Fitness studio",
+        "cottages": "Seaside cottages",
+        "florist": "Florist",
+        "coffee": "Coffee shop"
       },
       "alts": {
-        "market": "A bread stall at a street market, loaves piled on a red checked cloth",
-        "studio": "Floury hands shaping dough on a wooden bench",
-        "salon": "Scissors, a razor and a comb laid out on a black mat",
-        "gym": "Rows of dumbbells on a rack in a gym"
+        "seedanceBread": "A golden sourdough loaf on a wooden board, steam rising",
+        "pulseStudioText": "Wall-of-text post for a fitness studio: three short strength sessions beat one long slog, and your first class is free",
+        "atelierWren": "Folds of washed linen in rust and sage, captioned “Washed linen in rust and sage”",
+        "greenleafFlorist": "A single red rose, captioned “Dahlias, cosmos and late roses”",
+        "coastlineStaysText": "Wall-of-text post for seaside cottages: autumn on the coast, empty beaches, dogs welcome",
+        "harbourCoffee": "Espresso pouring into a white cup, captioned “Single-origin espresso”",
+        "northsideBakery": "A country white loaf on an orange background, captioned “Country white, baked at 6am”",
+        "pulseStudio": "A man training with a resistance band, captioned “45-minute small-group classes”",
+        "coastlineStays": "Cottages above a rocky shore, captioned “Sea-view cottages for two to six”"
       }
     },
-    "features": {
-      "eyebrow": "Built for small teams",
-      "title": "Everything a one-person marketing team needs.",
-      "body": "Studio does the production work, so you spend your time on the business, not on editing timelines.",
-      "brand": {
-        "title": "Your brand, every time",
-        "body": "Logo, colors, fonts and tone of voice live in a brand kit that every video follows."
+    "video": {
+      "eyebrow": "Video generation",
+      "title": "A finished video from one sentence.",
+      "body": "Studio turns your brief into a script and a shot list, generates each shot with leading video models, then adds a voiceover, music and captions in your brand and cuts the result for every platform.",
+      "briefLabel": "The brief",
+      "brief": "“A woman walking through a sunlit food market, smiling at a vendor.”",
+      "alt": "AI video made with Studio from that brief: a woman walks through a sunlit food market, smiling at a vendor",
+      "steps": {
+        "script": {
+          "title": "Script",
+          "body": "A hook, a key message and the shots to match, written for your audience and each platform."
+        },
+        "shots": {
+          "title": "Shots",
+          "body": "Each scene generated from the script, or made from your own photos and footage."
+        },
+        "sound": {
+          "title": "Voice and music",
+          "body": "A natural voiceover and a music bed, leveled for phone speakers."
+        },
+        "captions": {
+          "title": "Captions",
+          "body": "Word-timed captions in your fonts and colors, so the video works with the sound off."
+        }
       },
-      "approvals": {
-        "title": "Approvals that fit your team",
-        "body": "Invite colleagues with the right role. Creators draft, owners approve, and nothing publishes by accident."
-      },
-      "calendar": {
-        "title": "A calendar that posts for you",
-        "body": "Plan the month ahead, drag posts to new slots and let Studio publish at the right time for each platform."
-      },
-      "languages": {
-        "title": "Eleven languages",
-        "body": "Work in English, French, Spanish, Arabic, German, Italian, Portuguese, Hindi or Chinese, and make videos for customers in theirs."
-      },
-      "library": {
-        "title": "Ideas when you need them",
-        "body": "Browse a library of proven short videos and use one as the starting point for your own."
-      },
-      "pricing": {
-        "title": "One simple price per channel",
-        "body": "Pay a fixed price for each social channel you connect, with videos included. No meters to watch and no surprise bills."
+      "scriptAlt": "A project’s Script tab: hook, audience, tone and the TikTok and YouTube Shorts scripts",
+      "scriptCaption": "Every script and shot list is yours to read and change."
+    },
+    "plan": {
+      "eyebrow": "Plan and schedule",
+      "title": "Your month, on one calendar.",
+      "body": "Approved posts fill open slots and publish to each account at the right time. Open any post to preview it, change the time, approve it or make it again.",
+      "alt": "The calendar for October, with posts scheduled and posted through the month"
+    },
+    "publish": {
+      "eyebrow": "Publish everywhere",
+      "title": "One post, every platform you use.",
+      "body": "Connect your accounts once. Studio cuts each post to the right shape and posts it on schedule.",
+      "platformsLabel": "Platforms Studio publishes to",
+      "points": {
+        "auto": {
+          "title": "Auto-publish",
+          "body": "Posts go out at the time you chose on each platform, and their views and engagement come back to Studio."
+        },
+        "drafts": {
+          "title": "Drafts when you want them",
+          "body": "Send TikTok posts to your drafts instead, to add a trending sound in the app before posting."
+        }
       }
+    },
+    "autopilot": {
+      "eyebrow": "Month planner, Blitz and automations",
+      "title": "One prompt, a month of posts.",
+      "body": "Describe your business and what you want to achieve. Studio plans the month, writes every post and makes each one ahead of its date.",
+      "gridCaption": "A month of posts for example businesses, all made by Studio.",
+      "items": {
+        "planner": {
+          "title": "Plan my month",
+          "body": "A full calendar of ideas, captions and formats from one prompt. Change anything before you approve it."
+        },
+        "blitz": {
+          "title": "Blitz",
+          "body": "Swipe through ready-made post ideas: keep the ones you like and skip the rest."
+        },
+        "automations": {
+          "title": "Automations",
+          "body": "Weekly or monthly posting that keeps itself going, within your plan’s allowance."
+        }
+      }
+    },
+    "insights": {
+      "eyebrow": "Analytics",
+      "title": "See what works, then make more of it.",
+      "body": "Views, watch time and engagement for every post, from every platform, in one place, so each brief is better than the last.",
+      "alt": "The analytics page: views over 30 days, watch time, engagement and a daily activity chart"
+    },
+    "brand": {
+      "eyebrow": "Brand kit and approvals",
+      "title": "Your colors, your voice, your sign-off.",
+      "alt": "The image library for a bakery: loaves, pastries, coffee and a logo",
+      "items": {
+        "brand": {
+          "title": "Your brand on every post",
+          "body": "Logo, colors, fonts and tone of voice live in a brand kit that every post follows, with your own photos in the image library."
+        },
+        "approvals": {
+          "title": "Approvals that fit your team",
+          "body": "Invite colleagues with the right role. Creators draft, owners approve, and nothing publishes by accident."
+        },
+        "languages": {
+          "title": "Eleven languages",
+          "body": "Work in English, French, Spanish, Arabic, German, Italian, Portuguese, Hindi or Chinese, and make videos for customers in theirs."
+        }
+      }
+    },
+    "pricing": {
+      "eyebrow": "Pricing",
+      "title": "One simple price per channel",
+      "per": "per channel a month",
+      "body": "Every channel includes {videos} short HD videos a month, or up to {quick} quick posts: carousels, slideshows and text videos count as ¼ of a video.",
+      "points": {
+        "billing": "Pay weekly, monthly or yearly",
+        "vat": "Prices exclude tax",
+        "cancel": "Cancel any time"
+      },
+      "cta": "See pricing"
     },
     "closing": {
       "eyebrow": "Ready when you are",
-      "title": "Your first video is ten minutes away.",
+      "title": "Make your first post today.",
       "body": "Create your account, add your business and brand, connect a platform and make your first video. The guided setup walks you through it.",
       "primaryCta": "Start free trial",
-      "secondaryCta": "Compare plans",
+      "secondaryCta": "See pricing",
       "fineprint": "Prices exclude tax. You can cancel at any time from your billing settings."
     },
     "footer": {
-      "tagline": "AI short videos and publishing for small businesses.",
+      "tagline": "Short videos and posts for small businesses: made, planned and published in one place.",
+      "productAria": "Product",
+      "productTitle": "Product",
       "copyright": "© {year} {entity}",
       "legalAria": "Legal",
       "legalTitle": "Legal"
-    },
-    "flow": {
-      "eyebrow": "From brief to booked in",
-      "title": "Watch a video get made.",
-      "body": "Six steps, one screen at a time. These are Studio’s real screens, filled with a sample bakery’s data.",
-      "note": "Screens from the Studio demo, with sample data for Leeds Sourdough, a fictional bakery.",
-      "roleCarousel": "carousel",
-      "roleSlide": "slide",
-      "stepsLabel": "Steps",
-      "slideLabel": "{current} of {total}",
-      "previous": "Previous step",
-      "next": "Next step",
-      "pause": "Pause the slideshow",
-      "play": "Play the slideshow",
-      "brief": {
-        "tab": "Brief",
-        "title": "Write one line",
-        "body": "Say what the video is about, or paste a web page. Studio picks the platforms, length and brand kit, and you can change any of them.",
-        "alt": "The Create screen with a brief about a rye loaf typed in and a Generate button"
-      },
-      "script": {
-        "tab": "Script",
-        "title": "Read the script and shot list",
-        "body": "Studio writes a hook, a key message and a script for each format, with the shots to match. Rewrite a line or ask for another take.",
-        "alt": "A project’s Script tab: hook, audience, tone and the TikTok and YouTube Shorts scripts"
-      },
-      "generate": {
-        "tab": "Generate",
-        "title": "Visuals, voice and music",
-        "body": "Studio generates each shot with AI video and image models, or uses your own photos and stock footage, then adds voice, music and captions in your brand.",
-        "alt": "The image library for a bakery: loaves, pastries, coffee and a logo"
-      },
-      "review": {
-        "tab": "Review",
-        "title": "Check every cut before it goes out",
-        "body": "Watch each format side by side. Automatic checks, including content safety and your brand kit, run before you approve.",
-        "alt": "A TikTok variant ready for review, with its quality checks passed, including content safety"
-      },
-      "calendar": {
-        "tab": "Calendar",
-        "title": "Plan the month ahead",
-        "body": "Approved videos drop into open slots on the calendar and publish to each account at the right time.",
-        "alt": "The calendar for September with morning and evening posts scheduled"
-      },
-      "analytics": {
-        "tab": "Analytics",
-        "title": "See what worked",
-        "body": "Views, watch time and engagement for every video, in one place, so the next brief is better.",
-        "alt": "The analytics page: views over 30 days, watch time, engagement and a daily activity chart"
-      }
     }
   },
   "pricing": {
@@ -4537,7 +4734,7 @@
       "panelLabel": "About PostMind Studio",
       "valueStatement": "Short videos for every channel, made from a few lines about your business.",
       "valueDetail": "Studio writes the script, makes the video in your brand and schedules it to the channels you connect.",
-      "panelAlt": "A TikTok video of a sourdough loaf in PostMind Studio, with its quality checks passed."
+      "panelAlt": "Two posts made with PostMind Studio: an AI video of a sourdough loaf and a slideshow of seaside cottages."
     },
     "errors": {
       "invalidCredentials": "That email and password don’t match an account.",
@@ -5107,7 +5304,9 @@
           "reason": "Reason for removing",
           "button": "Remove override",
           "cleared": "Override removed",
-          "trialWarning": "Stripe still shows a trial: removing the override brings the trial’s caps back. To keep them off, first save an override with “End the trial now”."
+          "trialWarning": "Stripe still shows a trial: removing the override brings the trial’s caps back. To keep them off, first save an override with “End the trial now”.",
+          "confirmTitle": "Remove this override?",
+          "confirmButton": "Yes, remove"
         },
         "trial": {
           "title": "Trial",
@@ -5675,7 +5874,26 @@
       "someWithoutAccount": "Made but not posted automatically (no connected account): {platforms}.",
       "connectAccount": "Connect an account",
       "ugcActors": "Make testimonial and product videos with UGC actors",
-      "ugcActorsHint": "A generated actor talks about your product. Each of these videos uses {count, number} of your videos. English only."
+      "ugcActorsHint": "A generated actor talks about your product. Each of these videos uses {count, number} of your videos. English only.",
+      "prompt": {
+        "title": "Your next month, planned",
+        "body": "Pick when it starts. Studio writes every topic from your website, brand kit and past posts, and you check the list before anything is made.",
+        "summary": "{perDay} · {videos, number}% videos · {platforms}",
+        "yourTimes": "Your posting times",
+        "noPlatforms": "no platforms yet",
+        "options": "More options"
+      },
+      "preview": {
+        "title": "What Studio will make",
+        "upTo": "Posts, at most",
+        "split": "Videos: {videos, number} · Slideshows: {slideshows, number}",
+        "dates": "Dates",
+        "range": "{start} – {end}",
+        "networks": "Networks",
+        "noNetworks": "None chosen yet",
+        "review": "Studio writes the topics first. You review and edit the list before anything is made.",
+        "rolling": "Each post is then made about 3 days before it goes out, so your edits until then still count."
+      }
     },
     "allowance": {
       "title": "This month",
@@ -5839,7 +6057,11 @@
       "removeConfirm": "Its post is canceled and the time is freed. The rest of the plan carries on.",
       "removedToast": "Post removed",
       "createsAt": "Scheduled to be created on {date}",
-      "createsLater": "{count, plural, one {# more post will be created closer to its post time.} other {# more posts will be created closer to their post time.}}"
+      "createsLater": "{count, plural, one {# more post will be created closer to its post time.} other {# more posts will be created closer to their post time.}}",
+      "approve": "Approve",
+      "approveAria": "Approve “{title}”",
+      "approved": "Approved: it goes out at its time",
+      "rolling": "Studio makes each post about 3 days before its time; a post still waiting says when it will be created."
     },
     "list": {
       "title": "Month plans",
@@ -5850,6 +6072,24 @@
       "emptyBody": "Let Studio draft a month of videos and slideshows, then generate and schedule them in one go.",
       "range": "{start} – {end}",
       "posts": "{count, plural, one {# post} other {# posts}}"
+    },
+    "timeline": {
+      "week": "Week {n, number}",
+      "range": "{start} – {end}"
+    },
+    "bulk": {
+      "label": "Bulk actions",
+      "selectAll": "Select all",
+      "selected": "{count, number} selected",
+      "selectItem": "Select “{title}”",
+      "progress": "Working… {done, number} of {total, number}",
+      "summaryOk": "Done: {count, number} changed.",
+      "summaryPartial": "{ok, number} done, {failed, number} could not be changed. Try those one by one.",
+      "regenerate": "New topics ({count, number})",
+      "delete": "Delete ({count, number})",
+      "deleteConfirmTitle": "Delete the selected posts ({count, number})?",
+      "deleteConfirmBody": "They are taken out of this draft. Nothing has been made yet.",
+      "approveAll": "Approve all waiting ({count, number})"
     }
   },
   "errorPage": {
@@ -6136,7 +6376,9 @@
       "beats": "Script",
       "stillAlt": "A picture from your library",
       "mentionsBusiness": "Names your business",
-      "allowanceQuick": "Uses ¼ of a video of your plan when kept"
+      "allowanceQuick": "Uses ¼ of a video of your plan when kept",
+      "hintEdit": "Edit first",
+      "hintDrag": "Or drag the card"
     },
     "keep": {
       "title": "Keep it",
@@ -6148,7 +6390,8 @@
       "editHint": "Opens it so you can change the text and pictures.",
       "cancel": "Cancel",
       "confirm": "Keep",
-      "previewNote": "{units, plural, one {This is made now and uses # video of your plan.} other {This is made now and uses # videos of your plan.}}"
+      "previewNote": "{units, plural, one {This is made now and uses # video of your plan.} other {This is made now and uses # videos of your plan.}}",
+      "noPublishRole": "Your role can’t post or schedule, so a kept post opens for editing first."
     },
     "skip": {
       "title": "Why skip it? (optional)",
@@ -6221,6 +6464,9 @@
       "noNudges": "Nothing yet. Skip reasons and keeps adjust this a little at a time.",
       "reset": "Clear what Blitz learned",
       "percent": "{value}%"
+    },
+    "readOnly": {
+      "role": "Your role can look through these posts but can’t keep or skip them. Ask an owner or admin of this workspace."
     }
   },
   "automations": {
@@ -6232,7 +6478,19 @@
       "pickBody": "An automation posts for one business. Pick one at the top of the page.",
       "loading": "Loading automations…",
       "empty": "No automations yet",
-      "emptyBody": "Set one up and Studio makes and posts your content every week."
+      "emptyBody": "Set one up and Studio makes and posts your content every week.",
+      "columns": {
+        "name": "Automation",
+        "status": "Status",
+        "makes": "Makes",
+        "next": "Next post"
+      },
+      "next": {
+        "review": "After your review",
+        "paused": "Paused",
+        "draft": "Not started",
+        "none": "Nothing due"
+      }
     },
     "status": {
       "DRAFT": "Draft",
@@ -6299,7 +6557,9 @@
       "back": "Back",
       "next": "Next",
       "create": "Create and start",
-      "started": "Automation started. Its first posts are being written."
+      "started": "Automation started. Its first posts are being written.",
+      "stepOf": "Step {n, number} of {total, number}",
+      "stepDone": "(done)"
     },
     "detail": {
       "back": "All automations",
@@ -6336,7 +6596,10 @@
       "reroll": "New topic",
       "rerolled": "A new topic is in.",
       "remove": "Remove",
-      "keep": "Keep"
+      "keep": "Keep",
+      "runs": "Runs",
+      "runRange": "{start} – {end}",
+      "runPosted": "{posted, number} of {total, number} posted"
     },
     "review": {
       "title": "Review: {name}",

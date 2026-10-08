@@ -102,7 +102,10 @@ describe.each(LOCALES)('Manage screens in %s', (locale) => {
       new Date(2026, 8, 7, 12),
     );
     expect((await screen.findAllByText(monday)).length).toBeGreaterThan(0);
-    expect(await screen.findByText(m.calendar.drip.title)).toBeInTheDocument();
+    // 25.9: the drip queue moved into the "Posting times" sheet, opened from the header.
+    expect(
+      await screen.findByRole('button', { name: m.calendar.postingTimes.open }),
+    ).toBeInTheDocument();
   });
 
   it('renders the business screen tabs and profile', async () => {

@@ -9,6 +9,8 @@ import { BusinessProvider } from '../business-context';
 import { mockFetch, ok } from '../publications/test-utils';
 import { PublicationsCalendar } from './publications-calendar';
 
+vi.mock('next/navigation', async () => (await import('./test-navigation')).navigationMock);
+
 // React error #418 on /calendar: the month heading and "Times are shown in your time zone: …"
 // were rendered on the server in the server's zone (UTC in production) and again in the browser's
 // zone during hydration. Node follows process.env.TZ changes, so the "server" render runs in UTC

@@ -18,7 +18,7 @@ import { baseURL, noHorizontalScroll, staffPage, watch } from './pass2.support';
 // 20.31 (QA pass 2) / 21.5 — the per-channel plan: /pricing (channel stepper, how often you pay,
 // the free-trial link) and Your plan (headline, change with a preview applied now or at the end
 // of the period, video packs, cancel and keep, the Stripe portal link, 375 px), the calendar's
-// drip queue, and the Admin Centre (every tab loads; Organisations -> Open -> plan override and
+// drip queue, and the Admin Centre (every section loads; Organisations -> Open -> plan override and
 // "End the trial now"; cost caps — staff screens keep the internal tier names). Stripe is never
 // called: the Your-plan endpoints are answered in the browser (billing.mocks.ts), and the
 // placeholder Stripe keys cannot reach it.
@@ -41,7 +41,7 @@ test.beforeAll(async ({ browser, playwright }) => {
   world = await seedWorld(db, ownerId);
   await addMember(db, world.orgId, ownerId, 'owner');
   owner = await signedInPage(browser, baseURL, emailFor('p2-billing'));
-  const made = await staffPage(browser, request, db);
+  const made = await staffPage(browser, request, db, undefined, 'billing');
   staff = made.page;
   staffEmail = made.email;
   await request.dispose();
@@ -394,6 +394,8 @@ test.describe('calendar drip queue', () => {
   test('set a weekly schedule, save it, and it is still there after a reload', async () => {
     const w = watch(owner);
     await w.visit('/calendar');
+    // 25.9: the posting times (drip queue) open in a side sheet from the calendar header.
+    await owner.getByRole('button', { name: 'Posting times', exact: true }).click();
     const drip = owner.getByRole('region', { name: 'Drip queue' });
     await expect(drip).toBeVisible();
     await drip.getByRole('radio', { name: 'Times a week' }).click();
@@ -401,17 +403,20 @@ test.describe('calendar drip queue', () => {
     await drip.getByRole('button', { name: 'Save schedule' }).click();
     await expect(owner.getByText('Drip queue saved.').first()).toBeVisible();
     await owner.reload();
+    await owner.getByRole('button', { name: 'Posting times', exact: true }).click();
     const again = owner.getByRole('region', { name: 'Drip queue' });
     await expect(again.getByRole('radio', { name: 'Times a week' })).toBeChecked();
     await expect(again.getByLabel('Posts a week')).toHaveValue('3');
     await expect(again.getByRole('list', { name: 'Next 7 days' })).toBeVisible();
     // The calendar's own notice no longer says the drip queue is off.
+    await owner.keyboard.press('Escape');
     await expect(owner.getByText(/The drip queue is off/)).toHaveCount(0);
     expect(w.issues).toEqual([]);
   });
 
   test('back to a daily schedule: posts a day, and a day can be skipped', async () => {
     await owner.goto('/calendar');
+    await owner.getByRole('button', { name: 'Posting times', exact: true }).click();
     const drip = owner.getByRole('region', { name: 'Drip queue' });
     // Wait for the saved schedule to load (weekly, from the test above) before changing it.
     await expect(drip.getByRole('radio', { name: 'Times a week' })).toBeChecked();
@@ -431,46 +436,50 @@ test.describe('calendar drip queue', () => {
 // ------------------------------------------------------------------------------ Admin Centre
 
 test.describe('Admin Centre', () => {
-  test('every tab loads without an error banner', async () => {
+  test('every section loads without an error banner', async () => {
     test.setTimeout(240_000);
     const w = watch(staff);
     // Staff have no organisation: the workspace endpoints behind the shell answer 403.
     w.expect4xx(/[/]api[/]studio[/]/, 403);
     await w.visit('/admin');
     await expect(staff.getByRole('heading', { name: 'Admin Centre' })).toBeVisible();
-    // The tab list renders once the staff access probe answers, after the heading.
-    await expect(staff.getByRole('tab', { name: 'Kill switch', exact: true })).toBeVisible();
-    const tabs = (await staff.getByRole('tab').allInnerTexts()).map((t) => t.trim());
-    expect(tabs).toEqual(
+    // 25.13: a sectioned side menu replaces the tab row; it renders once the staff access probe
+    // answers, after the heading.
+    const menu = staff.getByRole('navigation', { name: 'Admin sections' });
+    await expect(menu.getByRole('link', { name: 'Kill switch', exact: true })).toBeVisible();
+    const sections = (await menu.getByRole('link').allInnerTexts()).map((t) => t.trim());
+    expect(sections).toEqual(
       expect.arrayContaining([
         'Kill switch',
-        'Features',
-        'Re-drive',
-        'Library',
-        'Cost report',
         'Queues',
+        'Dead letters',
+        'Re-drive',
         'Providers',
+        'Library',
         'Organisations',
         'Users',
-        'Subscriptions',
-        'Dead letters',
-        'Billing',
+        'Subscriptions & billing',
+        'Features',
+        'Cost report',
       ]),
     );
-    for (const name of tabs) {
+    for (const name of sections) {
       w.label(`/admin ${name}`);
-      await staff.getByRole('tab', { name, exact: true }).click();
-      await expect(staff.getByRole('tabpanel', { name })).toBeVisible();
+      await menu.getByRole('link', { name, exact: true }).click();
+      await expect(staff.getByRole('region', { name, exact: true })).toBeVisible();
       await w.settle();
       await w.check();
     }
+    // The section is in the URL: a reload keeps it.
+    await staff.reload();
+    await expect(staff.getByRole('region', { name: 'Cost report', exact: true })).toBeVisible();
+    expect(new URL(staff.url()).searchParams.get('tab')).toBe('cost');
     expect(w.issues).toEqual([]);
   });
 
   test('cost caps: today’s caps, the tier table and the project-budget rule are shown', async () => {
-    await staff.goto('/admin');
-    await staff.getByRole('tab', { name: 'Cost report' }).click();
-    const panel = staff.getByRole('tabpanel', { name: 'Cost report' });
+    await staff.goto('/admin?tab=cost');
+    const panel = staff.getByRole('region', { name: 'Cost report', exact: true });
     await expect(panel.getByRole('heading', { name: /Caps today/ })).toBeVisible();
     const table = panel.getByRole('table', { name: 'Organisation caps by plan tier' });
     for (const tier of ['basic', 'standard', 'plus', 'enterprise']) {
@@ -508,9 +517,12 @@ test.describe('Admin Centre', () => {
     const w = watch(staff);
     w.expect4xx(/[/]api[/]studio[/]/, 403);
     await w.visit('/admin');
-    await staff.getByRole('tab', { name: 'Organisations' }).click();
+    await staff
+      .getByRole('navigation', { name: 'Admin sections' })
+      .getByRole('link', { name: 'Organisations' })
+      .click();
     await staff.getByLabel('Search organisations').fill(`P2 Trial ${run}`);
-    await staff.getByRole('button', { name: 'Search' }).click();
+    await staff.getByRole('button', { name: 'Search', exact: true }).click();
     await staff.getByRole('button', { name: `Open P2 Trial ${run}` }).click();
     await expect(staff.getByText('Running: the trial’s caps apply now.')).toBeVisible();
     const form = staff.getByRole('form', { name: 'Set an override' });

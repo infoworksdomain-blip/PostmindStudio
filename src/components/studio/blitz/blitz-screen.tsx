@@ -27,6 +27,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { StudioCapability } from '@/lib/rbac';
+import { CreateBlockedNotice, useCreateBlock } from '../account/create-access';
 import { OptionCards } from '../automations/option-cards';
 import { useBusiness } from '../business-context';
 import { TikTokDraftsHint } from '../connections/tiktok-post-mode';
@@ -69,6 +70,14 @@ function BlitzDeckScreen() {
   const { businessId, ready } = useBusiness();
   const mayKeep = useCan(StudioCapability.ProjectWrite);
   const mayPost = useCan(StudioCapability.PublicationWrite);
+  // 25.9 (audit): a read-only role or a read-only account says why the deck cannot be swiped.
+  const block = useCreateBlock();
+  const readOnly = !mayKeep || block === 'read_only';
+  const readOnlyReason = block ? (
+    <CreateBlockedNotice block={block} className="text-sm" />
+  ) : !mayKeep ? (
+    t('readOnly.role')
+  ) : null;
   // 24.2: while the live stream is open, cards still rendering arrive with their project's event
   // (debounced refresh) instead of a poll every RENDERING_POLL_MS.
   const liveOpen = useRef(false);
@@ -241,7 +250,7 @@ function BlitzDeckScreen() {
         </div>
       )}
       {deck && (
-        <div className="grid items-start gap-8 lg:grid-cols-[1fr_minmax(0,24rem)_1fr]">
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_24rem_minmax(0,1fr)]">
           <aside className="hidden justify-end pt-10 lg:flex" aria-label={t('deck.remix.title')}>
             {top?.remix && <RemixSource card={top} />}
           </aside>
@@ -256,7 +265,8 @@ function BlitzDeckScreen() {
             {cards.length > 0 && deck.swipesLeft > 0 ? (
               <SwipeDeck
                 items={items}
-                busy={busy || !mayKeep}
+                busy={busy || readOnly}
+                disabledReason={readOnlyReason}
                 renderCard={(card, active) => (
                   <BlitzCardView
                     card={card}
@@ -323,6 +333,7 @@ function BlitzDeckScreen() {
               };
             })}
           />
+          {!mayPost && <p className="text-xs text-muted-foreground">{t('keep.noPublishRole')}</p>}
           {/* 22.7: where the TikTok copy goes when the account sends drafts. */}
           {mode !== 'edit' && <TikTokDraftsHint businessId={businessId} />}
           {keeping && keeping.tier === 'preview' && (

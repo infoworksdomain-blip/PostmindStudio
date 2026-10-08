@@ -71,6 +71,7 @@ let db: Db;
 let world: World;
 let owner: Page;
 let staff: Page | undefined;
+let staffEmail = '';
 
 test.beforeAll(async ({ browser, playwright }) => {
   test.setTimeout(300_000);
@@ -80,7 +81,9 @@ test.beforeAll(async ({ browser, playwright }) => {
   world = await seedWorld(db, ownerId);
   await addMember(db, world.orgId, ownerId, 'owner');
   owner = await signedInPage(browser, baseURL, emailFor('owner'));
-  staff = (await staffPage(browser, request, db)).page;
+  const made = await staffPage(browser, request, db, undefined, 'a11y');
+  staff = made.page;
+  staffEmail = made.email;
   await request.dispose();
 });
 
@@ -89,7 +92,7 @@ test.afterAll(async () => {
   await staff?.context().close();
   await cleanWorld(db, world);
   const users = await db.user.findMany({
-    where: { OR: [{ email: emailFor('owner') }, { email: { startsWith: 'qa-p2-staff-' } }] },
+    where: { OR: [{ email: emailFor('owner') }, { email: staffEmail }] },
     select: { id: true },
   });
   const ids = users.map((u) => u.id);
@@ -139,16 +142,19 @@ for (const theme of ['light', 'dark'] as const) {
       expect(blocking).toEqual([]);
     });
 
-    test(`the Admin Centre tabs have no serious or critical violations`, async () => {
+    test(`the Admin Centre sections have no serious or critical violations`, async () => {
       test.setTimeout(300_000);
       const page = staff as Page;
       if (theme === 'dark') await enableDarkTheme(page);
       await visit(page, '/admin');
-      const names = (await page.getByRole('tab').allInnerTexts()).map((n) => n.trim());
+      // 25.13: the sections are links in the admin side menu.
+      const menu = page.getByRole('navigation', { name: 'Admin sections' });
+      await menu.getByRole('link').first().waitFor();
+      const names = (await menu.getByRole('link').allInnerTexts()).map((n) => n.trim());
       expect(names.length).toBeGreaterThan(3);
       const blocking: Finding[] = [];
       for (const name of names) {
-        await page.getByRole('tab', { name, exact: true }).click();
+        await menu.getByRole('link', { name, exact: true }).click();
         await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => undefined);
         blocking.push(...(await scan(page, `/admin: ${name}`, theme)));
       }

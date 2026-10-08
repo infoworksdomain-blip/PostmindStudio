@@ -177,6 +177,32 @@
   --elevation-modal: 0 0 0 1px oklch(1 0 0 / 10%), 0 24px 64px -12px oklch(0 0 0 / 70%);
 }
 
+/* 25.5 — tokens that alias other tokens (--background: var(--canvas)) resolve where they are
+   declared, so an element with .dark inside a light page (the landing page's darkroom bands)
+   re-declares them to pick up its dark values. Zero specificity: the .dark block above still wins
+   where it sets an alias itself (--popover). */
+:where(.dark) {
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --foreground-secondary: var(--ink-2);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --secondary: var(--surface-raised);
+  --secondary-foreground: var(--ink);
+  --muted: var(--surface-raised);
+  --muted-foreground: var(--ink-3);
+  --accent: var(--surface-raised);
+  --accent-foreground: var(--ink);
+  --border: var(--line);
+  --border-strong: var(--line-strong);
+  --sidebar-foreground: var(--ink-2);
+  --sidebar-accent: var(--surface-active);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--line);
+}
+
 @theme inline {
   --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
@@ -262,41 +288,6 @@
       transform: translateX(100%);
     }
   }
-  /* Phase 18 landing page: the sample frames drift gently (transform only). */
-  --animate-drift: drift 9s ease-in-out infinite;
-  @keyframes drift {
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
-  }
-  /* Phase 20.8 landing page: the carousel's step timer (FlowCarousel ADVANCE_MS), a slide's
-     entrance and the hero phone's playback bar. Transform and opacity only; the reduced-motion
-     rule below stops them. */
-  --animate-progress: progress 7s linear forwards;
-  --animate-slide-in: slide-in 0.45s cubic-bezier(0.16, 1, 0.3, 1);
-  --animate-playback: progress 12s linear infinite;
-  @keyframes progress {
-    from {
-      transform: scaleX(0);
-    }
-    to {
-      transform: scaleX(1);
-    }
-  }
-  @keyframes slide-in {
-    from {
-      opacity: 0;
-      transform: translateY(12px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
   @keyframes rec {
     0%,
     100% {
@@ -344,6 +335,21 @@
       animation-duration: 0.01ms !important;
       transition-duration: 0.01ms !important;
     }
+  }
+}
+
+/* 25.5 landing page — scroll-entry reveal (src/components/marketing/landing/motion.tsx). Resting
+   state is visible; only elements the script marked "waiting" (below the fold, motion allowed)
+   start faded and 16px lower, then settle in 300 ms. */
+@media screen and (prefers-reduced-motion: no-preference) {
+  [data-reveal] {
+    transition:
+      opacity 300ms cubic-bezier(0.2, 0, 0, 1),
+      translate 300ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  [data-reveal='waiting'] {
+    opacity: 0;
+    translate: 0 16px;
   }
 }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { CalendarDays } from 'lucide-react';
@@ -28,7 +29,7 @@ import { TikTokPublicationNote, usePublicationBadge } from './tiktok-draft';
 import { useProjectName } from '@/lib/client/use-project-name';
 
 // BACKLOG 10.5 — Manage: every publication across platforms (spec 14.3), filtered by state and
-// platform, cursor-paginated (GET /publications).
+// platform (25.9: kept in the URL), cursor-paginated (GET /publications).
 
 export type PublicationFilterKey = 'all' | 'scheduled' | 'live' | 'failed' | 'ended';
 
@@ -115,12 +116,50 @@ function PublicationRow({ p, onChanged }: { p: Publication; onChanged: () => voi
   );
 }
 
+function isFilterKey(value: string | null | undefined): value is PublicationFilterKey {
+  return PUBLICATION_FILTERS.some((pf) => pf.key === value);
+}
+
+/**
+ * 25.9: the state and platform filters live in the URL (?filter=&platform=), so a filtered list
+ * can be shared and survives a reload; paging starts again when either changes.
+ */
+function usePublicationFilters() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+  // Seeded from the URL once, then held in state: router.replace commits in a transition, so
+  // rebuilding the next URL from useSearchParams could drop a change made a moment earlier.
+  const [state, setState] = useState(() => {
+    const raw = params?.get('filter');
+    const rawPlatform = params?.get('platform') ?? '';
+    return {
+      filter: isFilterKey(raw) ? raw : ('all' satisfies PublicationFilterKey),
+      platform: Object.hasOwn(PLATFORM_LABEL, rawPlatform) ? rawPlatform : '',
+    };
+  });
+  const update = (next: { filter?: PublicationFilterKey; platform?: string }) => {
+    const merged = {
+      filter: next.filter ?? state.filter,
+      platform: next.platform ?? state.platform,
+    };
+    setState(merged);
+    const search = new URLSearchParams(params?.toString() ?? '');
+    if (merged.filter === 'all') search.delete('filter');
+    else search.set('filter', merged.filter);
+    if (merged.platform) search.set('platform', merged.platform);
+    else search.delete('platform');
+    const qs = search.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
+  return { filter: state.filter, platform: state.platform, update };
+}
+
 export function PublicationsList() {
   const t = useTranslations('publications.list');
   const tn = useTranslations('shell.nav.groups');
   const f = useFormat();
-  const [filter, setFilter] = useState<PublicationFilterKey>('all');
-  const [platform, setPlatform] = useState('');
+  const { filter, platform, update } = usePublicationFilters();
   const [cursors, setCursors] = useState<string[]>([]);
   const states = PUBLICATION_FILTERS.find((pf) => pf.key === filter)?.states;
   const { data, error, isLoading, mutate } = useApi<Page<Publication>>(
@@ -155,7 +194,7 @@ export function PublicationsList() {
           label={t('filtersAria')}
           value={filter}
           onChange={(next) => {
-            setFilter(next);
+            update({ filter: next });
             setCursors([]);
           }}
           options={PUBLICATION_FILTERS.map((pf) => ({
@@ -172,7 +211,7 @@ export function PublicationsList() {
             id="publication-platform"
             value={platform}
             onChange={(e) => {
-              setPlatform(e.target.value);
+              update({ platform: e.target.value });
               setCursors([]);
             }}
           >

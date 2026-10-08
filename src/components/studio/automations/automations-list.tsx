@@ -2,16 +2,19 @@
 
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { Plus, Repeat } from 'lucide-react';
+import { ChevronRight, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
 import { useBusiness } from '../business-context';
 import { EmptyState, ErrorState, PageHeader, StateBadge } from '../primitives';
 import { WriteGate } from '../write-gate';
 import { statusTone, type AutomationSummary } from './automation-model';
 
-// 22.5 — /automations: the business's automations, newest first.
+// 22.5 — /automations: the business's automations, newest first. 25.9: a calm list — name,
+// status pill, what it makes (cadence, length, approval) and when its next post goes out
+// (GET /automations nextPostAt) — one row per automation, the whole row opening its page.
 
 export function CadenceText({ cadence }: { cadence: AutomationSummary['cadence'] }) {
   const t = useTranslations('automations.cadence');
@@ -22,6 +25,28 @@ export function CadenceText({ cadence }: { cadence: AutomationSummary['cadence']
         : t('perWeek', { count: cadence.postsPerWeek })}
     </>
   );
+}
+
+/** "Next post" for one automation: its time, or why there is none. */
+export function NextPostText({ automation }: { automation: AutomationSummary }) {
+  const t = useTranslations('automations.list');
+  const f = useFormat();
+  if (automation.nextPostAt)
+    return (
+      <time dateTime={automation.nextPostAt}>
+        {f.date(automation.nextPostAt, {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+          hour: 'numeric',
+          minute: '2-digit',
+        })}
+      </time>
+    );
+  if (automation.status === 'REVIEW') return <>{t('next.review')}</>;
+  if (automation.status === 'PAUSED') return <>{t('next.paused')}</>;
+  if (automation.status === 'DRAFT') return <>{t('next.draft')}</>;
+  return <>{t('next.none')}</>;
 }
 
 export function AutomationsList() {
@@ -54,39 +79,53 @@ export function AutomationsList() {
       )}
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
       {businessId && !data && !error && (
-        <Skeleton aria-label={t('list.loading')} className="h-40 rounded-xl" />
+        <Skeleton aria-label={t('list.loading')} className="h-40 rounded-panel" />
       )}
       {data && data.automations.length === 0 && (
         <EmptyState title={t('list.empty')} description={t('list.emptyBody')} action={create} />
       )}
       {data && data.automations.length > 0 && (
-        <ul className="grid gap-3 md:grid-cols-2">
-          {data.automations.map((a) => (
-            <li key={a.id}>
-              <Link
-                href={`/automations/${a.id}`}
-                className="group flex h-full flex-col gap-3 rounded-2xl border border-border bg-card p-5 shadow-xs transition hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none motion-reduce:transform-none"
-              >
-                <span className="flex items-start justify-between gap-3">
-                  <span className="flex items-center gap-2 font-medium">
-                    <Repeat className="size-4 text-primary" aria-hidden />
-                    {a.name}
+        <div className="overflow-hidden rounded-panel border border-border bg-card">
+          <div
+            aria-hidden
+            className="hidden grid-cols-[minmax(0,2fr)_8rem_minmax(0,2fr)_minmax(0,1.3fr)_1.25rem] gap-4 border-b border-border px-5 py-2.5 text-xs font-medium text-muted-foreground md:grid"
+          >
+            <span>{t('list.columns.name')}</span>
+            <span>{t('list.columns.status')}</span>
+            <span>{t('list.columns.makes')}</span>
+            <span>{t('list.columns.next')}</span>
+            <span />
+          </div>
+          <ul aria-label={t('list.title')} className="divide-y divide-border">
+            {data.automations.map((a) => (
+              <li key={a.id}>
+                <Link
+                  href={`/automations/${a.id}`}
+                  className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 px-5 py-4 transition-colors duration-(--duration-fast) hover:bg-surface-raised focus-visible:bg-surface-raised focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset md:grid-cols-[minmax(0,2fr)_8rem_minmax(0,2fr)_minmax(0,1.3fr)_1.25rem]"
+                >
+                  <span className="min-w-0 truncate font-medium">{a.name}</span>
+                  <span className="justify-self-end md:justify-self-start">
+                    <StateBadge label={t(`status.${a.status}`)} tone={statusTone(a.status)} />
                   </span>
-                  <StateBadge label={t(`status.${a.status}`)} tone={statusTone(a.status)} />
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  <CadenceText cadence={a.cadence} /> · {t(`duration.${a.duration}`)} ·{' '}
-                  {t(`approval.${a.approvalMode}`)}
-                </span>
-                {a.periodIndex > 0 && (
-                  <span className="text-xs text-muted-foreground">
-                    {t('detail.period', { n: a.periodIndex })}
+                  <span className="col-span-2 text-sm text-muted-foreground md:col-span-1">
+                    <CadenceText cadence={a.cadence} /> · {t(`duration.${a.duration}`)} ·{' '}
+                    {t(`approval.${a.approvalMode}`)}
                   </span>
-                )}
-              </Link>
-            </li>
-          ))}
-        </ul>
+                  <span className="tabular col-span-2 text-sm md:col-span-1">
+                    <span className="text-muted-foreground md:sr-only">
+                      {t('list.columns.next')}:{' '}
+                    </span>
+                    <NextPostText automation={a} />
+                  </span>
+                  <ChevronRight
+                    aria-hidden
+                    className="hidden size-4 text-muted-foreground group-hover:text-foreground md:block rtl:-scale-x-100"
+                  />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </>
   );

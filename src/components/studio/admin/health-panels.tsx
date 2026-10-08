@@ -66,6 +66,8 @@ const REFRESH_MS = 30_000;
 /** A job waiting longer than this is worth a look (spec 11.3 queue latency targets are minutes). */
 const SLOW_WAIT_SEC = 300;
 const NONE = '—';
+/** Counts, rates and money in Geist Mono with tabular figures. */
+const MONO = 'font-mono text-xs';
 
 function useWaitText(): (sec: number | null) => string {
   const t = useTranslations('admin.health.queues');
@@ -110,20 +112,52 @@ export function QueuesPanel() {
     refreshInterval: REFRESH_MS,
   });
   const columns: DataTableColumn<QueueHealth>[] = [
-    { id: 'queue', header: t('queue'), className: 'font-medium', cell: (q) => q.name },
-    { id: 'waiting', header: t('waiting'), align: 'end', cell: (q) => <Num value={q.waiting} /> },
-    { id: 'active', header: t('active'), align: 'end', cell: (q) => <Num value={q.active} /> },
+    {
+      id: 'queue',
+      header: t('queue'),
+      rowHeader: true,
+      className: 'font-mono text-xs',
+      cell: (q) => q.name,
+      sortValue: (q) => q.name,
+    },
+    {
+      id: 'waiting',
+      header: t('waiting'),
+      align: 'end',
+      className: MONO,
+      sortValue: (q) => q.waiting,
+      cell: (q) => <Num value={q.waiting} />,
+    },
+    {
+      id: 'active',
+      header: t('active'),
+      align: 'end',
+      className: MONO,
+      sortValue: (q) => q.active,
+      cell: (q) => <Num value={q.active} />,
+    },
     {
       id: 'failed',
       header: t('failed'),
       align: 'end',
+      className: MONO,
+      sortValue: (q) => q.failed,
       cell: (q) => <Num value={q.failed} warn />,
     },
-    { id: 'delayed', header: t('delayed'), align: 'end', cell: (q) => <Num value={q.delayed} /> },
+    {
+      id: 'delayed',
+      header: t('delayed'),
+      align: 'end',
+      className: MONO,
+      sortValue: (q) => q.delayed,
+      cell: (q) => <Num value={q.delayed} />,
+    },
     {
       id: 'oldestWaiting',
       header: t('oldestWaiting'),
       align: 'end',
+      className: MONO,
+      sortValue: (q) => q.oldestWaitingSec,
       cell: (q) => (
         <span
           className={cn(
@@ -165,6 +199,13 @@ const BREAKER_TONE: Record<ProviderHealth['breaker'], StatusTone> = {
   closed: 'good',
 };
 
+/** Sorting by breaker puts open circuits first. */
+const BREAKER_ORDER: Record<ProviderHealth['breaker'], number> = {
+  open: 0,
+  half_open: 1,
+  closed: 2,
+};
+
 function BreakerTag({ state }: { state: ProviderHealth['breaker'] }) {
   const t = useTranslations('admin.health.providers.breakerState');
   return (
@@ -184,7 +225,8 @@ export function ProvidersPanel() {
     {
       id: 'provider',
       header: t('provider'),
-      className: 'font-medium',
+      rowHeader: true,
+      sortValue: (p) => p.id,
       cell: (p) => (
         <>
           {p.id}
@@ -200,6 +242,7 @@ export function ProvidersPanel() {
       id: 'breaker',
       header: t('breaker'),
       className: 'whitespace-normal',
+      sortValue: (p) => BREAKER_ORDER[p.breaker],
       cell: (p) => (
         <>
           <BreakerTag state={p.breaker} />
@@ -211,6 +254,8 @@ export function ProvidersPanel() {
       id: 'errorRate',
       header: t('errorRate'),
       align: 'end',
+      className: MONO,
+      sortValue: (p) => p.errorRate1h,
       cell: (p) => (
         <span className={cn((p.errorRate1h ?? 0) >= 0.2 && 'font-medium text-destructive')}>
           {p.errorRate1h === null ? NONE : f.percent(p.errorRate1h, 1)}
@@ -221,7 +266,7 @@ export function ProvidersPanel() {
       id: 'jobs',
       header: t('jobs'),
       align: 'end',
-      className: 'text-muted-foreground',
+      className: `${MONO} text-muted-foreground`,
       cell: (p) =>
         p.jobs1h.running > 0
           ? t('jobCountsRunning', {
@@ -238,6 +283,8 @@ export function ProvidersPanel() {
       id: 'spendToday',
       header: t('spendToday'),
       align: 'end',
+      className: MONO,
+      sortValue: (p) => p.spendTodayPence,
       cell: (p) => f.pence(p.spendTodayPence),
     },
   ];

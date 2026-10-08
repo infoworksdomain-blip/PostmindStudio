@@ -29,15 +29,27 @@ function metricParam(query: URLSearchParams): Metric {
   return m;
 }
 
-const publishedSince = (days: number) => {
+/** 25.11: optional ?businessId= narrows to that business's projects (as the service does). */
+function businessPosts(query: URLSearchParams) {
+  const businessId = query.get('businessId')?.trim() || null;
+  if (!businessId) return livePosts();
+  const projects = new Set(
+    allProjects()
+      .filter((p) => p.businessId === businessId)
+      .map((p) => p.id),
+  );
+  return livePosts().filter((p) => projects.has(p.pub.projectId));
+}
+
+const publishedSince = (days: number, query: URLSearchParams) => {
   const since = Date.now() - days * DAY;
-  return livePosts().filter((p) => p.publishedMs >= since);
+  return businessPosts(query).filter((p) => p.publishedMs >= since);
 };
 
 route('GET', '/analytics/overview', ({ query }) => {
   const days = windowDays(query);
   const now = Date.now();
-  const posts = publishedSince(days);
+  const posts = publishedSince(days, query);
   const totals: Counts = { views: 0, watchTimeSec: 0, likes: 0, comments: 0, shares: 0, saves: 0 };
   const byPlatform: Record<string, { publications: number; views: number; engagement: number }> =
     {};
@@ -57,10 +69,14 @@ route('GET', '/analytics/overview', ({ query }) => {
     };
   }
   const since = new Date(now - days * DAY).toISOString();
+  const businessId = query.get('businessId')?.trim() || null;
   return {
     days,
+    businessId,
     publications: posts.length,
-    projectsCreated: allProjects().filter((p) => p.createdAt >= since).length,
+    projectsCreated: allProjects().filter(
+      (p) => p.createdAt >= since && (!businessId || p.businessId === businessId),
+    ).length,
     totals,
     byPlatform,
   };
@@ -70,7 +86,7 @@ route('GET', '/analytics/timeseries', ({ query }) => {
   const days = Math.min(365, Math.max(1, Number(query.get('days') ?? 30) || 30));
   const metric = metricParam(query);
   const now = Date.now();
-  const posts = livePosts();
+  const posts = businessPosts(query);
   const todayStart = Date.parse(`${dayKey(0)}T00:00:00.000Z`);
   const data = [];
   for (let i = days - 1; i >= 0; i -= 1) {
@@ -95,9 +111,10 @@ route('GET', '/analytics/leaderboard', ({ query }) => {
   const metric = metricParam(query);
   const limit = Math.min(50, Math.max(1, Number(query.get('limit') ?? 10) || 10));
   const now = Date.now();
-  const data = publishedSince(days)
+  const data = publishedSince(days, query)
     .map((post) => ({
       id: post.pub.id,
+      renderId: post.pub.renderId,
       platform: post.pub.platform,
       platformUrl: post.pub.platformUrl,
       publishedAt: post.pub.publishedAt,

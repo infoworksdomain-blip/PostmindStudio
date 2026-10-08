@@ -116,13 +116,14 @@ function TierCaps({ caps }: { caps: CostCapsResponse['caps'] }) {
     {
       id: 'tier',
       header: t('tierCol'),
-      className: 'font-medium capitalize',
+      rowHeader: true,
+      className: 'capitalize',
       cell: (tier) => tier.toLowerCase(),
     },
     {
       id: 'daily',
       header: t('dailyCol'),
-      className: 'tabular-nums',
+      className: 'font-mono tabular-nums',
       cell: (tier) => (
         <>
           {capText(caps.orgDailyByTier[tier])}
@@ -133,7 +134,7 @@ function TierCaps({ caps }: { caps: CostCapsResponse['caps'] }) {
     {
       id: 'monthly',
       header: t('monthlyCol'),
-      className: 'tabular-nums',
+      className: 'font-mono tabular-nums',
       cell: (tier) => (
         <>
           {capText(caps.orgMonthlyByTier[tier])}

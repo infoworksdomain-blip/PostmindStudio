@@ -28,7 +28,6 @@ import { PUBLISHABLE } from './types';
 
 export function ReviewStatus({
   project,
-  projectName,
   selected,
   live,
   attention,
@@ -36,7 +35,6 @@ export function ReviewStatus({
   onPublish,
 }: {
   project: ProjectDetail;
-  projectName: string;
   selected: Render | null;
   live: LiveProjectEvent | undefined;
   attention: readonly AttentionItem[];
@@ -62,12 +60,7 @@ export function ReviewStatus({
           <StateBadge {...state} />
           {inProgress && <StatusChip live={live} projectState={project.state} />}
         </div>
-        <ProjectMenu
-          project={project}
-          selected={selected}
-          projectName={projectName}
-          onChanged={onChanged}
-        />
+        <ProjectMenu project={project} selected={selected} onChanged={onChanged} />
       </div>
       {/* Screen readers hear the stage change and how many things need attention, not the ETA. */}
       <p role="status" className="sr-only">

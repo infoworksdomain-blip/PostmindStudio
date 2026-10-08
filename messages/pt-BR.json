@@ -621,19 +621,9 @@
       "summaryPlatforms": "{count, plural, =0 {Nenhuma plataforma} one {# plataforma} other {# plataformas}}",
       "summaryAutoPublish": "{count, plural, =0 {publicação automática: nenhuma conta escolhida} one {publica em # conta} other {publica em # contas}}",
       "summaryBrandKit": "kit de marca ativado",
-      "options": "Opções",
       "generate": "Gerar",
       "createSlideshow": "Criar apresentação de slides",
       "sourcesAria": "O que criar",
-      "sources": {
-        "BRIEF": "Vídeo",
-        "SLIDESHOW": "Apresentação de slides",
-        "UPLOAD": "Enviar um vídeo",
-        "UGC": "Ator UGC",
-        "CAROUSEL": "Carrossel (cartões de post)",
-        "HOOK_DEMO": "Gancho + demo",
-        "WALL_OF_TEXT": "Parede de texto"
-      },
       "templatedNote": "As plataformas e a duração vêm do modelo. O texto acima é opcional — ele acrescenta detalhes ao roteiro do modelo.",
       "noBusiness": {
         "title": "Escolha uma empresa primeiro",
@@ -642,18 +632,61 @@
       },
       "toast": {
         "slideshowDrafted": "Rascunho da apresentação criado — confira os slides e depois gere.",
-        "generatingUpload": "Gerando — o Studio está legendando seu vídeo.",
-        "generatingScript": "Gerando — o Studio está escrevendo o roteiro.",
+        "generatingUpload": "Criando seu vídeo — adicionando legendas…",
+        "generatingScript": "Criando seu vídeo…",
         "draftNotStarted": "Salvo como rascunho, mas a geração não começou: {error}",
         "generatingCarousel": "Escrevendo seu carrossel…",
-        "generatingFormat": "Gerando: o Studio está escrevendo o texto e criando seu vídeo."
+        "generatingFormat": "Criando seu vídeo…"
       },
       "planMonth": "Ou planeje um mês inteiro de vídeos e apresentações",
       "summaryNoAccounts": "nenhuma conta conectada: salvo para revisão",
       "summaryForReview": "salvo para revisão",
       "createCarousel": "Criar carrossel",
       "summaryCarousel": "{count} posts · cartões {theme, select, dark {escuros} other {claros}}",
-      "summarySeconds": "{count, number} s"
+      "summarySeconds": "{count, number} s",
+      "formats": {
+        "BRIEF": {
+          "name": "Vídeo com IA",
+          "line": "Roteiro, cenas e narração para você"
+        },
+        "SLIDESHOW": {
+          "name": "Apresentação de slides",
+          "line": "Fotos com legendas e música"
+        },
+        "CAROUSEL": {
+          "name": "Carrossel",
+          "line": "Um post para deslizar"
+        },
+        "UPLOAD": {
+          "name": "Seu vídeo",
+          "line": "Legendas e formatos para o seu próprio vídeo"
+        },
+        "UGC": {
+          "name": "Vídeo de criador (UGC)",
+          "line": "Um criador de IA fala sobre seu produto"
+        },
+        "HOOK_DEMO": {
+          "name": "Gancho + demo",
+          "line": "Uma reação como gancho e depois sua demo"
+        },
+        "WALL_OF_TEXT": {
+          "name": "Parede de texto",
+          "line": "Um bloco de texto sobre um vídeo calmo"
+        }
+      },
+      "basicDefault": "Seu plano começa em Apresentação de slides, que usa ¼ de vídeo da sua cota. Você pode escolher qualquer formato.",
+      "moreOptions": "Mais opções",
+      "usesQuick": "Usa ¼ de vídeo",
+      "usesVideos": "Usa {count, number} dos seus vídeos",
+      "allowanceLeft": "{left} de {limit} restantes {period, select, week {nesta semana} other {neste mês}}",
+      "submitShortcut": "Ctrl ou ⌘ + Enter para gerar",
+      "groups": {
+        "format": "Plataformas e duração",
+        "brand": "Marca e idioma",
+        "message": "Público e chamada para ação",
+        "publishing": "Aprovação e agendamento",
+        "quality": "Qualidade"
+      }
     },
     "problems": {
       "businessRequired": "Escolha uma empresa primeiro.",
@@ -693,7 +726,6 @@
         "defaultKit": "{name} (padrão)"
       },
       "advanced": {
-        "toggle": "Opções avançadas",
         "audience": "Público-alvo",
         "audiencePlaceholder": "ex.: quem vai comprar o primeiro imóvel",
         "cta": "Chamada para ação",
@@ -894,6 +926,27 @@
       },
       "length": "Duração",
       "seconds": "{count, number} s"
+    },
+    "videoModel": {
+      "legend": "Modelo de vídeo",
+      "automatic": "Automático (recomendado)",
+      "automaticLine": "O Studio escolhe um modelo disponível para cada clipe e troca se algum estiver ocupado.",
+      "speed": "{minutes, number} min por clipe",
+      "maxClip": "até {seconds, number} s",
+      "costStaff": "{amount} por clipe de 6 s",
+      "droppedChoice": "O modelo escolhido não está disponível neste nível de qualidade, então o Automático será usado.",
+      "hint": {
+        "BRIEF": "Cria os clipes de IA deste vídeo.",
+        "UGC": "Cria as cenas de IA. Os clipes do criador sempre usam os modelos de criador.",
+        "HOOK_DEMO": "Cria a reação do gancho."
+      },
+      "capability": {
+        "text_to_video": "Só texto",
+        "image_to_video": "Só foto",
+        "both": "Texto ou foto"
+      },
+      "change": "Trocar modelo",
+      "hide": "Ocultar modelos"
     }
   },
   "review": {
@@ -1427,7 +1480,7 @@
       "none": "Ainda não há vídeo."
     },
     "menu": {
-      "trigger": "Mais ações para {name}",
+      "trigger": "Mais ações",
       "download": "Baixar vídeo",
       "templateDescription": "Guarde os formatos, a estrutura de cenas e as configurações de publicação deste vídeo para criar novos a partir deles."
     }
@@ -1841,7 +1894,15 @@
       "agendaAria": "Agenda",
       "emptyMonth": "Nada agendado ou publicado neste mês.",
       "moreOpen": "{count, plural, one {+# horário livre} other {+# horários livres}}",
-      "morePlanned": "+{count} planejadas"
+      "morePlanned": "+{count} planejadas",
+      "moreAria": "Ver tudo em {date} (mais {count, number})",
+      "dayAria": "Publicações deste dia",
+      "weekAria": "Dias da semana",
+      "todayAria": "{date}, hoje",
+      "today": "Hoje",
+      "quietDay": "Nada planejado",
+      "emptyWeek": "Nada agendado nem publicado nesta semana.",
+      "emptyDayView": "Nada agendado nem publicado neste dia."
     },
     "event": {
       "untitled": "Projeto sem título",
@@ -1863,7 +1924,11 @@
       "newTime": "Novo horário",
       "cancel": "Cancelar",
       "moving": "Movendo…",
-      "submit": "Mover"
+      "submit": "Mover",
+      "undo": "Desfazer",
+      "undone": "Movida de volta para {date}",
+      "movedLive": "“{name}” foi movida para {date}. Dá para desfazer na notificação.",
+      "undoneLive": "“{name}” voltou para {date}."
     },
     "drip": {
       "title": "Fila de postagem",
@@ -1987,6 +2052,48 @@
           "none": "vazia"
         }
       }
+    },
+    "previousWeek": "Semana anterior",
+    "nextWeek": "Próxima semana",
+    "previousDay": "Dia anterior",
+    "nextDay": "Próximo dia",
+    "views": {
+      "label": "Visualização do calendário",
+      "month": "Mês",
+      "week": "Semana",
+      "day": "Dia"
+    },
+    "filters": {
+      "label": "Filtros",
+      "platformLabel": "Plataforma",
+      "statusLabel": "Status",
+      "sourceLabel": "Origem",
+      "allPlatforms": "Todas as plataformas",
+      "anyStatus": "Qualquer status",
+      "anySource": "Qualquer origem",
+      "clear": "Limpar filtros",
+      "showing": "Mostrando {shown, number} de {total, number} publicações",
+      "status": {
+        "SCHEDULED": "Agendada",
+        "PUBLISHING": "Publicando",
+        "PUBLISHED": "Publicada",
+        "FAILED": "Falhou",
+        "PLANNED": "Em produção (plano do mês)"
+      },
+      "source": {
+        "plan": "Plano do mês",
+        "automation": "Automação",
+        "manual": "Feita manualmente"
+      }
+    },
+    "postingTimes": {
+      "open": "Horários de publicação",
+      "title": "Horários de publicação",
+      "description": "Quando os vídeos aprovados sem data deste negócio são publicados. Os horários salvos aparecem no calendário como horários livres."
+    },
+    "campaign": {
+      "plan": "Plano do mês · {date}",
+      "automation": "Automação · {name}"
     }
   },
   "business": {
@@ -2788,44 +2895,55 @@
     "dashboard": {
       "eyebrow": "Gerenciar",
       "title": "Análises",
-      "description": "Como seus vídeos publicados estão se saindo e quanto custou produzi-los.",
       "rangeLabel": "Período",
       "rangeOption": "{days, plural, one {# dia} other {# dias}}",
-      "descriptionNoCost": "Como seus vídeos publicados estão se saindo."
+      "scopeAll": "Todos os negócios",
+      "scopeBusiness": "{name}",
+      "scopeSelected": "Negócio selecionado",
+      "window": "{days, plural, one {último dia} other {últimos # dias}}",
+      "costScope": "Os gastos incluem todos os negócios da sua organização.",
+      "loadingAria": "Carregando as estatísticas"
     },
     "metrics": {
       "views": "Visualizações",
-      "watchTime": "Tempo de exibição",
-      "engagement": "Engajamento"
+      "watchTime": "Tempo de exibição"
     },
     "overview": {
       "loadingAria": "Carregando visão geral",
-      "viewsHeading": "Visualizações · {days, plural, one {último dia} other {últimos # dias}}",
-      "summary": "em {publications, plural, one {# publicação} other {# publicações}} · {projects, plural, one {# projeto iniciado} other {# projetos iniciados}}",
+      "summary": "Seus {posts, plural, one {# post} other {# posts}} {days, plural, one {do último dia} other {dos últimos # dias}} alcançaram {count, plural, one {{views} visualização} other {{views} visualizações}}, com {rate} de engajamento.",
       "watchTime": "Tempo de exibição",
-      "engagement": "Engajamento",
-      "engagementHint": "{rate} das visualizações",
-      "shares": "Compartilhamentos",
-      "savesHint": "{saves, plural, one {{formatted} salvamento} other {{formatted} salvamentos}}",
-      "spend": "Gastos",
-      "spendHint": "custos de provedores",
-      "pending": "…"
+      "engagementHint": "{count} curtidas, comentários, compartilhamentos e salvamentos",
+      "regionLabel": "Resumo",
+      "summaryNoViews": "{posts, plural, one {Saiu # post} other {Saíram # posts}} {days, plural, one {no último dia} other {nos últimos # dias}}. As visualizações costumam aparecer cerca de um dia depois da publicação.",
+      "summaryLead": "{platform} trouxe {share} das visualizações.",
+      "views": "Visualizações",
+      "viewsHint": "{publications, plural, one {# post} other {# posts}} · {projects, plural, one {# projeto iniciado} other {# projetos iniciados}}",
+      "watchTimeHint": "{avg} por visualização, em média",
+      "engagementRate": "Taxa de engajamento",
+      "sharesSaves": "Compartilhamentos e salvamentos",
+      "sharesSavesHint": "{shares} compartilhamentos · {saves} salvamentos",
+      "empty": {
+        "title": "Nenhum post publicado {days, plural, one {no último dia} other {nos últimos # dias}}",
+        "body": "As estatísticas aparecem cerca de um dia depois que um post sai. Tente um período maior ou publique um vídeo de um dos seus projetos.",
+        "action": "Ir para os projetos"
+      },
+      "windowNote": "Totais dos posts publicados neste período, contados até agora."
     },
     "trend": {
-      "title": "Atividade diária",
+      "title": "Crescimento e alcance",
       "metricLabel": "Métrica",
       "loadingAria": "Carregando gráfico",
       "total": {
-        "views": "{count, plural, one {{value} visualização} other {{value} visualizações}} no período",
-        "watchTime": "{value} de tempo de exibição no período",
-        "engagement": "{value} de engajamento no período"
+        "views": "{count, plural, one {{value} visualização ganha} other {{value} visualizações ganhas}} neste período",
+        "watchTime": "{value} de tempo de exibição ganho neste período"
       },
       "chartLabel": {
         "views": "Visualizações por dia, {days, plural, one {último dia} other {últimos # dias}}",
-        "watchTime": "Tempo de exibição por dia, {days, plural, one {último dia} other {últimos # dias}}",
-        "engagement": "Engajamento por dia, {days, plural, one {último dia} other {últimos # dias}}"
+        "watchTime": "Tempo de exibição por dia, {days, plural, one {último dia} other {últimos # dias}}"
       },
-      "estimated": "Alguns dias são estimativas: faltaram medições, então o crescimento foi distribuído igualmente pelo intervalo."
+      "estimated": "Alguns dias são estimativas: faltaram medições, então o crescimento foi distribuído igualmente pelo intervalo.",
+      "description": "Visualizações ganhas por dia em todos os seus posts",
+      "quiet": "Ainda nada de novo neste período. O gráfico vai sendo preenchido conforme seus posts são vistos."
     },
     "platforms": {
       "title": "Por plataforma",
@@ -2835,15 +2953,16 @@
       "hint": "{posts, plural, one {# post} other {# posts}} · {engagement} de engajamento"
     },
     "leaderboard": {
-      "title": "Principais vídeos",
-      "description": "Publicações classificadas por visualizações",
+      "title": "Principais posts",
+      "description": "Os posts deste período com mais visualizações",
       "empty": "Nada foi publicado neste período.",
       "listLabel": "Principais publicações",
       "untitled": "Post sem título",
       "meta": "{platform} · {date}",
       "openOn": "Abrir no {platform}",
       "analyticsFor": "Análises de “{caption}”",
-      "analyticsForUntitled": "Análises do post sem título"
+      "analyticsForUntitled": "Análises do post sem título",
+      "views": "visualizações"
     },
     "cost": {
       "title": "Gastos",
@@ -2892,7 +3011,8 @@
         "avgWatched": "Média assistida",
         "likes": "Curtidas",
         "commentsShares": "Comentários · compartilhamentos",
-        "commentsSharesValue": "{comments} · {shares}"
+        "commentsSharesValue": "{comments} · {shares}",
+        "saves": "Salvamentos"
       },
       "viewsOverTime": {
         "title": "Visualizações ao longo do tempo",
@@ -2928,6 +3048,39 @@
         "body": "Ela pode ter sido removida ou o link está errado.",
         "action": "Voltar às análises"
       }
+    },
+    "change": {
+      "up": "Mais <n>{pct}</n> do que no período anterior",
+      "down": "Menos <n>{pct}</n> do que no período anterior",
+      "flat": "Igual ao período anterior"
+    },
+    "engagement": {
+      "title": "Engajamento",
+      "description": "Curtidas, comentários, compartilhamentos e salvamentos ganhos por dia",
+      "total": "Interações ganhas neste período: {value}",
+      "chartLabel": "Interações por dia, {days, plural, one {último dia} other {últimos # dias}}",
+      "quiet": "Ainda sem curtidas, comentários, compartilhamentos ou salvamentos neste período.",
+      "mixTitle": "Do que foi feito",
+      "mixRate": "{rate} das visualizações dos posts deste período",
+      "mixNoViews": "Os posts deste período ainda não têm visualizações.",
+      "mixLabel": "Engajamento por tipo",
+      "mixEmpty": "Os posts deste período ainda não têm interações.",
+      "parts": {
+        "likes": "Curtidas",
+        "comments": "Comentários",
+        "shares": "Compartilhamentos",
+        "saves": "Salvamentos"
+      }
+    },
+    "bestTimes": {
+      "title": "Melhores horários para publicar",
+      "description": "Quando seus posts tiveram mais visualizações, em comparação com o melhor horário",
+      "listLabel": "Melhores horários de publicação",
+      "slot": "{day}, {time}",
+      "empty": "Ainda não há posts dos últimos 180 dias para aprender.",
+      "basis": "Com base em {videos, plural, one {# post} other {# posts}} dos últimos 180 dias. Horários em {timezone}. Uma orientação, não uma regra.",
+      "fromMemory": "Ainda há poucos posts, então este é o horário de publicação habitual do seu negócio. Horários em {timezone}.",
+      "littleData": "Por enquanto, só {videos, plural, one {# post} other {# posts}}: são primeiras pistas, mais confiáveis a partir de {min}. Horários em {timezone}."
     }
   },
   "admin": {
@@ -3018,7 +3171,25 @@
         "forceApprovals": "Aprovações forçadas",
         "beta": "Beta",
         "users": "Usuários",
-        "subscriptions": "Assinaturas"
+        "subscriptions": "Assinaturas",
+        "billing": "Assinaturas e cobrança"
+      },
+      "menu": {
+        "label": "Seções de administração",
+        "jump": "Ir para a seção",
+        "halted": "Parado",
+        "groups": {
+          "operations": "Operações",
+          "content": "Conteúdo",
+          "customers": "Clientes",
+          "platform": "Plataforma"
+        }
+      },
+      "billingViews": {
+        "label": "Visualização",
+        "overview": "Visão geral e MRR",
+        "records": "Registros do Stripe",
+        "entitlements": "Substituições de direitos"
       }
     },
     "cost": {
@@ -4271,8 +4442,9 @@
   },
   "marketing": {
     "meta": {
-      "title": "PostMind Studio · Vídeos curtos com IA para pequenos negócios",
-      "description": "Transforme uma frase em vídeos curtos com a identidade da sua marca para TikTok, Reels, Shorts, Facebook, LinkedIn e X. Revise, aprove e publique em um só lugar."
+      "title": "PostMind Studio · Vídeos curtos e posts para pequenos negócios",
+      "description": "Crie, planeje e publique vídeos curtos e posts para o seu pequeno negócio a partir de um único briefing: roteiro, vídeo, voz, música e legendas com a sua marca, agendados no TikTok, Instagram, YouTube, Facebook, LinkedIn e X.",
+      "ogAlt": "PostMind Studio: crie, planeje e publique vídeos curtos a partir de um único briefing"
     },
     "nav": {
       "home": "Página inicial do PostMind Studio",
@@ -4282,9 +4454,9 @@
       "startTrial": "Começar teste gratuito"
     },
     "hero": {
-      "eyebrow": "Estúdio de vídeo com IA para pequenos negócios",
-      "title": "Um mês de vídeos curtos, <em>prontos antes do seu café esfriar.</em>",
-      "lede": "Diga ao Studio o que você quer comunicar. Ele escreve o roteiro, filma ou busca cada cena, adiciona sua voz, música e legendas com a identidade da sua marca, e edita para cada plataforma. Você aprova; ele publica.",
+      "eyebrow": "Estúdio de vídeo para pequenos negócios",
+      "title": "Crie, planeje e publique seus vídeos para redes sociais <em>a partir de um único briefing.</em>",
+      "lede": "Diga ao Studio o que você quer comunicar. Ele escreve o roteiro, cria o vídeo, adiciona voz, música e legendas com a sua marca e agenda cada post nas plataformas que você usa. Você aprova; ele publica.",
       "primaryCta": "Começar teste gratuito",
       "secondaryCta": "Ver preços",
       "assurances": {
@@ -4292,146 +4464,171 @@
         "yourBrand": "Suas cores, fontes e voz",
         "cancelAnytime": "Cancele quando quiser"
       },
-      "frames": {
-        "one": "Saindo do forno às 7h",
-        "two": "Conheça os padeiros",
-        "three": "Três pães, um fim de semana"
-      },
-      "slate": {
-        "scene": "Cena 01",
-        "take": "Take 1"
-      },
-      "phoneAlt": "Vídeo vertical de exemplo: um pão de fermentação natural com cortes, sobre papel manteiga, com a legenda “Saindo do forno às 7h”"
-    },
-    "platforms": {
-      "title": "Um briefing, cortado para cada feed"
-    },
-    "steps": {
-      "eyebrow": "Como funciona",
-      "title": "Briefing. Revisão. Publicação.",
-      "brief": {
-        "title": "Escreva uma frase",
-        "body": "Descreva o vídeo, cole uma página da web ou escolha um modelo. O Studio cria o roteiro e a lista de cenas em segundos."
-      },
-      "review": {
-        "title": "Confira o corte",
-        "body": "Veja cada formato lado a lado, troque uma cena, mude uma legenda ou peça outra versão. Nada é publicado até você aprovar."
-      },
-      "publish": {
-        "title": "Publique com agenda",
-        "body": "Publique agora ou planeje o próximo mês. O Studio publica em cada conta e traz de volta visualizações, curtidas e comentários para um único painel."
+      "reelLabel": "Três posts feitos com o PostMind Studio",
+      "madeWith": "Feito com o PostMind Studio. Os negócios mostrados são exemplos.",
+      "alts": {
+        "bread": "Vídeo com IA feito com o Studio: um pão de fermentação natural dourado sobre uma tábua de madeira, soltando vapor, com a câmera se aproximando devagar",
+        "market": "Vídeo com IA feito com o Studio: uma mulher caminha por uma feira ensolarada e sorri para um feirante",
+        "coastline": "Slideshow feito com o Studio para chalés à beira-mar, com a legenda “Chalés com vista para o mar para duas a seis pessoas”"
       }
     },
-    "samples": {
-      "eyebrow": "Contact sheet",
-      "title": "Todos os formatos, a partir de um briefing.",
-      "body": "Vertical para TikTok, Reels e Shorts, quadrado e retrato para feeds, widescreen para YouTube e LinkedIn.",
-      "note": "Fotos de banco de imagens que mostram os formatos que o Studio cria, não vídeos de clientes.",
-      "captions": {
-        "market": "Feira de sábado, 8h",
-        "studio": "Como moldamos um pão de fermentação natural",
-        "salon": "Cortes de sexta, agende já",
-        "gym": "Aula das 6h, restam três vagas"
+    "motion": {
+      "pause": "Pausar vídeos",
+      "play": "Reproduzir vídeos"
+    },
+    "formats": {
+      "eyebrow": "Um briefing, todos os formatos",
+      "title": "Todo tipo de post que um pequeno negócio precisa.",
+      "body": "Vídeo com IA, slideshows e posts de parede de texto, cada um feito para feeds verticais. O Studio fez tudo isso a partir de briefings de uma linha.",
+      "note": "Resultados reais do Studio para negócios de exemplo.",
+      "stripLabel": "Posts de exemplo feitos com o Studio",
+      "kinds": {
+        "aiVideo": "Vídeo com IA",
+        "slideshow": "Slideshow",
+        "wallOfText": "Parede de texto"
+      },
+      "types": {
+        "bakery": "Padaria de fermentação natural",
+        "boutique": "Loja de linho",
+        "gym": "Estúdio de fitness",
+        "cottages": "Chalés à beira-mar",
+        "florist": "Floricultura",
+        "coffee": "Cafeteria"
       },
       "alts": {
-        "market": "Uma barraca de pães em uma feira de rua, pães empilhados sobre uma toalha xadrez vermelha",
-        "studio": "Mãos com farinha modelando a massa sobre uma bancada de madeira",
-        "salon": "Tesouras, uma navalha e um pente sobre um tapete preto",
-        "gym": "Fileiras de halteres em um suporte na academia"
+        "seedanceBread": "Um pão de fermentação natural dourado sobre uma tábua de madeira, soltando vapor",
+        "pulseStudioText": "Post de parede de texto para um estúdio de fitness: três sessões curtas de força valem mais que um treino longo e cansativo, e a primeira aula é grátis",
+        "atelierWren": "Dobras de linho lavado em ferrugem e sálvia, com a legenda “Linho lavado em ferrugem e sálvia”",
+        "greenleafFlorist": "Uma rosa vermelha, com a legenda “Dálias, cosmos e rosas tardias”",
+        "coastlineStaysText": "Post de parede de texto para chalés à beira-mar: outono no litoral, praias vazias, cães são bem-vindos",
+        "harbourCoffee": "Um espresso caindo em uma xícara branca, com a legenda “Espresso de origem única”",
+        "northsideBakery": "Um pão rústico sobre fundo laranja, com a legenda “Pão rústico, assado às 6h”",
+        "pulseStudio": "Um homem treinando com um elástico, com a legenda “Aulas de 45 minutos em grupos pequenos”",
+        "coastlineStays": "Chalés acima de um litoral rochoso, com a legenda “Chalés com vista para o mar para duas a seis pessoas”"
       }
     },
-    "features": {
-      "eyebrow": "Feito para equipes pequenas",
-      "title": "Tudo o que uma equipe de marketing de uma pessoa precisa.",
-      "body": "O Studio faz o trabalho de produção, para você gastar seu tempo com o negócio, não com linhas de edição.",
-      "brand": {
-        "title": "Sua marca, sempre",
-        "body": "Logo, cores, fontes e tom de voz ficam em um kit de marca que todo vídeo segue."
+    "video": {
+      "eyebrow": "Geração de vídeo",
+      "title": "Um vídeo pronto a partir de uma frase.",
+      "body": "O Studio transforma o seu briefing em um roteiro e uma lista de cenas, gera cada cena com modelos de vídeo de ponta, depois adiciona locução, música e legendas com a sua marca e adapta o resultado para cada plataforma.",
+      "briefLabel": "O briefing",
+      "brief": "“Uma mulher caminhando por uma feira ensolarada, sorrindo para um feirante.”",
+      "alt": "Vídeo com IA feito com o Studio a partir desse briefing: uma mulher caminha por uma feira ensolarada e sorri para um feirante",
+      "steps": {
+        "script": {
+          "title": "Roteiro",
+          "body": "Um gancho, uma mensagem principal e as cenas certas, escritos para o seu público e para cada plataforma."
+        },
+        "shots": {
+          "title": "Cenas",
+          "body": "Cada cena gerada a partir do roteiro ou feita com as suas próprias fotos e vídeos."
+        },
+        "sound": {
+          "title": "Voz e música",
+          "body": "Uma locução natural e uma trilha de fundo, com o volume ajustado para alto-falantes de celular."
+        },
+        "captions": {
+          "title": "Legendas",
+          "body": "Legendas sincronizadas palavra por palavra, com as suas fontes e cores, para o vídeo funcionar sem som."
+        }
       },
-      "approvals": {
-        "title": "Aprovações do jeito da sua equipe",
-        "body": "Convide colegas com o papel certo. Criadores fazem os rascunhos, proprietários aprovam, e nada é publicado por acidente."
-      },
-      "calendar": {
-        "title": "Um calendário que publica por você",
-        "body": "Planeje o próximo mês, arraste publicações para novos horários e deixe o Studio publicar no momento certo para cada plataforma."
-      },
-      "languages": {
-        "title": "Onze idiomas",
-        "body": "Trabalhe em inglês, francês, espanhol, árabe, alemão, italiano, português, hindi ou chinês, e crie vídeos para os clientes no idioma deles."
-      },
-      "library": {
-        "title": "Ideias na hora que você precisa",
-        "body": "Explore uma biblioteca de vídeos curtos que já funcionaram e use um deles como ponto de partida para o seu."
-      },
-      "pricing": {
-        "title": "Um preço simples por canal",
-        "body": "Pague um preço fixo para cada canal social que você conectar, com vídeos incluídos. Sem medidores para acompanhar e sem cobranças surpresa."
+      "scriptAlt": "A aba Roteiro de um projeto: gancho, público, tom e os roteiros de TikTok e YouTube Shorts",
+      "scriptCaption": "Você pode ler e alterar cada roteiro e cada lista de cenas."
+    },
+    "plan": {
+      "eyebrow": "Planeje e agende",
+      "title": "O seu mês, em um só calendário.",
+      "body": "Os posts aprovados ocupam os horários livres e são publicados em cada conta na hora certa. Abra qualquer post para ver a prévia, mudar o horário, aprovar ou criar de novo.",
+      "alt": "O calendário de outubro, com posts agendados e publicados ao longo do mês"
+    },
+    "publish": {
+      "eyebrow": "Publique em todo lugar",
+      "title": "Um post, todas as suas plataformas.",
+      "body": "Conecte as suas contas uma vez. O Studio adapta cada post ao formato certo e publica conforme o agendamento.",
+      "platformsLabel": "Plataformas em que o Studio publica",
+      "points": {
+        "auto": {
+          "title": "Publicação automática",
+          "body": "Os posts saem no horário escolhido em cada plataforma, e as visualizações e o engajamento voltam para o Studio."
+        },
+        "drafts": {
+          "title": "Rascunhos quando você quiser",
+          "body": "Envie os posts do TikTok para os seus rascunhos, para adicionar um som em alta no app antes de postar."
+        }
       }
+    },
+    "autopilot": {
+      "eyebrow": "Planejador mensal, Blitz e automações",
+      "title": "Um prompt, um mês de posts.",
+      "body": "Descreva o seu negócio e o que você quer alcançar. O Studio planeja o mês, escreve cada post e cria cada um antes da data.",
+      "gridCaption": "Um mês de posts para negócios de exemplo, todos feitos pelo Studio.",
+      "items": {
+        "planner": {
+          "title": "Planejar meu mês",
+          "body": "Um calendário completo de ideias, legendas e formatos a partir de um prompt. Mude o que quiser antes de aprovar."
+        },
+        "blitz": {
+          "title": "Blitz",
+          "body": "Deslize por ideias de posts prontas: fique com as que você gostar e pule o resto."
+        },
+        "automations": {
+          "title": "Automações",
+          "body": "Publicação semanal ou mensal que continua sozinha, dentro do que o seu plano inclui."
+        }
+      }
+    },
+    "insights": {
+      "eyebrow": "Análises",
+      "title": "Veja o que funciona e faça mais disso.",
+      "body": "Visualizações, tempo de exibição e engajamento de cada post, de todas as plataformas, em um só lugar, para que cada briefing seja melhor que o anterior.",
+      "alt": "A página de análises: visualizações em 30 dias, tempo de exibição, engajamento e um gráfico de atividade diária"
+    },
+    "brand": {
+      "eyebrow": "Kit de marca e aprovações",
+      "title": "Suas cores, sua voz, sua aprovação.",
+      "alt": "A biblioteca de imagens de uma padaria: pães, doces, café e um logotipo",
+      "items": {
+        "brand": {
+          "title": "Sua marca em cada post",
+          "body": "Logo, cores, fontes e tom de voz ficam em um kit de marca que todo post segue, com as suas próprias fotos na biblioteca de imagens."
+        },
+        "approvals": {
+          "title": "Aprovações do jeito da sua equipe",
+          "body": "Convide colegas com o papel certo. Criadores fazem os rascunhos, proprietários aprovam, e nada é publicado por acidente."
+        },
+        "languages": {
+          "title": "Onze idiomas",
+          "body": "Trabalhe em inglês, francês, espanhol, árabe, alemão, italiano, português, hindi ou chinês, e crie vídeos para os clientes no idioma deles."
+        }
+      }
+    },
+    "pricing": {
+      "eyebrow": "Preços",
+      "title": "Um preço simples por canal",
+      "per": "por canal por mês",
+      "body": "Cada canal inclui {videos} vídeos curtos em HD por mês, ou até {quick} posts rápidos: carrosséis, slideshows e vídeos de texto contam como ¼ de vídeo.",
+      "points": {
+        "billing": "Pague por semana, mês ou ano",
+        "vat": "Preços sem impostos",
+        "cancel": "Cancele quando quiser"
+      },
+      "cta": "Ver preços"
     },
     "closing": {
       "eyebrow": "Pronto quando você estiver",
-      "title": "Seu primeiro vídeo está a dez minutos de distância.",
+      "title": "Crie o seu primeiro post hoje.",
       "body": "Crie sua conta, adicione seu negócio e sua marca, conecte uma plataforma e faça seu primeiro vídeo. A configuração guiada te acompanha em cada passo.",
       "primaryCta": "Começar teste gratuito",
-      "secondaryCta": "Comparar planos",
+      "secondaryCta": "Ver preços",
       "fineprint": "Preços sem impostos. Você pode cancelar quando quiser nas configurações de cobrança."
     },
     "footer": {
-      "tagline": "Vídeos curtos com IA e publicação para pequenos negócios.",
+      "tagline": "Vídeos curtos e posts para pequenos negócios: criados, planejados e publicados em um só lugar.",
+      "productAria": "Produto",
+      "productTitle": "Produto",
       "copyright": "© {year} {entity}",
       "legalAria": "Jurídico",
       "legalTitle": "Jurídico"
-    },
-    "flow": {
-      "eyebrow": "Do briefing à publicação",
-      "title": "Veja um vídeo ser feito.",
-      "body": "Seis etapas, uma tela por vez. Estas são telas reais do Studio, com os dados de uma padaria de exemplo.",
-      "note": "Telas da demonstração do Studio, com dados de exemplo da Leeds Sourdough, uma padaria fictícia.",
-      "roleCarousel": "carrossel",
-      "roleSlide": "slide",
-      "stepsLabel": "Etapas",
-      "slideLabel": "{current} de {total}",
-      "previous": "Etapa anterior",
-      "next": "Próxima etapa",
-      "pause": "Pausar a apresentação",
-      "play": "Reproduzir a apresentação",
-      "brief": {
-        "tab": "Briefing",
-        "title": "Escreva uma linha",
-        "body": "Diga do que trata o vídeo ou cole uma página da web. O Studio escolhe as plataformas, a duração e o kit de marca, e você pode mudar qualquer um.",
-        "alt": "A tela Criar com um briefing sobre um pão de centeio e um botão Gerar"
-      },
-      "script": {
-        "tab": "Roteiro",
-        "title": "Leia o roteiro e a lista de cenas",
-        "body": "O Studio escreve um gancho, uma mensagem principal e um roteiro para cada formato, com as cenas certas. Reescreva uma linha ou peça outra versão.",
-        "alt": "A aba Roteiro de um projeto: gancho, público, tom e os roteiros de TikTok e YouTube Shorts"
-      },
-      "generate": {
-        "tab": "Gerar",
-        "title": "Imagens, voz e música",
-        "body": "O Studio gera cada cena com modelos de IA de vídeo e imagem, ou usa suas fotos e imagens de banco, e adiciona voz, música e legendas com a sua marca.",
-        "alt": "A biblioteca de imagens de uma padaria: pães, doces, café e um logotipo"
-      },
-      "review": {
-        "tab": "Revisão",
-        "title": "Confira cada versão antes de publicar",
-        "body": "Assista a cada formato lado a lado. Verificações automáticas, incluindo segurança do conteúdo e seu kit de marca, rodam antes da sua aprovação.",
-        "alt": "Uma variante do TikTok pronta para revisão, com as verificações de qualidade aprovadas, incluindo a segurança do conteúdo"
-      },
-      "calendar": {
-        "tab": "Calendário",
-        "title": "Planeje o próximo mês",
-        "body": "Os vídeos aprovados entram nos horários livres do calendário e são publicados em cada conta no momento certo.",
-        "alt": "O calendário de setembro com posts agendados de manhã e à noite"
-      },
-      "analytics": {
-        "tab": "Análises",
-        "title": "Veja o que funcionou",
-        "body": "Visualizações, tempo de exibição e engajamento de cada vídeo em um só lugar, para o próximo briefing ser melhor.",
-        "alt": "A página de análises: visualizações em 30 dias, tempo de exibição, engajamento e um gráfico de atividade diária"
-      }
     }
   },
   "pricing": {
@@ -4537,7 +4734,7 @@
       "panelLabel": "Sobre o PostMind Studio",
       "valueStatement": "Vídeos curtos para cada canal, feitos a partir de algumas linhas sobre o seu negócio.",
       "valueDetail": "O Studio escreve o roteiro, cria o vídeo com a sua marca e agenda nos canais que você conectar.",
-      "panelAlt": "Um vídeo do TikTok de um pão de fermentação natural no PostMind Studio, com as verificações de qualidade aprovadas."
+      "panelAlt": "Dois posts feitos com o PostMind Studio: um vídeo com IA de um pão de fermentação natural e uma apresentação de chalés à beira-mar."
     },
     "errors": {
       "invalidCredentials": "Esse e-mail e essa senha não correspondem a nenhuma conta.",
@@ -5107,7 +5304,9 @@
           "reason": "Motivo da remoção",
           "button": "Remover substituição",
           "cleared": "Substituição removida",
-          "trialWarning": "A Stripe ainda mostra um teste: remover a substituição traz de volta os limites do teste. Para o evitar, salve primeiro uma substituição com “Encerrar o teste agora”."
+          "trialWarning": "A Stripe ainda mostra um teste: remover a substituição traz de volta os limites do teste. Para o evitar, salve primeiro uma substituição com “Encerrar o teste agora”.",
+          "confirmTitle": "Remover esta substituição?",
+          "confirmButton": "Sim, remover"
         },
         "trial": {
           "title": "Teste",
@@ -5675,7 +5874,26 @@
       "someWithoutAccount": "Criadas, mas não publicadas automaticamente (nenhuma conta conectada): {platforms}.",
       "connectAccount": "Conectar uma conta",
       "ugcActors": "Fazer vídeos de depoimento e de produto com atores UGC",
-      "ugcActorsHint": "Um ator gerado fala sobre o seu produto. Cada um desses vídeos usa {count, number} dos seus vídeos. Somente em inglês."
+      "ugcActorsHint": "Um ator gerado fala sobre o seu produto. Cada um desses vídeos usa {count, number} dos seus vídeos. Somente em inglês.",
+      "prompt": {
+        "title": "Seu próximo mês, planejado",
+        "body": "Escolha quando começa. O Studio escreve cada tema a partir do seu site, do kit de marca e das publicações anteriores, e você confere a lista antes de qualquer coisa ser feita.",
+        "summary": "{perDay} · {videos, number}% vídeos · {platforms}",
+        "yourTimes": "Seus horários de publicação",
+        "noPlatforms": "nenhuma plataforma ainda",
+        "options": "Mais opções"
+      },
+      "preview": {
+        "title": "O que o Studio vai fazer",
+        "upTo": "Publicações, no máximo",
+        "split": "Vídeos: {videos, number} · Apresentações: {slideshows, number}",
+        "dates": "Datas",
+        "range": "{start} – {end}",
+        "networks": "Redes",
+        "noNetworks": "Nenhuma escolhida ainda",
+        "review": "O Studio escreve primeiro os temas. Você revisa e edita a lista antes de qualquer coisa ser feita.",
+        "rolling": "Depois, cada publicação é feita cerca de 3 dias antes de sair, então suas alterações até lá ainda valem."
+      }
     },
     "allowance": {
       "title": "Este mês",
@@ -5839,7 +6057,11 @@
       "removeConfirm": "A publicação dela é cancelada e o horário liberado. O restante do plano continua.",
       "removedToast": "Publicação removida",
       "createsAt": "Programada para ser criada em {date}",
-      "createsLater": "{count, plural, one {Mais # publicação será criada perto do horário de publicação.} other {Mais # publicações serão criadas perto do horário de publicação.}}"
+      "createsLater": "{count, plural, one {Mais # publicação será criada perto do horário de publicação.} other {Mais # publicações serão criadas perto do horário de publicação.}}",
+      "approve": "Aprovar",
+      "approveAria": "Aprovar “{title}”",
+      "approved": "Aprovada: sai no horário dela",
+      "rolling": "O Studio faz cada publicação cerca de 3 dias antes do horário; uma publicação em espera mostra quando será criada."
     },
     "list": {
       "title": "Planos mensais",
@@ -5850,6 +6072,24 @@
       "emptyBody": "Deixe o Studio preparar um mês de vídeos e apresentações e depois gere e agende tudo de uma vez.",
       "range": "{start} – {end}",
       "posts": "{count, plural, one {# publicação} other {# publicações}}"
+    },
+    "timeline": {
+      "week": "Semana {n, number}",
+      "range": "{start} – {end}"
+    },
+    "bulk": {
+      "label": "Ações em massa",
+      "selectAll": "Selecionar tudo",
+      "selected": "{count, number} selecionadas",
+      "selectItem": "Selecionar “{title}”",
+      "progress": "Processando… {done, number} de {total, number}",
+      "summaryOk": "Pronto: {count, number} alteradas.",
+      "summaryPartial": "{ok, number} feitas, {failed, number} não puderam ser alteradas. Tente uma por uma.",
+      "regenerate": "Novos temas ({count, number})",
+      "delete": "Excluir ({count, number})",
+      "deleteConfirmTitle": "Excluir as publicações selecionadas ({count, number})?",
+      "deleteConfirmBody": "Elas saem deste rascunho. Nada foi feito ainda.",
+      "approveAll": "Aprovar todas as pendentes ({count, number})"
     }
   },
   "errorPage": {
@@ -6136,7 +6376,9 @@
       "beats": "Roteiro",
       "stillAlt": "Uma imagem da sua biblioteca",
       "mentionsBusiness": "Cita sua empresa",
-      "allowanceQuick": "Usa ¼ de vídeo do seu plano se você mantiver"
+      "allowanceQuick": "Usa ¼ de vídeo do seu plano se você mantiver",
+      "hintEdit": "Editar antes",
+      "hintDrag": "Ou arraste o cartão"
     },
     "keep": {
       "title": "Manter",
@@ -6148,7 +6390,8 @@
       "editHint": "Abre a publicação para você mudar o texto e as imagens.",
       "cancel": "Cancelar",
       "confirm": "Manter",
-      "previewNote": "{units, plural, one {Ela é criada agora e usa # vídeo do seu plano.} other {Ela é criada agora e usa # vídeos do seu plano.}}"
+      "previewNote": "{units, plural, one {Ela é criada agora e usa # vídeo do seu plano.} other {Ela é criada agora e usa # vídeos do seu plano.}}",
+      "noPublishRole": "Sua função não pode publicar nem agendar, então uma publicação mantida abre primeiro para edição."
     },
     "skip": {
       "title": "Por que pular? (opcional)",
@@ -6221,6 +6464,9 @@
       "noNudges": "Nada ainda. Os motivos para pular e o que você mantém ajustam isso aos poucos.",
       "reset": "Apagar o que o Blitz aprendeu",
       "percent": "{value}%"
+    },
+    "readOnly": {
+      "role": "Sua função pode ver estas publicações, mas não pode mantê-las nem pulá-las. Peça a um proprietário ou administrador."
     }
   },
   "automations": {
@@ -6232,7 +6478,19 @@
       "pickBody": "Uma automação publica para uma empresa. Escolha uma no topo da página.",
       "loading": "Carregando automações…",
       "empty": "Nenhuma automação ainda",
-      "emptyBody": "Configure uma e o Studio cria e publica seu conteúdo toda semana."
+      "emptyBody": "Configure uma e o Studio cria e publica seu conteúdo toda semana.",
+      "columns": {
+        "name": "Automação",
+        "status": "Status",
+        "makes": "O que faz",
+        "next": "Próxima publicação"
+      },
+      "next": {
+        "review": "Depois da sua revisão",
+        "paused": "Pausada",
+        "draft": "Não iniciada",
+        "none": "Nada previsto"
+      }
     },
     "status": {
       "DRAFT": "Rascunho",
@@ -6299,7 +6557,9 @@
       "back": "Voltar",
       "next": "Avançar",
       "create": "Criar e iniciar",
-      "started": "Automação iniciada. As primeiras publicações estão sendo escritas."
+      "started": "Automação iniciada. As primeiras publicações estão sendo escritas.",
+      "stepOf": "Etapa {n, number} de {total, number}",
+      "stepDone": "(concluído)"
     },
     "detail": {
       "back": "Todas as automações",
@@ -6336,7 +6596,10 @@
       "reroll": "Novo assunto",
       "rerolled": "Chegou um novo assunto.",
       "remove": "Remover",
-      "keep": "Manter"
+      "keep": "Manter",
+      "runs": "Execuções",
+      "runRange": "{start} – {end}",
+      "runPosted": "{posted, number} de {total, number} publicadas"
     },
     "review": {
       "title": "Revisão: {name}",

@@ -621,19 +621,9 @@
       "summaryPlatforms": "{count, plural, =0 {Keine Plattformen} one {# Plattform} other {# Plattformen}}",
       "summaryAutoPublish": "{count, plural, =0 {automatische Veröffentlichung: kein Konto gewählt} one {wird auf # Konto gepostet} other {wird auf # Konten gepostet}}",
       "summaryBrandKit": "Brand-Kit aktiv",
-      "options": "Optionen",
       "generate": "Generieren",
       "createSlideshow": "Diashow erstellen",
       "sourcesAria": "Was möchten Sie erstellen?",
-      "sources": {
-        "BRIEF": "Video",
-        "SLIDESHOW": "Diashow",
-        "UPLOAD": "Video hochladen",
-        "UGC": "UGC-Darsteller",
-        "CAROUSEL": "Karussell (Post-Karten)",
-        "HOOK_DEMO": "Hook + Demo",
-        "WALL_OF_TEXT": "Textwand"
-      },
       "templatedNote": "Plattformen und Länge werden von der Vorlage vorgegeben. Ihr Text oben ist optional – er ergänzt die Gliederung der Vorlage um Details.",
       "noBusiness": {
         "title": "Wählen Sie zuerst ein Unternehmen aus",
@@ -642,18 +632,61 @@
       },
       "toast": {
         "slideshowDrafted": "Diashow entworfen – prüfen Sie die Folien und starten Sie dann die Generierung.",
-        "generatingUpload": "Wird generiert – Studio untertitelt Ihr Video.",
-        "generatingScript": "Wird generiert – Studio schreibt das Skript.",
+        "generatingUpload": "Ihr Video wird erstellt – Untertitel werden hinzugefügt …",
+        "generatingScript": "Ihr Video wird erstellt …",
         "draftNotStarted": "Als Entwurf gespeichert, aber die Generierung wurde nicht gestartet: {error}",
         "generatingCarousel": "Dein Karussell wird geschrieben …",
-        "generatingFormat": "Wird erstellt – Studio schreibt den Text und erstellt dein Video."
+        "generatingFormat": "Ihr Video wird erstellt …"
       },
       "planMonth": "Oder planen Sie einen ganzen Monat mit Videos und Diashows",
       "summaryNoAccounts": "keine verbundenen Konten: zur Prüfung gespeichert",
       "summaryForReview": "zur Prüfung gespeichert",
       "createCarousel": "Karussell erstellen",
       "summaryCarousel": "{count} Posts · {theme, select, dark {dunkle} other {helle}} Karten",
-      "summarySeconds": "{count, number} s"
+      "summarySeconds": "{count, number} s",
+      "formats": {
+        "BRIEF": {
+          "name": "KI-Video",
+          "line": "Skript, Aufnahmen und Stimme für Sie"
+        },
+        "SLIDESHOW": {
+          "name": "Diashow",
+          "line": "Fotos mit Bildtexten und Musik"
+        },
+        "CAROUSEL": {
+          "name": "Karussell",
+          "line": "Ein Beitrag zum Durchwischen"
+        },
+        "UPLOAD": {
+          "name": "Ihr Video",
+          "line": "Untertitel und Formate für Ihr eigenes Video"
+        },
+        "UGC": {
+          "name": "Creator-Video (UGC)",
+          "line": "Eine KI-Person spricht über Ihr Produkt"
+        },
+        "HOOK_DEMO": {
+          "name": "Hook + Demo",
+          "line": "Erst eine Reaktion als Hook, dann Ihre Demo"
+        },
+        "WALL_OF_TEXT": {
+          "name": "Textwand",
+          "line": "Ein Textblock über einem ruhigen Video"
+        }
+      },
+      "basicDefault": "Ihr Tarif beginnt mit „Diashow“ – sie verbraucht ¼ eines Videos Ihres Kontingents. Sie können jedes Format wählen.",
+      "moreOptions": "Weitere Optionen",
+      "usesQuick": "Verbraucht ¼ Video",
+      "usesVideos": "Verbraucht {count, number} Ihrer Videos",
+      "allowanceLeft": "{left} von {limit} übrig {period, select, week {diese Woche} other {diesen Monat}}",
+      "submitShortcut": "Strg oder ⌘ + Eingabe zum Generieren",
+      "groups": {
+        "format": "Plattformen und Länge",
+        "brand": "Marke und Sprache",
+        "message": "Zielgruppe und Handlungsaufforderung",
+        "publishing": "Freigabe und Zeitplan",
+        "quality": "Qualität"
+      }
     },
     "problems": {
       "businessRequired": "Wählen Sie zuerst ein Unternehmen aus.",
@@ -693,7 +726,6 @@
         "defaultKit": "{name} (Standard)"
       },
       "advanced": {
-        "toggle": "Erweiterte Optionen",
         "audience": "Zielgruppe",
         "audiencePlaceholder": "z. B. Erstkäufer von Wohneigentum",
         "cta": "Call-to-Action",
@@ -894,6 +926,27 @@
       },
       "length": "Länge",
       "seconds": "{count, number} s"
+    },
+    "videoModel": {
+      "legend": "Videomodell",
+      "automatic": "Automatisch (empfohlen)",
+      "automaticLine": "Studio wählt für jeden Clip ein verfügbares Modell und wechselt, wenn eines ausgelastet ist.",
+      "speed": "{minutes, number} Min. pro Clip",
+      "maxClip": "bis {seconds, number} s",
+      "costStaff": "{amount} pro 6-s-Clip",
+      "droppedChoice": "Das gewählte Modell ist in dieser Qualitätsstufe nicht verfügbar, daher wird „Automatisch“ verwendet.",
+      "hint": {
+        "BRIEF": "Erstellt die KI-Clips in diesem Video.",
+        "UGC": "Erstellt die KI-Szenen. Die Clips der KI-Person nutzen immer die Creator-Modelle.",
+        "HOOK_DEMO": "Erstellt die Reaktion als Hook."
+      },
+      "capability": {
+        "text_to_video": "Nur Text",
+        "image_to_video": "Nur Foto",
+        "both": "Text oder Foto"
+      },
+      "change": "Modell ändern",
+      "hide": "Modelle ausblenden"
     }
   },
   "review": {
@@ -1427,7 +1480,7 @@
       "none": "Noch kein Video."
     },
     "menu": {
-      "trigger": "Weitere Aktionen für {name}",
+      "trigger": "Weitere Aktionen",
       "download": "Video herunterladen",
       "templateDescription": "Behalte Formate, Szenenaufbau und Veröffentlichungsvorgaben dieses Videos und starte neue Videos damit."
     }
@@ -1841,7 +1894,15 @@
       "agendaAria": "Agenda",
       "emptyMonth": "In diesem Monat ist nichts geplant oder veröffentlicht.",
       "moreOpen": "{count, plural, one {+# freier Slot} other {+# freie Slots}}",
-      "morePlanned": "+{count} geplant"
+      "morePlanned": "+{count} geplant",
+      "moreAria": "Alles am {date} anzeigen ({count, number} weitere)",
+      "dayAria": "Beiträge an diesem Tag",
+      "weekAria": "Tage der Woche",
+      "todayAria": "{date}, heute",
+      "today": "Heute",
+      "quietDay": "Nichts geplant",
+      "emptyWeek": "In dieser Woche ist nichts geplant oder veröffentlicht.",
+      "emptyDayView": "An diesem Tag ist nichts geplant oder veröffentlicht."
     },
     "event": {
       "untitled": "Unbenanntes Projekt",
@@ -1863,7 +1924,11 @@
       "newTime": "Neuer Zeitpunkt",
       "cancel": "Abbrechen",
       "moving": "Wird verschoben …",
-      "submit": "Verschieben"
+      "submit": "Verschieben",
+      "undo": "Rückgängig",
+      "undone": "Zurück auf {date} verschoben",
+      "movedLive": "„{name}“ auf {date} verschoben. Rückgängig machen geht in der Benachrichtigung.",
+      "undoneLive": "„{name}“ zurück auf {date} verschoben."
     },
     "drip": {
       "title": "Posting-Warteschlange",
@@ -1987,6 +2052,48 @@
           "none": "leer"
         }
       }
+    },
+    "previousWeek": "Vorherige Woche",
+    "nextWeek": "Nächste Woche",
+    "previousDay": "Vorheriger Tag",
+    "nextDay": "Nächster Tag",
+    "views": {
+      "label": "Kalenderansicht",
+      "month": "Monat",
+      "week": "Woche",
+      "day": "Tag"
+    },
+    "filters": {
+      "label": "Filter",
+      "platformLabel": "Plattform",
+      "statusLabel": "Status",
+      "sourceLabel": "Quelle",
+      "allPlatforms": "Alle Plattformen",
+      "anyStatus": "Jeder Status",
+      "anySource": "Jede Quelle",
+      "clear": "Filter zurücksetzen",
+      "showing": "{shown, number} von {total, number} Beiträgen angezeigt",
+      "status": {
+        "SCHEDULED": "Geplant",
+        "PUBLISHING": "Wird veröffentlicht",
+        "PUBLISHED": "Veröffentlicht",
+        "FAILED": "Fehlgeschlagen",
+        "PLANNED": "In Arbeit (Monatsplan)"
+      },
+      "source": {
+        "plan": "Monatsplan",
+        "automation": "Automatisierung",
+        "manual": "Von Hand erstellt"
+      }
+    },
+    "postingTimes": {
+      "open": "Veröffentlichungszeiten",
+      "title": "Veröffentlichungszeiten",
+      "description": "Wann die freigegebenen Videos dieses Unternehmens ohne Datum veröffentlicht werden. Gespeicherte Zeiten erscheinen im Kalender als freie Termine."
+    },
+    "campaign": {
+      "plan": "Monatsplan · {date}",
+      "automation": "Automatisierung · {name}"
     }
   },
   "business": {
@@ -2788,44 +2895,55 @@
     "dashboard": {
       "eyebrow": "Verwalten",
       "title": "Analysen",
-      "description": "Wie Ihre veröffentlichten Videos abschneiden und was ihre Erstellung kostet.",
       "rangeLabel": "Zeitraum",
       "rangeOption": "{days, plural, one {# Tag} other {# Tage}}",
-      "descriptionNoCost": "Wie Ihre veröffentlichten Videos abschneiden."
+      "scopeAll": "Alle Unternehmen",
+      "scopeBusiness": "{name}",
+      "scopeSelected": "Ausgewähltes Unternehmen",
+      "window": "letzte {days, plural, one {# Tag} other {# Tage}}",
+      "costScope": "Die Ausgaben umfassen alle Unternehmen Ihrer Organisation.",
+      "loadingAria": "Analysen werden geladen"
     },
     "metrics": {
       "views": "Aufrufe",
-      "watchTime": "Wiedergabezeit",
-      "engagement": "Interaktionen"
+      "watchTime": "Wiedergabezeit"
     },
     "overview": {
       "loadingAria": "Übersicht wird geladen",
-      "viewsHeading": "Aufrufe · {days, plural, one {letzter Tag} other {letzte # Tage}}",
-      "summary": "aus {publications, plural, one {# Veröffentlichung} other {# Veröffentlichungen}} · {projects, plural, one {# Projekt gestartet} other {# Projekte gestartet}}",
+      "summary": "Ihre {posts, plural, one {# Beitrag} other {# Beiträge}} der letzten {days, plural, one {# Tag} other {# Tage}} erreichten {count, plural, one {{views} Aufruf} other {{views} Aufrufe}} bei {rate} Interaktionsrate.",
       "watchTime": "Wiedergabezeit",
-      "engagement": "Interaktionen",
-      "engagementHint": "{rate} der Aufrufe",
-      "shares": "Geteilt",
-      "savesHint": "{saves, plural, one {{formatted}-mal gespeichert} other {{formatted}-mal gespeichert}}",
-      "spend": "Ausgaben",
-      "spendHint": "Anbieterkosten",
-      "pending": "…"
+      "engagementHint": "{count} Likes, Kommentare, Shares und Speicherungen",
+      "regionLabel": "Zusammenfassung",
+      "summaryNoViews": "In den letzten {days, plural, one {# Tag} other {# Tagen}} {posts, plural, one {ging # Beitrag} other {gingen # Beiträge}} online. Aufrufe erscheinen meist etwa einen Tag nach der Veröffentlichung.",
+      "summaryLead": "{platform} brachte {share} der Aufrufe.",
+      "views": "Aufrufe",
+      "viewsHint": "{publications, plural, one {# Beitrag} other {# Beiträge}} · {projects, plural, one {# Projekt} other {# Projekte}} gestartet",
+      "watchTimeHint": "durchschnittlich {avg} pro Aufruf",
+      "engagementRate": "Interaktionsrate",
+      "sharesSaves": "Shares und Speicherungen",
+      "sharesSavesHint": "{shares} Shares · {saves} Speicherungen",
+      "empty": {
+        "title": "Keine Beiträge in den letzten {days, plural, one {# Tag} other {# Tagen}} veröffentlicht",
+        "body": "Analysen erscheinen etwa einen Tag, nachdem ein Beitrag online ist. Wählen Sie einen längeren Zeitraum oder veröffentlichen Sie ein Video aus einem Ihrer Projekte.",
+        "action": "Zu den Projekten"
+      },
+      "windowNote": "Summen für die in diesem Zeitraum veröffentlichten Beiträge, gezählt bis jetzt."
     },
     "trend": {
-      "title": "Tägliche Aktivität",
+      "title": "Wachstum und Reichweite",
       "metricLabel": "Kennzahl",
       "loadingAria": "Diagramm wird geladen",
       "total": {
-        "views": "{count, plural, one {{value} Aufruf} other {{value} Aufrufe}} im Zeitraum",
-        "watchTime": "{value} Wiedergabezeit im Zeitraum",
-        "engagement": "{value} Interaktionen im Zeitraum"
+        "views": "{count, plural, one {{value} neuer Aufruf} other {{value} neue Aufrufe}} in diesem Zeitraum",
+        "watchTime": "{value} neue Wiedergabezeit in diesem Zeitraum"
       },
       "chartLabel": {
         "views": "Aufrufe pro Tag, {days, plural, one {letzter Tag} other {letzte # Tage}}",
-        "watchTime": "Wiedergabezeit pro Tag, {days, plural, one {letzter Tag} other {letzte # Tage}}",
-        "engagement": "Interaktionen pro Tag, {days, plural, one {letzter Tag} other {letzte # Tage}}"
+        "watchTime": "Wiedergabezeit pro Tag, {days, plural, one {letzter Tag} other {letzte # Tage}}"
       },
-      "estimated": "Einige Tage sind Schätzungen: Es fehlten Messwerte, daher wird der Zuwachs gleichmäßig auf die Lücke verteilt."
+      "estimated": "Einige Tage sind Schätzungen: Es fehlten Messwerte, daher wird der Zuwachs gleichmäßig auf die Lücke verteilt.",
+      "description": "Neue Aufrufe pro Tag über alle Ihre Beiträge",
+      "quiet": "In diesem Zeitraum noch nichts Neues. Das Diagramm füllt sich, sobald Ihre Beiträge angesehen werden."
     },
     "platforms": {
       "title": "Nach Plattform",
@@ -2835,15 +2953,16 @@
       "hint": "{posts, plural, one {# Beitrag} other {# Beiträge}} · {engagement} Interaktionen"
     },
     "leaderboard": {
-      "title": "Top-Videos",
-      "description": "Veröffentlichungen nach Aufrufen sortiert",
+      "title": "Top-Beiträge",
+      "description": "Die Beiträge dieses Zeitraums mit den meisten Aufrufen",
       "empty": "In diesem Zeitraum wurde nichts veröffentlicht.",
       "listLabel": "Top-Veröffentlichungen",
       "untitled": "Beitrag ohne Titel",
       "meta": "{platform} · {date}",
       "openOn": "Auf {platform} öffnen",
       "analyticsFor": "Analysen für „{caption}“",
-      "analyticsForUntitled": "Analysen für Beitrag ohne Titel"
+      "analyticsForUntitled": "Analysen für Beitrag ohne Titel",
+      "views": "Aufrufe"
     },
     "cost": {
       "title": "Ausgaben",
@@ -2892,7 +3011,8 @@
         "avgWatched": "Ø angesehen",
         "likes": "Likes",
         "commentsShares": "Kommentare · geteilt",
-        "commentsSharesValue": "{comments} · {shares}"
+        "commentsSharesValue": "{comments} · {shares}",
+        "saves": "Speicherungen"
       },
       "viewsOverTime": {
         "title": "Aufrufe im Zeitverlauf",
@@ -2928,6 +3048,39 @@
         "body": "Er wurde möglicherweise entfernt, oder der Link ist falsch.",
         "action": "Zurück zu den Analysen"
       }
+    },
+    "change": {
+      "up": "<n>{pct}</n> mehr als im Vorzeitraum",
+      "down": "<n>{pct}</n> weniger als im Vorzeitraum",
+      "flat": "Gleichauf mit dem Vorzeitraum"
+    },
+    "engagement": {
+      "title": "Interaktionen",
+      "description": "Neue Likes, Kommentare, Shares und Speicherungen pro Tag",
+      "total": "Neue Interaktionen in diesem Zeitraum: {value}",
+      "chartLabel": "Interaktionen pro Tag, letzte {days, plural, one {# Tag} other {# Tage}}",
+      "quiet": "In diesem Zeitraum noch keine Likes, Kommentare, Shares oder Speicherungen.",
+      "mixTitle": "Woraus sie bestanden",
+      "mixRate": "{rate} der Aufrufe der Beiträge dieses Zeitraums",
+      "mixNoViews": "Die Beiträge dieses Zeitraums haben noch keine Aufrufe.",
+      "mixLabel": "Interaktionen nach Art",
+      "mixEmpty": "Die Beiträge dieses Zeitraums haben noch keine Interaktionen.",
+      "parts": {
+        "likes": "Likes",
+        "comments": "Kommentare",
+        "shares": "Shares",
+        "saves": "Speicherungen"
+      }
+    },
+    "bestTimes": {
+      "title": "Beste Zeiten zum Posten",
+      "description": "Wann Ihre Beiträge die meisten Aufrufe erzielt haben, verglichen mit dem besten Zeitfenster",
+      "listLabel": "Beste Veröffentlichungszeiten",
+      "slot": "{day}, {time}",
+      "empty": "Noch keine Beiträge aus den letzten 180 Tagen, aus denen sich lernen lässt.",
+      "basis": "Basierend auf {videos, plural, one {# Beitrag} other {# Beiträgen}} der letzten 180 Tage. Zeiten in {timezone}. Eine Orientierung, keine Regel.",
+      "fromMemory": "Noch zu wenige Beiträge, daher ist dies die übliche Veröffentlichungszeit Ihres Unternehmens. Zeiten in {timezone}.",
+      "littleData": "Bisher erst {videos, plural, one {# Beitrag} other {# Beiträge}}, also nur erste Hinweise; ab {min} werden sie belastbarer. Zeiten in {timezone}."
     }
   },
   "admin": {
@@ -3018,7 +3171,25 @@
         "forceApprovals": "Erzwungene Freigaben",
         "beta": "Beta",
         "users": "Benutzer",
-        "subscriptions": "Abonnements"
+        "subscriptions": "Abonnements",
+        "billing": "Abonnements & Abrechnung"
+      },
+      "menu": {
+        "label": "Admin-Bereiche",
+        "jump": "Zu Bereich wechseln",
+        "halted": "Angehalten",
+        "groups": {
+          "operations": "Betrieb",
+          "content": "Inhalte",
+          "customers": "Kunden",
+          "platform": "Plattform"
+        }
+      },
+      "billingViews": {
+        "label": "Ansicht",
+        "overview": "Übersicht und MRR",
+        "records": "Stripe-Datensätze",
+        "entitlements": "Berechtigungs-Overrides"
       }
     },
     "cost": {
@@ -4271,8 +4442,9 @@
   },
   "marketing": {
     "meta": {
-      "title": "PostMind Studio · KI-Kurzvideos für kleine Unternehmen",
-      "description": "Verwandeln Sie eine kurze Vorgabe in markengerechte Kurzvideos für TikTok, Reels, Shorts, Facebook, LinkedIn und X. Prüfen, freigeben und veröffentlichen Sie alles an einem Ort."
+      "title": "PostMind Studio · Kurzvideos und Beiträge für kleine Unternehmen",
+      "description": "Erstellen, planen und veröffentlichen Sie Kurzvideos und Beiträge für Ihr kleines Unternehmen aus einem einzigen Briefing: Skript, Video, Stimme, Musik und Untertitel in Ihrer Marke, geplant für TikTok, Instagram, YouTube, Facebook, LinkedIn und X.",
+      "ogAlt": "PostMind Studio: Kurzvideos aus einem Briefing erstellen, planen und veröffentlichen"
     },
     "nav": {
       "home": "PostMind Studio Startseite",
@@ -4282,9 +4454,9 @@
       "startTrial": "Kostenlose Testversion starten"
     },
     "hero": {
-      "eyebrow": "KI-Videostudio für kleine Unternehmen",
-      "title": "Ein Monat Kurzvideos, <em>fertig, bevor Ihr Kaffee kalt wird.</em>",
-      "lede": "Sagen Sie Studio, was Sie mitteilen möchten. Es schreibt das Skript, dreht oder beschafft jede Szene, fügt Ihre Stimme, Musik und Untertitel im Stil Ihrer Marke hinzu und schneidet das Video für jede Plattform. Sie geben frei, es veröffentlicht.",
+      "eyebrow": "Videostudio für kleine Unternehmen",
+      "title": "Social-Videos erstellen, planen und veröffentlichen – <em>aus einem einzigen Briefing.</em>",
+      "lede": "Sagen Sie Studio, was Sie sagen möchten. Es schreibt das Skript, erstellt das Video, fügt Stimme, Musik und Untertitel in Ihrer Marke hinzu und plant jeden Beitrag für die Plattformen, die Sie nutzen. Sie geben frei; Studio veröffentlicht.",
       "primaryCta": "Kostenlose Testversion starten",
       "secondaryCta": "Preise ansehen",
       "assurances": {
@@ -4292,146 +4464,171 @@
         "yourBrand": "Ihre Farben, Schriften und Stimme",
         "cancelAnytime": "Jederzeit kündbar"
       },
-      "frames": {
-        "one": "Frisch um 7 Uhr",
-        "two": "Lernen Sie die Bäcker kennen",
-        "three": "Drei Laibe, ein Wochenende"
-      },
-      "slate": {
-        "scene": "Szene 01",
-        "take": "Take 1"
-      },
-      "phoneAlt": "Beispiel für ein Hochformat-Video: ein eingeschnittenes Sauerteigbrot auf Backpapier, mit der Einblendung „Frisch aus dem Ofen um 7“"
-    },
-    "platforms": {
-      "title": "Ein Briefing, für jeden Feed geschnitten"
-    },
-    "steps": {
-      "eyebrow": "So funktioniert’s",
-      "title": "Briefen. Prüfen. Veröffentlichen.",
-      "brief": {
-        "title": "Schreiben Sie ein paar Zeilen",
-        "body": "Beschreiben Sie das Video, fügen Sie eine Webseite ein oder wählen Sie eine Vorlage. Studio erstellt Skript und Drehplan in Sekunden."
-      },
-      "review": {
-        "title": "Schnitt prüfen",
-        "body": "Sehen Sie sich alle Formate nebeneinander an, tauschen Sie eine Einstellung aus, ändern Sie einen Untertitel oder fordern Sie eine weitere Aufnahme an. Nichts wird veröffentlicht, bevor Sie es freigeben."
-      },
-      "publish": {
-        "title": "Nach Zeitplan veröffentlichen",
-        "body": "Veröffentlichen Sie sofort oder planen Sie den kommenden Monat. Studio veröffentlicht auf jedem Konto und bringt Aufrufe, Likes und Kommentare in ein einziges Dashboard zurück."
+      "reelLabel": "Drei Beiträge, erstellt mit PostMind Studio",
+      "madeWith": "Erstellt mit PostMind Studio. Die gezeigten Unternehmen sind Beispiele.",
+      "alts": {
+        "bread": "KI-Video, erstellt mit Studio: ein goldenes Sauerteigbrot auf einem Holzbrett, Dampf steigt auf, die Kamera fährt langsam heran",
+        "market": "KI-Video, erstellt mit Studio: eine Frau geht über einen sonnigen Lebensmittelmarkt und lächelt einem Standbesitzer zu",
+        "coastline": "Diashow, erstellt mit Studio für Ferienhäuser am Meer, mit der Unterschrift „Cottages mit Meerblick für zwei bis sechs“"
       }
     },
-    "samples": {
-      "eyebrow": "Kontaktbogen",
-      "title": "Jedes Format, aus einem Briefing.",
-      "body": "Hochformat für TikTok, Reels und Shorts, quadratisch und Hochformat für Feeds, Breitbild für YouTube und LinkedIn.",
-      "note": "Stockfotos, die die Formate von Studio zeigen, keine Kundenvideos.",
-      "captions": {
-        "market": "Samstagsmarkt, 8 Uhr",
-        "studio": "So formen wir ein Sauerteigbrot",
-        "salon": "Freitagsschnitte, jetzt buchen",
-        "gym": "Kurs um 6 Uhr, noch drei Plätze frei"
+    "motion": {
+      "pause": "Videos pausieren",
+      "play": "Videos abspielen"
+    },
+    "formats": {
+      "eyebrow": "Ein Briefing, jedes Format",
+      "title": "Jede Art von Beitrag, die ein kleines Unternehmen braucht.",
+      "body": "KI-Video, Diashows und Textwand-Beiträge, jeweils für vertikale Feeds gemacht. Studio hat all das aus einzeiligen Briefings erstellt.",
+      "note": "Echte Studio-Ergebnisse für Beispielunternehmen.",
+      "stripLabel": "Beispielbeiträge, erstellt mit Studio",
+      "kinds": {
+        "aiVideo": "KI-Video",
+        "slideshow": "Diashow",
+        "wallOfText": "Textwand"
+      },
+      "types": {
+        "bakery": "Sauerteigbäckerei",
+        "boutique": "Leinenboutique",
+        "gym": "Fitnessstudio",
+        "cottages": "Ferienhäuser am Meer",
+        "florist": "Blumenladen",
+        "coffee": "Café"
       },
       "alts": {
-        "market": "Ein Brotstand auf einem Straßenmarkt, Laibe auf einer rot karierten Decke gestapelt",
-        "studio": "Bemehlte Hände formen Teig auf einer Holzplatte",
-        "salon": "Scheren, ein Rasiermesser und ein Kamm auf einer schwarzen Matte",
-        "gym": "Reihen von Kurzhanteln in einem Ständer im Fitnessstudio"
+        "seedanceBread": "Ein goldenes Sauerteigbrot auf einem Holzbrett, Dampf steigt auf",
+        "pulseStudioText": "Textwand-Beitrag für ein Fitnessstudio: drei kurze Krafteinheiten schlagen eine lange Quälerei, und die erste Stunde ist gratis",
+        "atelierWren": "Falten aus gewaschenem Leinen in Rost und Salbei, mit der Unterschrift „Gewaschenes Leinen in Rost und Salbei“",
+        "greenleafFlorist": "Eine einzelne rote Rose, mit der Unterschrift „Dahlien, Schmuckkörbchen und späte Rosen“",
+        "coastlineStaysText": "Textwand-Beitrag für Ferienhäuser am Meer: Herbst an der Küste, leere Strände, Hunde willkommen",
+        "harbourCoffee": "Espresso läuft in eine weiße Tasse, mit der Unterschrift „Single-Origin-Espresso“",
+        "northsideBakery": "Ein Landbrot vor orangem Hintergrund, mit der Unterschrift „Landbrot, gebacken um 6 Uhr“",
+        "pulseStudio": "Ein Mann trainiert mit einem Widerstandsband, mit der Unterschrift „45-minütige Kurse in kleinen Gruppen“",
+        "coastlineStays": "Cottages über einer felsigen Küste, mit der Unterschrift „Cottages mit Meerblick für zwei bis sechs“"
       }
     },
-    "features": {
-      "eyebrow": "Für kleine Teams gemacht",
-      "title": "Alles, was ein einzelner Marketingverantwortlicher braucht.",
-      "body": "Studio übernimmt die Produktion, damit Sie Ihre Zeit dem Geschäft widmen können, nicht dem Videoschnitt.",
-      "brand": {
-        "title": "Ihre Marke, jedes Mal",
-        "body": "Logo, Farben, Schriften und Tonfall leben in einem Markenkit, an das sich jedes Video hält."
+    "video": {
+      "eyebrow": "Videogenerierung",
+      "title": "Ein fertiges Video aus einem Satz.",
+      "body": "Studio macht aus Ihrem Briefing ein Skript und eine Shotliste, generiert jede Einstellung mit führenden Videomodellen, fügt dann Sprecherstimme, Musik und Untertitel in Ihrer Marke hinzu und schneidet das Ergebnis für jede Plattform.",
+      "briefLabel": "Das Briefing",
+      "brief": "„Eine Frau geht über einen sonnigen Lebensmittelmarkt und lächelt einem Standbesitzer zu.“",
+      "alt": "KI-Video, mit Studio aus diesem Briefing erstellt: eine Frau geht über einen sonnigen Lebensmittelmarkt und lächelt einem Standbesitzer zu",
+      "steps": {
+        "script": {
+          "title": "Skript",
+          "body": "Ein Hook, eine Kernbotschaft und die passenden Einstellungen, geschrieben für Ihr Publikum und jede Plattform."
+        },
+        "shots": {
+          "title": "Einstellungen",
+          "body": "Jede Szene aus dem Skript generiert oder aus Ihren eigenen Fotos und Aufnahmen erstellt."
+        },
+        "sound": {
+          "title": "Stimme und Musik",
+          "body": "Eine natürliche Sprecherstimme und ein Musikbett, ausgepegelt für Smartphone-Lautsprecher."
+        },
+        "captions": {
+          "title": "Untertitel",
+          "body": "Wortgenaue Untertitel in Ihren Schriften und Farben, damit das Video auch ohne Ton funktioniert."
+        }
       },
-      "approvals": {
-        "title": "Freigaben, die zu Ihrem Team passen",
-        "body": "Laden Sie Kollegen mit der passenden Rolle ein. Ersteller entwerfen, Inhaber geben frei, und nichts wird versehentlich veröffentlicht."
-      },
-      "calendar": {
-        "title": "Ein Kalender, der für Sie veröffentlicht",
-        "body": "Planen Sie den kommenden Monat, ziehen Sie Beiträge auf neue Zeitfenster und lassen Sie Studio zur richtigen Zeit für jede Plattform veröffentlichen."
-      },
-      "languages": {
-        "title": "Elf Sprachen",
-        "body": "Arbeiten Sie auf Englisch, Französisch, Spanisch, Arabisch, Deutsch, Italienisch, Portugiesisch, Hindi oder Chinesisch und erstellen Sie Videos für Ihre Kunden in ihrer Sprache."
-      },
-      "library": {
-        "title": "Ideen, wenn Sie sie brauchen",
-        "body": "Durchsuchen Sie eine Bibliothek bewährter Kurzvideos und nutzen Sie eines als Ausgangspunkt für Ihr eigenes."
-      },
-      "pricing": {
-        "title": "Ein einfacher Preis pro Kanal",
-        "body": "Zahlen Sie einen festen Preis für jeden verbundenen Social-Media-Kanal, Videos inklusive. Keine Zähler im Blick behalten, keine überraschenden Rechnungen."
+      "scriptAlt": "Der Skript-Tab eines Projekts: Aufhänger, Zielgruppe, Tonfall und die Skripte für TikTok und YouTube Shorts",
+      "scriptCaption": "Jedes Skript und jede Shotliste können Sie lesen und ändern."
+    },
+    "plan": {
+      "eyebrow": "Planen und terminieren",
+      "title": "Ihr Monat in einem Kalender.",
+      "body": "Freigegebene Beiträge füllen freie Termine und werden zur richtigen Zeit auf jedem Konto veröffentlicht. Öffnen Sie einen Beitrag, um ihn anzusehen, die Uhrzeit zu ändern, ihn freizugeben oder neu zu erstellen.",
+      "alt": "Der Kalender für Oktober mit geplanten und veröffentlichten Beiträgen über den ganzen Monat"
+    },
+    "publish": {
+      "eyebrow": "Überall veröffentlichen",
+      "title": "Ein Beitrag, alle Ihre Plattformen.",
+      "body": "Verbinden Sie Ihre Konten einmal. Studio bringt jeden Beitrag ins richtige Format und veröffentlicht ihn nach Plan.",
+      "platformsLabel": "Plattformen, auf denen Studio veröffentlicht",
+      "points": {
+        "auto": {
+          "title": "Automatisch veröffentlichen",
+          "body": "Beiträge gehen zur gewählten Zeit auf jeder Plattform online, und ihre Aufrufe und Interaktionen kommen zurück in Studio."
+        },
+        "drafts": {
+          "title": "Entwürfe, wenn Sie möchten",
+          "body": "Senden Sie TikTok-Beiträge stattdessen in Ihre Entwürfe, um in der App vor dem Posten einen Trend-Sound hinzuzufügen."
+        }
       }
+    },
+    "autopilot": {
+      "eyebrow": "Monatsplaner, Blitz und Automatisierungen",
+      "title": "Ein Prompt, ein Monat voller Beiträge.",
+      "body": "Beschreiben Sie Ihr Unternehmen und Ihre Ziele. Studio plant den Monat, schreibt jeden Beitrag und erstellt jeden rechtzeitig vor seinem Termin.",
+      "gridCaption": "Ein Monat voller Beiträge für Beispielunternehmen, alle von Studio erstellt.",
+      "items": {
+        "planner": {
+          "title": "Meinen Monat planen",
+          "body": "Ein ganzer Kalender mit Ideen, Texten und Formaten aus einem Prompt. Ändern Sie alles, bevor Sie freigeben."
+        },
+        "blitz": {
+          "title": "Blitz",
+          "body": "Wischen Sie durch fertige Beitragsideen: Behalten Sie, was Ihnen gefällt, und überspringen Sie den Rest."
+        },
+        "automations": {
+          "title": "Automatisierungen",
+          "body": "Wöchentliches oder monatliches Posten, das von selbst weiterläuft, im Rahmen Ihres Kontingents."
+        }
+      }
+    },
+    "insights": {
+      "eyebrow": "Analysen",
+      "title": "Sehen, was funktioniert, und mehr davon machen.",
+      "body": "Aufrufe, Wiedergabezeit und Interaktionen für jeden Beitrag, von jeder Plattform, an einem Ort, damit jedes Briefing besser wird als das letzte.",
+      "alt": "Die Analyseseite: Aufrufe in 30 Tagen, Wiedergabezeit, Interaktionen und ein Diagramm der täglichen Aktivität"
+    },
+    "brand": {
+      "eyebrow": "Brand Kit und Freigaben",
+      "title": "Ihre Farben, Ihre Stimme, Ihre Freigabe.",
+      "alt": "Die Bildbibliothek einer Bäckerei: Brote, Gebäck, Kaffee und ein Logo",
+      "items": {
+        "brand": {
+          "title": "Ihre Marke in jedem Beitrag",
+          "body": "Logo, Farben, Schriften und Tonalität liegen in einem Brand Kit, an das sich jeder Beitrag hält, mit Ihren eigenen Fotos in der Bildbibliothek."
+        },
+        "approvals": {
+          "title": "Freigaben, die zu Ihrem Team passen",
+          "body": "Laden Sie Kollegen mit der passenden Rolle ein. Ersteller entwerfen, Inhaber geben frei, und nichts wird versehentlich veröffentlicht."
+        },
+        "languages": {
+          "title": "Elf Sprachen",
+          "body": "Arbeiten Sie auf Englisch, Französisch, Spanisch, Arabisch, Deutsch, Italienisch, Portugiesisch, Hindi oder Chinesisch und erstellen Sie Videos für Ihre Kunden in ihrer Sprache."
+        }
+      }
+    },
+    "pricing": {
+      "eyebrow": "Preise",
+      "title": "Ein einfacher Preis pro Kanal",
+      "per": "pro Kanal und Monat",
+      "body": "Jeder Kanal enthält {videos} kurze HD-Videos pro Monat oder bis zu {quick} schnelle Beiträge: Karussells, Diashows und Textvideos zählen als ¼ Video.",
+      "points": {
+        "billing": "Wöchentlich, monatlich oder jährlich zahlen",
+        "vat": "Preise zzgl. MwSt.",
+        "cancel": "Jederzeit kündbar"
+      },
+      "cta": "Preise ansehen"
     },
     "closing": {
       "eyebrow": "Bereit, wenn Sie es sind",
-      "title": "Ihr erstes Video ist zehn Minuten entfernt.",
+      "title": "Erstellen Sie heute Ihren ersten Beitrag.",
       "body": "Erstellen Sie Ihr Konto, fügen Sie Ihr Unternehmen und Ihre Marke hinzu, verbinden Sie eine Plattform und erstellen Sie Ihr erstes Video. Die geführte Einrichtung begleitet Sie durch jeden Schritt.",
       "primaryCta": "Kostenlose Testversion starten",
-      "secondaryCta": "Pläne vergleichen",
+      "secondaryCta": "Preise ansehen",
       "fineprint": "Preise verstehen sich zzgl. MwSt. Sie können jederzeit in Ihren Abrechnungseinstellungen kündigen."
     },
     "footer": {
-      "tagline": "KI-Kurzvideos und Veröffentlichung für kleine Unternehmen.",
+      "tagline": "Kurzvideos und Beiträge für kleine Unternehmen: erstellt, geplant und veröffentlicht an einem Ort.",
+      "productAria": "Produkt",
+      "productTitle": "Produkt",
       "copyright": "© {year} {entity}",
       "legalAria": "Rechtliches",
       "legalTitle": "Rechtliches"
-    },
-    "flow": {
-      "eyebrow": "Vom Briefing bis zum Posting",
-      "title": "So entsteht ein Video.",
-      "body": "Sechs Schritte, ein Bildschirm nach dem anderen. Das sind echte Studio-Bildschirme mit den Daten einer Beispielbäckerei.",
-      "note": "Bildschirme aus der Studio-Demo mit Beispieldaten von Leeds Sourdough, einer fiktiven Bäckerei.",
-      "roleCarousel": "Karussell",
-      "roleSlide": "Folie",
-      "stepsLabel": "Schritte",
-      "slideLabel": "{current} von {total}",
-      "previous": "Vorheriger Schritt",
-      "next": "Nächster Schritt",
-      "pause": "Diashow anhalten",
-      "play": "Diashow abspielen",
-      "brief": {
-        "tab": "Briefing",
-        "title": "Eine Zeile schreiben",
-        "body": "Sagen Sie, worum es im Video geht, oder fügen Sie eine Webseite ein. Studio wählt Plattformen, Länge und Brand Kit, und Sie können alles ändern.",
-        "alt": "Der Bildschirm „Erstellen“ mit einem Briefing zu einem Roggenbrot und einer Schaltfläche „Generieren“"
-      },
-      "script": {
-        "tab": "Skript",
-        "title": "Skript und Shotliste lesen",
-        "body": "Studio schreibt einen Aufhänger, eine Kernbotschaft und ein Skript für jedes Format, samt passenden Einstellungen. Ändern Sie eine Zeile oder fordern Sie eine neue Version an.",
-        "alt": "Der Skript-Tab eines Projekts: Aufhänger, Zielgruppe, Tonfall und die Skripte für TikTok und YouTube Shorts"
-      },
-      "generate": {
-        "tab": "Generieren",
-        "title": "Bilder, Stimme und Musik",
-        "body": "Studio erzeugt jede Einstellung mit KI-Video- und Bildmodellen oder nutzt Ihre Fotos und Stockmaterial und ergänzt Stimme, Musik und Untertitel in Ihrem Markenauftritt.",
-        "alt": "Die Bildbibliothek einer Bäckerei: Brote, Gebäck, Kaffee und ein Logo"
-      },
-      "review": {
-        "tab": "Prüfung",
-        "title": "Jede Fassung vor der Veröffentlichung prüfen",
-        "body": "Sehen Sie alle Formate nebeneinander. Automatische Prüfungen, darunter Inhaltssicherheit und Ihr Brand Kit, laufen vor Ihrer Freigabe.",
-        "alt": "Eine TikTok-Variante zur Prüfung, mit bestandenen Qualitätsprüfungen einschließlich Inhaltssicherheit"
-      },
-      "calendar": {
-        "tab": "Kalender",
-        "title": "Den nächsten Monat planen",
-        "body": "Freigegebene Videos landen in freien Kalenderplätzen und werden zur richtigen Zeit auf jedem Konto veröffentlicht.",
-        "alt": "Der Kalender für September mit geplanten Beiträgen morgens und abends"
-      },
-      "analytics": {
-        "tab": "Analysen",
-        "title": "Sehen, was funktioniert hat",
-        "body": "Aufrufe, Wiedergabezeit und Interaktionen jedes Videos an einem Ort, damit das nächste Briefing besser wird.",
-        "alt": "Die Analyseseite: Aufrufe in 30 Tagen, Wiedergabezeit, Interaktionen und ein Diagramm der täglichen Aktivität"
-      }
     }
   },
   "pricing": {
@@ -4537,7 +4734,7 @@
       "panelLabel": "Über PostMind Studio",
       "valueStatement": "Kurze Videos für jeden Kanal, aus ein paar Zeilen über Ihr Unternehmen.",
       "valueDetail": "Studio schreibt das Skript, erstellt das Video in Ihrem Markenauftritt und plant es für die Kanäle, die Sie verbinden.",
-      "panelAlt": "Ein TikTok-Video eines Sauerteigbrots in PostMind Studio mit bestandenen Qualitätsprüfungen."
+      "panelAlt": "Zwei mit PostMind Studio erstellte Beiträge: ein KI-Video eines Sauerteigbrots und eine Diashow mit Ferienhäusern am Meer."
     },
     "errors": {
       "invalidCredentials": "Diese E-Mail-Adresse und dieses Passwort passen zu keinem Konto.",
@@ -5107,7 +5304,9 @@
           "reason": "Grund für das Entfernen",
           "button": "Override entfernen",
           "cleared": "Override entfernt",
-          "trialWarning": "Stripe zeigt noch eine Testphase: Wird der Override entfernt, gelten ihre Obergrenzen wieder. Damit sie entfallen, speichern Sie zuerst einen Override mit „Testphase jetzt beenden“."
+          "trialWarning": "Stripe zeigt noch eine Testphase: Wird der Override entfernt, gelten ihre Obergrenzen wieder. Damit sie entfallen, speichern Sie zuerst einen Override mit „Testphase jetzt beenden“.",
+          "confirmTitle": "Diesen Override entfernen?",
+          "confirmButton": "Ja, entfernen"
         },
         "trial": {
           "title": "Testphase",
@@ -5675,7 +5874,26 @@
       "someWithoutAccount": "Erstellt, aber nicht automatisch gepostet (kein verbundenes Konto): {platforms}.",
       "connectAccount": "Konto verbinden",
       "ugcActors": "Erfahrungsberichte und Produktvideos mit UGC-Darstellern erstellen",
-      "ugcActorsHint": "Ein generierter Darsteller spricht über Ihr Produkt. Jedes dieser Videos verbraucht {count, number} Ihrer Videos. Nur auf Englisch."
+      "ugcActorsHint": "Ein generierter Darsteller spricht über Ihr Produkt. Jedes dieser Videos verbraucht {count, number} Ihrer Videos. Nur auf Englisch.",
+      "prompt": {
+        "title": "Ihr nächster Monat, geplant",
+        "body": "Wählen Sie den Start. Studio schreibt jedes Thema aus Ihrer Website, Ihrem Markenkit und früheren Beiträgen, und Sie prüfen die Liste, bevor etwas erstellt wird.",
+        "summary": "{perDay} · {videos, number} % Videos · {platforms}",
+        "yourTimes": "Ihre Veröffentlichungszeiten",
+        "noPlatforms": "noch keine Plattformen",
+        "options": "Weitere Optionen"
+      },
+      "preview": {
+        "title": "Was Studio erstellt",
+        "upTo": "Beiträge, höchstens",
+        "split": "Videos: {videos, number} · Diashows: {slideshows, number}",
+        "dates": "Zeitraum",
+        "range": "{start} – {end}",
+        "networks": "Netzwerke",
+        "noNetworks": "Noch keine gewählt",
+        "review": "Studio schreibt zuerst die Themen. Sie prüfen und bearbeiten die Liste, bevor etwas erstellt wird.",
+        "rolling": "Jeder Beitrag wird dann etwa 3 Tage vor dem Veröffentlichen erstellt, Ihre Änderungen bis dahin zählen also noch."
+      }
     },
     "allowance": {
       "title": "Dieser Monat",
@@ -5839,7 +6057,11 @@
       "removeConfirm": "Seine Veröffentlichung wird abgebrochen und die Zeit freigegeben. Der Rest des Plans läuft weiter.",
       "removedToast": "Beitrag entfernt",
       "createsAt": "Erstellung geplant für {date}",
-      "createsLater": "{count, plural, one {# weiterer Beitrag wird kurz vor seiner Veröffentlichungszeit erstellt.} other {# weitere Beiträge werden kurz vor ihrer Veröffentlichungszeit erstellt.}}"
+      "createsLater": "{count, plural, one {# weiterer Beitrag wird kurz vor seiner Veröffentlichungszeit erstellt.} other {# weitere Beiträge werden kurz vor ihrer Veröffentlichungszeit erstellt.}}",
+      "approve": "Freigeben",
+      "approveAria": "„{title}“ freigeben",
+      "approved": "Freigegeben: Der Beitrag geht zu seiner Zeit raus",
+      "rolling": "Studio erstellt jeden Beitrag etwa 3 Tage vor seiner Zeit; ein wartender Beitrag zeigt, wann er erstellt wird."
     },
     "list": {
       "title": "Monatspläne",
@@ -5850,6 +6072,24 @@
       "emptyBody": "Lassen Sie Studio einen Monat mit Videos und Diashows entwerfen und erstellen und planen Sie sie dann in einem Schritt ein.",
       "range": "{start} – {end}",
       "posts": "{count, plural, one {# Beitrag} other {# Beiträge}}"
+    },
+    "timeline": {
+      "week": "Woche {n, number}",
+      "range": "{start} – {end}"
+    },
+    "bulk": {
+      "label": "Sammelaktionen",
+      "selectAll": "Alle auswählen",
+      "selected": "{count, number} ausgewählt",
+      "selectItem": "„{title}“ auswählen",
+      "progress": "Wird bearbeitet … {done, number} von {total, number}",
+      "summaryOk": "Fertig: {count, number} geändert.",
+      "summaryPartial": "{ok, number} erledigt, {failed, number} konnten nicht geändert werden. Versuchen Sie diese einzeln.",
+      "regenerate": "Neue Themen ({count, number})",
+      "delete": "Löschen ({count, number})",
+      "deleteConfirmTitle": "Ausgewählte Beiträge löschen ({count, number})?",
+      "deleteConfirmBody": "Sie werden aus diesem Entwurf entfernt. Es wurde noch nichts erstellt.",
+      "approveAll": "Alle wartenden freigeben ({count, number})"
     }
   },
   "errorPage": {
@@ -6136,7 +6376,9 @@
       "beats": "Skript",
       "stillAlt": "Ein Bild aus Ihrer Bibliothek",
       "mentionsBusiness": "Nennt Ihr Unternehmen",
-      "allowanceQuick": "Verbraucht beim Behalten ¼ Video Ihres Tarifs"
+      "allowanceQuick": "Verbraucht beim Behalten ¼ Video Ihres Tarifs",
+      "hintEdit": "Erst bearbeiten",
+      "hintDrag": "Oder ziehen Sie die Karte"
     },
     "keep": {
       "title": "Behalten",
@@ -6148,7 +6390,8 @@
       "editHint": "Öffnet den Beitrag, damit Sie Text und Bilder ändern können.",
       "cancel": "Abbrechen",
       "confirm": "Behalten",
-      "previewNote": "{units, plural, one {Er wird jetzt erstellt und verbraucht # Video Ihres Tarifs.} other {Er wird jetzt erstellt und verbraucht # Videos Ihres Tarifs.}}"
+      "previewNote": "{units, plural, one {Er wird jetzt erstellt und verbraucht # Video Ihres Tarifs.} other {Er wird jetzt erstellt und verbraucht # Videos Ihres Tarifs.}}",
+      "noPublishRole": "Ihre Rolle kann nicht veröffentlichen oder planen, daher öffnet sich ein behaltener Beitrag zuerst zum Bearbeiten."
     },
     "skip": {
       "title": "Warum überspringen? (optional)",
@@ -6221,6 +6464,9 @@
       "noNudges": "Noch nichts. Gründe fürs Überspringen und Behaltenes passen das nach und nach an.",
       "reset": "Gelerntes von Blitz löschen",
       "percent": "{value} %"
+    },
+    "readOnly": {
+      "role": "Ihre Rolle kann diese Beiträge ansehen, aber nicht behalten oder überspringen. Fragen Sie eine Inhaberin, einen Inhaber oder einen Admin."
     }
   },
   "automations": {
@@ -6232,7 +6478,19 @@
       "pickBody": "Eine Automatisierung postet für ein Unternehmen. Wählen Sie oben auf der Seite eines aus.",
       "loading": "Automatisierungen werden geladen …",
       "empty": "Noch keine Automatisierungen",
-      "emptyBody": "Richten Sie eine ein, und Studio erstellt und postet jede Woche Ihre Inhalte."
+      "emptyBody": "Richten Sie eine ein, und Studio erstellt und postet jede Woche Ihre Inhalte.",
+      "columns": {
+        "name": "Automatisierung",
+        "status": "Status",
+        "makes": "Erstellt",
+        "next": "Nächster Beitrag"
+      },
+      "next": {
+        "review": "Nach Ihrer Prüfung",
+        "paused": "Pausiert",
+        "draft": "Nicht gestartet",
+        "none": "Nichts fällig"
+      }
     },
     "status": {
       "DRAFT": "Entwurf",
@@ -6299,7 +6557,9 @@
       "back": "Zurück",
       "next": "Weiter",
       "create": "Erstellen und starten",
-      "started": "Automatisierung gestartet. Die ersten Beiträge werden geschrieben."
+      "started": "Automatisierung gestartet. Die ersten Beiträge werden geschrieben.",
+      "stepOf": "Schritt {n, number} von {total, number}",
+      "stepDone": "(erledigt)"
     },
     "detail": {
       "back": "Alle Automatisierungen",
@@ -6336,7 +6596,10 @@
       "reroll": "Neues Thema",
       "rerolled": "Ein neues Thema ist da.",
       "remove": "Entfernen",
-      "keep": "Behalten"
+      "keep": "Behalten",
+      "runs": "Durchläufe",
+      "runRange": "{start} – {end}",
+      "runPosted": "{posted, number} von {total, number} veröffentlicht"
     },
     "review": {
       "title": "Prüfung: {name}",

@@ -7,14 +7,20 @@ import '@fontsource-variable/geist';
 import '@fontsource-variable/geist/wght-italic.css';
 import '@fontsource-variable/geist-mono';
 import { directionOf } from '@/lib/i18n/locales';
+import { siteOrigin } from '@/lib/seo/site';
 import type { Messages } from '@/lib/i18n/messages';
 import { Providers } from './providers';
 import './globals.css';
 
-export const metadata: Metadata = {
-  title: { default: 'PostMind Studio', template: '%s · PostMind Studio' },
-  description: 'AI video generation and multi-platform publishing for PostMind AI.',
-};
+// 25.5: metadataBase makes the link-preview image and canonical URLs absolute (APP_URL at runtime).
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    metadataBase: new URL(siteOrigin()),
+    title: { default: 'PostMind Studio', template: '%s · PostMind Studio' },
+    description:
+      'Create, plan and publish short videos and posts for your business from one brief.',
+  };
+}
 
 // BACKLOG 16.1 / 16.2 — the request's locale (src/i18n/request.ts: studio.locale cookie →
 // Accept-Language → en-GB) sets <html lang dir>, and its catalogue is handed to the client

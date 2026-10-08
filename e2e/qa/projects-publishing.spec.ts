@@ -840,6 +840,7 @@ test.describe('publications page', () => {
     // Platform filter.
     await page.getByRole('radio', { name: 'All' }).click();
     await page.getByLabel('Platform').selectOption('x');
+    await expect(page).toHaveURL(/platform=x/);
     await expect(page.getByRole('row')).toHaveCount(2);
     await page.getByLabel('Platform').selectOption('linkedin_video');
     await expect(page.getByText('No publications match these filters.')).toBeVisible();
