@@ -4,7 +4,7 @@
 //   GET     /businesses/:id/drip-queue/upcoming   (20.3, month-ahead open slots)
 //   GET     /analytics/best-times                 (15.A6, analytics/best-times.ts)
 //   POST    /projects/:id/caption-suggestions     (15.A7, services/caption-suggestions.ts)
-//   GET     /renders/:id  (+ thumbnailUrl)         (15.A3)
+//   GET     /renders/:id  (+ thumbnailUrl: the showcase poster, 25 polish) (15.A3)
 //   POST    /renders/:id/thumbnail                 (15.A3, JSON regenerate or multipart upload)
 //   GET     /renders/:id/captions                  (15.A4, burned-in vs SRT lines)
 // Registered before ./review so GET /renders/:id carries the thumbnail URL.
@@ -21,7 +21,8 @@ import {
 } from '@/lib/studio/services/drip-queue';
 import { DEMO_BUSINESS_ID } from '../ids';
 import { DemoHttpError, route } from '../registry';
-import { findRender, getProject } from './projects-store';
+import { samplePoster } from '../../media';
+import { findRender, getProject, type ProjectRec } from './projects-store';
 import { listPublications } from './publications-store';
 import { demoPlanHeld, demoPlannedPosts } from './p20-plan-month';
 
@@ -212,18 +213,23 @@ route('POST', '/projects/:id/caption-suggestions', ({ params }) => {
 
 const thumbnails = new Map<string, string>();
 
-function thumbnailSvg(text: string, aspect: string): string {
+/** 25 polish: the project's showcase poster (demo/media.ts), wall-of-text posters for that format. */
+export function renderPoster(project: Pick<ProjectRec, 'id' | 'sourceType'>): string {
+  return samplePoster(project.id, project.sourceType === 'WALL_OF_TEXT' ? 'wall_of_text' : 'video');
+}
+
+/** A regenerated thumbnail: the poster under a band with the overlay text. */
+export function thumbnailSvg(text: string, aspect: string, poster: string): string {
   const [w, h] = aspect === '16:9' ? [1280, 720] : aspect === '1:1' ? [1080, 1080] : [720, 1280];
   const safe = text.replace(/[<>&"]/g, '').slice(0, 60);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c3a12"/><stop offset="1" stop-color="#e3a15b"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><rect x="${w * 0.1}" y="${h * 0.7}" width="${w * 0.8}" height="${h * 0.14}" fill="rgba(0,0,0,0.6)"/><text x="50%" y="${h * 0.79}" font-family="Montserrat, sans-serif" font-size="${Math.round(Math.min(w, h) * 0.07)}" fill="#fff" text-anchor="middle">${safe}</text></svg>`;
+  const href = poster.replace(/[<>&"]/g, '');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><rect width="100%" height="100%" fill="#2a1d14"/><image href="${href}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice"/><rect x="${w * 0.1}" y="${h * 0.7}" width="${w * 0.8}" height="${h * 0.14}" fill="rgba(0,0,0,0.6)"/><text x="50%" y="${h * 0.79}" font-family="Montserrat, sans-serif" font-size="${Math.round(Math.min(w, h) * 0.07)}" fill="#fff" text-anchor="middle">${safe}</text></svg>`;
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
 route('GET', '/renders/:id', ({ params }) => {
   const { project, render } = findRender(params.id ?? '');
-  const url =
-    thumbnails.get(render.id) ??
-    thumbnailSvg(project.brief?.hook ?? project.name ?? '', render.aspectRatio);
+  const url = thumbnails.get(render.id) ?? renderPoster(project);
   return { render: { ...render, thumbnailUrl: url } };
 });
 
@@ -249,7 +255,7 @@ route('POST', '/renders/:id/thumbnail', ({ params, body }) => {
     typeof input.overlayText === 'string' && input.overlayText.trim()
       ? input.overlayText.trim()
       : (project.brief?.hook ?? project.name ?? '');
-  const url = thumbnailSvg(text, render.aspectRatio);
+  const url = thumbnailSvg(text, render.aspectRatio, renderPoster(project));
   thumbnails.set(render.id, url);
   return { render: { id: render.id, thumbnailUrl: url } };
 });
