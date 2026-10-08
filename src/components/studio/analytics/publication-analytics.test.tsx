@@ -97,6 +97,32 @@ describe('PublicationAnalytics', () => {
     );
   });
 
+  it('shows the post itself: caption, poster frame and saves (25.11)', async () => {
+    const api = mockFetch((req) =>
+      req.url.pathname === '/api/studio/renders/render_9'
+        ? ok({ render: { thumbnailUrl: 'https://cdn.test/thumb.jpg' } })
+        : ok(
+            body({
+              publication: {
+                ...body().publication,
+                caption: 'Sourdough at dawn',
+                renderId: 'render_9',
+                projectId: 'proj_9',
+              },
+            }),
+          ),
+    );
+    const { container } = renderScreen(<PublicationAnalytics publicationId="pub_1" />);
+    expect(await screen.findByText('Sourdough at dawn')).toBeInTheDocument();
+    await waitFor(() => expect(api.find('GET', '/renders/render_9')).toHaveLength(1));
+    await waitFor(() =>
+      expect(container.querySelector('img')).toHaveAttribute('src', 'https://cdn.test/thumb.jpg'),
+    );
+    // The poster is decorative: the caption names the post.
+    expect(container.querySelector('img')).toHaveAttribute('alt', '');
+    expect(screen.getByText('Saves')).toBeInTheDocument();
+  });
+
   it('explains missing retention and audience per platform', async () => {
     mockFetch(() => ok(body({ retention: [], demographics: [] })));
     const { unmount } = renderScreen(<PublicationAnalytics publicationId="pub_1" />);

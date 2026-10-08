@@ -2834,44 +2834,55 @@
     "dashboard": {
       "eyebrow": "الإدارة",
       "title": "التحليلات",
-      "description": "أداء مقاطع الفيديو المنشورة وتكلفة إنتاجها.",
       "rangeLabel": "النطاق الزمني",
       "rangeOption": "{days, plural, zero {# يوم} one {يوم واحد} two {يومان} few {# أيام} many {# يومًا} other {# يوم}}",
-      "descriptionNoCost": "أداء مقاطع الفيديو المنشورة."
+      "scopeAll": "كل الأنشطة التجارية",
+      "scopeBusiness": "{name}",
+      "scopeSelected": "النشاط التجاري المحدد",
+      "window": "آخر {days, plural, zero {# يوم} one {يوم واحد} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
+      "costScope": "يشمل الإنفاق كل الأنشطة التجارية في مؤسستك.",
+      "loadingAria": "جارٍ تحميل التحليلات"
     },
     "metrics": {
       "views": "المشاهدات",
-      "watchTime": "مدة المشاهدة",
-      "engagement": "التفاعل"
+      "watchTime": "مدة المشاهدة"
     },
     "overview": {
       "loadingAria": "جارٍ تحميل النظرة العامة",
-      "viewsHeading": "المشاهدات · آخر {days, plural, zero {# يوم} one {يوم} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
-      "summary": "عبر {publications, plural, zero {# منشور} one {منشور واحد} two {منشورين} few {# منشورات} many {# منشورًا} other {# منشور}} · {projects, plural, zero {لم يبدأ أي مشروع} one {بدء مشروع واحد} two {بدء مشروعين} few {بدء # مشاريع} many {بدء # مشروعًا} other {بدء # مشروع}}",
+      "summary": "حقّق {posts, plural, zero {# منشور} one {منشور واحد} two {منشوران} few {# منشورات} many {# منشورًا} other {# منشور}} خلال آخر {days, plural, zero {# يوم} one {يوم واحد} two {يومين} few {# أيام} many {# يومًا} other {# يوم}} {count, plural, zero {{views} مشاهدة} one {مشاهدة واحدة} two {مشاهدتين} few {{views} مشاهدات} many {{views} مشاهدة} other {{views} مشاهدة}}، بنسبة تفاعل {rate}.",
       "watchTime": "مدة المشاهدة",
-      "engagement": "التفاعل",
-      "engagementHint": "{rate} من المشاهدات",
-      "shares": "المشاركات",
-      "savesHint": "{saves, plural, zero {لا عمليات حفظ} one {عملية حفظ واحدة} two {عمليتا حفظ} few {{formatted} عمليات حفظ} many {{formatted} عملية حفظ} other {{formatted} عملية حفظ}}",
-      "spend": "المصروفات",
-      "spendHint": "تكاليف مزوّدي الخدمة",
-      "pending": "…"
+      "engagementHint": "{count} من الإعجابات والتعليقات والمشاركات وعمليات الحفظ",
+      "regionLabel": "الملخص",
+      "summaryNoViews": "نُشر {posts, plural, zero {# منشور} one {منشور واحد} two {منشوران} few {# منشورات} many {# منشورًا} other {# منشور}} خلال آخر {days, plural, zero {# يوم} one {يوم واحد} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}. تظهر المشاهدات عادةً بعد نحو يوم من نشر المنشور.",
+      "summaryLead": "جاءت {share} من المشاهدات من {platform}.",
+      "views": "المشاهدات",
+      "viewsHint": "{publications, plural, zero {# منشور} one {منشور واحد} two {منشوران} few {# منشورات} many {# منشورًا} other {# منشور}} · {projects, plural, zero {لم يبدأ أي مشروع} one {بدء مشروع واحد} two {بدء مشروعين} few {بدء # مشاريع} many {بدء # مشروعًا} other {بدء # مشروع}}",
+      "watchTimeHint": "{avg} لكل مشاهدة في المتوسط",
+      "engagementRate": "معدل التفاعل",
+      "sharesSaves": "المشاركات وعمليات الحفظ",
+      "sharesSavesHint": "{shares} مشاركة · {saves} حفظ",
+      "empty": {
+        "title": "لم يُنشر أي منشور خلال آخر {days, plural, zero {# يوم} one {يوم واحد} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
+        "body": "تظهر التحليلات بعد نحو يوم من نشر المنشور. جرّب فترة أطول، أو انشر فيديو من أحد مشاريعك.",
+        "action": "الانتقال إلى المشاريع"
+      },
+      "windowNote": "إجماليات المنشورات التي نُشرت في هذه الفترة، محسوبة حتى الآن."
     },
     "trend": {
-      "title": "النشاط اليومي",
+      "title": "النمو والوصول",
       "metricLabel": "المقياس",
       "loadingAria": "جارٍ تحميل الرسم البياني",
       "total": {
-        "views": "{count, plural, zero {لا مشاهدات} one {مشاهدة واحدة} two {مشاهدتان} few {{value} مشاهدات} many {{value} مشاهدة} other {{value} مشاهدة}} خلال الفترة",
-        "watchTime": "{value} من مدة المشاهدة خلال الفترة",
-        "engagement": "{value} تفاعل خلال الفترة"
+        "views": "{count, plural, zero {{value} مشاهدة جديدة} one {مشاهدة جديدة واحدة} two {مشاهدتان جديدتان} few {{value} مشاهدات جديدة} many {{value} مشاهدة جديدة} other {{value} مشاهدة جديدة}} في هذه الفترة",
+        "watchTime": "{value} من مدة المشاهدة الجديدة في هذه الفترة"
       },
       "chartLabel": {
         "views": "المشاهدات يوميًا، آخر {days, plural, zero {# يوم} one {يوم} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
-        "watchTime": "مدة المشاهدة يوميًا، آخر {days, plural, zero {# يوم} one {يوم} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
-        "engagement": "التفاعل يوميًا، آخر {days, plural, zero {# يوم} one {يوم} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}"
+        "watchTime": "مدة المشاهدة يوميًا، آخر {days, plural, zero {# يوم} one {يوم} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}"
       },
-      "estimated": "بعض الأيام تقديرية: كانت بعض اللقطات مفقودة، لذا تم توزيع النمو بالتساوي على الفترة."
+      "estimated": "بعض الأيام تقديرية: كانت بعض اللقطات مفقودة، لذا تم توزيع النمو بالتساوي على الفترة.",
+      "description": "المشاهدات الجديدة يوميًا عبر كل منشوراتك",
+      "quiet": "لا جديد في هذه الفترة بعد. سيمتلئ المخطط مع مشاهدة الناس لمنشوراتك."
     },
     "platforms": {
       "title": "حسب المنصة",
@@ -2881,15 +2892,16 @@
       "hint": "{posts, plural, zero {# منشور} one {منشور واحد} two {منشوران} few {# منشورات} many {# منشورًا} other {# منشور}} · {engagement} تفاعل"
     },
     "leaderboard": {
-      "title": "أفضل الفيديوهات",
-      "description": "المنشورات مرتبة حسب المشاهدات",
+      "title": "أفضل المنشورات",
+      "description": "منشورات هذه الفترة الأكثر مشاهدة",
       "empty": "لم يُنشر شيء خلال هذه الفترة.",
       "listLabel": "أفضل المنشورات",
       "untitled": "منشور بلا عنوان",
       "meta": "{platform} · {date}",
       "openOn": "فتح على {platform}",
       "analyticsFor": "تحليلات «{caption}»",
-      "analyticsForUntitled": "تحليلات المنشور بلا عنوان"
+      "analyticsForUntitled": "تحليلات المنشور بلا عنوان",
+      "views": "مشاهدة"
     },
     "cost": {
       "title": "المصروفات",
@@ -2938,7 +2950,8 @@
         "avgWatched": "متوسط المشاهدة",
         "likes": "الإعجابات",
         "commentsShares": "التعليقات · المشاركات",
-        "commentsSharesValue": "{comments} · {shares}"
+        "commentsSharesValue": "{comments} · {shares}",
+        "saves": "عمليات الحفظ"
       },
       "viewsOverTime": {
         "title": "المشاهدات بمرور الوقت",
@@ -2974,6 +2987,39 @@
         "body": "ربما أُزيل، أو أن الرابط غير صحيح.",
         "action": "العودة إلى التحليلات"
       }
+    },
+    "change": {
+      "up": "ارتفاع بنسبة <n>{pct}</n> عن الفترة السابقة",
+      "down": "انخفاض بنسبة <n>{pct}</n> عن الفترة السابقة",
+      "flat": "مماثل للفترة السابقة"
+    },
+    "engagement": {
+      "title": "التفاعل",
+      "description": "الإعجابات والتعليقات والمشاركات وعمليات الحفظ الجديدة يوميًا",
+      "total": "التفاعلات الجديدة في هذه الفترة: {value}",
+      "chartLabel": "التفاعلات يوميًا، آخر {days, plural, zero {# يوم} one {يوم واحد} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
+      "quiet": "لا إعجابات أو تعليقات أو مشاركات أو عمليات حفظ في هذه الفترة بعد.",
+      "mixTitle": "مكوّنات التفاعل",
+      "mixRate": "{rate} من مشاهدات منشورات هذه الفترة",
+      "mixNoViews": "لا مشاهدات لمنشورات هذه الفترة بعد.",
+      "mixLabel": "التفاعل حسب النوع",
+      "mixEmpty": "لا تفاعلات على منشورات هذه الفترة بعد.",
+      "parts": {
+        "likes": "الإعجابات",
+        "comments": "التعليقات",
+        "shares": "المشاركات",
+        "saves": "عمليات الحفظ"
+      }
+    },
+    "bestTimes": {
+      "title": "أفضل أوقات النشر",
+      "description": "متى حققت منشوراتك أكبر عدد من المشاهدات، مقارنةً بأفضل وقت",
+      "listLabel": "أفضل أوقات النشر",
+      "slot": "{day}، {time}",
+      "empty": "لا توجد منشورات من آخر 180 يومًا للتعلّم منها بعد.",
+      "basis": "استنادًا إلى {videos, plural, zero {# منشور} one {منشور واحد} two {منشورين} few {# منشورات} many {# منشورًا} other {# منشور}} من آخر 180 يومًا. الأوقات بتوقيت {timezone}. إرشاد وليس قاعدة.",
+      "fromMemory": "المنشورات قليلة حتى الآن، لذا هذا هو وقت النشر المعتاد لنشاطك التجاري. الأوقات بتوقيت {timezone}.",
+      "littleData": "{videos, plural, zero {لا منشورات} one {منشور واحد فقط} two {منشوران فقط} few {# منشورات فقط} many {# منشورًا فقط} other {# منشور فقط}} حتى الآن، فاعتبرها مؤشرات أولية؛ ستصبح أدق بعد {min}. الأوقات بتوقيت {timezone}."
     }
   },
   "admin": {

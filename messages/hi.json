@@ -2834,44 +2834,55 @@
     "dashboard": {
       "eyebrow": "प्रबंधन",
       "title": "एनालिटिक्स",
-      "description": "आपके प्रकाशित वीडियो कैसा प्रदर्शन कर रहे हैं और उन्हें बनाने में कितना खर्च हुआ।",
       "rangeLabel": "समय सीमा",
       "rangeOption": "{days, plural, one {# दिन} other {# दिन}}",
-      "descriptionNoCost": "आपके प्रकाशित वीडियो कैसा प्रदर्शन कर रहे हैं।"
+      "scopeAll": "सभी व्यवसाय",
+      "scopeBusiness": "{name}",
+      "scopeSelected": "चुना गया व्यवसाय",
+      "window": "{days, plural, one {पिछला # दिन} other {पिछले # दिन}}",
+      "costScope": "खर्च में आपके संगठन के सभी व्यवसाय शामिल हैं।",
+      "loadingAria": "एनालिटिक्स लोड हो रहा है"
     },
     "metrics": {
       "views": "व्यूज़",
-      "watchTime": "देखने का समय",
-      "engagement": "एंगेजमेंट"
+      "watchTime": "देखने का समय"
     },
     "overview": {
       "loadingAria": "अवलोकन लोड हो रहा है",
-      "viewsHeading": "व्यूज़ · पिछले {days, plural, one {# दिन} other {# दिन}}",
-      "summary": "{publications, plural, one {# प्रकाशन} other {# प्रकाशनों}} में · {projects, plural, one {# प्रोजेक्ट शुरू हुआ} other {# प्रोजेक्ट शुरू हुए}}",
+      "summary": "{days, plural, one {पिछले # दिन} other {पिछले # दिनों}} की आपकी {posts, plural, one {# पोस्ट} other {# पोस्ट}} {count, plural, one {{views} व्यू} other {{views} व्यूज़}} तक पहुँचीं, {rate} एंगेजमेंट के साथ।",
       "watchTime": "देखने का समय",
-      "engagement": "एंगेजमेंट",
-      "engagementHint": "व्यूज़ का {rate}",
-      "shares": "शेयर",
-      "savesHint": "{saves, plural, one {{formatted} सेव} other {{formatted} सेव}}",
-      "spend": "खर्च",
-      "spendHint": "प्रदाता लागत",
-      "pending": "…"
+      "engagementHint": "{count} लाइक, कमेंट, शेयर और सेव",
+      "regionLabel": "सारांश",
+      "summaryNoViews": "{days, plural, one {पिछले # दिन} other {पिछले # दिनों}} में {posts, plural, one {# पोस्ट} other {# पोस्ट}} प्रकाशित हुईं। व्यूज़ आमतौर पर पोस्ट लाइव होने के लगभग एक दिन बाद दिखते हैं।",
+      "summaryLead": "{share} व्यूज़ {platform} से आए।",
+      "views": "व्यूज़",
+      "viewsHint": "{publications, plural, one {# पोस्ट} other {# पोस्ट}} · {projects, plural, one {# प्रोजेक्ट शुरू हुआ} other {# प्रोजेक्ट शुरू हुए}}",
+      "watchTimeHint": "औसतन प्रति व्यू {avg}",
+      "engagementRate": "एंगेजमेंट दर",
+      "sharesSaves": "शेयर और सेव",
+      "sharesSavesHint": "{shares} शेयर · {saves} सेव",
+      "empty": {
+        "title": "{days, plural, one {पिछले # दिन} other {पिछले # दिनों}} में कोई पोस्ट प्रकाशित नहीं हुई",
+        "body": "पोस्ट प्रकाशित होने के लगभग एक दिन बाद एनालिटिक्स दिखते हैं। लंबी अवधि चुनें, या अपने किसी प्रोजेक्ट से वीडियो प्रकाशित करें।",
+        "action": "प्रोजेक्ट पर जाएँ"
+      },
+      "windowNote": "इस अवधि में प्रकाशित पोस्ट के कुल आँकड़े, अब तक की गिनती।"
     },
     "trend": {
-      "title": "दैनिक गतिविधि",
+      "title": "बढ़त और पहुँच",
       "metricLabel": "मेट्रिक",
       "loadingAria": "चार्ट लोड हो रहा है",
       "total": {
-        "views": "इस अवधि में {count, plural, one {{value} व्यू} other {{value} व्यूज़}}",
-        "watchTime": "इस अवधि में {value} देखने का समय",
-        "engagement": "इस अवधि में {value} एंगेजमेंट"
+        "views": "इस अवधि में {count, plural, one {{value} नया व्यू} other {{value} नए व्यूज़}}",
+        "watchTime": "इस अवधि में {value} नया देखने का समय"
       },
       "chartLabel": {
         "views": "प्रति दिन व्यूज़, पिछले {days, plural, one {# दिन} other {# दिन}}",
-        "watchTime": "प्रति दिन देखने का समय, पिछले {days, plural, one {# दिन} other {# दिन}}",
-        "engagement": "प्रति दिन एंगेजमेंट, पिछले {days, plural, one {# दिन} other {# दिन}}"
+        "watchTime": "प्रति दिन देखने का समय, पिछले {days, plural, one {# दिन} other {# दिन}}"
       },
-      "estimated": "कुछ दिन अनुमानित हैं: डेटा के स्नैपशॉट गायब थे, इसलिए वृद्धि को अंतराल में बराबर बाँटा गया है।"
+      "estimated": "कुछ दिन अनुमानित हैं: डेटा के स्नैपशॉट गायब थे, इसलिए वृद्धि को अंतराल में बराबर बाँटा गया है।",
+      "description": "आपकी सभी पोस्ट पर प्रतिदिन मिले नए व्यूज़",
+      "quiet": "इस अवधि में अभी कुछ नया नहीं। लोग आपकी पोस्ट देखेंगे तो चार्ट भरता जाएगा।"
     },
     "platforms": {
       "title": "प्लैटफ़ॉर्म के अनुसार",
@@ -2881,15 +2892,16 @@
       "hint": "{posts, plural, one {# पोस्ट} other {# पोस्ट}} · {engagement} एंगेजमेंट"
     },
     "leaderboard": {
-      "title": "शीर्ष वीडियो",
-      "description": "व्यूज़ के अनुसार क्रमबद्ध प्रकाशन",
+      "title": "शीर्ष पोस्ट",
+      "description": "इस अवधि की सबसे ज़्यादा देखी गई पोस्ट",
       "empty": "इस अवधि में कुछ भी प्रकाशित नहीं हुआ।",
       "listLabel": "शीर्ष प्रकाशन",
       "untitled": "बिना शीर्षक की पोस्ट",
       "meta": "{platform} · {date}",
       "openOn": "{platform} पर खोलें",
       "analyticsFor": "“{caption}” के एनालिटिक्स",
-      "analyticsForUntitled": "बिना शीर्षक की पोस्ट के एनालिटिक्स"
+      "analyticsForUntitled": "बिना शीर्षक की पोस्ट के एनालिटिक्स",
+      "views": "व्यूज़"
     },
     "cost": {
       "title": "खर्च",
@@ -2938,7 +2950,8 @@
         "avgWatched": "औसत देखा गया",
         "likes": "लाइक",
         "commentsShares": "कमेंट · शेयर",
-        "commentsSharesValue": "{comments} · {shares}"
+        "commentsSharesValue": "{comments} · {shares}",
+        "saves": "सेव"
       },
       "viewsOverTime": {
         "title": "समय के साथ व्यूज़",
@@ -2974,6 +2987,39 @@
         "body": "हो सकता है इसे हटा दिया गया हो, या लिंक गलत हो।",
         "action": "एनालिटिक्स पर वापस जाएँ"
       }
+    },
+    "change": {
+      "up": "पिछली अवधि से <n>{pct}</n> अधिक",
+      "down": "पिछली अवधि से <n>{pct}</n> कम",
+      "flat": "पिछली अवधि के बराबर"
+    },
+    "engagement": {
+      "title": "एंगेजमेंट",
+      "description": "प्रतिदिन मिले नए लाइक, कमेंट, शेयर और सेव",
+      "total": "इस अवधि में मिले इंटरैक्शन: {value}",
+      "chartLabel": "प्रतिदिन इंटरैक्शन, {days, plural, one {पिछला # दिन} other {पिछले # दिन}}",
+      "quiet": "इस अवधि में अभी कोई लाइक, कमेंट, शेयर या सेव नहीं।",
+      "mixTitle": "यह किनसे बना",
+      "mixRate": "इस अवधि की पोस्ट के व्यूज़ का {rate}",
+      "mixNoViews": "इस अवधि की पोस्ट पर अभी कोई व्यू नहीं।",
+      "mixLabel": "प्रकार के अनुसार एंगेजमेंट",
+      "mixEmpty": "इस अवधि की पोस्ट पर अभी कोई इंटरैक्शन नहीं।",
+      "parts": {
+        "likes": "लाइक",
+        "comments": "कमेंट",
+        "shares": "शेयर",
+        "saves": "सेव"
+      }
+    },
+    "bestTimes": {
+      "title": "पोस्ट करने का सबसे अच्छा समय",
+      "description": "आपकी पोस्ट को सबसे ज़्यादा व्यूज़ कब मिले, सबसे अच्छे समय की तुलना में",
+      "listLabel": "पोस्ट करने के सबसे अच्छे समय",
+      "slot": "{day}, {time}",
+      "empty": "पिछले 180 दिनों की कोई पोस्ट अभी नहीं है जिससे सीखा जा सके।",
+      "basis": "पिछले 180 दिनों की {videos, plural, one {# पोस्ट} other {# पोस्ट}} पर आधारित। समय {timezone} में। एक सुझाव, नियम नहीं।",
+      "fromMemory": "अभी पोस्ट कम हैं, इसलिए यह आपके व्यवसाय का सामान्य पोस्टिंग समय है। समय {timezone} में।",
+      "littleData": "अभी तक केवल {videos, plural, one {# पोस्ट} other {# पोस्ट}}, इसलिए इन्हें शुरुआती संकेत मानें; {min} के बाद ये पक्के होंगे। समय {timezone} में।"
     }
   },
   "admin": {

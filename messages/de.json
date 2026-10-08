@@ -2834,44 +2834,55 @@
     "dashboard": {
       "eyebrow": "Verwalten",
       "title": "Analysen",
-      "description": "Wie Ihre veröffentlichten Videos abschneiden und was ihre Erstellung kostet.",
       "rangeLabel": "Zeitraum",
       "rangeOption": "{days, plural, one {# Tag} other {# Tage}}",
-      "descriptionNoCost": "Wie Ihre veröffentlichten Videos abschneiden."
+      "scopeAll": "Alle Unternehmen",
+      "scopeBusiness": "{name}",
+      "scopeSelected": "Ausgewähltes Unternehmen",
+      "window": "letzte {days, plural, one {# Tag} other {# Tage}}",
+      "costScope": "Die Ausgaben umfassen alle Unternehmen Ihrer Organisation.",
+      "loadingAria": "Analysen werden geladen"
     },
     "metrics": {
       "views": "Aufrufe",
-      "watchTime": "Wiedergabezeit",
-      "engagement": "Interaktionen"
+      "watchTime": "Wiedergabezeit"
     },
     "overview": {
       "loadingAria": "Übersicht wird geladen",
-      "viewsHeading": "Aufrufe · {days, plural, one {letzter Tag} other {letzte # Tage}}",
-      "summary": "aus {publications, plural, one {# Veröffentlichung} other {# Veröffentlichungen}} · {projects, plural, one {# Projekt gestartet} other {# Projekte gestartet}}",
+      "summary": "Ihre {posts, plural, one {# Beitrag} other {# Beiträge}} der letzten {days, plural, one {# Tag} other {# Tage}} erreichten {count, plural, one {{views} Aufruf} other {{views} Aufrufe}} bei {rate} Interaktionsrate.",
       "watchTime": "Wiedergabezeit",
-      "engagement": "Interaktionen",
-      "engagementHint": "{rate} der Aufrufe",
-      "shares": "Geteilt",
-      "savesHint": "{saves, plural, one {{formatted}-mal gespeichert} other {{formatted}-mal gespeichert}}",
-      "spend": "Ausgaben",
-      "spendHint": "Anbieterkosten",
-      "pending": "…"
+      "engagementHint": "{count} Likes, Kommentare, Shares und Speicherungen",
+      "regionLabel": "Zusammenfassung",
+      "summaryNoViews": "In den letzten {days, plural, one {# Tag} other {# Tagen}} {posts, plural, one {ging # Beitrag} other {gingen # Beiträge}} online. Aufrufe erscheinen meist etwa einen Tag nach der Veröffentlichung.",
+      "summaryLead": "{platform} brachte {share} der Aufrufe.",
+      "views": "Aufrufe",
+      "viewsHint": "{publications, plural, one {# Beitrag} other {# Beiträge}} · {projects, plural, one {# Projekt} other {# Projekte}} gestartet",
+      "watchTimeHint": "durchschnittlich {avg} pro Aufruf",
+      "engagementRate": "Interaktionsrate",
+      "sharesSaves": "Shares und Speicherungen",
+      "sharesSavesHint": "{shares} Shares · {saves} Speicherungen",
+      "empty": {
+        "title": "Keine Beiträge in den letzten {days, plural, one {# Tag} other {# Tagen}} veröffentlicht",
+        "body": "Analysen erscheinen etwa einen Tag, nachdem ein Beitrag online ist. Wählen Sie einen längeren Zeitraum oder veröffentlichen Sie ein Video aus einem Ihrer Projekte.",
+        "action": "Zu den Projekten"
+      },
+      "windowNote": "Summen für die in diesem Zeitraum veröffentlichten Beiträge, gezählt bis jetzt."
     },
     "trend": {
-      "title": "Tägliche Aktivität",
+      "title": "Wachstum und Reichweite",
       "metricLabel": "Kennzahl",
       "loadingAria": "Diagramm wird geladen",
       "total": {
-        "views": "{count, plural, one {{value} Aufruf} other {{value} Aufrufe}} im Zeitraum",
-        "watchTime": "{value} Wiedergabezeit im Zeitraum",
-        "engagement": "{value} Interaktionen im Zeitraum"
+        "views": "{count, plural, one {{value} neuer Aufruf} other {{value} neue Aufrufe}} in diesem Zeitraum",
+        "watchTime": "{value} neue Wiedergabezeit in diesem Zeitraum"
       },
       "chartLabel": {
         "views": "Aufrufe pro Tag, {days, plural, one {letzter Tag} other {letzte # Tage}}",
-        "watchTime": "Wiedergabezeit pro Tag, {days, plural, one {letzter Tag} other {letzte # Tage}}",
-        "engagement": "Interaktionen pro Tag, {days, plural, one {letzter Tag} other {letzte # Tage}}"
+        "watchTime": "Wiedergabezeit pro Tag, {days, plural, one {letzter Tag} other {letzte # Tage}}"
       },
-      "estimated": "Einige Tage sind Schätzungen: Es fehlten Messwerte, daher wird der Zuwachs gleichmäßig auf die Lücke verteilt."
+      "estimated": "Einige Tage sind Schätzungen: Es fehlten Messwerte, daher wird der Zuwachs gleichmäßig auf die Lücke verteilt.",
+      "description": "Neue Aufrufe pro Tag über alle Ihre Beiträge",
+      "quiet": "In diesem Zeitraum noch nichts Neues. Das Diagramm füllt sich, sobald Ihre Beiträge angesehen werden."
     },
     "platforms": {
       "title": "Nach Plattform",
@@ -2881,15 +2892,16 @@
       "hint": "{posts, plural, one {# Beitrag} other {# Beiträge}} · {engagement} Interaktionen"
     },
     "leaderboard": {
-      "title": "Top-Videos",
-      "description": "Veröffentlichungen nach Aufrufen sortiert",
+      "title": "Top-Beiträge",
+      "description": "Die Beiträge dieses Zeitraums mit den meisten Aufrufen",
       "empty": "In diesem Zeitraum wurde nichts veröffentlicht.",
       "listLabel": "Top-Veröffentlichungen",
       "untitled": "Beitrag ohne Titel",
       "meta": "{platform} · {date}",
       "openOn": "Auf {platform} öffnen",
       "analyticsFor": "Analysen für „{caption}“",
-      "analyticsForUntitled": "Analysen für Beitrag ohne Titel"
+      "analyticsForUntitled": "Analysen für Beitrag ohne Titel",
+      "views": "Aufrufe"
     },
     "cost": {
       "title": "Ausgaben",
@@ -2938,7 +2950,8 @@
         "avgWatched": "Ø angesehen",
         "likes": "Likes",
         "commentsShares": "Kommentare · geteilt",
-        "commentsSharesValue": "{comments} · {shares}"
+        "commentsSharesValue": "{comments} · {shares}",
+        "saves": "Speicherungen"
       },
       "viewsOverTime": {
         "title": "Aufrufe im Zeitverlauf",
@@ -2974,6 +2987,39 @@
         "body": "Er wurde möglicherweise entfernt, oder der Link ist falsch.",
         "action": "Zurück zu den Analysen"
       }
+    },
+    "change": {
+      "up": "<n>{pct}</n> mehr als im Vorzeitraum",
+      "down": "<n>{pct}</n> weniger als im Vorzeitraum",
+      "flat": "Gleichauf mit dem Vorzeitraum"
+    },
+    "engagement": {
+      "title": "Interaktionen",
+      "description": "Neue Likes, Kommentare, Shares und Speicherungen pro Tag",
+      "total": "Neue Interaktionen in diesem Zeitraum: {value}",
+      "chartLabel": "Interaktionen pro Tag, letzte {days, plural, one {# Tag} other {# Tage}}",
+      "quiet": "In diesem Zeitraum noch keine Likes, Kommentare, Shares oder Speicherungen.",
+      "mixTitle": "Woraus sie bestanden",
+      "mixRate": "{rate} der Aufrufe der Beiträge dieses Zeitraums",
+      "mixNoViews": "Die Beiträge dieses Zeitraums haben noch keine Aufrufe.",
+      "mixLabel": "Interaktionen nach Art",
+      "mixEmpty": "Die Beiträge dieses Zeitraums haben noch keine Interaktionen.",
+      "parts": {
+        "likes": "Likes",
+        "comments": "Kommentare",
+        "shares": "Shares",
+        "saves": "Speicherungen"
+      }
+    },
+    "bestTimes": {
+      "title": "Beste Zeiten zum Posten",
+      "description": "Wann Ihre Beiträge die meisten Aufrufe erzielt haben, verglichen mit dem besten Zeitfenster",
+      "listLabel": "Beste Veröffentlichungszeiten",
+      "slot": "{day}, {time}",
+      "empty": "Noch keine Beiträge aus den letzten 180 Tagen, aus denen sich lernen lässt.",
+      "basis": "Basierend auf {videos, plural, one {# Beitrag} other {# Beiträgen}} der letzten 180 Tage. Zeiten in {timezone}. Eine Orientierung, keine Regel.",
+      "fromMemory": "Noch zu wenige Beiträge, daher ist dies die übliche Veröffentlichungszeit Ihres Unternehmens. Zeiten in {timezone}.",
+      "littleData": "Bisher erst {videos, plural, one {# Beitrag} other {# Beiträge}}, also nur erste Hinweise; ab {min} werden sie belastbarer. Zeiten in {timezone}."
     }
   },
   "admin": {
