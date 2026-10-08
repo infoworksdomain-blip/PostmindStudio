@@ -17,11 +17,17 @@ const REMARK_PLUGINS = [remarkGfm];
 
 const components: Components = {
   h1: ({ children }) => (
-    <h1 className="font-display text-5xl leading-none md:text-6xl">{children}</h1>
+    <h1 className="font-display text-[clamp(2.5rem,1.6rem+3vw,4rem)] leading-[1.02] text-balance">
+      {children}
+    </h1>
   ),
-  h2: ({ children }) => <h2 className="mt-10 font-display text-3xl">{children}</h2>,
+  h2: ({ children }) => (
+    <h2 className="mt-14 border-t border-border pt-8 font-display text-2xl md:text-3xl">
+      {children}
+    </h2>
+  ),
   h3: ({ children }) => <h3 className="mt-8 text-lg font-semibold">{children}</h3>,
-  p: ({ children }) => <p className="mt-4 leading-relaxed">{children}</p>,
+  p: ({ children }) => <p className="mt-4 leading-7 text-foreground/90">{children}</p>,
   ul: ({ children }) => <ul className="mt-4 list-disc space-y-1.5 ps-6">{children}</ul>,
   ol: ({ children }) => <ol className="mt-4 list-decimal space-y-1.5 ps-6">{children}</ol>,
   // Only http(s), mailto and relative links; anything else is plain text (legal-links.ts).
@@ -70,9 +76,9 @@ export function LegalDocumentView({
 }) {
   const t = useTranslations('legal');
   return (
-    <div className="grid gap-12 py-12 lg:grid-cols-[14rem_1fr] lg:py-16">
+    <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 py-14 md:px-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-20 lg:py-20">
       <nav aria-label={t('navAria')} className="lg:sticky lg:top-24 lg:self-start">
-        <p className="mb-3 text-xs tracking-[0.2em] text-muted-foreground uppercase">
+        <p className="mb-4 text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">
           {t('navTitle')}
         </p>
         <ul className="grid gap-1 text-sm">
@@ -83,8 +89,8 @@ export function LegalDocumentView({
                 aria-current={key === docKey ? 'page' : undefined}
                 className={
                   key === docKey
-                    ? 'block rounded-md bg-accent px-3 py-1.5 font-medium'
-                    : 'block rounded-md px-3 py-1.5 text-muted-foreground hover:text-foreground'
+                    ? 'block rounded-md border-s-2 border-primary bg-surface-active px-3 py-1.5 font-medium'
+                    : 'block rounded-md border-s-2 border-transparent px-3 py-1.5 text-muted-foreground transition-colors duration-200 hover:text-foreground'
                 }
               >
                 {t(`docs.${key}`)}
@@ -93,7 +99,7 @@ export function LegalDocumentView({
           ))}
         </ul>
       </nav>
-      <article className="max-w-3xl min-w-0">
+      <article className="max-w-[46rem] min-w-0">
         {placeholder && (
           <div
             role="note"

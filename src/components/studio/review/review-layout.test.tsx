@@ -194,9 +194,7 @@ describe('player and actions', () => {
         body: { ok: true, project: { id: 'proj_copy' } },
       },
     ]);
-    await userEvent.click(
-      screen.getByRole('button', { name: 'More actions for Spring menu launch' }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'More actions' }));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Duplicate' }));
     await waitFor(() => expect(api.find('POST', '/projects/proj_1/duplicate')).toHaveLength(1));
     expect(nav.push).toHaveBeenCalledWith('/projects/proj_copy');
@@ -212,9 +210,7 @@ describe('player and actions', () => {
         body: { ok: true, url: 'https://cdn.test/dl.mp4', expiresInSec: 60 },
       },
     ]);
-    await userEvent.click(
-      screen.getByRole('button', { name: 'More actions for Spring menu launch' }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'More actions' }));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Download video' }));
     await waitFor(() =>
       expect(opened).toHaveBeenCalledWith('https://cdn.test/dl.mp4', '_blank', 'noopener'),

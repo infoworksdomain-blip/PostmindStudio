@@ -389,12 +389,20 @@ test.describe('analytics', () => {
     });
     const page = await newPage(browser, { now: new Date(now) });
     await page.goto('/analytics');
-    await expect(page.getByText('Views · last 30 days')).toBeVisible();
+    // 25.11: a one-sentence summary heads the page; the period lives in the URL.
+    const summary = page.getByRole('region', { name: 'Summary' });
+    await expect(summary).toContainText('from the last 30 days');
     await page.getByRole('radio', { name: '7 days' }).click();
-    await expect(page.getByText('Views · last 7 days')).toBeVisible();
-    await expect(page.getByText(/across 1 publication/)).toBeVisible();
+    await expect(page).toHaveURL(/\/analytics\?days=7$/);
+    await expect(summary).toContainText('Your 1 post from the last 7 days');
     await page.getByRole('radio', { name: '90 days' }).click();
-    await expect(page.getByText(/across 2 publications/)).toBeVisible();
+    await expect(summary).toContainText('Your 2 posts from the last 90 days');
+    await page.reload();
+    await expect(page.getByRole('radio', { name: '90 days' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await expect(page.getByRole('list', { name: 'Top publications' })).toBeVisible();
     await expect(page.locator('body')).not.toContainText('NaN');
     const badPaths = await page
       .locator('svg path')
@@ -414,7 +422,7 @@ test.describe('analytics', () => {
     );
     await page.goto('/analytics');
     await expect(page.getByRole('alert').filter({ hasText: 'Couldn’t load this' })).toBeVisible();
-    await expect(page.getByText(/Views · last/)).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Summary' })).toBeVisible();
     await page.close();
   });
 });

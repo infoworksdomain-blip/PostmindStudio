@@ -1,125 +1,42 @@
 'use client';
 
-import { MAX_SCHEDULE_AHEAD_DAYS } from '@/lib/studio/schedule-window';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
-import { toast } from 'sonner';
-import {
-  AlignCenter,
-  ArrowRight,
-  CalendarRange,
-  Clapperboard,
-  GalleryHorizontal,
-  Layers,
-  MonitorPlay,
-  Upload,
-  UserRound,
-} from 'lucide-react';
+import { CalendarRange } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ChoiceChips } from '@/components/ui/choice-chips';
-import { api, ApiError, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
-import { useFormat } from '@/lib/client/format';
-import type { BrandKit, MetaConnectInfo, PlatformConnection, Project } from '@/lib/client/types';
-import { useShowCosts } from '../account/use-show-costs';
-import { useBusiness } from '../business-context';
 import { EmptyState } from '../primitives';
-import {
-  CREATE_BLOCK_NOTICE_ID,
-  CreateBlockedNotice,
-  useCreateBlock,
-} from '../account/create-access';
 import { TemplatePicker } from '../slideshow/template-picker';
-import {
-  buildTargets,
-  hasConnectedAccount,
-  publishablePlatforms,
-  resolveAccounts,
-  type ProjectTemplate,
-} from '../automation/automation';
-import { AutoPublishOption } from './auto-publish-option';
-import {
-  BRIEF_MAX,
-  CAROUSEL_POSTS_DEFAULT,
-  buildCreateBody,
-  MAX_BUDGET_POUNDS,
-  buildGenerateBody,
-  EMPTY_HOOK_DEMO,
-  EMPTY_UGC,
-  EMPTY_WALL_OF_TEXT,
-  HOOK_LINE_MAX_WORDS,
-  WALL_TEXT_MAX_WORDS,
-  publishPlatforms,
-  usesTemplate,
-  validateCreate,
-  type CreateProblem,
-  type CreateSource,
-  type CreateState,
-  type InitialTemplate,
-  type QualityTier,
-  type Reference,
-} from './body';
-import { defaultSourceFor, LanguageOptions, type WorkflowOption } from './create-planning-options';
-import { AdvancedOptions, BrandKitSelect, LengthToggle, PlatformChips } from './create-options';
-import { BusinessHashtagsNote } from '../hashtags/business-hashtags-panel';
-import { defaultPlatforms, PLATFORM_OPTIONS } from './formats';
-import { ProjectTemplatePicker } from './project-template-picker';
-import { UgcOptions } from './ugc-options';
-import { ReferenceBanner } from './reference-banner';
-import { ReferencePreview } from './reference-preview';
 import { VideoUploadField } from '../uploads/video-upload-field';
 import { ProfileReviewNotice } from '../business/profile-review-notice';
 import { BriefHint, briefHintDescribedBy } from '../brief-hint';
+import { AutoPublishOption } from './auto-publish-option';
+import {
+  BRIEF_MAX,
+  EMPTY_HOOK_DEMO,
+  EMPTY_UGC,
+  EMPTY_WALL_OF_TEXT,
+  publishPlatforms,
+  type InitialTemplate,
+  type Reference,
+} from './body';
 import { CarouselOptions } from './carousel-options';
+import { CreateActionBar } from './create-action-bar';
+import { allowanceLine } from './create-allowance';
+import { MoreOptions } from './create-more-options';
+import { useCreateText } from './create-summary';
+import { FormatRail } from './format-rail';
 import { HookDemoOptions } from './hook-demo-options';
-import { TARGET_DEFAULT_SEC as HOOK_DEMO_TARGET_SEC } from '@/lib/studio/formats/hook-demo';
+import { ReferenceBanner } from './reference-banner';
+import { ReferencePreview } from './reference-preview';
+import { UgcOptions } from './ugc-options';
+import { useCreateForm, type CreateForm } from './use-create-form';
+import { VideoModelPicker } from './video-model-picker';
 import { WallOfTextOptions } from './wall-of-text-options';
 
-// BACKLOG 10.3 — Create (spec 14.1): one text box, one button. Defaults are pre-filled from the
-// business's connections and default brand kit; options sit behind progressive disclosure.
-
-/** The form's own state; autoPublish null = the default (on when an account can post). */
-type FormState = Omit<CreateState, 'platforms' | 'brandKitId' | 'autoPublish'> & {
-  autoPublish: boolean | null;
-};
-
-const INITIAL: FormState = {
-  brief: '',
-  source: 'BRIEF',
-  length: 'short',
-  templateId: null,
-  targetAudience: '',
-  callToAction: '',
-  budgetPounds: '',
-  reviewPolicy: '',
-  projectTemplate: null,
-  autoPublish: null,
-  autoPublishAccounts: {},
-  upload: null,
-  ugc: EMPTY_UGC,
-  hookDemo: EMPTY_HOOK_DEMO,
-  wallOfText: EMPTY_WALL_OF_TEXT,
-};
-
-const SOURCES: Array<{ key: CreateSource; icon: typeof Clapperboard }> = [
-  { key: 'BRIEF', icon: Clapperboard },
-  { key: 'SLIDESHOW', icon: Layers },
-  { key: 'CAROUSEL', icon: GalleryHorizontal },
-  { key: 'UPLOAD', icon: Upload },
-  // 21.4: a generated actor talks about the product (UGC style).
-  { key: 'UGC', icon: UserRound },
-  // 22.1: a reaction hook, then the business's own demo video (Fastlane's main format).
-  { key: 'HOOK_DEMO', icon: MonitorPlay },
-  // 22.2: one block of text over a calm background video.
-  { key: 'WALL_OF_TEXT', icon: AlignCenter },
-];
-
-const WHOLE_POUNDS: Intl.NumberFormatOptions = {
-  style: 'currency',
-  currency: 'GBP',
-  maximumFractionDigits: 0,
-};
+// BACKLOG 10.3 / 25.7 — Create (spec 14.1): the format first (a visible rail of the seven
+// formats), then one calm brief, then the options a format needs. Everything else waits behind
+// one "More options" disclosure, beside the brief on wide screens (sticky) and below it on phones,
+// where Generate stays in thumb reach. Ctrl/⌘ + Enter in the brief submits.
 
 export function CreateScreen({
   initialReference,
@@ -129,104 +46,11 @@ export function CreateScreen({
   /** A template picked on /templates: applied once its list has loaded. */
   initialTemplate?: InitialTemplate | null;
 }) {
-  const router = useRouter();
   const t = useTranslations('create.screen');
-  const tp = useTranslations('create.problems');
-  const tl = useTranslations('create.options.lengths');
-  const f = useFormat();
-  const errorMessage = useErrorMessage();
-  const { businessId, ready } = useBusiness();
-  const [form, setForm] = useState<FormState>(() =>
-    initialTemplate?.kind === 'slideshow'
-      ? { ...INITIAL, source: 'SLIDESHOW', templateId: initialTemplate.id }
-      : INITIAL,
-  );
-  const [platforms, setPlatforms] = useState<string[] | null>(null);
-  const [brandKitId, setBrandKitId] = useState<string | null | undefined>(undefined);
-  const [reference, setReference] = useState<Reference | null>(initialReference);
-  const [showOptions, setShowOptions] = useState(initialTemplate !== null);
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [problems, setProblems] = useState<CreateProblem[]>([]);
-  // 21.4: the server refused a UGC brief that asks for a real person.
-  const [refusal, setRefusal] = useState(false);
-  // Read-only: every mutation answers 402, so Generate is disabled with the reason beside it.
-  const block = useCreateBlock();
+  const c = useCreateForm(initialReference, initialTemplate);
+  const text = useCreateText(c);
 
-  const kits = useApi<{ data: BrandKit[] }>(businessId ? '/brand-kits' : null, { businessId });
-  const connections = useApi<{ data: PlatformConnection[]; meta?: MetaConnectInfo }>(
-    '/platform-connections',
-  );
-  const templates = useApi<{ data: ProjectTemplate[] }>('/templates');
-  // 15.C4: the plan tier caps the tier override; workflows feed the approval picker (15.D3).
-  const usage = useApi<{ usage: { planTier: QualityTier } }>('/usage');
-  const workflows = useApi<{ data: WorkflowOption[] }>('/approval-workflows');
-  const planTier = usage.data?.usage.planTier;
-  const showCosts = useShowCosts();
-  // "Use template" on /templates: pick that project template once the list is here (a template
-  // deleted meanwhile is simply not applied).
-  const [templateApplied, setTemplateApplied] = useState(false);
-  useEffect(() => {
-    if (templateApplied || initialTemplate?.kind !== 'project' || !templates.data) return;
-    setTemplateApplied(true);
-    const found = templates.data.data.find((x) => x.id === initialTemplate.id);
-    if (!found) return;
-    setForm((f) => ({
-      ...f,
-      projectTemplate: {
-        id: found.id,
-        name: found.name,
-        platforms: found.targetFormats.map((format) => format.platform),
-      },
-    }));
-  }, [templateApplied, initialTemplate, templates.data]);
-  const [sourceTouched, setSourceTouched] = useState(initialTemplate?.kind === 'slideshow');
-  // P5 (operator decision): the Basic plan starts on Slideshow until the user picks.
-  useEffect(() => {
-    if (sourceTouched || initialReference) return;
-    setForm((f) => ({ ...f, source: defaultSourceFor(planTier) }));
-  }, [planTier, sourceTouched, initialReference]);
-
-  const chosen: CreateState = {
-    ...form,
-    autoPublish: false,
-    platforms: platforms ?? defaultPlatforms(connections.data?.data, businessId),
-    brandKitId:
-      brandKitId === undefined
-        ? (kits.data?.data.find((k) => k.isDefault)?.id ?? null)
-        : brandKitId,
-  };
-  // 20.12: "platforms" are the formats to render; "accounts" are the connected social accounts
-  // the result is posted to. Auto-publish defaults on only when an account can post one of the
-  // chosen platforms, and is always off for a business with no connected account.
-  const connectionList = connections.data?.data;
-  const hasAccounts = hasConnectedAccount(connectionList, businessId);
-  const publishable = publishablePlatforms(
-    PLATFORM_OPTIONS.map((o) => o.platform),
-    connectionList,
-    businessId,
-  );
-  const accounts = resolveAccounts(
-    publishPlatforms(chosen),
-    form.autoPublishAccounts,
-    connectionList,
-    businessId,
-  );
-  const autoPublish =
-    hasAccounts &&
-    (form.autoPublish ?? buildTargets(publishPlatforms(chosen), accounts).length > 0);
-  const state: CreateState = { ...chosen, autoPublish, autoPublishAccounts: accounts };
-
-  const patch = (next: Partial<FormState & Pick<CreateState, 'platforms' | 'brandKitId'>>) => {
-    const { platforms: p, brandKitId: kit, ...rest } = next;
-    if (p) setPlatforms(p);
-    if (kit !== undefined) setBrandKitId(kit);
-    setForm((f) => ({ ...f, ...rest }));
-    setProblems([]);
-    setRefusal(false);
-  };
-
-  if (ready && !businessId) {
+  if (c.ready && !c.businessId) {
     return (
       <EmptyState
         media="business"
@@ -241,154 +65,96 @@ export function CreateScreen({
     );
   }
 
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    const found = validateCreate(state, businessId, Date.now(), publishable);
-    if (found.length || !businessId) {
-      setProblems(found);
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const body = buildCreateBody(state, businessId, form.source === 'BRIEF' ? reference : null);
-      setRefusal(false);
-      const { project } = await api<{ project: Project }>('/projects', {
-        method: 'POST',
-        body,
-        idempotencyKey: newIdempotencyKey(),
-      });
-      if (body.sourceType === 'SLIDESHOW') {
-        toast.success(t('toast.slideshowDrafted'));
-      } else {
-        try {
-          await api(`/projects/${project.id}/generate`, {
-            method: 'POST',
-            body: buildGenerateBody(state),
-            idempotencyKey: newIdempotencyKey(),
-          });
-          toast.success(
-            body.sourceType === 'UPLOAD'
-              ? t('toast.generatingUpload')
-              : body.sourceType === 'CAROUSEL'
-                ? t('toast.generatingCarousel')
-                : body.sourceType === 'HOOK_DEMO' || body.sourceType === 'WALL_OF_TEXT'
-                  ? t('toast.generatingFormat')
-                  : t('toast.generatingScript'),
-          );
-        } catch (err) {
-          toast.error(t('toast.draftNotStarted', { error: errorMessage(err) }));
-        }
-      }
-      router.push(`/projects/${project.id}`);
-    } catch (err) {
-      if (err instanceof ApiError && err.details?.reason === 'ugc_real_person_refused')
-        setRefusal(true);
-      // 22.1: the business has no (usable) demo video: say so beside the form.
-      else if (err instanceof ApiError && err.code === 'no_demo_video')
-        setProblems(['demoRequired']);
-      else toast.error(errorMessage(err));
-      setSubmitting(false);
-    }
-  }
-
-  const isSlideshow = form.source === 'SLIDESHOW';
-  const isUpload = form.source === 'UPLOAD';
-  const isUgc = form.source === 'UGC';
-  // 21.6: a carousel picks its networks when it is published.
-  const isCarousel = form.source === 'CAROUSEL';
-  // 22.1 / 22.2: fixed-length formats with their own settings (no template, no length choice).
-  const isHookDemo = form.source === 'HOOK_DEMO';
-  const isWall = form.source === 'WALL_OF_TEXT';
-  const isFormat = isHookDemo || isWall;
-  const templated = usesTemplate(state, reference);
-  const chooseTemplate = (id: string | null) => {
-    const found = templates.data?.data.find((x) => x.id === id);
-    patch({
-      projectTemplate: found
-        ? {
-            id: found.id,
-            name: found.name,
-            platforms: found.targetFormats.map((format) => format.platform),
-          }
-        : null,
-    });
-  };
-  const problemText = (p: CreateProblem): string => {
-    if (p === 'briefTooLong') return tp('briefTooLong', { max: BRIEF_MAX });
-    if (p === 'autoPublishAccountRequired')
-      return tp(p, {
-        platforms: f.list(
-          publishPlatforms(state)
-            .filter((x) => publishable.includes(x))
-            .map((x) => f.platform(x)),
-          'disjunction',
-        ),
-      });
-    if (p === 'autoPublishNoMatchingAccount')
-      return tp(p, { platforms: f.list(publishable.map((x) => f.platform(x))) });
-    if (p === 'scheduleTooFar') return tp('scheduleTooFar', { days: MAX_SCHEDULE_AHEAD_DAYS });
-    if (p === 'hookLineTooLong') return tp('hookLineTooLong', { max: HOOK_LINE_MAX_WORDS });
-    if (p === 'wallTextTooLong') return tp('wallTextTooLong', { max: WALL_TEXT_MAX_WORDS });
-    if (p === 'budgetRange')
-      return tp('budgetRange', {
-        min: f.number(0, WHOLE_POUNDS),
-        max: f.number(MAX_BUDGET_POUNDS, WHOLE_POUNDS),
-      });
-    return tp(p);
-  };
-  // The options summary: separate facts joined with a middle dot (a list, not a sentence).
-  const summary = isCarousel
-    ? [
-        t('summaryCarousel', {
-          count: form.carouselPosts ?? CAROUSEL_POSTS_DEFAULT,
-          theme: form.carouselTheme ?? 'light',
-        }),
-        state.brandKitId ? t('summaryBrandKit') : null,
-      ].filter(Boolean)
-    : videoSummary();
-  function videoSummary() {
-    return [
-      templated && form.projectTemplate
-        ? t('summaryTemplate', { name: form.projectTemplate.name })
-        : `${t('summaryPlatforms', { count: state.platforms.length })} · ${
-            isFormat
-              ? t('summarySeconds', {
-                  // 22.1: up to 15 s (the demo may be shorter); 22.2: the chosen length.
-                  count: isWall
-                    ? (form.wallOfText?.durationSec ?? EMPTY_WALL_OF_TEXT.durationSec)
-                    : HOOK_DEMO_TARGET_SEC,
-                })
-              : tl(form.length)
-          }`,
-      !connections.data
-        ? null
-        : !hasAccounts
-          ? t('summaryNoAccounts')
-          : state.autoPublish
-            ? t('summaryAutoPublish', {
-                count: buildTargets(publishPlatforms(state), accounts).length,
-              })
-            : t('summaryForReview'),
-      state.brandKitId ? t('summaryBrandKit') : null,
-    ].filter(Boolean);
-  }
+  const { form, state, patch } = c;
   return (
-    <form onSubmit={submit} className="mx-auto flex max-w-3xl flex-col gap-6 pt-4 md:pt-10">
-      <div>
-        <p className="mb-3 text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
+    <form
+      onSubmit={c.submit}
+      className="mx-auto grid max-w-6xl gap-x-10 gap-y-7 pt-4 md:pt-8 xl:grid-cols-[minmax(0,1fr)_22rem]"
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 xl:col-span-2">
+        <h1 className="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
           {t('eyebrow')}
-        </p>
-        <label htmlFor="create-brief" className="font-display text-4xl leading-tight md:text-6xl">
-          {t(`heading.${form.source}`)}
-        </label>
+        </h1>
         {/* 20.9: a whole month of videos and slideshows, drafted and scheduled at once. */}
         <Link
           href="/plans/new"
-          className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
         >
-          <CalendarRange className="size-4" strokeWidth={1.5} /> {t('planMonth')}
+          <CalendarRange className="size-4" strokeWidth={1.5} aria-hidden /> {t('planMonth')}
         </Link>
       </div>
+      <div className="min-w-0 xl:col-span-2">
+        <FormatRail
+          value={form.source}
+          onChange={c.chooseSource}
+          note={c.basicDefault ? t('basicDefault') : null}
+        />
+      </div>
+      <BriefColumn c={c} />
+      {/* xl: the options column scrolls on its own while Generate stays pinned at its foot. */}
+      <div className="grid min-w-0 content-start gap-6 xl:sticky xl:top-6 xl:max-h-[calc(100dvh-3rem)] xl:self-start xl:overflow-y-auto xl:pe-1 xl:pb-px">
+        {c.showVideoModel && (
+          <VideoModelPicker
+            source={form.source}
+            models={c.videoModels}
+            value={state.videoModel}
+            onChange={(videoModel) => patch({ videoModel })}
+            showCosts={c.showCosts}
+            droppedChoice={c.droppedVideoModel}
+          />
+        )}
+        <MoreOptions
+          state={state}
+          onChange={patch}
+          open={c.moreOpen}
+          onToggle={c.toggleMore}
+          view={{
+            templated: text.templated,
+            canUseTemplate: form.source === 'BRIEF' && !c.reference,
+            fixedLength: form.source === 'HOOK_DEMO' || form.source === 'WALL_OF_TEXT',
+          }}
+          businessId={c.businessId}
+          kits={c.data.kits.data?.data}
+          templates={{
+            data: c.data.templates.data?.data,
+            error: c.data.templates.error,
+            retry: () => void c.data.templates.mutate(),
+            choose: c.chooseTemplate,
+          }}
+          planTier={c.planTier}
+          workflows={c.data.workflows.data?.data}
+          canSchedule={!c.data.connections.data || c.publishable.length > 0}
+          showCosts={c.showCosts}
+        />
+        <CreateActionBar
+          source={form.source}
+          summary={text.summary}
+          allowance={allowanceLine(state, c.data.usage.data?.usage)}
+          submitting={c.submitting}
+          disabled={!c.ready || c.block === 'read_only'}
+          block={c.block}
+        />
+      </div>
+    </form>
+  );
+}
+
+/** The heading, the brief and the chosen format's own settings. */
+function BriefColumn({ c }: { c: CreateForm }) {
+  const t = useTranslations('create.screen');
+  const tp = useTranslations('create.problems');
+  const text = useCreateText(c);
+  const { form, state, patch, reference, businessId } = c;
+  const isUpload = form.source === 'UPLOAD';
+  const showReference = reference && form.source === 'BRIEF';
+  return (
+    <div className="flex min-w-0 flex-col gap-5">
+      <label
+        htmlFor="create-brief"
+        className="font-display text-3xl leading-tight text-balance md:text-5xl"
+      >
+        {t(`heading.${form.source}`)}
+      </label>
       {!isUpload && <ProfileReviewNotice businessId={businessId} />}
       {isUpload && businessId && (
         <div className="flex flex-col gap-1">
@@ -404,22 +170,22 @@ export function CreateScreen({
           <p className="text-xs text-muted-foreground">{t('uploadNote')}</p>
         </div>
       )}
-      {reference && !isSlideshow && !isUpload && !isUgc && !isCarousel && !isFormat && (
+      {showReference && (
         <>
           <ReferenceBanner
             reference={reference}
-            onModeChange={(mode) => setReference({ ...reference, mode })}
-            onClear={() => setReference(null)}
+            onModeChange={(mode) => c.setReference({ ...reference, mode })}
+            onClear={() => c.setReference(null)}
           />
           <ReferencePreview id={reference.id} mode={reference.mode} />
         </>
       )}
-      <div className="rounded-2xl border border-border bg-card p-2 shadow-[0_1px_0_rgb(0_0_0/0.03)] focus-within:border-ring">
+      <div className="rounded-2xl border border-border bg-card p-1.5 shadow-[0_1px_0_rgb(0_0_0/0.03)] transition-[border-color] duration-(--duration-fast) focus-within:border-ring">
         <textarea
           id="create-brief"
           value={form.brief}
           maxLength={BRIEF_MAX}
-          rows={5}
+          rows={7}
           autoFocus
           onChange={(e) => patch({ brief: e.target.value })}
           aria-describedby={briefHintDescribedBy(form.brief, 'create-brief-hint')}
@@ -428,41 +194,21 @@ export function CreateScreen({
               e.currentTarget.form?.requestSubmit();
           }}
           placeholder={t('briefPlaceholder')}
-          className="block w-full resize-y bg-transparent px-3 py-2 text-lg leading-relaxed outline-none placeholder:text-muted-foreground/70"
+          className="block min-h-44 w-full resize-y bg-transparent px-4 py-3 text-lg leading-relaxed outline-none placeholder:text-muted-foreground/70"
         />
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 px-2 pt-2">
-          <button
-            type="button"
-            aria-expanded={showOptions}
-            aria-controls="create-options"
-            onClick={() => setShowOptions((v) => !v)}
-            className="rounded-md px-1.5 py-1 text-start text-xs text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          >
-            {summary.join(' · ')} · <span className="underline">{t('options')}</span>
-          </button>
-          <Button
-            type="submit"
-            size="lg"
-            loading={submitting}
-            disabled={!ready || block === 'read_only'}
-            aria-describedby={block ? CREATE_BLOCK_NOTICE_ID : undefined}
-            className="px-4"
-          >
-            {!submitting && <ArrowRight className="rtl:-scale-x-100" />}
-            {isSlideshow ? t('createSlideshow') : isCarousel ? t('createCarousel') : t('generate')}
-          </Button>
-        </div>
+        <p className="px-4 pb-2 text-end text-xs text-muted-foreground" aria-hidden>
+          {t('submitShortcut')}
+        </p>
       </div>
-      <CreateBlockedNotice block={block} className="-mt-3 text-sm text-destructive" />
       {/* 20.18: a gentle nudge for a very short or generic brief; Generate still works. */}
-      <BriefHint text={form.brief} id="create-brief-hint" className="-mt-3" />
-      {!isCarousel && (
+      <BriefHint text={form.brief} id="create-brief-hint" className="-mt-2" />
+      {form.source !== 'CAROUSEL' && (
         <AutoPublishOption
           source={form.source}
           enabled={state.autoPublish}
           onToggle={(on) => patch({ autoPublish: on })}
           platforms={publishPlatforms(state)}
-          accounts={accounts}
+          accounts={c.accounts}
           onAccount={(platform, connectionId) =>
             patch({
               autoPublishAccounts: { ...form.autoPublishAccounts, [platform]: connectionId },
@@ -470,107 +216,47 @@ export function CreateScreen({
               autoPublish: form.autoPublish ?? state.autoPublish,
             })
           }
-          connections={connectionList}
-          metaConnect={connections.data?.meta?.connect}
+          connections={c.connectionList}
+          metaConnect={c.data.connections.data?.meta?.connect}
           businessId={businessId}
         />
       )}
-      {isUgc && (
+      {form.source === 'SLIDESHOW' && (
+        <TemplatePicker value={form.templateId} onChange={(templateId) => patch({ templateId })} />
+      )}
+      {form.source === 'CAROUSEL' && <CarouselOptions state={form} onChange={patch} />}
+      {form.source === 'UGC' && (
         <UgcOptions
           businessId={businessId}
           value={form.ugc ?? EMPTY_UGC}
           onChange={(ugc) => patch({ ugc })}
         />
       )}
-      {isHookDemo && (
+      {form.source === 'HOOK_DEMO' && (
         <HookDemoOptions
           businessId={businessId}
           value={form.hookDemo ?? EMPTY_HOOK_DEMO}
           onChange={(hookDemo) => patch({ hookDemo })}
         />
       )}
-      {isWall && (
+      {form.source === 'WALL_OF_TEXT' && (
         <WallOfTextOptions
           value={form.wallOfText ?? EMPTY_WALL_OF_TEXT}
           onChange={(wallOfText) => patch({ wallOfText })}
         />
       )}
-      {refusal && (
+      {c.refusal && (
         <p role="alert" className="text-sm text-destructive">
           {tp('ugcRealPerson')}
         </p>
       )}
-      {problems.length > 0 && (
+      {c.problems.length > 0 && (
         <ul role="alert" className="flex flex-col gap-1 text-sm text-destructive">
-          {problems.map((p) => (
-            <li key={p}>{problemText(p)}</li>
+          {c.problems.map((p) => (
+            <li key={p}>{text.problemText(p)}</li>
           ))}
         </ul>
       )}
-      {showOptions && (
-        <div id="create-options" className="flex flex-col gap-5">
-          {/* 21.4 added a fourth source (UGC): wrap so the row never overflows a 375 px phone. */}
-          <ChoiceChips
-            type="single"
-            label={t('sourcesAria')}
-            value={form.source}
-            onChange={(key) => {
-              setSourceTouched(true);
-              patch({ source: key });
-            }}
-            options={SOURCES.map(({ key, icon: Icon }) => ({
-              value: key,
-              label: (
-                <>
-                  <Icon strokeWidth={1.5} /> {t(`sources.${key}`)}
-                </>
-              ),
-            }))}
-          />
-          {isSlideshow && (
-            <TemplatePicker
-              value={form.templateId}
-              onChange={(templateId) => patch({ templateId })}
-            />
-          )}
-          {isCarousel && <CarouselOptions state={form} onChange={patch} />}
-          {!isSlideshow && !isUpload && !isUgc && !isCarousel && !isFormat && !reference && (
-            <ProjectTemplatePicker
-              templates={templates.data?.data}
-              error={templates.error}
-              onRetry={() => void templates.mutate()}
-              value={form.projectTemplate?.id ?? null}
-              onChange={chooseTemplate}
-            />
-          )}
-          {isCarousel ? null : templated ? (
-            <p className="text-xs text-muted-foreground">{t('templatedNote')}</p>
-          ) : (
-            <PlatformChips value={state.platforms} onChange={patch} />
-          )}
-          {/* 20.13: the hashtags every post carries (Business settings → Hashtags). */}
-          <BusinessHashtagsNote businessId={businessId} />
-          <div className="grid gap-5 sm:grid-cols-2">
-            {!templated && !isCarousel && !isFormat && (
-              <LengthToggle value={form.length} onChange={patch} />
-            )}
-            <BrandKitSelect kits={kits.data?.data} value={state.brandKitId} onChange={patch} />
-          </div>
-          <LanguageOptions state={state} onChange={patch} />
-          {!isCarousel && (
-            <AdvancedOptions
-              state={state}
-              onChange={patch}
-              open={showAdvanced}
-              onToggle={() => setShowAdvanced((v) => !v)}
-              planTier={planTier}
-              workflows={workflows.data?.data}
-              canSchedule={!connections.data || publishable.length > 0}
-              showCosts={showCosts}
-            />
-          )}
-        </div>
-      )}
-    </form>
+    </div>
   );
 }

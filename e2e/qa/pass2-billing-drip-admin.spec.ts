@@ -41,7 +41,7 @@ test.beforeAll(async ({ browser, playwright }) => {
   world = await seedWorld(db, ownerId);
   await addMember(db, world.orgId, ownerId, 'owner');
   owner = await signedInPage(browser, baseURL, emailFor('p2-billing'));
-  const made = await staffPage(browser, request, db);
+  const made = await staffPage(browser, request, db, undefined, 'billing');
   staff = made.page;
   staffEmail = made.email;
   await request.dispose();
@@ -517,7 +517,7 @@ test.describe('Admin Centre', () => {
     await w.visit('/admin');
     await staff.getByRole('tab', { name: 'Organisations' }).click();
     await staff.getByLabel('Search organisations').fill(`P2 Trial ${run}`);
-    await staff.getByRole('button', { name: 'Search' }).click();
+    await staff.getByRole('button', { name: 'Search', exact: true }).click();
     await staff.getByRole('button', { name: `Open P2 Trial ${run}` }).click();
     await expect(staff.getByText('Running: the trial’s caps apply now.')).toBeVisible();
     const form = staff.getByRole('form', { name: 'Set an override' });

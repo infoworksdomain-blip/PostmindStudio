@@ -10,7 +10,8 @@ import { AreaChart, useShortDay } from './area-chart';
 import { BarList } from './bar-list';
 import type { CostResponse } from './types';
 
-// Spend (GET /analytics/cost?days) — provider-job ledger by day, provider and project.
+// Spend (GET /analytics/cost?days) — provider-job ledger by day, provider and project. Platform
+// staff only, and organisation-wide (the cost endpoint takes no business filter).
 
 /** Fill the days the ledger has no rows for, so the chart shows quiet days as zero. */
 export function fillDays(
@@ -33,8 +34,11 @@ export function CostSection({
   error,
   isLoading,
   retry,
+  scopeNote,
 }: {
   days: number;
+  /** 25.11: said when the rest of the page is narrowed to one business (spend is org-wide). */
+  scopeNote?: string;
   data?: CostResponse;
   error?: unknown;
   isLoading: boolean;
@@ -53,7 +57,7 @@ export function CostSection({
   if (isLoading || !data)
     return (
       <Section title={t('title')}>
-        <Skeleton className="h-48 rounded-lg" />
+        <Skeleton className="h-[26rem] rounded-field" />
       </Section>
     );
 
@@ -64,7 +68,12 @@ export function CostSection({
   return (
     <Section
       title={t('title')}
-      description={t('description', { total: f.pence(data.totalPence), days })}
+      description={
+        <>
+          {t('description', { total: f.pence(data.totalPence), days })}
+          {scopeNote && <span className="block text-xs text-muted-foreground">{scopeNote}</span>}
+        </>
+      }
     >
       <AreaChart
         points={points}
