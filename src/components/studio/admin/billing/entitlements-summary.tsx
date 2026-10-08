@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
+import { meterFillClass } from '../../usage-meter';
 import {
   isSubscriptionStatus,
   PLAN_TIERS,
@@ -91,10 +92,7 @@ function TrialBlock({ trial }: { trial: NonNullable<EntitlementView['trial']> })
           className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
         >
           <div
-            className={cn(
-              'h-full rounded-full',
-              spentShare >= 1 ? 'bg-destructive' : spentShare >= 0.8 ? 'bg-warning' : 'bg-primary',
-            )}
+            className={cn('h-full rounded-full', meterFillClass(spentShare * 100))}
             style={{ width: `${Math.min(100, spentShare * 100)}%` }}
           />
         </div>

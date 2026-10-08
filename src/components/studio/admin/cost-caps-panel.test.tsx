@@ -65,10 +65,10 @@ describe('CostCapsPanel', () => {
     renderWithSWR(<CostCapsPanel />);
     expect(await screen.findByText('Caps today (2026-09-27, UTC)')).toBeInTheDocument();
     expect(screen.getByText('£850.00 / £1,000.00')).toBeInTheDocument();
-    expect(screen.getByRole('meter', { name: 'Global daily cap used' })).toHaveAttribute(
-      'aria-valuenow',
-      '85',
-    );
+    const meter = screen.getByRole('meter', { name: 'Global daily cap used' });
+    expect(meter).toHaveAttribute('aria-valuenow', '85');
+    // The shared meter rule (usage-meter.tsx): 80%+ is the warning fill, not the brand colour.
+    expect(meter.firstElementChild).toHaveClass('bg-warning');
     const tiers = screen.getByRole('table', { name: 'Organisation caps by plan tier' });
     const basic = within(tiers).getByRole('row', { name: /basic/i });
     expect(basic).toHaveTextContent('£5.00env override');

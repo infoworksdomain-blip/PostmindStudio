@@ -10,6 +10,7 @@ import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
 import { ErrorState, Section } from '../primitives';
 import { useProjectName } from '@/lib/client/use-project-name';
+import { meterFillClass } from '../usage-meter';
 
 // Spec 12.5 / 16.4 — spend today (and this month) against every cap, plus the recent cost
 // alerts (GET /admin/cost/caps). Cap values are the operator's defaults in code (cost/caps.ts),
@@ -167,10 +168,7 @@ function Meter({ percent, label }: { percent: number | null; label: string }) {
       className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
     >
       <div
-        className={cn(
-          'h-full rounded-full',
-          percent >= 100 ? 'bg-destructive' : percent >= 80 ? 'bg-warning' : 'bg-primary',
-        )}
+        className={cn('h-full rounded-full', meterFillClass(percent))}
         style={{ width: `${clamped}%` }}
       />
     </div>

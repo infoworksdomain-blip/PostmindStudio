@@ -335,7 +335,12 @@ export function ProjectsList() {
 
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
       {isLoading && (
-        <div className="flex flex-col gap-2" aria-label={t('loading')}>
+        <div
+          className="flex flex-col gap-2"
+          role="status"
+          aria-busy="true"
+          aria-label={t('loading')}
+        >
           {Array.from({ length: 5 }, (_, i) => (
             <Skeleton key={i} className="h-[4.5rem] rounded-xl" />
           ))}
