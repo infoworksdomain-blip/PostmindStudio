@@ -9,6 +9,8 @@ import type { KillSwitchState } from './types';
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 const nav = vi.hoisted(() => ({ replace: vi.fn(), search: '' }));
+// 25.13: a section change rewrites the URL with the native history API (no router round trip).
+vi.spyOn(window.history, 'replaceState').mockImplementation(nav.replace);
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: nav.replace }),
   usePathname: () => '/admin',
@@ -149,14 +151,14 @@ describe('AdminCentre section menu (25.13)', () => {
     await user.click(library);
     expect(await screen.findByText('Add to the corpus')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Library' })).toBeInTheDocument();
-    expect(nav.replace).toHaveBeenLastCalledWith('/admin?tab=library', { scroll: false });
+    expect(nav.replace).toHaveBeenLastCalledWith(null, '', '/admin?tab=library');
     expect(within(menu).getByRole('link', { name: 'Library' })).toHaveAttribute(
       'aria-current',
       'page',
     );
     await user.click(within(menu).getByRole('link', { name: 'Cost report' }));
     expect(await screen.findByText('No provider usage in this window.')).toBeInTheDocument();
-    expect(nav.replace).toHaveBeenLastCalledWith('/admin?tab=cost', { scroll: false });
+    expect(nav.replace).toHaveBeenLastCalledWith(null, '', '/admin?tab=cost');
   });
 
   it('jumps to a section from the phone picker', async () => {
@@ -167,7 +169,7 @@ describe('AdminCentre section menu (25.13)', () => {
     expect(within(jump).getByRole('group', { name: 'Platform' })).toBeInTheDocument();
     await user.selectOptions(jump, 'cost');
     expect(await screen.findByText('No provider usage in this window.')).toBeInTheDocument();
-    expect(nav.replace).toHaveBeenLastCalledWith('/admin?tab=cost', { scroll: false });
+    expect(nav.replace).toHaveBeenLastCalledWith(null, '', '/admin?tab=cost');
   });
 
   it('follows ?tab= after load, not only on the first render', async () => {
@@ -190,9 +192,7 @@ describe('AdminCentre section menu (25.13)', () => {
     expect(within(views).getByRole('radio', { name: 'Stripe records' })).toBeChecked();
     expect(await screen.findByText(/Read-only/)).toBeInTheDocument();
     await user.click(within(views).getByRole('radio', { name: 'Entitlement overrides' }));
-    expect(nav.replace).toHaveBeenLastCalledWith('/admin?tab=billing&view=entitlements', {
-      scroll: false,
-    });
+    expect(nav.replace).toHaveBeenLastCalledWith(null, '', '/admin?tab=billing&view=entitlements');
     expect(await screen.findByLabelText('Organisation id')).toBeInTheDocument();
   });
 

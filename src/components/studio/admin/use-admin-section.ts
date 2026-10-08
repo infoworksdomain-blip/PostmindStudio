@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import {
   DEFAULT_BILLING_VIEW,
@@ -14,7 +14,7 @@ import {
 // BACKLOG 25.13 — the Admin Centre's open section lives in the URL (?tab=, plus ?view= inside
 // "Subscriptions & billing"). It is read on every render, not only on load (the 25.1 audit found
 // ?tab was read once, so a link to another section from inside the page did nothing), and a change
-// replaces the history entry: Back leaves the Admin Centre instead of stepping through sections.
+// replaces the history entry (window.history.replaceState, no RSC refetch): Back leaves the Admin Centre instead of stepping through sections.
 // The choice shows at once, before the router has applied the new URL.
 
 export interface AdminSectionState extends ResolvedSection {
@@ -24,7 +24,6 @@ export interface AdminSectionState extends ResolvedSection {
 }
 
 export function useAdminSection(): AdminSectionState {
-  const router = useRouter();
   const pathname = usePathname() ?? '/admin';
   const params = useSearchParams();
   const search = params?.toString() ?? '';
@@ -43,7 +42,9 @@ export function useAdminSection(): AdminSectionState {
       view: view ?? (section === current.section ? current.view : DEFAULT_BILLING_VIEW),
     };
     setChosen({ value: next, over: search });
-    router.replace(hrefFor(next.section, next.view), { scroll: false });
+    // The native history API (synced with useSearchParams since Next 14.1): no server round trip,
+    // so the page and its <title> stay as they are while the section changes.
+    window.history.replaceState(window.history.state, '', hrefFor(next.section, next.view));
   };
 
   return { ...current, hrefFor, open };
