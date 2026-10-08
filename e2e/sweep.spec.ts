@@ -439,7 +439,7 @@ test('an organisation owner can use every workflow that needs no provider', asyn
   await page.getByRole('radio', { name: 'Day' }).click();
   await w.settle();
   await page.getByRole('radio', { name: 'Month' }).click();
-  await page.getByRole('button', { name: 'Posting times' }).click();
+  await page.getByRole('button', { name: 'Posting times', exact: true }).click();
   const times = page.getByRole('dialog', { name: 'Posting times' });
   await times.getByRole('radio', { name: 'Times a week' }).click();
   await times.getByLabel('Posts a week').selectOption('3');

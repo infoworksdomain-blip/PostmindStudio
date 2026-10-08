@@ -128,22 +128,31 @@ function usePublicationFilters() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
-  const raw = params?.get('filter');
-  const filter: PublicationFilterKey = isFilterKey(raw) ? raw : 'all';
-  const rawPlatform = params?.get('platform') ?? '';
-  const platform = Object.hasOwn(PLATFORM_LABEL, rawPlatform) ? rawPlatform : '';
+  // Seeded from the URL once, then held in state: router.replace commits in a transition, so
+  // rebuilding the next URL from useSearchParams could drop a change made a moment earlier.
+  const [state, setState] = useState(() => {
+    const raw = params?.get('filter');
+    const rawPlatform = params?.get('platform') ?? '';
+    return {
+      filter: isFilterKey(raw) ? raw : ('all' satisfies PublicationFilterKey),
+      platform: Object.hasOwn(PLATFORM_LABEL, rawPlatform) ? rawPlatform : '',
+    };
+  });
   const update = (next: { filter?: PublicationFilterKey; platform?: string }) => {
+    const merged = {
+      filter: next.filter ?? state.filter,
+      platform: next.platform ?? state.platform,
+    };
+    setState(merged);
     const search = new URLSearchParams(params?.toString() ?? '');
-    const nextFilter = next.filter ?? filter;
-    const nextPlatform = next.platform ?? platform;
-    if (nextFilter === 'all') search.delete('filter');
-    else search.set('filter', nextFilter);
-    if (nextPlatform) search.set('platform', nextPlatform);
+    if (merged.filter === 'all') search.delete('filter');
+    else search.set('filter', merged.filter);
+    if (merged.platform) search.set('platform', merged.platform);
     else search.delete('platform');
     const qs = search.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   };
-  return { filter, platform, update };
+  return { filter: state.filter, platform: state.platform, update };
 }
 
 export function PublicationsList() {

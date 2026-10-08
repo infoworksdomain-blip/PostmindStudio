@@ -397,7 +397,7 @@ test.describe('calendar drip queue', () => {
     const w = watch(owner);
     await w.visit('/calendar');
     // 25.9: the posting times (drip queue) open in a side sheet from the calendar header.
-    await owner.getByRole('button', { name: 'Posting times' }).click();
+    await owner.getByRole('button', { name: 'Posting times', exact: true }).click();
     const drip = owner.getByRole('region', { name: 'Drip queue' });
     await expect(drip).toBeVisible();
     await drip.getByRole('radio', { name: 'Times a week' }).click();
@@ -405,7 +405,7 @@ test.describe('calendar drip queue', () => {
     await drip.getByRole('button', { name: 'Save schedule' }).click();
     await expect(owner.getByText('Drip queue saved.').first()).toBeVisible();
     await owner.reload();
-    await owner.getByRole('button', { name: 'Posting times' }).click();
+    await owner.getByRole('button', { name: 'Posting times', exact: true }).click();
     const again = owner.getByRole('region', { name: 'Drip queue' });
     await expect(again.getByRole('radio', { name: 'Times a week' })).toBeChecked();
     await expect(again.getByLabel('Posts a week')).toHaveValue('3');
@@ -418,7 +418,7 @@ test.describe('calendar drip queue', () => {
 
   test('back to a daily schedule: posts a day, and a day can be skipped', async () => {
     await owner.goto('/calendar');
-    await owner.getByRole('button', { name: 'Posting times' }).click();
+    await owner.getByRole('button', { name: 'Posting times', exact: true }).click();
     const drip = owner.getByRole('region', { name: 'Drip queue' });
     // Wait for the saved schedule to load (weekly, from the test above) before changing it.
     await expect(drip.getByRole('radio', { name: 'Times a week' })).toBeChecked();
