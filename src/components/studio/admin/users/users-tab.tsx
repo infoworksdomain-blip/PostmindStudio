@@ -5,17 +5,11 @@ import { ArrowLeft, Eye, KeyRound, LogOut, Search, ShieldCheck, ShieldOff } from
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { StatusPill } from '@/components/ui/status-pill';
 import { api, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { hardNavigate } from '@/lib/client/navigate';
@@ -59,7 +53,9 @@ type Action = 'ban' | 'unban' | 'sessions' | 'twoFactor' | 'impersonate';
 
 function YesNo({ value, yes, no }: { value: boolean; yes: string; no: string }) {
   return (
-    <span className={value ? 'text-success' : 'text-muted-foreground'}>{value ? yes : no}</span>
+    <StatusPill tone={value ? 'good' : 'neutral'} size="sm">
+      {value ? yes : no}
+    </StatusPill>
   );
 }
 
@@ -222,8 +218,77 @@ export function UsersTab() {
 
   if (open) return <UserDetail id={open} onBack={() => setOpen(null)} />;
 
+  const columns: DataTableColumn<AdminUserRow>[] = [
+    {
+      id: 'user',
+      header: t('user'),
+      rowHeader: true,
+      sortValue: (u) => u.name,
+      cell: (u) => (
+        <>
+          <span className="flex items-center gap-2">
+            {u.name}
+            {u.banned && <StatusBadge value="banned" />}
+          </span>
+          <span className="block text-xs font-normal text-muted-foreground" dir="ltr">
+            {u.email}
+          </span>
+        </>
+      ),
+    },
+    {
+      id: 'verified',
+      header: t('verified'),
+      sortValue: (u) => u.emailVerified,
+      cell: (u) => <YesNo value={u.emailVerified} yes={t('yes')} no={t('no')} />,
+    },
+    {
+      id: 'twoFactor',
+      header: t('twoFactor'),
+      sortValue: (u) => u.twoFactorEnabled,
+      cell: (u) => <YesNo value={u.twoFactorEnabled} yes={t('yes')} no={t('no')} />,
+    },
+    {
+      id: 'role',
+      header: t('role'),
+      className: 'text-muted-foreground',
+      sortValue: (u) => u.role,
+      cell: (u) => u.role,
+    },
+    {
+      id: 'sessions',
+      header: t('sessions'),
+      align: 'end',
+      className: 'font-mono text-xs',
+      sortValue: (u) => u.sessions,
+      cell: (u) => f.number(u.sessions),
+    },
+    {
+      id: 'created',
+      header: t('created'),
+      className: 'font-mono text-xs text-muted-foreground',
+      sortValue: (u) => new Date(u.createdAt),
+      cell: (u) => f.date(u.createdAt),
+    },
+    {
+      id: 'actions',
+      header: <span className="sr-only">{t('actions')}</span>,
+      align: 'end',
+      cell: (u) => (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setOpen(u.id)}
+          aria-label={t('openAria', { name: u.name })}
+        >
+          {t('open')}
+        </Button>
+      ),
+    },
+  ];
+
   return (
-    <div className="grid gap-6">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6">
       <form
         className="flex flex-wrap items-end gap-3"
         onSubmit={(e: FormEvent) => {
@@ -231,14 +296,14 @@ export function UsersTab() {
           setQ(input.trim());
         }}
       >
-        <div className="grid gap-1.5">
+        <div className="grid w-full gap-1.5 sm:w-auto">
           <Label htmlFor="admin-user-search">{t('search')}</Label>
           <Input
             id="admin-user-search"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={t('searchPlaceholder')}
-            className="w-80"
+            className="w-full sm:w-80"
             maxLength={120}
             dir="ltr"
           />
@@ -255,57 +320,13 @@ export function UsersTab() {
         <EmptyState title={t('empty')} />
       ) : (
         <Section title={t('results', { count: data.total })}>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('user')}</TableHead>
-                  <TableHead>{t('verified')}</TableHead>
-                  <TableHead>{t('twoFactor')}</TableHead>
-                  <TableHead>{t('role')}</TableHead>
-                  <TableHead className="text-end">{t('sessions')}</TableHead>
-                  <TableHead>{t('created')}</TableHead>
-                  <TableHead>
-                    <span className="sr-only">{t('actions')}</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.data.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell>
-                      <span className="flex items-center gap-2 font-medium">
-                        {u.name}
-                        {u.banned && <StatusBadge value="banned" />}
-                      </span>
-                      <span className="block text-xs text-muted-foreground" dir="ltr">
-                        {u.email}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <YesNo value={u.emailVerified} yes={t('yes')} no={t('no')} />
-                    </TableCell>
-                    <TableCell>
-                      <YesNo value={u.twoFactorEnabled} yes={t('yes')} no={t('no')} />
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{u.role}</TableCell>
-                    <TableCell className="text-end tabular-nums">{f.number(u.sessions)}</TableCell>
-                    <TableCell className="text-muted-foreground">{f.date(u.createdAt)}</TableCell>
-                    <TableCell className="text-end">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setOpen(u.id)}
-                        aria-label={t('openAria', { name: u.name })}
-                      >
-                        {t('open')}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <DataTable
+            dense
+            caption={t('results', { count: data.total })}
+            columns={columns}
+            rows={data.data}
+            getRowId={(u) => u.id}
+          />
         </Section>
       )}
     </div>

@@ -1,13 +1,16 @@
 // @vitest-environment jsdom
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Publication } from '@/lib/client/types';
 import { fail, mockFetch, ok, renderScreen } from '../publications/test-utils';
 import { zoneLabel } from './month';
 import { PublicationsCalendar } from './publications-calendar';
 import { MAX_PAGES } from './use-calendar-publications';
 import type { UpcomingSlots } from './use-upcoming-slots';
+import { setTestUrl } from './test-navigation';
+
+vi.mock('next/navigation', async () => (await import('./test-navigation')).navigationMock);
 
 function pub(id: string, overrides: Partial<Publication>): Publication {
   return {
@@ -33,6 +36,7 @@ function pub(id: string, overrides: Partial<Publication>): Publication {
 }
 
 afterEach(() => vi.unstubAllGlobals());
+beforeEach(() => setTestUrl('/calendar'));
 
 const SEPT = new Date(2026, 8, 10);
 
@@ -51,7 +55,7 @@ describe('PublicationsCalendar', () => {
     renderScreen(<PublicationsCalendar initialDate={SEPT} />);
     const messages = await screen.findAllByText('Nothing scheduled or published this month.');
     expect(messages).toHaveLength(2);
-    const grid = screen.getByRole('list', { name: 'Days of the month' });
+    const grid = screen.getByRole('grid', { name: 'Days of the month' });
     expect(grid.parentElement).toContainElement(messages[0] as HTMLElement);
   });
 
@@ -68,7 +72,7 @@ describe('PublicationsCalendar', () => {
       return undefined;
     });
     renderScreen(<PublicationsCalendar initialDate={SEPT} />);
-    const grid = await screen.findByRole('list', { name: 'Days of the month' });
+    const grid = await screen.findByRole('grid', { name: 'Days of the month' });
     expect(
       within(grid).getByRole('button', { name: /Video f1, YouTube Shorts, Failed/ }),
     ).toBeInTheDocument();
@@ -86,7 +90,7 @@ describe('PublicationsCalendar', () => {
       }),
     );
     renderScreen(<PublicationsCalendar initialDate={SEPT} />);
-    const grid = await screen.findByRole('list', { name: 'Days of the month' });
+    const grid = await screen.findByRole('grid', { name: 'Days of the month' });
     const cell = grid.querySelector('[data-day="2026-09-14"]') as HTMLElement;
     expect(
       within(cell).getAllByRole('button', { name: /^Video d\d, YouTube Shorts/ }),
@@ -112,7 +116,7 @@ describe('PublicationsCalendar', () => {
     expect(screen.getByLabelText('Loading calendar')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /September 2026/ })).toBeInTheDocument();
 
-    const grid = await screen.findByRole('list', { name: 'Days of the month' });
+    const grid = await screen.findByRole('grid', { name: 'Days of the month' });
     // 24.2: a post opens the side panel (a dialog) instead of navigating away.
     expect(
       within(grid).getByRole('button', { name: /Video a, YouTube Shorts, Scheduled/ }),
@@ -215,7 +219,7 @@ describe('PublicationsCalendar — month ahead (20.3)', () => {
     expect(
       await screen.findByText('Next 30 days: 2 posts scheduled · 3 open slots'),
     ).toBeInTheDocument();
-    const grid = await screen.findByRole('list', { name: 'Days of the month' });
+    const grid = await screen.findByRole('grid', { name: 'Days of the month' });
     await waitFor(() => expect(within(grid).getAllByText('Open slot')).toHaveLength(3));
     expect(within(grid).queryAllByRole('link')).toHaveLength(0);
     expect(
@@ -247,7 +251,7 @@ describe('PublicationsCalendar — month ahead (20.3)', () => {
     );
     const user = userEvent.setup();
     renderScreen(<PublicationsCalendar initialDate={new Date(Date.now() + 2 * DAY)} />);
-    const grid = await screen.findByRole('list', { name: 'Days of the month' });
+    const grid = await screen.findByRole('grid', { name: 'Days of the month' });
     const marker = await within(grid).findByRole('button', {
       name: /^Month-plan post at .+: Halloween loaves \(Being made\)$/,
     });
@@ -273,14 +277,17 @@ describe('PublicationsCalendar — month ahead (20.3)', () => {
     expect(
       await screen.findByText(/Next 30 days: 1 post scheduled\. The drip queue is off/),
     ).toBeInTheDocument();
+    // 25.9: the posting times live in a side sheet now.
     await user.click(screen.getByRole('button', { name: 'set posting times' }));
-    expect(screen.getByRole('heading', { name: 'Drip queue' })).toHaveFocus();
+    const sheet = await screen.findByRole('dialog', { name: 'Posting times' });
+    expect(within(sheet).getByRole('heading', { name: 'Drip queue' })).toBeInTheDocument();
   });
 
   it('20.14: a posting schedule saves (turning the queue on) and refreshes the markers', async () => {
     const api = server(upcoming());
     const user = userEvent.setup();
     renderScreen(<PublicationsCalendar initialDate={new Date()} />);
+    await user.click(await screen.findByRole('button', { name: 'Posting times' }));
     // The saved Monday 12:30 slot reopens as a weekly schedule.
     expect(await screen.findByRole('radio', { name: 'Times a week' })).toBeChecked();
     await user.selectOptions(screen.getByLabelText('Posts a week'), '5');

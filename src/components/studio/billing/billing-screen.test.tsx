@@ -238,7 +238,7 @@ describe('Your plan (21.5)', () => {
     const user = userEvent.setup();
     renderWithSWR(<BillingScreen />);
     await user.click(await screen.findByRole('button', { name: 'Cancel plan' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Cancel your plan?' });
+    const dialog = await screen.findByRole('alertdialog', { name: 'Cancel your plan?' });
     expect(within(dialog).getByText(/Your plan will end on 29 October 2026/)).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Cancel plan' }));
     await waitFor(() =>

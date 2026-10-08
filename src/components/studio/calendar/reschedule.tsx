@@ -22,7 +22,7 @@ import { useProjectName } from '@/lib/client/use-project-name';
 
 // BACKLOG 13.9 (spec 14.3) — reschedule a scheduled publication: PATCH /publications/:id
 // { scheduledFor }. Drag a post to another day on the month grid, or use the move dialog (the
-// keyboard and phone alternative) to pick any date and time.
+// keyboard and phone alternative) to pick any date and time. 25.9: every move can be undone.
 
 export const MIN_LEAD_MS = 60_000;
 /** Drag payload type: a publication id. */
@@ -32,12 +32,21 @@ export function canMove(publication: Publication): boolean {
   return publication.state === 'SCHEDULED' && publication.scheduledFor !== null;
 }
 
+/** How long the "Moved … Undo" toast stays (it pauses while hovered or focused). */
+export const UNDO_TOAST_MS = 10_000;
+
+/**
+ * 25.9: after a move the toast offers Undo, which moves the post back to its old time with the
+ * same PATCH; `announcement` is the sentence the calendar's live region reads out.
+ */
 export function useReschedule(onMoved: () => void) {
   const t = useTranslations('calendar.move');
   const f = useFormat();
   const errorMessage = useErrorMessage();
+  const projectName = useProjectName();
   const [pending, setPending] = useState<string | null>(null);
-  const move = async (publication: Publication, to: Date): Promise<boolean> => {
+  const [announcement, setAnnouncement] = useState('');
+  const patch = async (publication: Publication, to: Date): Promise<boolean> => {
     if (to.getTime() - Date.now() < MIN_LEAD_MS) {
       toast.error(t('tooSoon'));
       return false;
@@ -48,7 +57,6 @@ export function useReschedule(onMoved: () => void) {
         method: 'PATCH',
         body: { scheduledFor: to.toISOString() },
       });
-      toast.success(t('moved', { date: f.date(to.toISOString()) }));
       onMoved();
       return true;
     } catch (err) {
@@ -58,7 +66,28 @@ export function useReschedule(onMoved: () => void) {
       setPending(null);
     }
   };
-  return { move, pending };
+  const undo = async (publication: Publication, movedTo: Date, back: Date) => {
+    const ok = await patch({ ...publication, scheduledFor: movedTo.toISOString() }, back);
+    if (!ok) return;
+    const date = f.date(back.toISOString());
+    toast.success(t('undone', { date }));
+    setAnnouncement(t('undoneLive', { name: projectName(publication.project?.name), date }));
+  };
+  const move = async (publication: Publication, to: Date): Promise<boolean> => {
+    const from = publication.scheduledFor ? new Date(publication.scheduledFor) : null;
+    const ok = await patch(publication, to);
+    if (!ok) return false;
+    const date = f.date(to.toISOString());
+    toast.success(t('moved', { date }), {
+      duration: UNDO_TOAST_MS,
+      ...(from && {
+        action: { label: t('undo'), onClick: () => void undo(publication, to, from) },
+      }),
+    });
+    setAnnouncement(t('movedLive', { name: projectName(publication.project?.name), date }));
+    return true;
+  };
+  return { move, pending, announcement };
 }
 
 export function MoveToDialog({

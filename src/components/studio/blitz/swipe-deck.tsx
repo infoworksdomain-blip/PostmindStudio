@@ -57,6 +57,11 @@ export interface SwipeDeckProps<T extends DeckItem> {
   busy?: boolean;
   /** Under the buttons (e.g. the skip-reason chips). */
   footer?: ReactNode;
+  /**
+   * 25.9: why keeping and skipping are off (a read-only role or account), shown above the
+   * buttons instead of leaving them silently disabled.
+   */
+  disabledReason?: ReactNode;
 }
 
 const EXIT_MS = 260;
@@ -70,6 +75,7 @@ export function SwipeDeck<T extends DeckItem>({
   editLabel,
   busy = false,
   footer,
+  disabledReason,
 }: SwipeDeckProps<T>) {
   const t = useTranslations('blitz.deck');
   const dir: Direction = directionOf(useLocale()) === 'rtl' ? 'rtl' : 'ltr';
@@ -148,14 +154,14 @@ export function SwipeDeck<T extends DeckItem>({
   })();
 
   return (
-    <div className="flex flex-col items-center gap-5">
+    <div className="flex w-full flex-col items-center gap-5">
       <div
         role="group"
         aria-roledescription={t('roleDeck')}
         aria-label={top ? top.label : t('empty')}
         tabIndex={0}
         onKeyDown={onKeyDown}
-        className="relative aspect-[9/16] max-h-[calc(100dvh-14rem)] w-full max-w-[22rem] rounded-[1.75rem] outline-none focus-visible:ring-4 focus-visible:ring-ring/60 sm:max-w-[24rem]"
+        className="relative aspect-[9/16] max-h-[calc(100dvh-20rem)] min-h-[26rem] w-full max-w-[22rem] rounded-[1.75rem] outline-none focus-visible:ring-4 focus-visible:ring-ring/60 sm:max-w-[24rem]"
       >
         {items
           .slice(0, 3)
@@ -191,7 +197,7 @@ export function SwipeDeck<T extends DeckItem>({
                       }
                 }
                 className={cn(
-                  'absolute inset-0 overflow-hidden rounded-[1.75rem] border border-border/70 bg-card shadow-[0_24px_60px_-28px_rgba(15,23,42,0.55)] select-none',
+                  'absolute inset-0 overflow-hidden rounded-[1.75rem] border border-border/70 bg-card shadow-overlay select-none',
                   isTop && 'cursor-grab active:cursor-grabbing',
                 )}
               >
@@ -228,10 +234,19 @@ export function SwipeDeck<T extends DeckItem>({
           .reverse()}
       </div>
 
+      {disabledReason && (
+        <div
+          id="blitz-disabled-reason"
+          className="w-full max-w-[22rem] rounded-panel bg-surface-raised px-4 py-3 text-center text-sm text-foreground-secondary sm:max-w-[24rem]"
+        >
+          {disabledReason}
+        </div>
+      )}
       <div
         className="flex items-center justify-center gap-4"
-        role="toolbar"
+        role="group"
         aria-label={t('actions')}
+        aria-describedby={disabledReason ? 'blitz-disabled-reason' : undefined}
       >
         <RoundButton
           tone="skip"
@@ -239,7 +254,7 @@ export function SwipeDeck<T extends DeckItem>({
           disabled={!top || busy}
           onClick={() => decide('skip')}
         >
-          <X className="size-7" strokeWidth={2.5} />
+          <X className="size-6" strokeWidth={2.25} />
         </RoundButton>
         {onEdit && (
           <RoundButton
@@ -258,12 +273,10 @@ export function SwipeDeck<T extends DeckItem>({
           disabled={!top || busy}
           onClick={() => decide('keep')}
         >
-          <Check className="size-7" strokeWidth={2.75} />
+          <Check className="size-6" strokeWidth={2.5} />
         </RoundButton>
       </div>
-      <p className="text-center text-xs text-muted-foreground">
-        {dir === 'rtl' ? t('keyboardHintRtl') : t('keyboardHintLtr')}
-      </p>
+      <KeyHints dir={dir} withEdit={Boolean(onEdit)} />
       {footer}
     </div>
   );
@@ -317,16 +330,49 @@ function RoundButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'rounded-full border-2 shadow-sm transition-transform duration-150 hover:scale-105 active:scale-95 motion-reduce:transform-none',
-        small ? 'size-12' : 'size-16',
+        'rounded-full border border-border-strong bg-card shadow-raised transition-[transform,background-color] duration-(--duration-fast) hover:scale-[1.04] active:scale-95 motion-reduce:transform-none',
+        small ? 'size-11' : 'size-14',
         tone === 'keep' &&
-          'border-success/50 text-success-foreground hover:bg-success-soft hover:text-success-foreground',
+          'text-success-foreground hover:bg-success-soft hover:text-success-foreground',
         tone === 'skip' &&
-          'border-destructive/40 text-destructive-foreground hover:bg-destructive-soft hover:text-destructive-foreground',
-        tone === 'edit' && 'border-border text-muted-foreground hover:text-foreground',
+          'text-destructive-foreground hover:bg-destructive-soft hover:text-destructive-foreground',
+        tone === 'edit' && 'text-muted-foreground hover:text-foreground',
       )}
     >
       {children}
     </IconButton>
+  );
+}
+
+/**
+ * 25.9: the keyboard shortcuts as key caps under the buttons ("← Skip · ↑ Edit · → Keep",
+ * mirrored right to left). Screen readers get the full sentence instead.
+ */
+function KeyHints({ dir, withEdit }: { dir: Direction; withEdit: boolean }) {
+  const t = useTranslations('blitz.deck');
+  const keep = dir === 'rtl' ? '←' : '→';
+  const skip = dir === 'rtl' ? '→' : '←';
+  const hints = [
+    { key: skip, label: t('stampSkip') },
+    ...(withEdit ? [{ key: '↑', label: t('hintEdit') }] : []),
+    { key: keep, label: t('stampKeep') },
+  ];
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <p className="sr-only">{dir === 'rtl' ? t('keyboardHintRtl') : t('keyboardHintLtr')}</p>
+      <ul aria-hidden className="hidden items-center gap-4 text-xs text-muted-foreground sm:flex">
+        {hints.map((h) => (
+          <li key={h.label} className="flex items-center gap-1.5">
+            <kbd className="grid h-6 min-w-6 place-items-center rounded-control border border-border-strong bg-surface-raised px-1.5 font-mono text-[0.6875rem] text-foreground-secondary shadow-[inset_0_-1px_0_var(--border-strong)]">
+              {h.key}
+            </kbd>
+            {h.label}
+          </li>
+        ))}
+      </ul>
+      <p aria-hidden className="text-[0.6875rem] text-muted-foreground/80">
+        {t('hintDrag')}
+      </p>
+    </div>
   );
 }

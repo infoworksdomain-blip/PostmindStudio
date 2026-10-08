@@ -1894,7 +1894,15 @@
       "agendaAria": "Agenda",
       "emptyMonth": "Nothing scheduled or published this month.",
       "moreOpen": "{count, plural, one {+# open slot} other {+# open slots}}",
-      "morePlanned": "+{count} planned"
+      "morePlanned": "+{count} planned",
+      "moreAria": "Show everything on {date} ({count, number} more)",
+      "dayAria": "Posts on this day",
+      "weekAria": "Days of the week",
+      "todayAria": "{date}, today",
+      "today": "Today",
+      "quietDay": "Nothing planned",
+      "emptyWeek": "Nothing scheduled or published this week.",
+      "emptyDayView": "Nothing scheduled or published on this day."
     },
     "event": {
       "untitled": "Untitled project",
@@ -1916,7 +1924,11 @@
       "newTime": "New time",
       "cancel": "Cancel",
       "moving": "Moving…",
-      "submit": "Move"
+      "submit": "Move",
+      "undo": "Undo",
+      "undone": "Moved back to {date}",
+      "movedLive": "Moved “{name}” to {date}. Undo is in the notification.",
+      "undoneLive": "Moved “{name}” back to {date}."
     },
     "drip": {
       "title": "Drip queue",
@@ -2040,6 +2052,48 @@
           "none": "empty"
         }
       }
+    },
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "previousDay": "Previous day",
+    "nextDay": "Next day",
+    "views": {
+      "label": "Calendar view",
+      "month": "Month",
+      "week": "Week",
+      "day": "Day"
+    },
+    "filters": {
+      "label": "Filters",
+      "platformLabel": "Platform",
+      "statusLabel": "Status",
+      "sourceLabel": "Source",
+      "allPlatforms": "All platforms",
+      "anyStatus": "Any status",
+      "anySource": "Any source",
+      "clear": "Clear filters",
+      "showing": "Showing {shown, number} of {total, number} posts",
+      "status": {
+        "SCHEDULED": "Scheduled",
+        "PUBLISHING": "Publishing",
+        "PUBLISHED": "Published",
+        "FAILED": "Failed",
+        "PLANNED": "Being made (month plan)"
+      },
+      "source": {
+        "plan": "Month plan",
+        "automation": "Automation",
+        "manual": "Made by hand"
+      }
+    },
+    "postingTimes": {
+      "open": "Posting times",
+      "title": "Posting times",
+      "description": "When this business’s approved videos with no date go out. Saved times show on the calendar as open slots."
+    },
+    "campaign": {
+      "plan": "Month plan · {date}",
+      "automation": "Automation · {name}"
     }
   },
   "business": {
@@ -2658,7 +2712,8 @@
       "guidance": "Connect Instagram and Facebook in PostMind settings.",
       "connectButton": "Connect with Facebook",
       "studioGuidance": "One Facebook login connects the Pages you choose and the Instagram professional accounts linked to them.",
-      "notConfigured": "Instagram and Facebook are not available yet: Studio’s Meta app still needs its settings. Ask your administrator."
+      "notConfigured": "Instagram and Facebook are not available yet: Studio’s Meta app still needs its settings. Ask your administrator.",
+      "title": "Instagram and Facebook"
     },
     "descriptionStandalone": "The accounts Studio publishes to. Connect each one for the selected business.",
     "connectedMetaNotice": "{count, plural, one {# Facebook or Instagram account is connected} other {# Facebook and Instagram accounts are connected}}. You can publish to them now.",
@@ -2690,6 +2745,12 @@
       "reconnect": "Reconnect TikTok to send drafts. Until then, posts go out directly.",
       "saved": "TikTok posting preference saved",
       "goesToDrafts": "TikTok: goes to your TikTok drafts. Add a trending sound in the app, then post."
+    },
+    "state": {
+      "connected": "Connected",
+      "needsReconnect": "Needs reconnecting",
+      "notConnected": "Not connected",
+      "unavailable": "Not available"
     }
   },
   "library": {
@@ -3110,7 +3171,25 @@
         "forceApprovals": "Force-approvals",
         "beta": "Beta",
         "users": "Users",
-        "subscriptions": "Subscriptions"
+        "subscriptions": "Subscriptions",
+        "billing": "Subscriptions & billing"
+      },
+      "menu": {
+        "label": "Admin sections",
+        "jump": "Go to section",
+        "halted": "Halted",
+        "groups": {
+          "operations": "Operations",
+          "content": "Content",
+          "customers": "Customers",
+          "platform": "Platform"
+        }
+      },
+      "billingViews": {
+        "label": "View",
+        "overview": "Overview and MRR",
+        "records": "Stripe records",
+        "entitlements": "Entitlement overrides"
       }
     },
     "cost": {
@@ -4860,13 +4939,6 @@
       "membersTitle": "Members",
       "auditTitle": "Audit log"
     },
-    "nav": {
-      "aria": "Settings",
-      "organisation": "Organization",
-      "members": "Members",
-      "billing": "Your plan",
-      "audit": "Audit log"
-    },
     "page": {
       "eyebrow": "Settings",
       "title": "Organization",
@@ -5024,7 +5096,8 @@
       "leave": "Leave",
       "removeTitle": "Remove {name}?",
       "removeBody": "They lose access to this organization right away. Their videos stay.",
-      "removed": "{name} was removed."
+      "removed": "{name} was removed.",
+      "caption": "Members"
     },
     "pending": {
       "none": "No pending invitations.",
@@ -5231,7 +5304,9 @@
           "reason": "Reason for removing",
           "button": "Remove override",
           "cleared": "Override removed",
-          "trialWarning": "Stripe still shows a trial: removing the override brings the trial’s caps back. To keep them off, first save an override with “End the trial now”."
+          "trialWarning": "Stripe still shows a trial: removing the override brings the trial’s caps back. To keep them off, first save an override with “End the trial now”.",
+          "confirmTitle": "Remove this override?",
+          "confirmButton": "Yes, remove"
         },
         "trial": {
           "title": "Trial",
@@ -5303,14 +5378,19 @@
         "legacy": "Moved over from your previous plan.",
         "pending": "Starting {date}: {count, plural, one {# channel} other {# channels}}, {period, select, week {weekly} month {monthly} other {yearly}}.",
         "keepCurrent": "Keep my current plan",
-        "paymentPending": "Your last change is waiting for payment. Update your payment method to apply it."
+        "paymentPending": "Your last change is waiting for payment. Update your payment method to apply it.",
+        "price": "Price",
+        "videosLeft": "{period, select, week {Videos left this week} other {Videos left this month}}",
+        "leftOf": "{left} of {limit}",
+        "packVideos": "Pack videos left"
       },
       "videos": {
         "title": "{period, select, week {Videos this week} other {Videos this month}}",
         "description": "Every video you start counts, including ones still being made.",
         "used": "{period, select, week {Used this week} other {Used this month}}",
         "moreFrom": "More videos are included starting {date}.",
-        "packsLeft": "{count, plural, =0 {No pack videos left} one {# pack video left} other {# pack videos left}}"
+        "packsLeft": "{count, plural, =0 {No pack videos left} one {# pack video left} other {# pack videos left}}",
+        "left": "{left} left"
       },
       "channels": {
         "title": "Your channels",
@@ -5354,7 +5434,8 @@
         "confirmBody": "Your plan will end at the end of this period. Your work stays available to view, export and download. We don’t refund partially used periods.",
         "confirmBodyDate": "Your plan will end on {date}. Until then nothing changes. After that your account becomes read-only: your work stays available to view, export and download. We don’t refund partially used periods.",
         "keep": "Keep my plan",
-        "confirm": "Cancel plan"
+        "confirm": "Cancel plan",
+        "resumeTitle": "Your plan is ending"
       },
       "toasts": {
         "applied": "Your plan has been changed.",
@@ -5793,7 +5874,26 @@
       "someWithoutAccount": "Made but not posted automatically (no connected account): {platforms}.",
       "connectAccount": "Connect an account",
       "ugcActors": "Make testimonial and product videos with UGC actors",
-      "ugcActorsHint": "A generated actor talks about your product. Each of these videos uses {count, number} of your videos. English only."
+      "ugcActorsHint": "A generated actor talks about your product. Each of these videos uses {count, number} of your videos. English only.",
+      "prompt": {
+        "title": "Your next month, planned",
+        "body": "Pick when it starts. Studio writes every topic from your website, brand kit and past posts, and you check the list before anything is made.",
+        "summary": "{perDay} · {videos, number}% videos · {platforms}",
+        "yourTimes": "Your posting times",
+        "noPlatforms": "no platforms yet",
+        "options": "More options"
+      },
+      "preview": {
+        "title": "What Studio will make",
+        "upTo": "Posts, at most",
+        "split": "Videos: {videos, number} · Slideshows: {slideshows, number}",
+        "dates": "Dates",
+        "range": "{start} – {end}",
+        "networks": "Networks",
+        "noNetworks": "None chosen yet",
+        "review": "Studio writes the topics first. You review and edit the list before anything is made.",
+        "rolling": "Each post is then made about 3 days before it goes out, so your edits until then still count."
+      }
     },
     "allowance": {
       "title": "This month",
@@ -5957,7 +6057,11 @@
       "removeConfirm": "Its post is canceled and the time is freed. The rest of the plan carries on.",
       "removedToast": "Post removed",
       "createsAt": "Scheduled to be created on {date}",
-      "createsLater": "{count, plural, one {# more post will be created closer to its post time.} other {# more posts will be created closer to their post time.}}"
+      "createsLater": "{count, plural, one {# more post will be created closer to its post time.} other {# more posts will be created closer to their post time.}}",
+      "approve": "Approve",
+      "approveAria": "Approve “{title}”",
+      "approved": "Approved: it goes out at its time",
+      "rolling": "Studio makes each post about 3 days before its time; a post still waiting says when it will be created."
     },
     "list": {
       "title": "Month plans",
@@ -5968,6 +6072,24 @@
       "emptyBody": "Let Studio draft a month of videos and slideshows, then generate and schedule them in one go.",
       "range": "{start} – {end}",
       "posts": "{count, plural, one {# post} other {# posts}}"
+    },
+    "timeline": {
+      "week": "Week {n, number}",
+      "range": "{start} – {end}"
+    },
+    "bulk": {
+      "label": "Bulk actions",
+      "selectAll": "Select all",
+      "selected": "{count, number} selected",
+      "selectItem": "Select “{title}”",
+      "progress": "Working… {done, number} of {total, number}",
+      "summaryOk": "Done: {count, number} changed.",
+      "summaryPartial": "{ok, number} done, {failed, number} could not be changed. Try those one by one.",
+      "regenerate": "New topics ({count, number})",
+      "delete": "Delete ({count, number})",
+      "deleteConfirmTitle": "Delete the selected posts ({count, number})?",
+      "deleteConfirmBody": "They are taken out of this draft. Nothing has been made yet.",
+      "approveAll": "Approve all waiting ({count, number})"
     }
   },
   "errorPage": {
@@ -6254,7 +6376,9 @@
       "beats": "Script",
       "stillAlt": "A picture from your library",
       "mentionsBusiness": "Names your business",
-      "allowanceQuick": "Uses ¼ of a video of your plan when kept"
+      "allowanceQuick": "Uses ¼ of a video of your plan when kept",
+      "hintEdit": "Edit first",
+      "hintDrag": "Or drag the card"
     },
     "keep": {
       "title": "Keep it",
@@ -6266,7 +6390,8 @@
       "editHint": "Opens it so you can change the text and pictures.",
       "cancel": "Cancel",
       "confirm": "Keep",
-      "previewNote": "{units, plural, one {This is made now and uses # video of your plan.} other {This is made now and uses # videos of your plan.}}"
+      "previewNote": "{units, plural, one {This is made now and uses # video of your plan.} other {This is made now and uses # videos of your plan.}}",
+      "noPublishRole": "Your role can’t post or schedule, so a kept post opens for editing first."
     },
     "skip": {
       "title": "Why skip it? (optional)",
@@ -6339,6 +6464,9 @@
       "noNudges": "Nothing yet. Skip reasons and keeps adjust this a little at a time.",
       "reset": "Clear what Blitz learned",
       "percent": "{value}%"
+    },
+    "readOnly": {
+      "role": "Your role can look through these posts but can’t keep or skip them. Ask an owner or admin of this workspace."
     }
   },
   "automations": {
@@ -6350,7 +6478,19 @@
       "pickBody": "An automation posts for one business. Pick one at the top of the page.",
       "loading": "Loading automations…",
       "empty": "No automations yet",
-      "emptyBody": "Set one up and Studio makes and posts your content every week."
+      "emptyBody": "Set one up and Studio makes and posts your content every week.",
+      "columns": {
+        "name": "Automation",
+        "status": "Status",
+        "makes": "Makes",
+        "next": "Next post"
+      },
+      "next": {
+        "review": "After your review",
+        "paused": "Paused",
+        "draft": "Not started",
+        "none": "Nothing due"
+      }
     },
     "status": {
       "DRAFT": "Draft",
@@ -6417,7 +6557,9 @@
       "back": "Back",
       "next": "Next",
       "create": "Create and start",
-      "started": "Automation started. Its first posts are being written."
+      "started": "Automation started. Its first posts are being written.",
+      "stepOf": "Step {n, number} of {total, number}",
+      "stepDone": "(done)"
     },
     "detail": {
       "back": "All automations",
@@ -6454,7 +6596,10 @@
       "reroll": "New topic",
       "rerolled": "A new topic is in.",
       "remove": "Remove",
-      "keep": "Keep"
+      "keep": "Keep",
+      "runs": "Runs",
+      "runRange": "{start} – {end}",
+      "runPosted": "{posted, number} of {total, number} posted"
     },
     "review": {
       "title": "Review: {name}",
@@ -6583,5 +6728,33 @@
       "edit": "Edit prompt",
       "again": "Generate again"
     }
+  },
+  "settingsNav": {
+    "aria": "Settings sections",
+    "title": "Settings",
+    "groups": {
+      "account": "Account",
+      "workspace": "Workspace",
+      "publishing": "Publishing",
+      "billing": "Billing"
+    },
+    "items": {
+      "profile": "Profile",
+      "security": "Sign-in and security",
+      "appearance": "Appearance",
+      "notifications": "Notifications",
+      "organisation": "Organization",
+      "members": "Members",
+      "audit": "Audit log",
+      "approvals": "Approval workflows",
+      "export": "Export data",
+      "business": "Brand and business",
+      "connections": "Social accounts",
+      "providerKeys": "Provider keys",
+      "billing": "Your plan"
+    },
+    "dangerZone": "Permanent changes",
+    "dangerZoneHint": "These affect everyone in the organization and can’t be undone.",
+    "providerKeysOwners": "Only owners and admins can manage provider keys. Ask one of them if you need a change."
   }
 }

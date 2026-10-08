@@ -102,7 +102,10 @@ describe.each(LOCALES)('Manage screens in %s', (locale) => {
       new Date(2026, 8, 7, 12),
     );
     expect((await screen.findAllByText(monday)).length).toBeGreaterThan(0);
-    expect(await screen.findByText(m.calendar.drip.title)).toBeInTheDocument();
+    // 25.9: the drip queue moved into the "Posting times" sheet, opened from the header.
+    expect(
+      await screen.findByRole('button', { name: m.calendar.postingTimes.open }),
+    ).toBeInTheDocument();
   });
 
   it('renders the business screen tabs and profile', async () => {
@@ -142,9 +145,12 @@ describe.each(LOCALES)('Manage screens in %s', (locale) => {
         : ok({ data: [], keys: [] }),
     );
     renderScreen(withLocale(locale, <ConnectionsScreen navigate={vi.fn()} />));
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(m.connections.title);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      m.settingsNav.items.connections,
+    );
     expect(await screen.findByText(m.connections.posts.tiktok)).toBeInTheDocument();
-    expect(screen.getAllByText(m.connections.notConnected).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(m.connections.meta.guidance)).toHaveLength(2);
+    expect(screen.getAllByText(m.connections.state.notConnected).length).toBeGreaterThan(0);
+    // 25.12: Facebook and Instagram share one Meta card.
+    expect(screen.getAllByText(m.connections.meta.guidance)).toHaveLength(1);
   });
 });

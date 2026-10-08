@@ -122,7 +122,7 @@ export function ExportScreen() {
   return (
     <>
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
-      <div className="grid gap-10 lg:grid-cols-[2fr_3fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-10 xl:grid-cols-[2fr_3fr]">
         <Section title={t('newExport')}>
           <fieldset className="grid gap-3">
             <legend className="sr-only">{t('includeLegend')}</legend>
@@ -158,11 +158,14 @@ export function ExportScreen() {
             <EmptyState title={t('empty.title')} description={t('empty.description')} />
           )}
           {data && data.data.length > 0 && (
-            <ul aria-label={t('listAria')} className="grid gap-2">
+            <ul
+              aria-label={t('listAria')}
+              className="divide-y divide-border border-y border-border"
+            >
               {data.data.map((e) => (
                 <li
                   key={e.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3 text-sm"
+                  className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"
                 >
                   <span className="flex flex-wrap items-center gap-2">
                     <StateBadge
@@ -172,7 +175,7 @@ export function ExportScreen() {
                     <span>{f.date(e.createdAt)}</span>
                     <span className="text-muted-foreground">{includedLabels(e.include)}</span>
                     {e.bytes !== null && (
-                      <span className="text-muted-foreground tabular">
+                      <span className="text-muted-foreground tabular-nums">
                         {t('sizeKb', { kb: Math.round(e.bytes / 1024) })}
                       </span>
                     )}

@@ -4,34 +4,32 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
-import { UGC_VIDEO_ALLOWANCE_UNITS } from '@/lib/studio/ugc/allowance';
+import { toast } from 'sonner';
+import { Building2, CalendarRange, ChevronDown, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
+import type { MetaConnectInfo, PlatformConnection } from '@/lib/client/types';
+import { cn } from '@/lib/utils';
 import {
   CREATE_BLOCK_NOTICE_ID,
   CreateBlockedNotice,
   useCreateBlock,
 } from '../account/create-access';
-import { toast } from 'sonner';
-import { Building2, CalendarRange, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ChoiceChips } from '@/components/ui/choice-chips';
-import { Input } from '@/components/ui/input';
-import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
-import { useFormat } from '@/lib/client/format';
-import type { MetaConnectInfo, PlatformConnection } from '@/lib/client/types';
-import { connectionsFor, publishablePlatforms } from '../automation/automation';
 import { useShowCosts } from '../account/use-show-costs';
+import { connectionsFor, publishablePlatforms } from '../automation/automation';
 import { useBusiness } from '../business-context';
-import { BusinessHashtagsNote } from '../hashtags/business-hashtags-panel';
 import { defaultZone } from '../calendar/drip-queue';
-import { PlatformChips } from '../create/create-options';
 import { defaultPlatforms } from '../create/formats';
 import { EmptyState, ErrorState, PageHeader } from '../primitives';
-import { NativeSelect } from '@/components/ui/native-select';
 import { Field } from '../review/field';
+import { PlanAccountsNotice, PlanFormOptions } from './plan-form-options';
 import { AllowancePanel } from './plan-parts';
+import { PlanPreview } from './plan-preview';
 import {
   buildPlanBody,
-  requestedPosts,
+  planPreview,
   validatePlanForm,
   type Plan,
   type PlanDefaults,
@@ -39,14 +37,15 @@ import {
   type PlanProblem,
 } from './plan-model';
 
-// 20.9 — "Plan my month": the window (start, length ≤ 31 days), posts a day (1–4, or the
-// business's posting times), the video / slideshow slider (default 50/50), platforms and the
-// account each posts to. "Draft my month" creates the plan (POST /content-plans); Claude writes
-// the topics in the background and the editor opens on /plans/:id.
+// 20.9 — "Plan my month", the flagship planner. 25.9: one prompt first — the month's start and
+// length (30 days by default, up to 31) and one "Draft my month" button, with the defaults read
+// out as a sentence; posts a day, the mix, platforms and accounts sit behind "More options"
+// (opened by itself when one of them needs an answer). Beside it, what Studio will make. "Draft
+// my month" creates the plan (POST /content-plans); Claude writes the topics in the background
+// and the editor opens on /plans/:id.
 
-const POSTS_PER_DAY = [1, 2, 3, 4] as const;
-/** A posts-a-day count, or 'drip' for the business's own posting times. */
-type PostsPerDayChoice = number | 'drip';
+/** Problems that are answered inside "More options". */
+const OPTION_PROBLEMS: ReadonlySet<PlanProblem> = new Set(['platformRequired', 'accountRequired']);
 
 export function PlanMonthForm() {
   const t = useTranslations('plans.new');
@@ -69,6 +68,7 @@ export function PlanMonthForm() {
   const [form, setForm] = useState<PlanFormState | null>(null);
   const [problems, setProblems] = useState<PlanProblem[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
 
   const d = defaults.data?.defaults;
   useEffect(() => {
@@ -119,6 +119,7 @@ export function PlanMonthForm() {
     );
     if (found.length) {
       setProblems(found);
+      if (found.some((p) => OPTION_PROBLEMS.has(p))) setOptionsOpen(true);
       return;
     }
     setSubmitting(true);
@@ -159,25 +160,34 @@ export function PlanMonthForm() {
       <>
         {header}
         <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" /> {t('loading')}
+          <Loader2 className="size-4 animate-spin motion-reduce:animate-none" /> {t('loading')}
         </p>
       </>
     );
 
-  const slideshows = 100 - form.videoShare;
   const withAccounts = publishablePlatforms(form.platforms, connections.data?.data, businessId);
-  const count = form.useDripSlots
-    ? Math.round((d.postingTimesPerWeek * form.days) / 7)
-    : requestedPosts(form.days, form.postsPerDay);
+  const preview = planPreview(form, d.postingTimesPerWeek);
+  const perDay = form.useDripSlots
+    ? t('prompt.yourTimes')
+    : t('postsPerDayOption', { count: form.postsPerDay });
   return (
     <>
       {header}
       <form
         onSubmit={submit}
-        className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]"
+        className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]"
         aria-describedby="plan-estimate"
       >
-        <div className="flex min-w-0 flex-col gap-6">
+        <section
+          aria-labelledby="plan-prompt-title"
+          className="flex min-w-0 flex-col gap-6 rounded-panel border border-border bg-card p-5 shadow-raised sm:p-7"
+        >
+          <div className="flex flex-col gap-1.5">
+            <h2 id="plan-prompt-title" className="text-xl font-semibold tracking-tight">
+              {t('prompt.title')}
+            </h2>
+            <p className="text-sm text-foreground-secondary">{t('prompt.body')}</p>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field id="plan-start" label={t('start')} hint={t('startHint')}>
               <Input
@@ -201,120 +211,48 @@ export function PlanMonthForm() {
               />
             </Field>
           </div>
-
-          <fieldset className="flex flex-col gap-2">
-            <legend
-              id="plan-posts-per-day"
-              className="mb-1 text-xs font-medium text-muted-foreground"
+          <div className="flex flex-col gap-2 border-t border-border pt-4">
+            <p className="text-sm" data-testid="plan-summary">
+              {t('prompt.summary', {
+                perDay,
+                videos: form.videoShare,
+                platforms: form.platforms.length
+                  ? f.list(form.platforms.map((p) => f.platform(p)))
+                  : t('prompt.noPlatforms'),
+              })}
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="self-start"
+              aria-expanded={optionsOpen}
+              aria-controls="plan-options"
+              onClick={() => setOptionsOpen((open) => !open)}
             >
-              {t('postsPerDay')}
-            </legend>
-            <ChoiceChips<PostsPerDayChoice>
-              type="single"
-              aria-labelledby="plan-posts-per-day"
-              value={form.useDripSlots ? 'drip' : form.postsPerDay}
-              onChange={(v) =>
-                patch(
-                  v === 'drip' ? { useDripSlots: true } : { postsPerDay: v, useDripSlots: false },
-                )
-              }
-              options={[
-                ...POSTS_PER_DAY.map((n) => ({
-                  value: n,
-                  label: t('postsPerDayOption', { count: n }),
-                })),
-                { value: 'drip', label: t('useMyTimes'), disabled: !d.hasPostingTimes },
-              ]}
-            />
-            <p className="text-xs text-muted-foreground">
-              {d.hasPostingTimes
-                ? t('useMyTimesHint', { count: d.postingTimesPerWeek })
-                : t('noPostingTimes')}
-            </p>
-          </fieldset>
-
-          <div className="flex flex-col gap-2">
-            <label htmlFor="plan-mix" className="text-xs font-medium text-muted-foreground">
-              {t('mix')}
-            </label>
-            <input
-              id="plan-mix"
-              type="range"
-              min={0}
-              max={100}
-              step={5}
-              value={form.videoShare}
-              aria-valuetext={t('mixValue', { videos: form.videoShare, slideshows })}
-              onChange={(e) => patch({ videoShare: Number(e.target.value) })}
-              className="w-full accent-foreground"
-            />
-            <p className="tabular text-sm" aria-hidden>
-              {t('mixValue', { videos: form.videoShare, slideshows })}
-            </p>
-            <p className="text-xs text-muted-foreground">{t('mixHint')}</p>
-          </div>
-
-          {/* 21.4: a plan's testimonial and product videos as UGC actor videos. */}
-          {form.videoShare > 0 && (
-            <div className="flex items-start gap-2">
-              <input
-                id="plan-ugc"
-                type="checkbox"
-                checked={Boolean(form.ugcActors)}
-                onChange={(e) => patch({ ugcActors: e.target.checked })}
-                aria-describedby="plan-ugc-hint"
-                className="mt-0.5 size-4 accent-foreground"
+              <ChevronDown
+                className={cn(
+                  'transition-transform duration-(--duration-fast) motion-reduce:transition-none',
+                  optionsOpen && 'rotate-180',
+                )}
               />
-              <div className="flex flex-col gap-0.5">
-                <label htmlFor="plan-ugc" className="text-sm">
-                  {t('ugcActors')}
-                </label>
-                <p id="plan-ugc-hint" className="text-xs text-muted-foreground">
-                  {t('ugcActorsHint', { count: UGC_VIDEO_ALLOWANCE_UNITS })}
-                </p>
-              </div>
+              {t('prompt.options')}
+            </Button>
+            <div id="plan-options" hidden={!optionsOpen} className="pt-2">
+              <PlanFormOptions
+                form={form}
+                defaults={d}
+                businessId={businessId ?? ''}
+                connections={connections.data?.data}
+                withAccounts={withAccounts}
+                patch={patch}
+              />
             </div>
-          )}
-
-          <PlatformChips
-            value={form.platforms}
-            onChange={(next) => next.platforms && patch({ platforms: next.platforms })}
-          />
-          <PlanAccountsNotice platforms={form.platforms} withAccounts={withAccounts} />
-          {/* 20.13: the hashtags every planned post carries (Business settings → Hashtags). */}
-          <BusinessHashtagsNote businessId={businessId} />
-          <div className="grid gap-3 sm:grid-cols-2">
-            {withAccounts.map((platform) => {
-              const options = connectionsFor(platform, connections.data?.data, businessId);
-              const id = `plan-account-${platform}`;
-              return (
-                <Field
-                  key={platform}
-                  id={id}
-                  label={t('account', { platform: f.platform(platform) })}
-                >
-                  <NativeSelect
-                    id={id}
-                    value={form.accounts[platform] ?? ''}
-                    onChange={(e) =>
-                      patch({ accounts: { ...form.accounts, [platform]: e.target.value } })
-                    }
-                  >
-                    <option value="">{t('chooseAccount')}</option>
-                    {options.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.platformAccountName}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </Field>
-              );
-            })}
           </div>
-
+          <PlanAccountsNotice platforms={form.platforms} withAccounts={withAccounts} />
           <CreateBlockedNotice block={block} />
           {problems.length > 0 && (
-            <ul role="alert" className="flex flex-col gap-1 text-sm text-destructive">
+            <ul role="alert" className="flex flex-col gap-1 text-sm text-destructive-foreground">
               {problems.map((p) => (
                 <li key={p}>{p === 'daysRange' ? tp(p, { max: d.maxDays }) : tp(p)}</li>
               ))}
@@ -332,11 +270,12 @@ export function PlanMonthForm() {
               {submitting ? t('submitting') : t('submit')}
             </Button>
             <p id="plan-estimate" className="text-sm text-muted-foreground" aria-live="polite">
-              {t('estimate', { count, days: form.days })}
+              {t('estimate', { count: preview.count, days: form.days })}
             </p>
           </div>
-        </div>
-        <aside className="flex flex-col gap-3">
+        </section>
+        <aside className="flex flex-col gap-4">
+          <PlanPreview preview={preview} platforms={form.platforms} />
           <AllowancePanel allowance={d.allowance} cost={d.cost} />
           {showCosts && (
             <p className="text-xs text-muted-foreground" data-testid="plan-cost-hint">
@@ -349,36 +288,5 @@ export function PlanMonthForm() {
         </aside>
       </form>
     </>
-  );
-}
-
-/**
- * 20.12: what happens to platforms without a connected account — with none at all the posts are
- * made and saved for review (nothing is scheduled); otherwise the uncovered platforms are made
- * but not posted.
- */
-function PlanAccountsNotice({
-  platforms,
-  withAccounts,
-}: {
-  platforms: string[];
-  withAccounts: string[];
-}) {
-  const t = useTranslations('plans.new');
-  const f = useFormat();
-  const without = platforms.filter((p) => !withAccounts.includes(p));
-  if (platforms.length === 0 || without.length === 0) return null;
-  return (
-    <p
-      role="status"
-      className="rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted-foreground"
-    >
-      {withAccounts.length === 0
-        ? t('noAccountsNotice')
-        : t('someWithoutAccount', { platforms: f.list(without.map((p) => f.platform(p))) })}{' '}
-      <Link href="/connections" className="text-foreground underline underline-offset-2">
-        {t('connectAccount')}
-      </Link>
-    </p>
   );
 }

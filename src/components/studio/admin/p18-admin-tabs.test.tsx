@@ -6,7 +6,7 @@ import { withLocale } from '../../../../test/i18n-wrapper';
 import { mockFetch, renderWithSWR, type MockRoute } from '../library/test-helpers';
 import { LegalReadinessWarning } from './legal-readiness-warning';
 import { OrganisationsTab } from './organisations/organisations-tab';
-import { SubscriptionsTab } from './subscriptions/subscriptions-tab';
+import { SubscriptionRecords } from './billing/subscription-records';
 import { UsersTab } from './users/users-tab';
 
 // Phase 18 Track E — admin Organisations, Users and Subscriptions tabs, impersonation button
@@ -179,7 +179,7 @@ describe('UsersTab', () => {
   });
 });
 
-describe('SubscriptionsTab', () => {
+describe('SubscriptionRecords', () => {
   it('lists subscriptions read-only with counts and a status filter', async () => {
     const api = mockFetch([
       {
@@ -199,7 +199,7 @@ describe('SubscriptionsTab', () => {
       },
     ]);
     const user = userEvent.setup();
-    renderWithSWR(<SubscriptionsTab />);
+    renderWithSWR(<SubscriptionRecords />);
     expect(await screen.findByText('Crumb & Co')).toBeVisible();
     expect(screen.getByText(/Read-only/)).toBeVisible();
     await user.selectOptions(screen.getByLabelText('Status'), 'past_due');

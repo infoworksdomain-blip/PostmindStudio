@@ -61,7 +61,7 @@ describe('ByocKeysPanel', () => {
     );
     renderScreen(<ByocKeysPanel />);
     await waitFor(() => expect(api.find('GET', '/me')).toHaveLength(1));
-    expect(screen.queryByText('Provider keys (BYOC)')).not.toBeInTheDocument();
+    expect(document.querySelector('[data-slot="provider-keys"]')).toBeNull();
     expect(api.find('GET', '/provider-credentials')).toHaveLength(0);
   });
 
@@ -75,7 +75,7 @@ describe('ByocKeysPanel', () => {
     );
     renderScreen(<ByocKeysPanel />);
     await waitFor(() => expect(api.find('GET', '/provider-credentials')).toHaveLength(1));
-    await waitFor(() => expect(screen.queryByText('Provider keys (BYOC)')).not.toBeInTheDocument());
+    await waitFor(() => expect(document.querySelector('[data-slot="provider-keys"]')).toBeNull());
   });
 
   it('saves a key write-only and shows only the hint afterwards', async () => {

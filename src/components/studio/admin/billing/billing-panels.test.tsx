@@ -195,6 +195,10 @@ describe('EntitlementsPanel', () => {
     expect(screen.getByText('Agreed price: £1,500.00 a month')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Reason for removing'), 'Pilot ended');
     await user.click(screen.getByRole('button', { name: 'Remove override' }));
+    // Removing an override is confirmed first (25.13); nothing is sent until then.
+    const confirm = await screen.findByRole('alertdialog', { name: 'Remove this override?' });
+    expect(api.calls.some((c) => c.method === 'DELETE')).toBe(false);
+    await user.click(within(confirm).getByRole('button', { name: 'Yes, remove' }));
     await waitFor(() => expect(api.calls.some((c) => c.method === 'DELETE')).toBe(true));
     expect(api.calls.find((c) => c.method === 'DELETE')?.body).toEqual({ reason: 'Pilot ended' });
     expect(await screen.findByText('No staff override.')).toBeInTheDocument();

@@ -18,10 +18,10 @@ export function ChannelLimitNotice() {
   return (
     <div
       role="status"
-      className="mb-6 flex flex-wrap items-start gap-3 rounded-xl border border-warning/50 bg-warning/10 p-4 text-sm"
+      className="mb-6 flex flex-wrap items-start gap-2.5 rounded-field bg-warning-soft py-2.5 ps-3.5 pe-3 text-sm text-warning-foreground"
     >
       <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
-      <p className="min-w-0 flex-1">
+      <p className="min-w-0 flex-1 leading-relaxed">
         {t('body', {
           count: channels.paid,
           blocked: channelList(channels.blocked),

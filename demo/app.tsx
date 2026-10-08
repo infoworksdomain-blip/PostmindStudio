@@ -28,6 +28,10 @@ import { LibraryBrowse } from '@/components/studio/library/library-browse';
 import { LibraryDetail } from '@/components/studio/library/library-detail';
 import { WelcomeWizard } from '@/components/studio/onboarding/welcome-wizard';
 import { AuditScreen } from '@/components/studio/settings/audit-screen';
+import { ProviderKeysScreen } from '@/components/studio/settings/provider-keys-screen';
+import { SettingsFrame } from '@/components/studio/settings/settings-frame';
+import { isSettingsPath } from '@/components/studio/settings/settings-map';
+import { NotificationPreferencesScreen } from '@/components/studio/notification-preferences';
 import { MembersScreen } from '@/components/studio/settings/members-screen';
 import { OrganisationSettingsScreen } from '@/components/studio/settings/organisation-settings';
 import { ProjectsList } from '@/components/studio/projects/projects-list';
@@ -112,6 +116,8 @@ const RENDER: Record<AppPath, Render> = {
   // Phase 18 Track C / 21.5: Your plan (channels, changes), usage, video packs and invoices (the
   // demo bar's plan switcher drives them).
   '/settings/billing': () => <BillingScreen />,
+  '/settings/provider-keys': () => <ProviderKeysScreen />,
+  '/settings/notifications': () => <NotificationPreferencesScreen />,
 };
 
 /** Screens a signed-out visitor may still open (the tour itself and a public share link). */
@@ -127,7 +133,13 @@ function Routed() {
       // changes (e.g. Connections clearing ?connected=) keep the screen mounted, like Next.js;
       // /new is the exception because its query carries the library reference.
       const key = pathname === '/new' ? `${pathname}${search}` : pathname;
-      return <div key={key}>{RENDER[path](params, new URLSearchParams(search))}</div>;
+      const body = RENDER[path](params, new URLSearchParams(search));
+      // 25.12: the Settings pages share the settings sub-navigation, as the app's layouts do.
+      return (
+        <div key={key}>
+          {isSettingsPath(pathname) ? <SettingsFrame>{body}</SettingsFrame> : body}
+        </div>
+      );
     }
   }
   return (

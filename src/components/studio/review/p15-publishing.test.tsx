@@ -9,6 +9,11 @@ import { makeProject, makeRender, mockFetch, renderWithSWR } from './test-helper
 import { VariantThumbnail } from './variant-thumbnail';
 import type { Publication } from '@/lib/client/types';
 
+vi.mock(
+  'next/navigation',
+  async () => (await import('../calendar/test-navigation')).navigationMock,
+);
+
 // Phase 15 Track A screens: caption suggestions + best-time hint (A6/A7), variant thumbnail
 // change (A3), views column + TikTok inbox note (A8/A2), drip queue panel (A5).
 

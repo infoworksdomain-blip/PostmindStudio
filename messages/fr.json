@@ -1894,7 +1894,15 @@
       "agendaAria": "Agenda",
       "emptyMonth": "Rien de programmé ni de publié ce mois-ci.",
       "moreOpen": "{count, plural, one {+# créneau libre} other {+# créneaux libres}}",
-      "morePlanned": "+{count} planifiées"
+      "morePlanned": "+{count} planifiées",
+      "moreAria": "Tout afficher pour le {date} ({count, number} de plus)",
+      "dayAria": "Publications de ce jour",
+      "weekAria": "Jours de la semaine",
+      "todayAria": "{date}, aujourd’hui",
+      "today": "Aujourd’hui",
+      "quietDay": "Rien de prévu",
+      "emptyWeek": "Rien de programmé ni de publié cette semaine.",
+      "emptyDayView": "Rien de programmé ni de publié ce jour-là."
     },
     "event": {
       "untitled": "Projet sans titre",
@@ -1916,7 +1924,11 @@
       "newTime": "Nouvel horaire",
       "cancel": "Annuler",
       "moving": "Déplacement…",
-      "submit": "Déplacer"
+      "submit": "Déplacer",
+      "undo": "Annuler",
+      "undone": "Remise au {date}",
+      "movedLive": "« {name} » a été déplacée au {date}. L’annulation se trouve dans la notification.",
+      "undoneLive": "« {name} » a été remise au {date}."
     },
     "drip": {
       "title": "File de diffusion",
@@ -2040,6 +2052,48 @@
           "none": "vide"
         }
       }
+    },
+    "previousWeek": "Semaine précédente",
+    "nextWeek": "Semaine suivante",
+    "previousDay": "Jour précédent",
+    "nextDay": "Jour suivant",
+    "views": {
+      "label": "Affichage du calendrier",
+      "month": "Mois",
+      "week": "Semaine",
+      "day": "Jour"
+    },
+    "filters": {
+      "label": "Filtres",
+      "platformLabel": "Plateforme",
+      "statusLabel": "Statut",
+      "sourceLabel": "Origine",
+      "allPlatforms": "Toutes les plateformes",
+      "anyStatus": "Tous les statuts",
+      "anySource": "Toutes les origines",
+      "clear": "Effacer les filtres",
+      "showing": "{shown, number} publications affichées sur {total, number}",
+      "status": {
+        "SCHEDULED": "Programmée",
+        "PUBLISHING": "Publication en cours",
+        "PUBLISHED": "Publiée",
+        "FAILED": "Échec",
+        "PLANNED": "En préparation (plan du mois)"
+      },
+      "source": {
+        "plan": "Plan du mois",
+        "automation": "Automatisation",
+        "manual": "Faite à la main"
+      }
+    },
+    "postingTimes": {
+      "open": "Horaires de publication",
+      "title": "Horaires de publication",
+      "description": "Quand les vidéos approuvées sans date de cette entreprise sont publiées. Les horaires enregistrés apparaissent dans le calendrier comme créneaux libres."
+    },
+    "campaign": {
+      "plan": "Plan du mois · {date}",
+      "automation": "Automatisation · {name}"
     }
   },
   "business": {
@@ -2658,7 +2712,8 @@
       "guidance": "Connectez Instagram et Facebook dans les paramètres PostMind.",
       "connectButton": "Se connecter avec Facebook",
       "studioGuidance": "Une seule connexion Facebook relie les Pages que vous choisissez et les comptes Instagram professionnels qui y sont associés.",
-      "notConfigured": "Instagram et Facebook ne sont pas encore disponibles : l’application Meta de Studio doit encore être configurée. Contactez votre administrateur."
+      "notConfigured": "Instagram et Facebook ne sont pas encore disponibles : l’application Meta de Studio doit encore être configurée. Contactez votre administrateur.",
+      "title": "Instagram et Facebook"
     },
     "descriptionStandalone": "Les comptes sur lesquels Studio publie. Connectez chacun d’eux pour l’entreprise sélectionnée.",
     "connectedMetaNotice": "{count, plural, one {# compte Facebook ou Instagram est connecté} other {# comptes Facebook et Instagram sont connectés}}. Vous pouvez y publier dès maintenant.",
@@ -2690,6 +2745,12 @@
       "reconnect": "Reconnectez TikTok pour envoyer des brouillons. En attendant, les publications partent directement.",
       "saved": "Préférence de publication TikTok enregistrée",
       "goesToDrafts": "TikTok : va dans vos brouillons TikTok. Ajoutez un son tendance dans l’app, puis publiez."
+    },
+    "state": {
+      "connected": "Connecté",
+      "needsReconnect": "À reconnecter",
+      "notConnected": "Non connecté",
+      "unavailable": "Indisponible"
     }
   },
   "library": {
@@ -3110,7 +3171,25 @@
         "forceApprovals": "Approbations forcées",
         "beta": "Bêta",
         "users": "Utilisateurs",
-        "subscriptions": "Abonnements"
+        "subscriptions": "Abonnements",
+        "billing": "Abonnements et facturation"
+      },
+      "menu": {
+        "label": "Sections d’administration",
+        "jump": "Aller à la section",
+        "halted": "Arrêté",
+        "groups": {
+          "operations": "Exploitation",
+          "content": "Contenu",
+          "customers": "Clients",
+          "platform": "Plateforme"
+        }
+      },
+      "billingViews": {
+        "label": "Vue",
+        "overview": "Aperçu et MRR",
+        "records": "Enregistrements Stripe",
+        "entitlements": "Dérogations de droits"
       }
     },
     "cost": {
@@ -4860,13 +4939,6 @@
       "membersTitle": "Membres",
       "auditTitle": "Journal d’audit"
     },
-    "nav": {
-      "aria": "Paramètres",
-      "organisation": "Organisation",
-      "members": "Membres",
-      "billing": "Votre abonnement",
-      "audit": "Journal d’audit"
-    },
     "page": {
       "eyebrow": "Paramètres",
       "title": "Organisation",
@@ -5024,7 +5096,8 @@
       "leave": "Quitter",
       "removeTitle": "Retirer {name} ?",
       "removeBody": "Cette personne perd immédiatement l’accès à cette organisation. Ses vidéos restent conservées.",
-      "removed": "{name} a été retiré(e)."
+      "removed": "{name} a été retiré(e).",
+      "caption": "Membres"
     },
     "pending": {
       "none": "Aucune invitation en attente.",
@@ -5231,7 +5304,9 @@
           "reason": "Motif de la suppression",
           "button": "Supprimer la dérogation",
           "cleared": "Dérogation supprimée",
-          "trialWarning": "Stripe indique encore un essai : retirer la dérogation rétablit les plafonds de l’essai. Pour les écarter, enregistrez d’abord une dérogation avec « Terminer l’essai maintenant »."
+          "trialWarning": "Stripe indique encore un essai : retirer la dérogation rétablit les plafonds de l’essai. Pour les écarter, enregistrez d’abord une dérogation avec « Terminer l’essai maintenant ».",
+          "confirmTitle": "Supprimer cette dérogation ?",
+          "confirmButton": "Oui, supprimer"
         },
         "trial": {
           "title": "Essai",
@@ -5303,14 +5378,19 @@
         "legacy": "Repris de votre abonnement précédent.",
         "pending": "À partir du {date} : {count, plural, one {# canal} many {# canaux} other {# canaux}}, {period, select, week {hebdomadaire} month {mensuel} other {annuel}}.",
         "keepCurrent": "Conserver mon abonnement actuel",
-        "paymentPending": "Votre dernière modification est en attente de paiement. Mettez à jour votre moyen de paiement pour l’appliquer."
+        "paymentPending": "Votre dernière modification est en attente de paiement. Mettez à jour votre moyen de paiement pour l’appliquer.",
+        "price": "Prix",
+        "videosLeft": "{period, select, week {Vidéos restantes cette semaine} other {Vidéos restantes ce mois-ci}}",
+        "leftOf": "{left} sur {limit}",
+        "packVideos": "Vidéos de pack restantes"
       },
       "videos": {
         "title": "{period, select, week {Vidéos cette semaine} other {Vidéos ce mois-ci}}",
         "description": "Chaque vidéo lancée compte, y compris celles encore en cours de création.",
         "used": "{period, select, week {Utilisées cette semaine} other {Utilisées ce mois-ci}}",
         "moreFrom": "D’autres vidéos sont incluses à partir du {date}.",
-        "packsLeft": "{count, plural, =0 {Plus aucune vidéo de pack} one {# vidéo de pack restante} many {# vidéos de pack restantes} other {# vidéos de pack restantes}}"
+        "packsLeft": "{count, plural, =0 {Plus aucune vidéo de pack} one {# vidéo de pack restante} many {# vidéos de pack restantes} other {# vidéos de pack restantes}}",
+        "left": "{left} restantes"
       },
       "channels": {
         "title": "Vos canaux",
@@ -5354,7 +5434,8 @@
         "confirmBody": "Votre abonnement prendra fin à la fin de cette période. Vos contenus restent disponibles en consultation, export et téléchargement. Les périodes entamées ne sont pas remboursées.",
         "confirmBodyDate": "Votre abonnement prendra fin le {date}. D’ici là, rien ne change. Ensuite, votre compte passe en lecture seule : vos contenus restent disponibles en consultation, export et téléchargement. Les périodes entamées ne sont pas remboursées.",
         "keep": "Conserver mon abonnement",
-        "confirm": "Résilier l’abonnement"
+        "confirm": "Résilier l’abonnement",
+        "resumeTitle": "Votre abonnement se termine"
       },
       "toasts": {
         "applied": "Votre abonnement a été modifié.",
@@ -5793,7 +5874,26 @@
       "someWithoutAccount": "Produites mais pas publiées automatiquement (aucun compte connecté) : {platforms}.",
       "connectAccount": "Connecter un compte",
       "ugcActors": "Réaliser les vidéos de témoignage et de produit avec des acteurs UGC",
-      "ugcActorsHint": "Un acteur généré parle de votre produit. Chacune de ces vidéos utilise {count, number} de vos vidéos. En anglais uniquement."
+      "ugcActorsHint": "Un acteur généré parle de votre produit. Chacune de ces vidéos utilise {count, number} de vos vidéos. En anglais uniquement.",
+      "prompt": {
+        "title": "Votre prochain mois, planifié",
+        "body": "Choisissez quand il commence. Studio rédige chaque sujet à partir de votre site, de votre kit de marque et de vos publications passées, et vous vérifiez la liste avant que rien ne soit créé.",
+        "summary": "{perDay} · {videos, number} % de vidéos · {platforms}",
+        "yourTimes": "Vos horaires de publication",
+        "noPlatforms": "aucune plateforme pour l’instant",
+        "options": "Plus d’options"
+      },
+      "preview": {
+        "title": "Ce que Studio va créer",
+        "upTo": "Publications, au maximum",
+        "split": "Vidéos : {videos, number} · Diaporamas : {slideshows, number}",
+        "dates": "Dates",
+        "range": "{start} – {end}",
+        "networks": "Réseaux",
+        "noNetworks": "Aucun choisi pour l’instant",
+        "review": "Studio rédige d’abord les sujets. Vous relisez et modifiez la liste avant que rien ne soit créé.",
+        "rolling": "Chaque publication est ensuite créée environ 3 jours avant sa diffusion : vos modifications jusque-là sont prises en compte."
+      }
     },
     "allowance": {
       "title": "Ce mois-ci",
@@ -5957,7 +6057,11 @@
       "removeConfirm": "Sa publication est annulée et l’horaire libéré. Le reste du plan continue.",
       "removedToast": "Publication retirée",
       "createsAt": "Création prévue le {date}",
-      "createsLater": "{count, plural, one {# autre publication sera créée peu avant son heure de publication.} other {# autres publications seront créées peu avant leur heure de publication.}}"
+      "createsLater": "{count, plural, one {# autre publication sera créée peu avant son heure de publication.} other {# autres publications seront créées peu avant leur heure de publication.}}",
+      "approve": "Approuver",
+      "approveAria": "Approuver « {title} »",
+      "approved": "Approuvée : elle sera publiée à son heure",
+      "rolling": "Studio crée chaque publication environ 3 jours avant son heure ; une publication en attente indique quand elle sera créée."
     },
     "list": {
       "title": "Plans mensuels",
@@ -5968,6 +6072,24 @@
       "emptyBody": "Laissez Studio préparer un mois de vidéos et de diaporamas, puis générez-les et programmez-les en une fois.",
       "range": "{start} – {end}",
       "posts": "{count, plural, one {# publication} other {# publications}}"
+    },
+    "timeline": {
+      "week": "Semaine {n, number}",
+      "range": "{start} – {end}"
+    },
+    "bulk": {
+      "label": "Actions groupées",
+      "selectAll": "Tout sélectionner",
+      "selected": "{count, number} sélectionnée(s)",
+      "selectItem": "Sélectionner « {title} »",
+      "progress": "En cours… {done, number} sur {total, number}",
+      "summaryOk": "Terminé : {count, number} modifiée(s).",
+      "summaryPartial": "{ok, number} terminée(s), {failed, number} n’ont pas pu être modifiée(s). Réessayez-les une par une.",
+      "regenerate": "Nouveaux sujets ({count, number})",
+      "delete": "Supprimer ({count, number})",
+      "deleteConfirmTitle": "Supprimer les publications sélectionnées ({count, number}) ?",
+      "deleteConfirmBody": "Elles sont retirées de ce brouillon. Rien n’a encore été créé.",
+      "approveAll": "Approuver toutes celles en attente ({count, number})"
     }
   },
   "errorPage": {
@@ -6254,7 +6376,9 @@
       "beats": "Script",
       "stillAlt": "Une image de votre bibliothèque",
       "mentionsBusiness": "Cite votre entreprise",
-      "allowanceQuick": "Utilise ¼ de vidéo de votre offre si vous la gardez"
+      "allowanceQuick": "Utilise ¼ de vidéo de votre offre si vous la gardez",
+      "hintEdit": "Modifier d’abord",
+      "hintDrag": "Ou faites glisser la carte"
     },
     "keep": {
       "title": "La garder",
@@ -6266,7 +6390,8 @@
       "editHint": "L’ouvre pour changer le texte et les images.",
       "cancel": "Annuler",
       "confirm": "Garder",
-      "previewNote": "{units, plural, one {Elle est créée maintenant et utilise # vidéo de votre offre.} other {Elle est créée maintenant et utilise # vidéos de votre offre.}}"
+      "previewNote": "{units, plural, one {Elle est créée maintenant et utilise # vidéo de votre offre.} other {Elle est créée maintenant et utilise # vidéos de votre offre.}}",
+      "noPublishRole": "Votre rôle ne permet pas de publier ni de programmer : une publication gardée s’ouvre d’abord pour être modifiée."
     },
     "skip": {
       "title": "Pourquoi la passer ? (facultatif)",
@@ -6339,6 +6464,9 @@
       "noNudges": "Rien pour l’instant. Les raisons de passer et les cartes gardées l’ajustent petit à petit.",
       "reset": "Effacer ce que Blitz a appris",
       "percent": "{value} %"
+    },
+    "readOnly": {
+      "role": "Votre rôle permet de parcourir ces publications, mais pas de les garder ni de les passer. Demandez à un propriétaire ou à un administrateur."
     }
   },
   "automations": {
@@ -6350,7 +6478,19 @@
       "pickBody": "Une automatisation publie pour une entreprise. Choisissez-en une en haut de la page.",
       "loading": "Chargement des automatisations…",
       "empty": "Aucune automatisation pour l’instant",
-      "emptyBody": "Configurez-en une et Studio crée et publie votre contenu chaque semaine."
+      "emptyBody": "Configurez-en une et Studio crée et publie votre contenu chaque semaine.",
+      "columns": {
+        "name": "Automatisation",
+        "status": "Statut",
+        "makes": "Ce qu’elle crée",
+        "next": "Prochaine publication"
+      },
+      "next": {
+        "review": "Après votre relecture",
+        "paused": "En pause",
+        "draft": "Pas démarrée",
+        "none": "Rien de prévu"
+      }
     },
     "status": {
       "DRAFT": "Brouillon",
@@ -6417,7 +6557,9 @@
       "back": "Retour",
       "next": "Suivant",
       "create": "Créer et lancer",
-      "started": "Automatisation lancée. Ses premières publications sont en cours de rédaction."
+      "started": "Automatisation lancée. Ses premières publications sont en cours de rédaction.",
+      "stepOf": "Étape {n, number} sur {total, number}",
+      "stepDone": "(terminé)"
     },
     "detail": {
       "back": "Toutes les automatisations",
@@ -6454,7 +6596,10 @@
       "reroll": "Nouveau sujet",
       "rerolled": "Un nouveau sujet est arrivé.",
       "remove": "Retirer",
-      "keep": "Garder"
+      "keep": "Garder",
+      "runs": "Exécutions",
+      "runRange": "{start} – {end}",
+      "runPosted": "{posted, number} sur {total, number} publiées"
     },
     "review": {
       "title": "Revue : {name}",
@@ -6583,5 +6728,33 @@
       "edit": "Modifier la description",
       "again": "Générer à nouveau"
     }
+  },
+  "settingsNav": {
+    "aria": "Rubriques des paramètres",
+    "title": "Paramètres",
+    "groups": {
+      "account": "Compte",
+      "workspace": "Espace de travail",
+      "publishing": "Publication",
+      "billing": "Facturation"
+    },
+    "items": {
+      "profile": "Profil",
+      "security": "Connexion et sécurité",
+      "appearance": "Apparence",
+      "notifications": "Notifications",
+      "organisation": "Organisation",
+      "members": "Membres",
+      "audit": "Journal d’audit",
+      "approvals": "Circuits de validation",
+      "export": "Exporter les données",
+      "business": "Marque et entreprise",
+      "connections": "Comptes sociaux",
+      "providerKeys": "Clés de fournisseur",
+      "billing": "Votre abonnement"
+    },
+    "dangerZone": "Changements définitifs",
+    "dangerZoneHint": "Ils concernent toute l’organisation et ne peuvent pas être annulés.",
+    "providerKeysOwners": "Seuls les propriétaires et les administrateurs peuvent gérer les clés de fournisseur. Demandez-leur si vous avez besoin d’un changement."
   }
 }

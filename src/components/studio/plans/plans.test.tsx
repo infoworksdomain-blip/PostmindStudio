@@ -128,11 +128,23 @@ describe('PlanMonthForm', () => {
     expect(start).toHaveValue('2026-10-01');
     expect(screen.getByText(/30 videos left of 40/)).toBeInTheDocument();
     expect(screen.getByText(/plus 5 top-up credits/)).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'Use my posting times' })).toBeDisabled();
     expect(screen.getByText('Up to 30 posts over 30 days.')).toBeInTheDocument();
+    // 25.9: one prompt first — the defaults read as a sentence, the rest behind "More options".
+    expect(screen.getByTestId('plan-summary')).toHaveTextContent('1 a day · 50% videos · TikTok');
+    expect(within(screen.getByTestId('plan-preview')).getByText('30')).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: '2 a day' })).toBeNull();
+    const more = screen.getByRole('button', { name: 'More options' });
+    expect(more).toHaveAttribute('aria-expanded', 'false');
+    await user.click(more);
+    expect(more).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('radio', { name: 'Use my posting times' })).toBeDisabled();
 
     await user.click(screen.getByRole('radio', { name: '2 a day' }));
     expect(screen.getByText('Up to 60 posts over 30 days.')).toBeInTheDocument();
+    expect(within(screen.getByTestId('plan-preview')).getByText('60')).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('plan-preview')).getByText('Videos: 30 · Slideshows: 30'),
+    ).toBeInTheDocument();
     const slider = screen.getByLabelText('Videos and slideshows');
     expect(slider).toHaveAttribute('aria-valuetext', '50% videos · 50% slideshows');
 
@@ -192,6 +204,7 @@ describe('PlanMonthForm', () => {
     renderScreen(<PlanMonthForm />);
     const select = await screen.findByLabelText('TikTok account');
     expect(select).toHaveValue('');
+    await user.click(screen.getByRole('button', { name: 'More options' }));
     await user.click(screen.getByRole('checkbox', { name: 'X' }));
     expect(
       screen.getByText('Made but not posted automatically (no connected account): X.'),

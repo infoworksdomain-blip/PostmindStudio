@@ -1894,7 +1894,15 @@
       "agendaAria": "Agenda",
       "emptyMonth": "In diesem Monat ist nichts geplant oder veröffentlicht.",
       "moreOpen": "{count, plural, one {+# freier Slot} other {+# freie Slots}}",
-      "morePlanned": "+{count} geplant"
+      "morePlanned": "+{count} geplant",
+      "moreAria": "Alles am {date} anzeigen ({count, number} weitere)",
+      "dayAria": "Beiträge an diesem Tag",
+      "weekAria": "Tage der Woche",
+      "todayAria": "{date}, heute",
+      "today": "Heute",
+      "quietDay": "Nichts geplant",
+      "emptyWeek": "In dieser Woche ist nichts geplant oder veröffentlicht.",
+      "emptyDayView": "An diesem Tag ist nichts geplant oder veröffentlicht."
     },
     "event": {
       "untitled": "Unbenanntes Projekt",
@@ -1916,7 +1924,11 @@
       "newTime": "Neuer Zeitpunkt",
       "cancel": "Abbrechen",
       "moving": "Wird verschoben …",
-      "submit": "Verschieben"
+      "submit": "Verschieben",
+      "undo": "Rückgängig",
+      "undone": "Zurück auf {date} verschoben",
+      "movedLive": "„{name}“ auf {date} verschoben. Rückgängig machen geht in der Benachrichtigung.",
+      "undoneLive": "„{name}“ zurück auf {date} verschoben."
     },
     "drip": {
       "title": "Posting-Warteschlange",
@@ -2040,6 +2052,48 @@
           "none": "leer"
         }
       }
+    },
+    "previousWeek": "Vorherige Woche",
+    "nextWeek": "Nächste Woche",
+    "previousDay": "Vorheriger Tag",
+    "nextDay": "Nächster Tag",
+    "views": {
+      "label": "Kalenderansicht",
+      "month": "Monat",
+      "week": "Woche",
+      "day": "Tag"
+    },
+    "filters": {
+      "label": "Filter",
+      "platformLabel": "Plattform",
+      "statusLabel": "Status",
+      "sourceLabel": "Quelle",
+      "allPlatforms": "Alle Plattformen",
+      "anyStatus": "Jeder Status",
+      "anySource": "Jede Quelle",
+      "clear": "Filter zurücksetzen",
+      "showing": "{shown, number} von {total, number} Beiträgen angezeigt",
+      "status": {
+        "SCHEDULED": "Geplant",
+        "PUBLISHING": "Wird veröffentlicht",
+        "PUBLISHED": "Veröffentlicht",
+        "FAILED": "Fehlgeschlagen",
+        "PLANNED": "In Arbeit (Monatsplan)"
+      },
+      "source": {
+        "plan": "Monatsplan",
+        "automation": "Automatisierung",
+        "manual": "Von Hand erstellt"
+      }
+    },
+    "postingTimes": {
+      "open": "Veröffentlichungszeiten",
+      "title": "Veröffentlichungszeiten",
+      "description": "Wann die freigegebenen Videos dieses Unternehmens ohne Datum veröffentlicht werden. Gespeicherte Zeiten erscheinen im Kalender als freie Termine."
+    },
+    "campaign": {
+      "plan": "Monatsplan · {date}",
+      "automation": "Automatisierung · {name}"
     }
   },
   "business": {
@@ -2658,7 +2712,8 @@
       "guidance": "Verbinden Sie Instagram und Facebook in den PostMind-Einstellungen.",
       "connectButton": "Mit Facebook verbinden",
       "studioGuidance": "Eine Facebook-Anmeldung verbindet die ausgewählten Seiten und die damit verknüpften professionellen Instagram-Konten.",
-      "notConfigured": "Instagram und Facebook sind noch nicht verfügbar: Die Meta-App von Studio muss noch eingerichtet werden. Wende dich an deine Administration."
+      "notConfigured": "Instagram und Facebook sind noch nicht verfügbar: Die Meta-App von Studio muss noch eingerichtet werden. Wende dich an deine Administration.",
+      "title": "Instagram und Facebook"
     },
     "descriptionStandalone": "Die Konten, auf denen Studio veröffentlicht. Verbinde jedes für das ausgewählte Unternehmen.",
     "connectedMetaNotice": "{count, plural, one {# Facebook- oder Instagram-Konto ist verbunden} other {# Facebook- und Instagram-Konten sind verbunden}}. Du kannst jetzt dort veröffentlichen.",
@@ -2690,6 +2745,12 @@
       "reconnect": "Verbinde TikTok neu, um Entwürfe zu senden. Bis dahin wird direkt gepostet.",
       "saved": "TikTok-Posting-Einstellung gespeichert",
       "goesToDrafts": "TikTok: landet in deinen TikTok-Entwürfen. Füge in der App einen Trend-Sound hinzu und poste dann."
+    },
+    "state": {
+      "connected": "Verbunden",
+      "needsReconnect": "Muss neu verbunden werden",
+      "notConnected": "Nicht verbunden",
+      "unavailable": "Nicht verfügbar"
     }
   },
   "library": {
@@ -3110,7 +3171,25 @@
         "forceApprovals": "Erzwungene Freigaben",
         "beta": "Beta",
         "users": "Benutzer",
-        "subscriptions": "Abonnements"
+        "subscriptions": "Abonnements",
+        "billing": "Abonnements & Abrechnung"
+      },
+      "menu": {
+        "label": "Admin-Bereiche",
+        "jump": "Zu Bereich wechseln",
+        "halted": "Angehalten",
+        "groups": {
+          "operations": "Betrieb",
+          "content": "Inhalte",
+          "customers": "Kunden",
+          "platform": "Plattform"
+        }
+      },
+      "billingViews": {
+        "label": "Ansicht",
+        "overview": "Übersicht und MRR",
+        "records": "Stripe-Datensätze",
+        "entitlements": "Berechtigungs-Overrides"
       }
     },
     "cost": {
@@ -4860,13 +4939,6 @@
       "membersTitle": "Mitglieder",
       "auditTitle": "Prüfprotokoll"
     },
-    "nav": {
-      "aria": "Einstellungen",
-      "organisation": "Organisation",
-      "members": "Mitglieder",
-      "billing": "Ihr Tarif",
-      "audit": "Prüfprotokoll"
-    },
     "page": {
       "eyebrow": "Einstellungen",
       "title": "Organisation",
@@ -5024,7 +5096,8 @@
       "leave": "Verlassen",
       "removeTitle": "{name} entfernen?",
       "removeBody": "Diese Person verliert sofort den Zugriff auf diese Organisation. Ihre Videos bleiben erhalten.",
-      "removed": "{name} wurde entfernt."
+      "removed": "{name} wurde entfernt.",
+      "caption": "Mitglieder"
     },
     "pending": {
       "none": "Keine ausstehenden Einladungen.",
@@ -5231,7 +5304,9 @@
           "reason": "Grund für das Entfernen",
           "button": "Override entfernen",
           "cleared": "Override entfernt",
-          "trialWarning": "Stripe zeigt noch eine Testphase: Wird der Override entfernt, gelten ihre Obergrenzen wieder. Damit sie entfallen, speichern Sie zuerst einen Override mit „Testphase jetzt beenden“."
+          "trialWarning": "Stripe zeigt noch eine Testphase: Wird der Override entfernt, gelten ihre Obergrenzen wieder. Damit sie entfallen, speichern Sie zuerst einen Override mit „Testphase jetzt beenden“.",
+          "confirmTitle": "Diesen Override entfernen?",
+          "confirmButton": "Ja, entfernen"
         },
         "trial": {
           "title": "Testphase",
@@ -5303,14 +5378,19 @@
         "legacy": "Aus Ihrem vorherigen Tarif übernommen.",
         "pending": "Ab {date}: {count, plural, one {# Kanal} other {# Kanäle}}, {period, select, week {wöchentlich} month {monatlich} other {jährlich}}.",
         "keepCurrent": "Aktuellen Tarif behalten",
-        "paymentPending": "Ihre letzte Änderung wartet auf die Zahlung. Aktualisieren Sie Ihre Zahlungsmethode, damit sie wirksam wird."
+        "paymentPending": "Ihre letzte Änderung wartet auf die Zahlung. Aktualisieren Sie Ihre Zahlungsmethode, damit sie wirksam wird.",
+        "price": "Preis",
+        "videosLeft": "{period, select, week {Verbleibende Videos diese Woche} other {Verbleibende Videos diesen Monat}}",
+        "leftOf": "{left} von {limit}",
+        "packVideos": "Verbleibende Paket-Videos"
       },
       "videos": {
         "title": "{period, select, week {Videos diese Woche} other {Videos diesen Monat}}",
         "description": "Jedes Video, das Sie starten, zählt – auch solche, die noch erstellt werden.",
         "used": "{period, select, week {Diese Woche genutzt} other {Diesen Monat genutzt}}",
         "moreFrom": "Ab {date} sind weitere Videos enthalten.",
-        "packsLeft": "{count, plural, =0 {Keine Paketvideos mehr übrig} one {# Paketvideo übrig} other {# Paketvideos übrig}}"
+        "packsLeft": "{count, plural, =0 {Keine Paketvideos mehr übrig} one {# Paketvideo übrig} other {# Paketvideos übrig}}",
+        "left": "{left} übrig"
       },
       "channels": {
         "title": "Ihre Kanäle",
@@ -5354,7 +5434,8 @@
         "confirmBody": "Ihr Tarif endet zum Ende dieses Zeitraums. Ihre Inhalte bleiben zum Ansehen, Exportieren und Herunterladen verfügbar. Angebrochene Zeiträume erstatten wir nicht.",
         "confirmBodyDate": "Ihr Tarif endet am {date}. Bis dahin ändert sich nichts. Danach ist Ihr Konto schreibgeschützt: Ihre Inhalte bleiben zum Ansehen, Exportieren und Herunterladen verfügbar. Angebrochene Zeiträume erstatten wir nicht.",
         "keep": "Tarif behalten",
-        "confirm": "Tarif kündigen"
+        "confirm": "Tarif kündigen",
+        "resumeTitle": "Ihr Tarif endet"
       },
       "toasts": {
         "applied": "Ihr Tarif wurde geändert.",
@@ -5793,7 +5874,26 @@
       "someWithoutAccount": "Erstellt, aber nicht automatisch gepostet (kein verbundenes Konto): {platforms}.",
       "connectAccount": "Konto verbinden",
       "ugcActors": "Erfahrungsberichte und Produktvideos mit UGC-Darstellern erstellen",
-      "ugcActorsHint": "Ein generierter Darsteller spricht über Ihr Produkt. Jedes dieser Videos verbraucht {count, number} Ihrer Videos. Nur auf Englisch."
+      "ugcActorsHint": "Ein generierter Darsteller spricht über Ihr Produkt. Jedes dieser Videos verbraucht {count, number} Ihrer Videos. Nur auf Englisch.",
+      "prompt": {
+        "title": "Ihr nächster Monat, geplant",
+        "body": "Wählen Sie den Start. Studio schreibt jedes Thema aus Ihrer Website, Ihrem Markenkit und früheren Beiträgen, und Sie prüfen die Liste, bevor etwas erstellt wird.",
+        "summary": "{perDay} · {videos, number} % Videos · {platforms}",
+        "yourTimes": "Ihre Veröffentlichungszeiten",
+        "noPlatforms": "noch keine Plattformen",
+        "options": "Weitere Optionen"
+      },
+      "preview": {
+        "title": "Was Studio erstellt",
+        "upTo": "Beiträge, höchstens",
+        "split": "Videos: {videos, number} · Diashows: {slideshows, number}",
+        "dates": "Zeitraum",
+        "range": "{start} – {end}",
+        "networks": "Netzwerke",
+        "noNetworks": "Noch keine gewählt",
+        "review": "Studio schreibt zuerst die Themen. Sie prüfen und bearbeiten die Liste, bevor etwas erstellt wird.",
+        "rolling": "Jeder Beitrag wird dann etwa 3 Tage vor dem Veröffentlichen erstellt, Ihre Änderungen bis dahin zählen also noch."
+      }
     },
     "allowance": {
       "title": "Dieser Monat",
@@ -5957,7 +6057,11 @@
       "removeConfirm": "Seine Veröffentlichung wird abgebrochen und die Zeit freigegeben. Der Rest des Plans läuft weiter.",
       "removedToast": "Beitrag entfernt",
       "createsAt": "Erstellung geplant für {date}",
-      "createsLater": "{count, plural, one {# weiterer Beitrag wird kurz vor seiner Veröffentlichungszeit erstellt.} other {# weitere Beiträge werden kurz vor ihrer Veröffentlichungszeit erstellt.}}"
+      "createsLater": "{count, plural, one {# weiterer Beitrag wird kurz vor seiner Veröffentlichungszeit erstellt.} other {# weitere Beiträge werden kurz vor ihrer Veröffentlichungszeit erstellt.}}",
+      "approve": "Freigeben",
+      "approveAria": "„{title}“ freigeben",
+      "approved": "Freigegeben: Der Beitrag geht zu seiner Zeit raus",
+      "rolling": "Studio erstellt jeden Beitrag etwa 3 Tage vor seiner Zeit; ein wartender Beitrag zeigt, wann er erstellt wird."
     },
     "list": {
       "title": "Monatspläne",
@@ -5968,6 +6072,24 @@
       "emptyBody": "Lassen Sie Studio einen Monat mit Videos und Diashows entwerfen und erstellen und planen Sie sie dann in einem Schritt ein.",
       "range": "{start} – {end}",
       "posts": "{count, plural, one {# Beitrag} other {# Beiträge}}"
+    },
+    "timeline": {
+      "week": "Woche {n, number}",
+      "range": "{start} – {end}"
+    },
+    "bulk": {
+      "label": "Sammelaktionen",
+      "selectAll": "Alle auswählen",
+      "selected": "{count, number} ausgewählt",
+      "selectItem": "„{title}“ auswählen",
+      "progress": "Wird bearbeitet … {done, number} von {total, number}",
+      "summaryOk": "Fertig: {count, number} geändert.",
+      "summaryPartial": "{ok, number} erledigt, {failed, number} konnten nicht geändert werden. Versuchen Sie diese einzeln.",
+      "regenerate": "Neue Themen ({count, number})",
+      "delete": "Löschen ({count, number})",
+      "deleteConfirmTitle": "Ausgewählte Beiträge löschen ({count, number})?",
+      "deleteConfirmBody": "Sie werden aus diesem Entwurf entfernt. Es wurde noch nichts erstellt.",
+      "approveAll": "Alle wartenden freigeben ({count, number})"
     }
   },
   "errorPage": {
@@ -6254,7 +6376,9 @@
       "beats": "Skript",
       "stillAlt": "Ein Bild aus Ihrer Bibliothek",
       "mentionsBusiness": "Nennt Ihr Unternehmen",
-      "allowanceQuick": "Verbraucht beim Behalten ¼ Video Ihres Tarifs"
+      "allowanceQuick": "Verbraucht beim Behalten ¼ Video Ihres Tarifs",
+      "hintEdit": "Erst bearbeiten",
+      "hintDrag": "Oder ziehen Sie die Karte"
     },
     "keep": {
       "title": "Behalten",
@@ -6266,7 +6390,8 @@
       "editHint": "Öffnet den Beitrag, damit Sie Text und Bilder ändern können.",
       "cancel": "Abbrechen",
       "confirm": "Behalten",
-      "previewNote": "{units, plural, one {Er wird jetzt erstellt und verbraucht # Video Ihres Tarifs.} other {Er wird jetzt erstellt und verbraucht # Videos Ihres Tarifs.}}"
+      "previewNote": "{units, plural, one {Er wird jetzt erstellt und verbraucht # Video Ihres Tarifs.} other {Er wird jetzt erstellt und verbraucht # Videos Ihres Tarifs.}}",
+      "noPublishRole": "Ihre Rolle kann nicht veröffentlichen oder planen, daher öffnet sich ein behaltener Beitrag zuerst zum Bearbeiten."
     },
     "skip": {
       "title": "Warum überspringen? (optional)",
@@ -6339,6 +6464,9 @@
       "noNudges": "Noch nichts. Gründe fürs Überspringen und Behaltenes passen das nach und nach an.",
       "reset": "Gelerntes von Blitz löschen",
       "percent": "{value} %"
+    },
+    "readOnly": {
+      "role": "Ihre Rolle kann diese Beiträge ansehen, aber nicht behalten oder überspringen. Fragen Sie eine Inhaberin, einen Inhaber oder einen Admin."
     }
   },
   "automations": {
@@ -6350,7 +6478,19 @@
       "pickBody": "Eine Automatisierung postet für ein Unternehmen. Wählen Sie oben auf der Seite eines aus.",
       "loading": "Automatisierungen werden geladen …",
       "empty": "Noch keine Automatisierungen",
-      "emptyBody": "Richten Sie eine ein, und Studio erstellt und postet jede Woche Ihre Inhalte."
+      "emptyBody": "Richten Sie eine ein, und Studio erstellt und postet jede Woche Ihre Inhalte.",
+      "columns": {
+        "name": "Automatisierung",
+        "status": "Status",
+        "makes": "Erstellt",
+        "next": "Nächster Beitrag"
+      },
+      "next": {
+        "review": "Nach Ihrer Prüfung",
+        "paused": "Pausiert",
+        "draft": "Nicht gestartet",
+        "none": "Nichts fällig"
+      }
     },
     "status": {
       "DRAFT": "Entwurf",
@@ -6417,7 +6557,9 @@
       "back": "Zurück",
       "next": "Weiter",
       "create": "Erstellen und starten",
-      "started": "Automatisierung gestartet. Die ersten Beiträge werden geschrieben."
+      "started": "Automatisierung gestartet. Die ersten Beiträge werden geschrieben.",
+      "stepOf": "Schritt {n, number} von {total, number}",
+      "stepDone": "(erledigt)"
     },
     "detail": {
       "back": "Alle Automatisierungen",
@@ -6454,7 +6596,10 @@
       "reroll": "Neues Thema",
       "rerolled": "Ein neues Thema ist da.",
       "remove": "Entfernen",
-      "keep": "Behalten"
+      "keep": "Behalten",
+      "runs": "Durchläufe",
+      "runRange": "{start} – {end}",
+      "runPosted": "{posted, number} von {total, number} veröffentlicht"
     },
     "review": {
       "title": "Prüfung: {name}",
@@ -6583,5 +6728,33 @@
       "edit": "Prompt bearbeiten",
       "again": "Erneut generieren"
     }
+  },
+  "settingsNav": {
+    "aria": "Bereiche der Einstellungen",
+    "title": "Einstellungen",
+    "groups": {
+      "account": "Konto",
+      "workspace": "Arbeitsbereich",
+      "publishing": "Veröffentlichen",
+      "billing": "Abrechnung"
+    },
+    "items": {
+      "profile": "Profil",
+      "security": "Anmeldung und Sicherheit",
+      "appearance": "Darstellung",
+      "notifications": "Benachrichtigungen",
+      "organisation": "Organisation",
+      "members": "Mitglieder",
+      "audit": "Prüfprotokoll",
+      "approvals": "Freigabe-Workflows",
+      "export": "Daten exportieren",
+      "business": "Marke und Unternehmen",
+      "connections": "Social-Media-Konten",
+      "providerKeys": "Anbieterschlüssel",
+      "billing": "Ihr Tarif"
+    },
+    "dangerZone": "Endgültige Änderungen",
+    "dangerZoneHint": "Diese betreffen alle in der Organisation und lassen sich nicht rückgängig machen.",
+    "providerKeysOwners": "Nur Inhaber und Admins können Anbieterschlüssel verwalten. Fragen Sie eine dieser Personen, wenn Sie etwas ändern möchten."
   }
 }

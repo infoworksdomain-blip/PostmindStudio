@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mockFetch, renderWithSWR } from './library/test-helpers';
 import { UsagePanel } from './admin/usage-panel';
-import { UsageBanner, type UsageResponse } from './usage-meter';
+import { MeterRow, meterFillClass, UsageBanner, type UsageResponse } from './usage-meter';
 
 const usage = (
   short: number,
@@ -114,5 +114,28 @@ describe('23.3 quick posts count as a quarter of a video', () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByRole('meter', { name: 'Videos' })).toHaveAttribute('aria-valuenow', '19.5');
+  });
+});
+
+describe('meter fill (25.12)', () => {
+  it('is neutral below 80 %, warning from 80 % and destructive only at 100 %', () => {
+    expect(meterFillClass(0)).toBe('bg-data');
+    expect(meterFillClass(12)).toBe('bg-data');
+    expect(meterFillClass(79)).toBe('bg-data');
+    expect(meterFillClass(80)).toBe('bg-warning');
+    expect(meterFillClass(99)).toBe('bg-warning');
+    expect(meterFillClass(100)).toBe('bg-destructive');
+  });
+
+  it.each([
+    [1, 3, 'bg-data'],
+    [4, 5, 'bg-warning'],
+    [5, 5, 'bg-destructive'],
+  ])('MeterRow at %i of %i fills with %s', (used, limit, fill) => {
+    const percent = Math.round((used / limit) * 100);
+    render(<MeterRow label="Seats" meter={{ used, limit, percent, maxDurationSec: null }} />);
+    const bar = screen.getByRole('meter', { name: 'Seats' }).firstElementChild;
+    expect(bar).toHaveClass(fill);
+    expect(bar).not.toHaveClass('bg-primary');
   });
 });
