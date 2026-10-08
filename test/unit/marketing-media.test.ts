@@ -3,25 +3,28 @@ import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   ALL_MARKETING_IMAGES,
-  FLOW_SCREENS,
-  FLOW_STEPS,
-  MARKETING_PHOTOS,
+  ALL_MARKETING_VIDEOS,
+  PRODUCT_SCREEN_NAMES,
+  PRODUCT_SCREENS,
+  STUDIO_CLIPS,
 } from '@/lib/marketing/media';
 import { marketingSrc } from '@/lib/marketing/media-src';
 
-// BACKLOG 20.8 — the landing page's photos and product screens. Every file in public/marketing/
-// must be listed (with its source and licence) in public/marketing/SOURCES.md; every image the
-// pages use must exist at the size the manifest declares (the img width/height attributes), stay
-// small, and be inlined by the demo build's shim.
+// BACKLOG 20.8 / 25.5 — the public pages' media. Every file in public/marketing/ must be listed
+// (with its source) in public/marketing/SOURCES.md; every image and video the pages use must exist
+// at the size the manifest declares (the img/video width and height attributes) and stay small;
+// the demo build's shim inlines every image (Studio posters once, as the 720 px WebP) and no video.
 
 const ROOT = join(__dirname, '..', '..');
 const DIR = join(ROOT, 'public', 'marketing');
 const SOURCES = readFileSync(join(DIR, 'SOURCES.md'), 'utf8');
 const SHIM = readFileSync(join(ROOT, 'demo', 'shims', 'marketing-media-src.ts'), 'utf8');
 
-/** Largest single file and all files together (bytes). */
-const MAX_FILE = 100 * 1024;
-const MAX_TOTAL = 1.2 * 1024 * 1024;
+/** Largest single image, all images together, largest video, all videos together (bytes). */
+const MAX_IMAGE = 100 * 1024;
+const MAX_IMAGES_TOTAL = 2 * 1024 * 1024;
+const MAX_VIDEO = 1.6 * 1024 * 1024;
+const MAX_VIDEOS_TOTAL = 5 * 1024 * 1024;
 
 function files(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
@@ -45,9 +48,45 @@ function webpSize(buf: Buffer): { width: number; height: number } {
   return { width: buf.readUInt16LE(26) & 0x3fff, height: buf.readUInt16LE(28) & 0x3fff };
 }
 
+/** Pixel size from a JPEG's first start-of-frame marker (SOF0–SOF15, not DHT/JPG/DAC). */
+function jpegSize(buf: Buffer): { width: number; height: number } {
+  expect(buf.readUInt16BE(0)).toBe(0xffd8);
+  let i = 2;
+  while (i < buf.length) {
+    const marker = buf.readUInt16BE(i);
+    const length = buf.readUInt16BE(i + 2);
+    if (marker >= 0xffc0 && marker <= 0xffcf && ![0xffc4, 0xffc8, 0xffcc].includes(marker)) {
+      return { width: buf.readUInt16BE(i + 7), height: buf.readUInt16BE(i + 5) };
+    }
+    i += 2 + length;
+  }
+  throw new Error('no SOF marker');
+}
+
+/** Display size of an MP4's video track (the tkhd box with a non-zero width, 16.16 fixed). */
+function mp4Size(buf: Buffer): { width: number; height: number } {
+  let from = 0;
+  for (;;) {
+    const at = buf.indexOf('tkhd', from, 'ascii');
+    if (at < 0) throw new Error('no video tkhd box');
+    const version = buf[at + 4];
+    const sizeAt = at + 8 + (version === 1 ? 32 : 20) + 52;
+    const width = buf.readUInt32BE(sizeAt) >>> 16;
+    const height = buf.readUInt32BE(sizeAt + 4) >>> 16;
+    if (width > 0 && height > 0) return { width, height };
+    from = at + 4;
+  }
+}
+
+function imageSize(path: string): { width: number; height: number } {
+  const buf = readFileSync(join(DIR, path));
+  return path.endsWith('.jpg') ? jpegSize(buf) : webpSize(buf);
+}
+
 const onDisk = files(DIR)
   .map((f) => relative(DIR, f).replaceAll('\\', '/'))
   .filter((f) => f !== 'SOURCES.md');
+const bytes = (paths: string[]) => paths.reduce((n, f) => n + statSync(join(DIR, f)).size, 0);
 
 describe('public/marketing', () => {
   it('lists every file in SOURCES.md', () => {
@@ -64,39 +103,68 @@ describe('public/marketing', () => {
     expect(SOURCES).toContain('2026-09-30');
   });
 
+  it('says the Studio clips were made with PostMind Studio and the businesses are fictional', () => {
+    expect(SOURCES).toContain(
+      'made with PostMind Studio on 2026-10-07 (showcase businesses are fictional)',
+    );
+  });
+
   it('has no file that the pages do not use', () => {
-    const used = new Set(ALL_MARKETING_IMAGES.map((i) => i.path));
+    const used = new Set([...ALL_MARKETING_IMAGES, ...ALL_MARKETING_VIDEOS].map((i) => i.path));
     expect(onDisk.filter((f) => !used.has(f))).toEqual([]);
   });
 
   it.each(ALL_MARKETING_IMAGES.map((i) => [i.path, i] as const))(
     '%s exists at its declared size and is small',
     (path, image) => {
-      const file = join(DIR, path);
-      const size = webpSize(readFileSync(file));
-      expect(size).toEqual({ width: image.width, height: image.height });
-      expect(statSync(file).size).toBeLessThanOrEqual(MAX_FILE);
+      expect(imageSize(path)).toEqual({ width: image.width, height: image.height });
+      expect(statSync(join(DIR, path)).size).toBeLessThanOrEqual(MAX_IMAGE);
     },
   );
 
-  it('keeps the total size reasonable', () => {
-    const total = onDisk.reduce((n, f) => n + statSync(join(DIR, f)).size, 0);
-    expect(total).toBeLessThanOrEqual(MAX_TOTAL);
+  it.each(ALL_MARKETING_VIDEOS.map((v) => [v.path, v] as const))(
+    '%s is an MP4 at its declared size and within the video budget',
+    (path, video) => {
+      const buf = readFileSync(join(DIR, path));
+      expect(buf.toString('ascii', 4, 8)).toBe('ftyp');
+      expect(mp4Size(buf)).toEqual({ width: video.width, height: video.height });
+      expect(buf.length).toBeLessThanOrEqual(MAX_VIDEO);
+    },
+  );
+
+  it('keeps the totals reasonable', () => {
+    expect(bytes(ALL_MARKETING_IMAGES.map((i) => i.path))).toBeLessThanOrEqual(MAX_IMAGES_TOTAL);
+    expect(bytes(ALL_MARKETING_VIDEOS.map((v) => v.path))).toBeLessThanOrEqual(MAX_VIDEOS_TOTAL);
   });
 
-  it('serves them from /marketing and the demo shim inlines each one', () => {
-    expect(marketingSrc(MARKETING_PHOTOS.coffee.path)).toBe('/marketing/photos/coffee.webp');
-    for (const { path } of ALL_MARKETING_IMAGES) {
-      expect(SHIM).toContain(`'../../public/marketing/${path}'`);
-      expect(SHIM).toContain(`'${path}':`);
+  it('gives every Studio clip 9:16 posters at 360, 720 and a 540 JPEG fallback', () => {
+    for (const clip of Object.values(STUDIO_CLIPS)) {
+      expect(clip.poster.small).toMatchObject({ width: 360, height: 640 });
+      expect(clip.poster.large).toMatchObject({ width: 720, height: 1280 });
+      expect(clip.poster.fallback).toMatchObject({ width: 540, height: 960 });
+      expect(clip.video.width / clip.video.height).toBeCloseTo(9 / 16, 3);
     }
   });
 
-  it('has a light and a dark screen for every flow step', () => {
-    expect(FLOW_STEPS).toEqual(['brief', 'script', 'generate', 'review', 'calendar', 'analytics']);
-    for (const step of FLOW_STEPS) {
-      expect(FLOW_SCREENS[step].light.path).toBe(`screens/${step}-light.webp`);
-      expect(FLOW_SCREENS[step].dark.path).toBe(`screens/${step}-dark.webp`);
+  it('serves them from /marketing; the demo shim inlines every image and no video', () => {
+    expect(marketingSrc(STUDIO_CLIPS.seedanceBread.video.path)).toBe(
+      '/marketing/studio/seedance-bread.mp4',
+    );
+    const inlined = ALL_MARKETING_IMAGES.filter(
+      (i) => !/^studio\/.+(-360\.webp|\.jpg)$/.test(i.path),
+    );
+    for (const { path } of inlined) {
+      expect(SHIM).toContain(`'../../public/marketing/${path}'`);
+      expect(SHIM).toContain(`'${path}':`);
+    }
+    expect(SHIM).not.toMatch(/\.mp4'/);
+  });
+
+  it('has a light and a dark capture for every product screen', () => {
+    expect(PRODUCT_SCREEN_NAMES).toEqual(['script', 'generate', 'calendar', 'analytics']);
+    for (const name of PRODUCT_SCREEN_NAMES) {
+      expect(PRODUCT_SCREENS[name].light.path).toBe(`screens/${name}-light.webp`);
+      expect(PRODUCT_SCREENS[name].dark.path).toBe(`screens/${name}-dark.webp`);
     }
   });
 });

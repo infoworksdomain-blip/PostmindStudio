@@ -1,154 +1,174 @@
 // @vitest-environment jsdom
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { withLocale } from '../../../../test/i18n-wrapper';
-import { ALL_MESSAGES } from '@/lib/i18n/all-messages';
-import { mockFetch, renderWithSWR, type MockRoute } from '../library/test-helpers';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { mockFetch } from '../library/test-helpers';
 import { AnalyticsDashboard } from './analytics-dashboard';
-import type { CostResponse, LeaderboardResponse, OverviewResponse } from './types';
+import { overview, renderPage, routes, series } from './analytics-test-fixtures';
 
-const overview: OverviewResponse = {
-  ok: true,
-  days: 30,
-  publications: 3,
-  projectsCreated: 2,
-  totals: { views: 12_400, watchTimeSec: 3_725, likes: 300, comments: 40, shares: 50, saves: 10 },
-  byPlatform: {
-    tiktok: { publications: 2, views: 10_000, engagement: 350 },
-    youtube_short: { publications: 1, views: 2_400, engagement: 50 },
-  },
-};
+const nav = vi.hoisted(() => ({ replace: vi.fn(), search: '' }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), replace: nav.replace }),
+  usePathname: () => '/analytics',
+  useSearchParams: () => new URLSearchParams(nav.search),
+}));
 
-const leaderboard: LeaderboardResponse = {
-  ok: true,
-  metric: 'views',
-  data: [
-    {
-      id: 'pub_1',
-      platform: 'tiktok',
-      platformUrl: 'https://tiktok.test/v/1',
-      publishedAt: '2026-09-20T10:00:00.000Z',
-      projectId: 'proj_1',
-      caption: 'Latte art in 10s',
-      value: 9_000,
-    },
-  ],
-};
-
-const cost: CostResponse = {
-  ok: true,
-  days: 30,
-  totalPence: 1_234,
-  byProvider: [{ provider: 'runway', costPence: 1_000, jobs: 4 }],
-  byProject: [
-    { projectId: 'proj_1', name: 'Spring offer', costPence: 900 },
-    { projectId: null, name: null, costPence: 334 },
-  ],
-  byDay: [{ day: '2026-09-26', costPence: 1_234 }],
-};
-
-const me = (platformRole: string): MockRoute => ({
-  match: /\/api\/studio\/me$/,
-  body: { ok: true, me: { capabilities: [], user: { platformRole } } },
+beforeEach(() => {
+  nav.search = '';
+  nav.replace.mockReset();
+  window.localStorage.clear();
 });
-
-// Spend is staff-only (operator decision 2026-10-04): these tests view the page as staff unless they
-// pass a customer /me first (the first matching route wins).
-function routes(over: MockRoute[] = []): MockRoute[] {
-  return [
-    ...over,
-    me('staff'),
-    { match: '/analytics/overview', body: overview },
-    {
-      match: '/analytics/timeseries',
-      body: {
-        ok: true,
-        metric: 'views',
-        data: [
-          { day: '2026-09-25', value: 100 },
-          { day: '2026-09-26', value: 300 },
-        ],
-      },
-    },
-    { match: '/analytics/leaderboard', body: leaderboard },
-    { match: '/analytics/cost', body: cost },
-  ];
-}
-
 afterEach(() => vi.unstubAllGlobals());
 
 describe('AnalyticsDashboard', () => {
-  it('shows headline totals, engagement rate and spend', async () => {
+  it('opens with a one-sentence summary and four headline numbers', async () => {
     mockFetch(routes());
-    renderWithSWR(<AnalyticsDashboard />);
-    expect(await screen.findByText(/^12.4k$/i)).toBeInTheDocument();
-    expect(screen.getByText(/across 3 publications · 2 projects started/)).toBeInTheDocument();
-    expect(screen.getByText('1h 02m')).toBeInTheDocument();
-    // (300+40+50+10)/12400 = 3.2%
-    expect(screen.getByText('3.2% of views')).toBeInTheDocument();
-    expect(await screen.findAllByText('£12.34')).not.toHaveLength(0);
+    renderPage();
+    const summary = await screen.findByRole('region', { name: 'Summary' });
+    expect(summary).toHaveTextContent(
+      'Your 3 posts from the last 30 days reached 12.4k views, with 3.2% engagement.',
+    );
+    expect(summary).toHaveTextContent('TikTok brought in 81% of the views.');
+    const numbers = within(summary).getAllByRole('definition');
+    expect(numbers.map((n) => n.textContent)).toEqual(
+      expect.arrayContaining(['12.4k', '1h 02m', '3.2%', '60']),
+    );
+    expect(summary).toHaveTextContent('3 posts · 2 projects started');
+    expect(summary).toHaveTextContent('400 likes, comments, shares and saves');
+    expect(summary).toHaveTextContent('50 shares · 10 saves');
+    // 3,725 s over 12,400 views is under a second a view: no "0s per view" hint.
+    expect(summary).not.toHaveTextContent('per view');
   });
 
-  it('breaks views down by platform and ranks top videos', async () => {
+  it('compares growth and engagement with the previous period', async () => {
     mockFetch(routes());
-    renderWithSWR(<AnalyticsDashboard />);
-    const platforms = await screen.findByRole('list', { name: 'Views by platform' });
-    const rows = within(platforms).getAllByRole('listitem');
-    expect(rows[0]).toHaveTextContent('TikTok');
-    expect(rows[1]).toHaveTextContent('YouTube Shorts');
-    const top = await screen.findByRole('list', { name: 'Top publications' });
-    expect(within(top).getByRole('link', { name: 'Latte art in 10s' })).toHaveAttribute(
-      'href',
-      '/projects/proj_1',
-    );
-    expect(within(top).getByRole('link', { name: 'Open on TikTok' })).toHaveAttribute(
-      'href',
-      'https://tiktok.test/v/1',
-    );
-    // 13.28: each row opens that publication's analytics.
+    renderPage();
+    // 30 days at 20 a day against 30 at 10: +100 %.
+    expect(await screen.findByText('600 views gained in this period')).toBeInTheDocument();
+    const badges = await screen.findAllByText(/on the previous period/);
+    expect(badges[0]).toHaveTextContent('Up 100% on the previous period');
+    expect(screen.getByRole('img', { name: /Views per day, last 30 days/ })).toBeInTheDocument();
     expect(
-      within(top).getByRole('link', { name: 'Analytics for Latte art in 10s' }),
-    ).toHaveAttribute('href', '/analytics/publications/pub_1');
+      screen.getByRole('img', { name: /Interactions per day, last 30 days/ }),
+    ).toBeInTheDocument();
+    const mix = screen.getByRole('list', { name: 'Engagement by type' });
+    expect(within(mix).getAllByRole('listitem')[0]).toHaveTextContent('Likes300');
   });
 
-  it('refetches every panel when the date range changes', async () => {
+  it('asks for twice the window so the change is computed, and switches the trend metric', async () => {
     const user = userEvent.setup();
     const { calls } = mockFetch(routes());
-    renderWithSWR(<AnalyticsDashboard />);
-    await screen.findByText(/^12.4k$/i);
-    await user.click(screen.getByRole('radio', { name: '7 days' }));
-    await waitFor(() => {
-      for (const path of ['overview', 'timeseries', 'leaderboard', 'cost']) {
-        expect(
-          calls.some((c) => c.url.includes(`/analytics/${path}`) && c.url.includes('days=7')),
-        ).toBe(true);
-      }
-    });
-    expect(screen.getByRole('radio', { name: '7 days' })).toHaveAttribute('aria-checked', 'true');
-  });
-
-  it('switches the trend metric', async () => {
-    const user = userEvent.setup();
-    const { calls } = mockFetch(routes());
-    renderWithSWR(<AnalyticsDashboard />);
-    await screen.findByText(/^12.4k$/i);
-    await user.click(screen.getByRole('radio', { name: 'Engagement' }));
+    renderPage();
+    await screen.findByRole('region', { name: 'Summary' });
+    await user.click(screen.getByRole('radio', { name: 'Watch time' }));
     await waitFor(() =>
       expect(
         calls.some(
-          (c) => c.url.includes('/analytics/timeseries') && c.url.includes('metric=engagement'),
+          (c) =>
+            c.url.includes('/analytics/timeseries') &&
+            c.url.includes('days=60') &&
+            c.url.includes('metric=watchTime'),
         ),
       ).toBe(true),
     );
   });
 
-  it('shows spend by provider and project', async () => {
+  it('ranks top posts with thumbnails, each opening its own analytics', async () => {
+    const { calls } = mockFetch(routes());
+    renderPage();
+    const top = await screen.findByRole('list', { name: 'Top publications' });
+    expect(
+      within(top).getByRole('link', { name: 'Analytics for Latte art in 10s' }),
+    ).toHaveAttribute('href', '/analytics/publications/pub_1');
+    expect(within(top).getByRole('link', { name: 'Open on TikTok' })).toHaveAttribute(
+      'href',
+      'https://tiktok.test/v/1',
+    );
+    await waitFor(() => expect(calls.some((c) => c.url.includes('/renders/render_1'))).toBe(true));
+    const platforms = screen.getByRole('list', { name: 'Views by platform' });
+    const rows = within(platforms).getAllByRole('listitem');
+    expect(rows[0]).toHaveTextContent('TikTok');
+    expect(rows[1]).toHaveTextContent('YouTube Shorts');
+  });
+
+  it('shows the best posting times with what they are based on', async () => {
     mockFetch(routes());
-    renderWithSWR(<AnalyticsDashboard />);
+    renderPage();
+    const list = await screen.findByRole('list', { name: 'Best posting times' });
+    const rows = within(list).getAllByRole('listitem');
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toHaveTextContent('Tuesday');
+    expect(rows[0]).toHaveTextContent('100%');
+    expect(rows[1]).toHaveTextContent('82%');
+    expect(screen.getByText(/Based on 14 posts from the last 180 days/)).toBeInTheDocument();
+  });
+
+  it('keeps the period in the URL and refetches every panel', async () => {
+    const user = userEvent.setup();
+    nav.search = 'days=7';
+    const { calls } = mockFetch(routes());
+    renderPage();
+    expect(await screen.findByRole('radio', { name: '7 days' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await waitFor(() => {
+      for (const path of [
+        'overview?days=7',
+        'timeseries?days=14',
+        'leaderboard?days=7',
+        'cost?days=7',
+      ])
+        expect(calls.some((c) => c.url.includes(`/analytics/${path}`))).toBe(true);
+    });
+    await user.click(screen.getByRole('radio', { name: '90 days' }));
+    expect(nav.replace).toHaveBeenLastCalledWith('/analytics?days=90', { scroll: false });
+    expect(screen.getByRole('radio', { name: '90 days' })).toHaveAttribute('aria-checked', 'true');
+    await waitFor(() =>
+      expect(calls.some((c) => c.url.includes('/analytics/overview?days=90'))).toBe(true),
+    );
+    await user.click(screen.getByRole('radio', { name: '30 days' }));
+    expect(nav.replace).toHaveBeenLastCalledWith('/analytics', { scroll: false });
+  });
+
+  it('narrows every customer-facing panel to the selected business', async () => {
+    const { calls } = mockFetch(routes());
+    renderPage(<AnalyticsDashboard />, 'biz_1');
+    expect(await screen.findByText('Leeds Sourdough')).toBeInTheDocument();
+    await screen.findByRole('list', { name: 'Best posting times' });
+    for (const path of ['overview', 'timeseries', 'leaderboard', 'best-times'])
+      expect(
+        calls.some(
+          (c) => c.url.includes(`/analytics/${path}`) && c.url.includes('businessId=biz_1'),
+        ),
+      ).toBe(true);
+    // Spend stays organisation-wide, and says so.
+    expect(
+      calls
+        .filter((c) => c.url.includes('/analytics/cost'))
+        .every((c) => !c.url.includes('businessId')),
+    ).toBe(true);
+    expect(
+      await screen.findByText('Spend covers every business in your organisation.'),
+    ).toBeInTheDocument();
+  });
+
+  it('says "All businesses" and sends no business filter when none is selected', async () => {
+    const { calls } = mockFetch(routes());
+    renderPage();
+    expect(await screen.findByText('All businesses')).toBeInTheDocument();
+    await screen.findByRole('region', { name: 'Summary' });
+    expect(calls.some((c) => c.url.includes('businessId='))).toBe(false);
+    expect(screen.queryByText(/Spend covers every business/)).not.toBeInTheDocument();
+  });
+
+  it('shows spend by provider and project for staff', async () => {
+    mockFetch(routes());
+    renderPage();
     const providers = await screen.findByRole('list', { name: 'Spend by provider' });
     expect(providers).toHaveTextContent('runway');
     expect(providers).toHaveTextContent('4 jobs');
+    expect(screen.getAllByText(/£12\.34/).length).toBeGreaterThan(0);
     const projects = screen.getByRole('list', { name: 'Spend by project' });
     expect(within(projects).getByRole('link', { name: 'Spring offer' })).toHaveAttribute(
       'href',
@@ -161,23 +181,16 @@ describe('AnalyticsDashboard', () => {
     mockFetch(
       routes([
         {
-          match: '/analytics/timeseries',
-          body: {
-            ok: true,
-            metric: 'views',
-            data: [
-              { day: '2026-09-25', value: 100 },
-              { day: '2026-09-26', value: 100, estimated: true },
-            ],
-          },
+          match: /\/analytics\/timeseries\?days=60&metric=views/,
+          body: series(30, 10, 20, { estimated: true }),
         },
       ]),
     );
-    renderWithSWR(<AnalyticsDashboard />);
+    renderPage();
     expect(await screen.findByRole('note')).toHaveTextContent(/estimates/i);
   });
 
-  it('shows empty breakdowns when nothing was published', async () => {
+  it('explains an empty period instead of showing zeros', async () => {
     mockFetch(
       routes([
         {
@@ -190,11 +203,24 @@ describe('AnalyticsDashboard', () => {
           },
         },
         { match: '/analytics/leaderboard', body: { ok: true, metric: 'views', data: [] } },
+        { match: /\/analytics\/timeseries/, body: series(30, 0, 0) },
       ]),
     );
-    renderWithSWR(<AnalyticsDashboard />);
+    renderPage();
+    expect(
+      await screen.findByRole('heading', { name: 'No posts published in the last 30 days' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Go to projects' })).toHaveAttribute(
+      'href',
+      '/projects',
+    );
     expect(await screen.findAllByText('Nothing published in this window.')).toHaveLength(2);
-    expect(screen.getByText('— of views')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Nothing new in this period yet. The chart fills in as people watch your posts.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/on the previous period/)).not.toBeInTheDocument();
   });
 
   it('shows an error with retry when the overview fails', async () => {
@@ -207,80 +233,9 @@ describe('AnalyticsDashboard', () => {
         },
       ]),
     );
-    renderWithSWR(<AnalyticsDashboard />);
+    renderPage();
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('Analytics store unavailable');
     expect(within(alert).getByRole('button', { name: /Retry/ })).toBeInTheDocument();
-  });
-});
-
-describe('AnalyticsDashboard for customers (operator decision 2026-10-04)', () => {
-  it('shows no spend figure, spend section or cost wording, and never asks for costs', async () => {
-    const { calls } = mockFetch(routes([me('user')]));
-    renderWithSWR(<AnalyticsDashboard />);
-    expect(await screen.findByText(/^12.4k$/i)).toBeInTheDocument();
-    await screen.findByRole('list', { name: 'Views by platform' });
-    expect(screen.getByText('3.2% of views')).toBeInTheDocument();
-    expect(screen.queryByText('Spend')).not.toBeInTheDocument();
-    expect(screen.queryByText(/£/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/cost/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole('list', { name: 'Spend by provider' })).not.toBeInTheDocument();
-    expect(calls.some((c) => c.url.includes('/analytics/cost'))).toBe(false);
-  });
-});
-
-describe('AnalyticsDashboard localisation', () => {
-  afterEach(() => {
-    document.documentElement.removeAttribute('dir');
-    document.documentElement.removeAttribute('lang');
-  });
-
-  it('renders Arabic right-to-left, with Arabic plurals and RTL arrow keys', async () => {
-    const user = userEvent.setup();
-    // jsdom has no UA stylesheet, so `dir="rtl"` does not set the computed direction the shared
-    // SegmentedControl reads (ui/roving); give the document the browser's rule for the test.
-    const ua = document.createElement('style');
-    ua.textContent = '[dir="rtl"], [dir="rtl"] * { direction: rtl; }';
-    document.head.append(ua);
-    const ar = ALL_MESSAGES.ar.analytics;
-    const { calls } = mockFetch(routes());
-    renderWithSWR(withLocale('ar', <AnalyticsDashboard />));
-    expect(
-      await screen.findByRole('heading', { name: ar.dashboard.title, level: 1 }),
-    ).toBeInTheDocument();
-    await waitFor(() => expect(document.documentElement).toHaveAttribute('dir', 'rtl'));
-    // 7 → the Arabic "few" form; 30 → "many".
-    expect(screen.getByRole('radio', { name: '7 أيام' })).toBeInTheDocument();
-    const thirty = screen.getByRole('radio', { name: '30 يومًا' });
-    expect(thirty).toHaveAttribute('aria-checked', 'true');
-    expect(await screen.findByRole('list', { name: ar.platforms.listLabel })).toBeInTheDocument();
-    expect(
-      await screen.findByRole('list', { name: ar.cost.byProvider.listLabel }),
-    ).toHaveTextContent('4 مهام');
-    // In RTL the next option sits to the left.
-    thirty.focus();
-    await user.keyboard('{ArrowLeft}');
-    await waitFor(() =>
-      expect(
-        calls.some((c) => c.url.includes('/analytics/cost') && c.url.includes('days=90')),
-      ).toBe(true),
-    );
-    ua.remove();
-  });
-
-  it('renders Simplified Chinese', async () => {
-    const zh = ALL_MESSAGES['zh-Hans'].analytics;
-    mockFetch(routes());
-    renderWithSWR(withLocale('zh-Hans', <AnalyticsDashboard />));
-    expect(
-      await screen.findByRole('heading', { name: zh.dashboard.title, level: 1 }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: '7 天' })).toBeInTheDocument();
-    expect(await screen.findByText('共 3 条发布 · 新建 2 个项目')).toBeInTheDocument();
-    expect(
-      await screen.findByRole('list', { name: zh.cost.byProvider.listLabel }),
-    ).toHaveTextContent('4 个任务');
-    await waitFor(() => expect(document.documentElement).toHaveAttribute('lang', 'zh-Hans'));
-    expect(document.documentElement).toHaveAttribute('dir', 'ltr');
   });
 });

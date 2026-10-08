@@ -41,7 +41,7 @@ test.beforeAll(async ({ browser, playwright }) => {
   world = await seedWorld(db, ownerId);
   await addMember(db, world.orgId, ownerId, 'owner');
   owner = await signedInPage(browser, baseURL, emailFor('p2-billing'));
-  const made = await staffPage(browser, request, db);
+  const made = await staffPage(browser, request, db, undefined, 'billing');
   staff = made.page;
   staffEmail = made.email;
   await request.dispose();
@@ -396,6 +396,8 @@ test.describe('calendar drip queue', () => {
   test('set a weekly schedule, save it, and it is still there after a reload', async () => {
     const w = watch(owner);
     await w.visit('/calendar');
+    // 25.9: the posting times (drip queue) open in a side sheet from the calendar header.
+    await owner.getByRole('button', { name: 'Posting times', exact: true }).click();
     const drip = owner.getByRole('region', { name: 'Drip queue' });
     await expect(drip).toBeVisible();
     await drip.getByRole('radio', { name: 'Times a week' }).click();
@@ -403,17 +405,20 @@ test.describe('calendar drip queue', () => {
     await drip.getByRole('button', { name: 'Save schedule' }).click();
     await expect(owner.getByText('Drip queue saved.').first()).toBeVisible();
     await owner.reload();
+    await owner.getByRole('button', { name: 'Posting times', exact: true }).click();
     const again = owner.getByRole('region', { name: 'Drip queue' });
     await expect(again.getByRole('radio', { name: 'Times a week' })).toBeChecked();
     await expect(again.getByLabel('Posts a week')).toHaveValue('3');
     await expect(again.getByRole('list', { name: 'Next 7 days' })).toBeVisible();
     // The calendar's own notice no longer says the drip queue is off.
+    await owner.keyboard.press('Escape');
     await expect(owner.getByText(/The drip queue is off/)).toHaveCount(0);
     expect(w.issues).toEqual([]);
   });
 
   test('back to a daily schedule: posts a day, and a day can be skipped', async () => {
     await owner.goto('/calendar');
+    await owner.getByRole('button', { name: 'Posting times', exact: true }).click();
     const drip = owner.getByRole('region', { name: 'Drip queue' });
     // Wait for the saved schedule to load (weekly, from the test above) before changing it.
     await expect(drip.getByRole('radio', { name: 'Times a week' })).toBeChecked();
@@ -519,7 +524,7 @@ test.describe('Admin Centre', () => {
       .getByRole('link', { name: 'Organisations' })
       .click();
     await staff.getByLabel('Search organisations').fill(`P2 Trial ${run}`);
-    await staff.getByRole('button', { name: 'Search' }).click();
+    await staff.getByRole('button', { name: 'Search', exact: true }).click();
     await staff.getByRole('button', { name: `Open P2 Trial ${run}` }).click();
     await expect(staff.getByText('Running: the trial’s caps apply now.')).toBeVisible();
     const form = staff.getByRole('form', { name: 'Set an override' });

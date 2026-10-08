@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockFetch, renderWithSWR, type MockRoute } from '../review/test-helpers';
 import { CreateScreen } from './create-screen';
+import { openMoreOptions } from './create-test-helpers';
 
 // Create screen: project templates (spec 8.6 / 14.5) and "Auto-publish when approved".
 
@@ -75,7 +76,7 @@ describe('CreateScreen — templates and auto-publish', () => {
   it('creates a TEMPLATE project with no brief, and the template’s formats', async () => {
     const api = mockFetch(routes());
     renderWithSWR(<CreateScreen initialReference={null} />);
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    await openMoreOptions();
     await userEvent.click(await screen.findByRole('radio', { name: /Introduce yourself/ }));
     expect(screen.getByText(/Platforms and length come from the template/)).toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: 'Long' })).not.toBeInTheDocument();
@@ -121,7 +122,7 @@ describe('CreateScreen — templates and auto-publish', () => {
   it('says Instagram is not posted and points to PostMind settings when none is connected', async () => {
     mockFetch(routes());
     renderWithSWR(<CreateScreen initialReference={null} />);
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    await openMoreOptions();
     await userEvent.click(await screen.findByRole('radio', { name: /Introduce yourself/ }));
     expect(screen.getByLabelText(/Auto-publish when approved/)).toBeChecked();
     expect(screen.queryByLabelText('Instagram Reels account')).not.toBeInTheDocument();
@@ -136,7 +137,7 @@ describe('CreateScreen — templates and auto-publish', () => {
   it('standalone: points to Connections, never to PostMind settings (Phase 18)', async () => {
     mockFetch(routes('studio'));
     renderWithSWR(<CreateScreen initialReference={null} />);
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    await openMoreOptions();
     await userEvent.click(await screen.findByRole('radio', { name: /Introduce yourself/ }));
     expect(screen.queryByLabelText('Instagram Reels account')).not.toBeInTheDocument();
     expect(screen.queryByText(/PostMind settings/)).not.toBeInTheDocument();

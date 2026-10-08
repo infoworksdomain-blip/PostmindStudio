@@ -1,12 +1,15 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Publication } from '@/lib/client/types';
 import { fail, mockFetch, ok, renderScreen } from '../publications/test-utils';
 import { dayKey, fromLocalInput, moveToDay, toLocalInput } from './month';
 import { PublicationsCalendar } from './publications-calendar';
 import { DRAG_TYPE } from './reschedule';
+import { setTestUrl } from './test-navigation';
+
+vi.mock('next/navigation', async () => (await import('./test-navigation')).navigationMock);
 
 // BACKLOG 13.9 — calendar drag-to-reschedule and the keyboard "Move to" alternative.
 
@@ -55,6 +58,8 @@ function dataTransfer() {
   };
 }
 
+beforeEach(() => setTestUrl('/calendar'));
+
 afterEach(() => {
   vi.unstubAllGlobals();
   toast.success.mockReset();
@@ -92,7 +97,7 @@ describe('PublicationsCalendar rescheduling', () => {
         : undefined,
     );
     renderScreen(<PublicationsCalendar initialDate={MONTH} />);
-    const grid = await screen.findByRole('list', { name: 'Days of the month' });
+    const grid = await screen.findByRole('grid', { name: 'Days of the month' });
     expect(
       within(grid).getByRole('button', { name: 'Move Video a to another time' }),
     ).toBeVisible();
@@ -107,7 +112,7 @@ describe('PublicationsCalendar rescheduling', () => {
         : ok({ data: [pub('a')], nextCursor: null }),
     );
     renderScreen(<PublicationsCalendar initialDate={MONTH} />);
-    const grid = await screen.findByRole('list', { name: 'Days of the month' });
+    const grid = await screen.findByRole('grid', { name: 'Days of the month' });
     await user.click(within(grid).getByRole('button', { name: 'Move Video a to another time' }));
     const dialog = await screen.findByRole('dialog', { name: /Move “Video a”/ });
     const input = within(dialog).getByLabelText('New time');
@@ -131,7 +136,7 @@ describe('PublicationsCalendar rescheduling', () => {
         : ok({ data: [pub('a')], nextCursor: null }),
     );
     const { container } = renderScreen(<PublicationsCalendar initialDate={MONTH} />);
-    const grid = await screen.findByRole('list', { name: 'Days of the month' });
+    const grid = await screen.findByRole('grid', { name: 'Days of the month' });
     const handle = within(grid)
       .getByRole('button', { name: 'Move Video a to another time' })
       .closest('[draggable="true"]') as HTMLElement;
@@ -156,7 +161,7 @@ describe('PublicationsCalendar rescheduling', () => {
         : ok({ data: [pub('a')], nextCursor: null }),
     );
     renderScreen(<PublicationsCalendar initialDate={MONTH} />);
-    const grid = await screen.findByRole('list', { name: 'Days of the month' });
+    const grid = await screen.findByRole('grid', { name: 'Days of the month' });
     await user.click(within(grid).getByRole('button', { name: 'Move Video a to another time' }));
     const dialog = await screen.findByRole('dialog');
     const input = within(dialog).getByLabelText('New time');
@@ -175,5 +180,42 @@ describe('PublicationsCalendar rescheduling', () => {
       ),
     );
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('25.9: Undo after a drag moves the post back to its old time (and says so)', async () => {
+    const api = mockFetch((req) =>
+      req.method === 'PATCH'
+        ? ok({ publication: pub('a') })
+        : ok({ data: [pub('a')], nextCursor: null }),
+    );
+    const { container } = renderScreen(<PublicationsCalendar initialDate={MONTH} />);
+    const grid = await screen.findByRole('grid', { name: 'Days of the month' });
+    const handle = within(grid)
+      .getByRole('button', { name: 'Move Video a to another time' })
+      .closest('[draggable="true"]') as HTMLElement;
+    const transfer = dataTransfer();
+    fireEvent.dragStart(handle, { dataTransfer: transfer });
+    const day = new Date(AT.getFullYear(), AT.getMonth(), 18);
+    const cell = container.querySelector(`[data-day="${dayKey(day)}"]`) as HTMLElement;
+    fireEvent.dragOver(cell, { dataTransfer: transfer });
+    fireEvent.drop(cell, { dataTransfer: transfer });
+    await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(1));
+    const [message, options] = toast.success.mock.calls[0] as [
+      string,
+      { action: { label: string; onClick: () => void }; duration: number },
+    ];
+    expect(message).toMatch(/^Moved to /);
+    expect(options.action.label).toBe('Undo');
+    expect(options.duration).toBe(10_000);
+    expect(screen.getByTestId('calendar-live')).toHaveTextContent(/Moved “Video a” to /);
+    options.action.onClick();
+    await waitFor(() => expect(api.find('PATCH', '/publications/a')).toHaveLength(2));
+    expect(api.find('PATCH', '/publications/a')[1]?.body).toEqual({
+      scheduledFor: AT.toISOString(),
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('calendar-live')).toHaveTextContent(/Moved “Video a” back to /),
+    );
+    expect(toast.success).toHaveBeenLastCalledWith(expect.stringMatching(/^Moved back to /));
   });
 });

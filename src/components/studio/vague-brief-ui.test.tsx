@@ -7,7 +7,7 @@ import type { Project } from '@/lib/client/types';
 import { withLocale } from '../../../test/i18n-wrapper';
 import { BriefHint, briefHintDescribedBy } from './brief-hint';
 import { FirstVideoStep } from './onboarding/first-video-step';
-import { ItemForm } from './plans/plan-editor';
+import { ItemForm } from './plans/item-form';
 import { ProjectsList } from './projects/projects-list';
 import { mockFetch, ok, renderScreen, type RecordedRequest } from './publications/test-utils';
 

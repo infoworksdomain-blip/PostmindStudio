@@ -1,12 +1,20 @@
 // @vitest-environment jsdom
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Publication } from '@/lib/client/types';
 import { PUBLICATIONS_POLL_MS, PublicationsList, publicationsRefreshMs } from './publications-list';
 import { fail, mockFetch, ok, renderScreen } from './test-utils';
 
+import { setTestUrl, testUrl } from '../calendar/test-navigation';
+
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock(
+  'next/navigation',
+  async () => (await import('../calendar/test-navigation')).navigationMock,
+);
+
+beforeEach(() => setTestUrl('/publications'));
 
 function pub(overrides: Partial<Publication>): Publication {
   return {
@@ -74,6 +82,9 @@ describe('PublicationsList', () => {
       expect(last.url.searchParams.get('state')).toBe('FAILED');
       expect(last.url.searchParams.get('platform')).toBe('youtube');
     });
+    // 25.9: both filters are kept in the URL.
+    expect(testUrl().searchParams.get('filter')).toBe('failed');
+    expect(testUrl().searchParams.get('platform')).toBe('youtube');
     await screen.findByRole('link', { name: 'Autumn launch' });
     await user.click(screen.getByRole('button', { name: 'Older' }));
     await waitFor(() => expect(api.requests.at(-1)!.url.searchParams.get('cursor')).toBe('pub_1'));
@@ -198,5 +209,19 @@ describe('publicationsRefreshMs (QA 3: a post in flight must not stay "Publishin
         ],
       }),
     ).toBe(0);
+  });
+
+  it('25.9: reads the filters from the URL (a shared link opens filtered)', async () => {
+    setTestUrl('/publications?filter=scheduled&platform=x');
+    const api = mockFetch(() => ok({ data: [pub({})], nextCursor: null }));
+    renderScreen(<PublicationsList />);
+    await screen.findByRole('link', { name: 'Autumn launch' });
+    expect(screen.getByRole('radio', { name: 'Scheduled' })).toBeChecked();
+    expect(screen.getByLabelText('Platform')).toHaveValue('x');
+    const q = api.requests.at(-1)!.url.searchParams;
+    expect(q.get('state')).toBe('SCHEDULED');
+    expect(q.get('platform')).toBe('x');
+    // The filters are one radio group, not tabs without panels (audit finding).
+    expect(screen.queryByRole('tablist')).toBeNull();
   });
 });

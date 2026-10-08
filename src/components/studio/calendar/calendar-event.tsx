@@ -14,11 +14,14 @@ import { useProjectName } from '@/lib/client/use-project-name';
 import { usePublicationBadge } from '../publications/tiktok-draft';
 import { useLiveStatus } from '../live/live-projects-context';
 import { StatusChip } from '../live/status-chip';
+import { CampaignLabel, PlatformMark } from './post-marks';
+import { PostThumb } from './post-thumb';
 
-// One publication on the calendar: a thin state-coloured rule, time, platform and video name.
-// 24.2: opens the side panel (onOpen) with a live status chip; without onOpen it links to the
-// project. A scheduled one can be dragged to another day (13.9) or moved with its
-// "Move to" button (keyboard and phone alternative to dragging).
+// One publication on the calendar: a thin state-coloured rule, time, platform mark and video
+// name, its live status chip and (25.9) the month plan or automation it belongs to. 24.2: opens
+// the side panel (onOpen); without onOpen it links to the project. A scheduled one can be dragged
+// to another day (13.9) or moved with its "Move to" button (keyboard and phone alternative).
+// 25.9: the week and day views show the post's thumbnail (`media`).
 
 const RULE: Record<string, string> = {
   SCHEDULED: 'border-s-muted-foreground/60',
@@ -27,16 +30,11 @@ const RULE: Record<string, string> = {
   FAILED: 'border-s-destructive bg-destructive-soft',
 };
 
-export function CalendarEvent({
-  publication,
-  compact = false,
-  onMove,
-  onRetry,
-  onOpen,
-  busy = false,
-}: {
+export interface CalendarEventProps {
   publication: Publication;
   compact?: boolean;
+  /** 25.9: a thumbnail beside the text (week and day views). */
+  media?: boolean;
   /** Opens the move dialog; scheduled publications only. Absent = read-only. */
   onMove?: (publication: Publication) => void;
   /** Retries a failed publication; failed ones only. Absent = no retry button. */
@@ -44,7 +42,17 @@ export function CalendarEvent({
   /** 24.2: opens the side panel; absent = the card links to the project page. */
   onOpen?: (publication: Publication) => void;
   busy?: boolean;
-}) {
+}
+
+export function CalendarEvent({
+  publication,
+  compact = false,
+  media = false,
+  onMove,
+  onRetry,
+  onOpen,
+  busy = false,
+}: CalendarEventProps) {
   const t = useTranslations('calendar.event');
   const f = useFormat();
   const at = eventTime(publication);
@@ -60,20 +68,22 @@ export function CalendarEvent({
     ? t('ariaAt', { name, platform, state, time })
     : t('aria', { name, platform, state });
   const className = cn(
-    'block min-w-0 rounded-sm border-s-2 bg-secondary/60 text-start transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+    'block min-w-0 rounded-sm border-s-2 bg-secondary/60 text-start transition-colors duration-(--duration-fast) hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
     RULE[publication.state] ?? 'border-s-border',
     compact ? 'px-1.5 py-0.5 text-[0.7rem] leading-tight' : 'px-3 py-2 text-sm',
+    media && (compact ? 'flex flex-col gap-1.5' : 'flex items-start gap-3'),
     movable && 'flex-1 cursor-grab active:cursor-grabbing',
     onOpen && !movable && 'w-full',
     busy && 'opacity-50',
   );
-  const content = (
-    <>
+  const text = (
+    <span className="block min-w-0 flex-1">
       <span className="flex items-baseline gap-1.5">
         {publication.state === 'FAILED' && (
           <AlertTriangle aria-hidden className="size-3 shrink-0 self-center text-destructive" />
         )}
         {time && <span className="tabular shrink-0 text-muted-foreground">{time}</span>}
+        <PlatformMark platform={publication.platform} compact={compact} />
         <span className="truncate font-medium">{name}</span>
       </span>
       {!compact && (
@@ -81,13 +91,23 @@ export function CalendarEvent({
           {t('meta', { platform, state })}
         </span>
       )}
-      <StatusChip
-        live={live}
-        publicationState={publication.state}
-        compact={compact}
-        className="mt-0.5"
+      <span className="mt-0.5 flex min-w-0 flex-wrap items-center gap-1.5">
+        <StatusChip live={live} publicationState={publication.state} compact={compact} />
+        {(!compact || media) && <CampaignLabel campaign={publication.campaign} />}
+      </span>
+    </span>
+  );
+  const content = media ? (
+    <>
+      <PostThumb
+        projectId={publication.projectId}
+        hideEmpty={compact}
+        className={compact ? 'aspect-[4/3] w-full' : 'aspect-[9/16] w-11'}
       />
+      {text}
     </>
+  ) : (
+    text
   );
   const link = onOpen ? (
     <button

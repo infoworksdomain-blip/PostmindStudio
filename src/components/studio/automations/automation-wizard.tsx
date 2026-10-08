@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -12,7 +12,6 @@ import { Input } from '@/components/ui/input';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import type { PlatformConnection } from '@/lib/client/types';
-import { cn } from '@/lib/utils';
 import { useShowCosts } from '../account/use-show-costs';
 import { buildTargets, connectionsFor } from '../automation/automation';
 import { useBusiness } from '../business-context';
@@ -30,6 +29,7 @@ import {
   type Duration,
 } from './automation-model';
 import { OptionCards } from './option-cards';
+import { WizardSteps } from './wizard-steps';
 
 // 22.5 — /automations/new: channels → cadence → mix → approval → summary. The summary shows how
 // many posts a period makes and the format split (cheapest first); customers never see pence —
@@ -67,6 +67,14 @@ export function AutomationWizard() {
   const [state, setState] = useState<WizardState | null>(null);
   const [estimate, setEstimate] = useState<AutomationEstimate | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // 25.9: moving between steps puts focus on the new step's heading (not on first load).
+  const heading = useRef<HTMLHeadingElement>(null);
+  const shownStep = useRef(step);
+  useEffect(() => {
+    if (shownStep.current === step) return;
+    shownStep.current = step;
+    heading.current?.focus();
+  }, [step]);
 
   useEffect(() => {
     if (state || !connections.data) return;
@@ -166,32 +174,21 @@ export function AutomationWizard() {
   return (
     <>
       {header}
-      <ol className="mb-8 flex flex-wrap gap-2" aria-label={t('wizard.progress')}>
-        {STEPS.map((s, i) => (
-          <li key={s}>
-            <button
-              type="button"
-              onClick={() => i < index && setStep(s)}
-              aria-current={s === step ? 'step' : undefined}
-              disabled={i > index}
-              className={cn(
-                'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition',
-                s === step && 'border-primary bg-primary text-primary-foreground',
-                i < index && 'border-primary/40 text-primary hover:bg-primary/8',
-                i > index && 'border-border text-muted-foreground',
-              )}
-            >
-              <span className="tabular-nums">
-                {i < index ? <Check className="size-3" /> : i + 1}
-              </span>
-              {t(`wizard.steps.${s}`)}
-            </button>
-          </li>
-        ))}
-      </ol>
+      <WizardSteps
+        steps={STEPS}
+        current={step}
+        label={t('wizard.progress')}
+        stepLabel={(s) => t(`wizard.steps.${s}`)}
+        onGo={setStep}
+      />
 
       <section className="max-w-2xl space-y-6" aria-labelledby="wizard-step-title">
-        <h2 id="wizard-step-title" className="font-display text-3xl leading-none">
+        <h2
+          id="wizard-step-title"
+          ref={heading}
+          tabIndex={-1}
+          className="text-2xl leading-tight font-semibold tracking-tight outline-none"
+        >
           {t(`wizard.${step}Title`)}
         </h2>
 

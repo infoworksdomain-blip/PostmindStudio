@@ -26,6 +26,8 @@ export interface AutomationSummary {
   pauseReason: string | null;
   activatedAt: string | null;
   createdAt: string;
+  /** 25.9: when its next post goes out (list endpoint; absent / null when none is due). */
+  nextPostAt?: string | null;
 }
 
 export interface AutomationSlot {

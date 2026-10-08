@@ -234,6 +234,15 @@ describe.skipIf(!hasDb)('22.4 / 22.5 API', { timeout: 120_000 }, () => {
       params: { id: automation.id },
     });
     expect((detail.json.automation as { id: string }).id).toBe(automation.id);
+    // 25.9: the list carries the next post time; a draft has none.
+    const list = await call(automationsRoute.GET, {
+      token: 'reader',
+      path: `/api/studio/automations?businessId=${biz}`,
+    });
+    const listed = (list.json.automations as Array<{ id: string; nextPostAt: string | null }>).find(
+      (a) => a.id === automation.id,
+    );
+    expect(listed).toMatchObject({ id: automation.id, nextPostAt: null });
     const foreign = await call(automationRoute.GET, {
       token: 'stranger',
       params: { id: automation.id },

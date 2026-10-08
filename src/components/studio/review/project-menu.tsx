@@ -48,13 +48,11 @@ type Dialogs = 'share' | 'template' | null;
 export function ProjectMenu({
   project,
   selected,
-  projectName,
   onChanged,
 }: {
   project: ProjectDetail;
   /** The variant in the player (what Download downloads). */
   selected: Render | null;
-  projectName: string;
   onChanged: () => void;
 }) {
   const t = useTranslations('review.menu');
@@ -114,7 +112,7 @@ export function ProjectMenu({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon-sm" aria-label={t('trigger', { name: projectName })}>
+          <Button variant="outline" size="icon-sm" aria-label={t('trigger')}>
             <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>

@@ -71,11 +71,11 @@ describe.skipIf(!hasDb)('analytics polling + endpoints', { timeout: 120_000 }, (
     await db.$disconnect();
   });
 
-  async function publishOne(caption: string) {
+  async function publishOne(caption: string, businessId = 'biz') {
     const project = await db.videoProject.create({
       data: {
         organisationId: org,
-        businessId: 'biz',
+        businessId,
         createdByUserId: 'user-1',
         name: caption,
         state: 'APPROVED',
@@ -114,7 +114,7 @@ describe.skipIf(!hasDb)('analytics polling + endpoints', { timeout: 120_000 }, (
     const connection = await db.platformConnection.create({
       data: {
         organisationId: org,
-        businessId: 'biz',
+        businessId,
         platform: 'tiktok',
         platformAccountId: `acct-${randomUUID()}`,
         platformAccountName: 'Bakery',
@@ -165,7 +165,7 @@ describe.skipIf(!hasDb)('analytics polling + endpoints', { timeout: 120_000 }, (
     });
     expect(rows.filter((r) => r.bucketSize === 'day').map((r) => r.views)).toEqual([120, 900]);
 
-    await publishOne('Sourdough tips');
+    await publishOne('Sourdough tips', 'biz-2');
     clock += 30_000;
     // Release both queued polls: first gets no new data (same totals), second gets 50 views.
     snapshots.push({ views: 900, likes: 80, comments: 9, shares: 5, saves: 3, watchTimeSec: 1200 });
@@ -206,6 +206,11 @@ describe.skipIf(!hasDb)('analytics polling + endpoints', { timeout: 120_000 }, (
       params: { id: publicationIds[0] ?? '' },
     });
     expect(detail.json.latest).toMatchObject({ views: 900, watchTimeSec: 1200 });
+    expect(detail.json.publication).toMatchObject({
+      caption: expect.stringContaining('Dawn bake'),
+      renderId: expect.any(String),
+      projectId: expect.any(String),
+    });
     expect((detail.json.daily as unknown[]).length).toBe(2);
     expect(
       (
@@ -231,6 +236,50 @@ describe.skipIf(!hasDb)('analytics polling + endpoints', { timeout: 120_000 }, (
     const top = board.json.data as Array<{ id: string; value: number }>;
     expect(top.map((t) => t.id)).toEqual(publicationIds);
     expect(top[0]?.value).toBe(80 + 9 + 5 + 3);
+  });
+
+  it('narrows overview, timeseries and leaderboard to one business (25.11)', async () => {
+    const overview = await call(overviewRoute.GET, {
+      token: 'reader',
+      path: '/api/studio/analytics/overview?days=30&businessId=biz',
+    });
+    expect(overview.json).toMatchObject({
+      businessId: 'biz',
+      publications: 1,
+      projectsCreated: 1,
+      totals: { views: 900 },
+    });
+    const series = await call(timeseriesRoute.GET, {
+      token: 'reader',
+      path: '/api/studio/analytics/timeseries?days=3&metric=views&businessId=biz-2',
+    });
+    const values = (series.json.data as Array<{ value: number }>).map((d) => d.value);
+    expect(values.slice(-2)).toEqual([0, 50]);
+    const board = await call(leaderboardRoute.GET, {
+      token: 'reader',
+      path: '/api/studio/analytics/leaderboard?days=30&businessId=biz-2',
+    });
+    const rows = board.json.data as Array<{ id: string; renderId: string }>;
+    expect(rows.map((r) => r.id)).toEqual([publicationIds[1]]);
+    expect(rows[0]?.renderId).toEqual(expect.any(String));
+
+    // Another organisation naming this business still sees nothing (the org filter stays).
+    const foreign = await call(overviewRoute.GET, {
+      token: 'other',
+      path: '/api/studio/analytics/overview?days=30&businessId=biz',
+    });
+    expect(foreign.json).toMatchObject({ publications: 0, totals: { views: 0 } });
+    // Without a business: organisation-wide, and null in the response.
+    const all = await call(overviewRoute.GET, {
+      token: 'reader',
+      path: '/api/studio/analytics/overview?days=30',
+    });
+    expect(all.json).toMatchObject({ businessId: null, publications: 2 });
+    const tooLong = await call(overviewRoute.GET, {
+      token: 'reader',
+      path: `/api/studio/analytics/overview?days=30&businessId=${'x'.repeat(129)}`,
+    });
+    expect(tooLong.status).toBe(400);
   });
 
   it('rolls up and reports cost', async () => {

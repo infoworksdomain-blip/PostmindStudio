@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockFetch, renderWithSWR, type MockRoute } from '../review/test-helpers';
 import { CreateScreen } from './create-screen';
+import { actionBar, openMoreOptions, pickFormat } from './create-test-helpers';
 
 // 20.12 — "platforms" (formats to render) vs "accounts" (connected social accounts to post to),
 // on every Create tab: (a) no connected account, (b) accounts that post none of the chosen
@@ -100,18 +101,18 @@ function routes(connections: unknown[]): MockRoute[] {
   ];
 }
 
-type Tab = 'Video' | 'Slideshow' | 'Upload a video';
+type Tab = 'AI video' | 'Slideshow' | 'Your video';
 
 async function openTab(tab: Tab) {
-  await userEvent.click(screen.getByRole('button', { name: /Options/ }));
-  if (tab !== 'Video') await userEvent.click(screen.getByRole('radio', { name: tab }));
+  if (tab !== 'AI video') await pickFormat(tab);
+  await openMoreOptions();
 }
 
 async function fill(tab: Tab) {
   if (tab === 'Slideshow') {
     await userEvent.type(screen.getByLabelText('What’s the slideshow about?'), 'AheadAi launch');
     await userEvent.click(await screen.findByRole('radio', { name: /Listicle 5/ }));
-  } else if (tab === 'Upload a video') {
+  } else if (tab === 'Your video') {
     const file = new File([new Uint8Array(20)], 'shop-tour.mp4', { type: 'video/mp4' });
     await userEvent.upload(screen.getByLabelText('Choose a video'), file);
     await screen.findByLabelText('Replace the video');
@@ -148,11 +149,10 @@ describe('20.12 regression: the operator’s screenshot (2026-10-01)', { timeout
     expect(
       await screen.findByText(/No connected accounts — slideshows are saved for review/),
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Connect an account' })).toHaveAttribute(
-      'href',
-      '/connections',
-    );
-    const summary = screen.getByRole('button', { name: /Options/ });
+    // "Post to" and (under More options) the schedule both link to Connections.
+    for (const link of screen.getAllByRole('link', { name: 'Connect an account' }))
+      expect(link).toHaveAttribute('href', '/connections');
+    const summary = actionBar();
     expect(summary).toHaveTextContent('9 platforms · Short · no connected accounts');
     expect(summary).not.toHaveTextContent('auto-publish');
     expect(screen.queryByLabelText(/Auto-publish when approved/)).not.toBeInTheDocument();
@@ -168,7 +168,7 @@ describe('20.12 regression: the operator’s screenshot (2026-10-01)', { timeout
   });
 });
 
-describe.each<Tab>(['Video', 'Slideshow', 'Upload a video'])(
+describe.each<Tab>(['AI video', 'Slideshow', 'Your video'])(
   '20.12 Create — %s tab',
   { timeout: 60_000 },
   (tab) => {
@@ -179,7 +179,6 @@ describe.each<Tab>(['Video', 'Slideshow', 'Upload a video'])(
       await fill(tab);
       expect(await screen.findByText(/No connected accounts —/)).toBeInTheDocument();
       // Scheduling posts automatically, so it explains why it is unavailable.
-      await userEvent.click(screen.getByRole('button', { name: 'Advanced options' }));
       expect(screen.getByLabelText('Schedule')).toBeDisabled();
       expect(
         screen.getByText(/A schedule posts automatically, so it needs a connected account/),
@@ -203,7 +202,7 @@ describe.each<Tab>(['Video', 'Slideshow', 'Upload a video'])(
       expect(postTo).toHaveTextContent(
         'None of your connected accounts posts to the platforms chosen above. Your accounts post to TikTok.',
       );
-      expect(screen.getByRole('button', { name: /Options/ })).toHaveTextContent('saved for review');
+      expect(actionBar()).toHaveTextContent('saved for review');
 
       // Turning it on anyway names what is missing instead of "choose an account".
       await userEvent.click(within(postTo).getByLabelText(/Auto-publish when approved/));
@@ -224,7 +223,7 @@ describe.each<Tab>(['Video', 'Slideshow', 'Upload a video'])(
     it('(c) a matching account: shown in the main form, pre-selected and sent', async () => {
       const api = mockFetch(routes([TIKTOK, LINKEDIN]));
       renderWithSWR(<CreateScreen initialReference={null} />);
-      // The picker is visible without opening Options (only the tab switch needs Options).
+      // The picker is visible without opening More options.
       const postTo = await screen.findByRole('group', { name: 'Post to' });
       expect(within(postTo).getByLabelText(/Auto-publish when approved/)).toBeChecked();
       await openTab(tab);
@@ -233,9 +232,7 @@ describe.each<Tab>(['Video', 'Slideshow', 'Upload a video'])(
       expect(within(postTo).getByLabelText('TikTok account')).toHaveValue('conn_tt');
       expect(within(postTo).getByLabelText('LinkedIn account')).toHaveValue('conn_li');
       expect(postTo).toHaveTextContent('Not posted automatically (no connected account): X.');
-      expect(screen.getByRole('button', { name: /Options/ })).toHaveTextContent(
-        'posts to 2 accounts',
-      );
+      expect(actionBar()).toHaveTextContent('posts to 2 accounts');
       // Unpicking every account names the platforms to pick.
       await userEvent.selectOptions(within(postTo).getByLabelText('TikTok account'), '');
       await userEvent.selectOptions(within(postTo).getByLabelText('LinkedIn account'), '');
@@ -275,8 +272,6 @@ describe('20.12 Create — switching business', () => {
     const select = within(postTo).getByLabelText('TikTok account');
     expect(select).toHaveValue('');
     expect(within(postTo).queryByRole('option', { name: 'Other biz' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Options/ })).toHaveTextContent(
-      'auto-publish: no account picked',
-    );
+    expect(actionBar()).toHaveTextContent('auto-publish: no account picked');
   });
 });
