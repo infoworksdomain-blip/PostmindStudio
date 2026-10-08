@@ -2712,7 +2712,8 @@
       "guidance": "Connectez Instagram et Facebook dans les paramètres PostMind.",
       "connectButton": "Se connecter avec Facebook",
       "studioGuidance": "Une seule connexion Facebook relie les Pages que vous choisissez et les comptes Instagram professionnels qui y sont associés.",
-      "notConfigured": "Instagram et Facebook ne sont pas encore disponibles : l’application Meta de Studio doit encore être configurée. Contactez votre administrateur."
+      "notConfigured": "Instagram et Facebook ne sont pas encore disponibles : l’application Meta de Studio doit encore être configurée. Contactez votre administrateur.",
+      "title": "Instagram et Facebook"
     },
     "descriptionStandalone": "Les comptes sur lesquels Studio publie. Connectez chacun d’eux pour l’entreprise sélectionnée.",
     "connectedMetaNotice": "{count, plural, one {# compte Facebook ou Instagram est connecté} other {# comptes Facebook et Instagram sont connectés}}. Vous pouvez y publier dès maintenant.",
@@ -2744,6 +2745,12 @@
       "reconnect": "Reconnectez TikTok pour envoyer des brouillons. En attendant, les publications partent directement.",
       "saved": "Préférence de publication TikTok enregistrée",
       "goesToDrafts": "TikTok : va dans vos brouillons TikTok. Ajoutez un son tendance dans l’app, puis publiez."
+    },
+    "state": {
+      "connected": "Connecté",
+      "needsReconnect": "À reconnecter",
+      "notConnected": "Non connecté",
+      "unavailable": "Indisponible"
     }
   },
   "library": {
@@ -4932,13 +4939,6 @@
       "membersTitle": "Membres",
       "auditTitle": "Journal d’audit"
     },
-    "nav": {
-      "aria": "Paramètres",
-      "organisation": "Organisation",
-      "members": "Membres",
-      "billing": "Votre abonnement",
-      "audit": "Journal d’audit"
-    },
     "page": {
       "eyebrow": "Paramètres",
       "title": "Organisation",
@@ -5096,7 +5096,8 @@
       "leave": "Quitter",
       "removeTitle": "Retirer {name} ?",
       "removeBody": "Cette personne perd immédiatement l’accès à cette organisation. Ses vidéos restent conservées.",
-      "removed": "{name} a été retiré(e)."
+      "removed": "{name} a été retiré(e).",
+      "caption": "Membres"
     },
     "pending": {
       "none": "Aucune invitation en attente.",
@@ -5377,14 +5378,19 @@
         "legacy": "Repris de votre abonnement précédent.",
         "pending": "À partir du {date} : {count, plural, one {# canal} many {# canaux} other {# canaux}}, {period, select, week {hebdomadaire} month {mensuel} other {annuel}}.",
         "keepCurrent": "Conserver mon abonnement actuel",
-        "paymentPending": "Votre dernière modification est en attente de paiement. Mettez à jour votre moyen de paiement pour l’appliquer."
+        "paymentPending": "Votre dernière modification est en attente de paiement. Mettez à jour votre moyen de paiement pour l’appliquer.",
+        "price": "Prix",
+        "videosLeft": "{period, select, week {Vidéos restantes cette semaine} other {Vidéos restantes ce mois-ci}}",
+        "leftOf": "{left} sur {limit}",
+        "packVideos": "Vidéos de pack restantes"
       },
       "videos": {
         "title": "{period, select, week {Vidéos cette semaine} other {Vidéos ce mois-ci}}",
         "description": "Chaque vidéo lancée compte, y compris celles encore en cours de création.",
         "used": "{period, select, week {Utilisées cette semaine} other {Utilisées ce mois-ci}}",
         "moreFrom": "D’autres vidéos sont incluses à partir du {date}.",
-        "packsLeft": "{count, plural, =0 {Plus aucune vidéo de pack} one {# vidéo de pack restante} many {# vidéos de pack restantes} other {# vidéos de pack restantes}}"
+        "packsLeft": "{count, plural, =0 {Plus aucune vidéo de pack} one {# vidéo de pack restante} many {# vidéos de pack restantes} other {# vidéos de pack restantes}}",
+        "left": "{left} restantes"
       },
       "channels": {
         "title": "Vos canaux",
@@ -5428,7 +5434,8 @@
         "confirmBody": "Votre abonnement prendra fin à la fin de cette période. Vos contenus restent disponibles en consultation, export et téléchargement. Les périodes entamées ne sont pas remboursées.",
         "confirmBodyDate": "Votre abonnement prendra fin le {date}. D’ici là, rien ne change. Ensuite, votre compte passe en lecture seule : vos contenus restent disponibles en consultation, export et téléchargement. Les périodes entamées ne sont pas remboursées.",
         "keep": "Conserver mon abonnement",
-        "confirm": "Résilier l’abonnement"
+        "confirm": "Résilier l’abonnement",
+        "resumeTitle": "Votre abonnement se termine"
       },
       "toasts": {
         "applied": "Votre abonnement a été modifié.",
@@ -6721,5 +6728,33 @@
       "edit": "Modifier la description",
       "again": "Générer à nouveau"
     }
+  },
+  "settingsNav": {
+    "aria": "Rubriques des paramètres",
+    "title": "Paramètres",
+    "groups": {
+      "account": "Compte",
+      "workspace": "Espace de travail",
+      "publishing": "Publication",
+      "billing": "Facturation"
+    },
+    "items": {
+      "profile": "Profil",
+      "security": "Connexion et sécurité",
+      "appearance": "Apparence",
+      "notifications": "Notifications",
+      "organisation": "Organisation",
+      "members": "Membres",
+      "audit": "Journal d’audit",
+      "approvals": "Circuits de validation",
+      "export": "Exporter les données",
+      "business": "Marque et entreprise",
+      "connections": "Comptes sociaux",
+      "providerKeys": "Clés de fournisseur",
+      "billing": "Votre abonnement"
+    },
+    "dangerZone": "Changements définitifs",
+    "dangerZoneHint": "Ils concernent toute l’organisation et ne peuvent pas être annulés.",
+    "providerKeysOwners": "Seuls les propriétaires et les administrateurs peuvent gérer les clés de fournisseur. Demandez-leur si vous avez besoin d’un changement."
   }
 }

@@ -7,18 +7,10 @@ import { StatusPill } from '@/components/ui/status-pill';
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import { api, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { EmptyState, ErrorState, PageHeader, Section } from '../primitives';
-import { SettingsNav } from './settings-nav';
 
 // Phase 18 §2.6 /settings/audit — the organisation's audit log (GET /audit), newest first, with
 // a category filter and "load more" (cursor). Known actions get a sentence in the reader's
@@ -175,10 +167,49 @@ export function AuditScreen() {
   }
 
   const rows = [...(data?.data ?? []), ...more];
+  const columns: Array<DataTableColumn<AuditRow>> = [
+    {
+      id: 'when',
+      header: t('when'),
+      className: 'whitespace-nowrap text-muted-foreground',
+      cell: (row) => (
+        <time
+          dateTime={row.occurredAt}
+          title={f.date(row.occurredAt, { dateStyle: 'medium', timeStyle: 'short' })}
+        >
+          {f.relative(row.occurredAt)}
+        </time>
+      ),
+    },
+    {
+      id: 'who',
+      header: t('who'),
+      cell: (row) => (
+        <>
+          {row.actorName ?? t(`actors.${actorKey(row.actorType)}`)}
+          {row.impersonatorUserId && (
+            <StatusPill tone="warn" size="sm" className="ms-2">
+              {t('viaStaff')}
+            </StatusPill>
+          )}
+        </>
+      ),
+    },
+    { id: 'what', header: t('what'), cell: (row) => <ActionLabel action={row.action} /> },
+    {
+      id: 'target',
+      header: t('target'),
+      className: 'text-xs text-muted-foreground',
+      cell: (row) => (
+        <span className="font-mono" dir="ltr">
+          {row.resourceType}:{row.resourceId.slice(0, 12)}
+        </span>
+      ),
+    },
+  ];
   return (
     <>
       <PageHeader eyebrow={tp('eyebrow')} title={t('title')} description={t('description')} />
-      <SettingsNav />
       <Section
         title={t('logTitle')}
         actions={
@@ -210,51 +241,14 @@ export function AuditScreen() {
           <EmptyState title={t('empty.title')} description={t('empty.body')} />
         ) : (
           <>
-            <div className="relative overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('when')}</TableHead>
-                    <TableHead>{t('who')}</TableHead>
-                    <TableHead>{t('what')}</TableHead>
-                    <TableHead>{t('target')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rows.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell className="whitespace-nowrap text-muted-foreground">
-                        <time
-                          dateTime={row.occurredAt}
-                          title={f.date(row.occurredAt, {
-                            dateStyle: 'medium',
-                            timeStyle: 'short',
-                          })}
-                        >
-                          {f.relative(row.occurredAt)}
-                        </time>
-                      </TableCell>
-                      <TableCell>
-                        {row.actorName ?? t(`actors.${actorKey(row.actorType)}`)}
-                        {row.impersonatorUserId && (
-                          <StatusPill tone="warn" size="sm" className="ms-2">
-                            {t('viaStaff')}
-                          </StatusPill>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <ActionLabel action={row.action} />
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        <span className="font-mono" dir="ltr">
-                          {row.resourceType}:{row.resourceId.slice(0, 12)}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <DataTable
+              caption={t('logTitle')}
+              columns={columns}
+              rows={rows}
+              getRowId={(row) => row.id}
+              responsive="stack"
+              dense
+            />
             {moreError && <p className="mt-3 text-sm text-destructive">{moreError}</p>}
             {cursor && (
               <div className="mt-4">

@@ -2712,7 +2712,8 @@
       "guidance": "Verbinden Sie Instagram und Facebook in den PostMind-Einstellungen.",
       "connectButton": "Mit Facebook verbinden",
       "studioGuidance": "Eine Facebook-Anmeldung verbindet die ausgewählten Seiten und die damit verknüpften professionellen Instagram-Konten.",
-      "notConfigured": "Instagram und Facebook sind noch nicht verfügbar: Die Meta-App von Studio muss noch eingerichtet werden. Wende dich an deine Administration."
+      "notConfigured": "Instagram und Facebook sind noch nicht verfügbar: Die Meta-App von Studio muss noch eingerichtet werden. Wende dich an deine Administration.",
+      "title": "Instagram und Facebook"
     },
     "descriptionStandalone": "Die Konten, auf denen Studio veröffentlicht. Verbinde jedes für das ausgewählte Unternehmen.",
     "connectedMetaNotice": "{count, plural, one {# Facebook- oder Instagram-Konto ist verbunden} other {# Facebook- und Instagram-Konten sind verbunden}}. Du kannst jetzt dort veröffentlichen.",
@@ -2744,6 +2745,12 @@
       "reconnect": "Verbinde TikTok neu, um Entwürfe zu senden. Bis dahin wird direkt gepostet.",
       "saved": "TikTok-Posting-Einstellung gespeichert",
       "goesToDrafts": "TikTok: landet in deinen TikTok-Entwürfen. Füge in der App einen Trend-Sound hinzu und poste dann."
+    },
+    "state": {
+      "connected": "Verbunden",
+      "needsReconnect": "Muss neu verbunden werden",
+      "notConnected": "Nicht verbunden",
+      "unavailable": "Nicht verfügbar"
     }
   },
   "library": {
@@ -4932,13 +4939,6 @@
       "membersTitle": "Mitglieder",
       "auditTitle": "Prüfprotokoll"
     },
-    "nav": {
-      "aria": "Einstellungen",
-      "organisation": "Organisation",
-      "members": "Mitglieder",
-      "billing": "Ihr Tarif",
-      "audit": "Prüfprotokoll"
-    },
     "page": {
       "eyebrow": "Einstellungen",
       "title": "Organisation",
@@ -5096,7 +5096,8 @@
       "leave": "Verlassen",
       "removeTitle": "{name} entfernen?",
       "removeBody": "Diese Person verliert sofort den Zugriff auf diese Organisation. Ihre Videos bleiben erhalten.",
-      "removed": "{name} wurde entfernt."
+      "removed": "{name} wurde entfernt.",
+      "caption": "Mitglieder"
     },
     "pending": {
       "none": "Keine ausstehenden Einladungen.",
@@ -5377,14 +5378,19 @@
         "legacy": "Aus Ihrem vorherigen Tarif übernommen.",
         "pending": "Ab {date}: {count, plural, one {# Kanal} other {# Kanäle}}, {period, select, week {wöchentlich} month {monatlich} other {jährlich}}.",
         "keepCurrent": "Aktuellen Tarif behalten",
-        "paymentPending": "Ihre letzte Änderung wartet auf die Zahlung. Aktualisieren Sie Ihre Zahlungsmethode, damit sie wirksam wird."
+        "paymentPending": "Ihre letzte Änderung wartet auf die Zahlung. Aktualisieren Sie Ihre Zahlungsmethode, damit sie wirksam wird.",
+        "price": "Preis",
+        "videosLeft": "{period, select, week {Verbleibende Videos diese Woche} other {Verbleibende Videos diesen Monat}}",
+        "leftOf": "{left} von {limit}",
+        "packVideos": "Verbleibende Paket-Videos"
       },
       "videos": {
         "title": "{period, select, week {Videos diese Woche} other {Videos diesen Monat}}",
         "description": "Jedes Video, das Sie starten, zählt – auch solche, die noch erstellt werden.",
         "used": "{period, select, week {Diese Woche genutzt} other {Diesen Monat genutzt}}",
         "moreFrom": "Ab {date} sind weitere Videos enthalten.",
-        "packsLeft": "{count, plural, =0 {Keine Paketvideos mehr übrig} one {# Paketvideo übrig} other {# Paketvideos übrig}}"
+        "packsLeft": "{count, plural, =0 {Keine Paketvideos mehr übrig} one {# Paketvideo übrig} other {# Paketvideos übrig}}",
+        "left": "{left} übrig"
       },
       "channels": {
         "title": "Ihre Kanäle",
@@ -5428,7 +5434,8 @@
         "confirmBody": "Ihr Tarif endet zum Ende dieses Zeitraums. Ihre Inhalte bleiben zum Ansehen, Exportieren und Herunterladen verfügbar. Angebrochene Zeiträume erstatten wir nicht.",
         "confirmBodyDate": "Ihr Tarif endet am {date}. Bis dahin ändert sich nichts. Danach ist Ihr Konto schreibgeschützt: Ihre Inhalte bleiben zum Ansehen, Exportieren und Herunterladen verfügbar. Angebrochene Zeiträume erstatten wir nicht.",
         "keep": "Tarif behalten",
-        "confirm": "Tarif kündigen"
+        "confirm": "Tarif kündigen",
+        "resumeTitle": "Ihr Tarif endet"
       },
       "toasts": {
         "applied": "Ihr Tarif wurde geändert.",
@@ -6721,5 +6728,33 @@
       "edit": "Prompt bearbeiten",
       "again": "Erneut generieren"
     }
+  },
+  "settingsNav": {
+    "aria": "Bereiche der Einstellungen",
+    "title": "Einstellungen",
+    "groups": {
+      "account": "Konto",
+      "workspace": "Arbeitsbereich",
+      "publishing": "Veröffentlichen",
+      "billing": "Abrechnung"
+    },
+    "items": {
+      "profile": "Profil",
+      "security": "Anmeldung und Sicherheit",
+      "appearance": "Darstellung",
+      "notifications": "Benachrichtigungen",
+      "organisation": "Organisation",
+      "members": "Mitglieder",
+      "audit": "Prüfprotokoll",
+      "approvals": "Freigabe-Workflows",
+      "export": "Daten exportieren",
+      "business": "Marke und Unternehmen",
+      "connections": "Social-Media-Konten",
+      "providerKeys": "Anbieterschlüssel",
+      "billing": "Ihr Tarif"
+    },
+    "dangerZone": "Endgültige Änderungen",
+    "dangerZoneHint": "Diese betreffen alle in der Organisation und lassen sich nicht rückgängig machen.",
+    "providerKeysOwners": "Nur Inhaber und Admins können Anbieterschlüssel verwalten. Fragen Sie eine dieser Personen, wenn Sie etwas ändern möchten."
   }
 }

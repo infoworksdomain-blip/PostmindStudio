@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { withLocale } from '../../../../../test/i18n-wrapper';
@@ -123,13 +123,17 @@ describe('SecurityScreen', () => {
   it('explains when deletion is blocked by sole ownership', async () => {
     routes();
     renderWithSWR(<SecurityScreen googleEnabled={false} />);
-    const section = (await screen.findByRole('heading', { name: 'Delete account' })).closest(
-      'section',
-    )!;
-    await userEvent.type(section.querySelector('input[type="password"]') as HTMLInputElement, 'pw');
-    await userEvent.click(screen.getByRole('checkbox'));
+    // 25.12: the danger zone's button opens the confirmation, which asks for the password and
+    // the "I understand" tick and stays open to explain a refusal.
+    await screen.findByRole('heading', { name: 'Delete account' });
     await userEvent.click(screen.getByRole('button', { name: 'Delete my account' }));
-    expect(await screen.findByText(/only owner of Acme/)).toBeInTheDocument();
+    const dialog = await screen.findByRole('alertdialog', { name: 'Delete account' });
+    const confirm = within(dialog).getByRole('button', { name: 'Delete my account' });
+    expect(confirm).toBeDisabled();
+    await userEvent.type(dialog.querySelector('input[type="password"]') as HTMLInputElement, 'pw');
+    await userEvent.click(within(dialog).getByRole('checkbox'));
+    await userEvent.click(confirm);
+    expect(await within(dialog).findByText(/only owner of Acme/)).toBeInTheDocument();
   });
 
   it('renders in Arabic (RTL) and Simplified Chinese', async () => {

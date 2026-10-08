@@ -180,10 +180,8 @@ test.describe('Your plan', () => {
   const plan = (page: Page) => ({
     change: page.locator('#change'),
     packs: page.locator('#topups'),
-    cancel: page
-      .locator('section')
-      .filter({ has: page.getByRole('heading', { name: 'Cancel your plan', exact: true }) })
-      .last(),
+    // 25.12: the danger zone at the end of the page (and "Your plan is ending" while cancelling).
+    cancel: page.locator('#cancel-plan'),
     toast: (text: string | RegExp) => page.locator('[data-sonner-toast]').filter({ hasText: text }),
   });
 
@@ -198,8 +196,10 @@ test.describe('Your plan', () => {
       timeout: 60_000,
     });
     await expect(owner.getByText('Active', { exact: true })).toBeVisible();
-    // The plan summary's price line (the change picker below repeats the bare total).
-    await expect(owner.getByText(`${gbp(8_700)} a month · excl. VAT`)).toBeVisible();
+    // The plan summary's price fact (25.12: the VAT note sits beside the total).
+    const price = owner.locator('dd').filter({ hasText: `${gbp(8_700)} a month` });
+    await expect(price).toBeVisible();
+    await expect(price).toContainText('excl. VAT');
     await expect(owner.getByText(`Renews on ${longDate(mock.periodEnd)}.`)).toBeVisible();
     await expect(owner.getByRole('heading', { name: 'Videos this month' })).toBeVisible();
     await expect(owner.getByRole('heading', { name: 'Your channels' })).toBeVisible();
@@ -216,7 +216,7 @@ test.describe('Your plan', () => {
     await expect(owner.getByText(/^(Basic|Standard|Plus|Enterprise) plan$/)).toHaveCount(0);
     await expect(owner.getByRole('button', { name: 'Manage billing' })).toHaveCount(0);
     await expect(owner.getByRole('radio', { name: 'Annual' })).toHaveCount(0);
-    // The settings tab is "Your plan" now.
+    // The settings sub-navigation calls it "Your plan" (25.12).
     await expect(owner.getByRole('link', { name: 'Your plan', exact: true }).first()).toBeVisible();
     expect(w.issues).toEqual([]);
   });
@@ -255,7 +255,9 @@ test.describe('Your plan', () => {
       prorationDate: PRORATION_DATE,
     });
     await expect(owner.getByText('4 channels, monthly', { exact: true })).toBeVisible();
-    await expect(owner.getByText(`${gbp(11_600)} a month · excl. VAT`)).toBeVisible();
+    await expect(owner.locator('dd').filter({ hasText: `${gbp(11_600)} a month` })).toContainText(
+      'excl. VAT',
+    );
   });
 
   test('fewer channels: the preview says nothing to pay now; the change waits, then is undone', async () => {
@@ -323,7 +325,7 @@ test.describe('Your plan', () => {
     const { cancel, change, toast } = plan(owner);
     const date = longDate(mock.periodEnd);
     await cancel.getByRole('button', { name: 'Cancel plan' }).click();
-    const dialog = owner.getByRole('dialog', { name: 'Cancel your plan?' });
+    const dialog = owner.getByRole('alertdialog', { name: 'Cancel your plan?' });
     await expect(dialog).toContainText(`Your plan will end on ${date}.`);
     // "Keep my plan" in the dialog changes nothing.
     await dialog.getByRole('button', { name: 'Keep my plan', exact: true }).click();
@@ -331,7 +333,7 @@ test.describe('Your plan', () => {
     expect(mock.sent('POST', '/billing/plan/cancel')).toHaveLength(0);
     await cancel.getByRole('button', { name: 'Cancel plan' }).click();
     await owner
-      .getByRole('dialog', { name: 'Cancel your plan?' })
+      .getByRole('alertdialog', { name: 'Cancel your plan?' })
       .getByRole('button', { name: 'Cancel plan' })
       .click();
     await expect(toast('Your plan will end at the end of this period.')).toBeVisible();
@@ -379,7 +381,8 @@ test.describe('Your plan', () => {
     await expect(change.getByText(/Applies now: you pay/)).toBeVisible();
     const review = change.getByRole('button', { name: 'Review change' });
     await review.scrollIntoViewIfNeeded();
-    await expect(review).toBeInViewport({ ratio: 1 });
+    // Fully on screen, allowing for sub-pixel layout (0.99: a fraction of a pixel at 375 px).
+    await expect(review).toBeInViewport({ ratio: 0.99 });
     await expect(review).toBeEnabled();
     await expect(packs.getByRole('button', { name: /^Buy 5 HD videos/ })).toBeVisible();
     await expect(cancel.getByRole('button', { name: 'Cancel plan' })).toBeVisible();

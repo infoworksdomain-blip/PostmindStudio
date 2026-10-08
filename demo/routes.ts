@@ -48,6 +48,9 @@ export const APP_PATHS = [
   '/settings/members',
   '/settings/audit',
   '/settings/billing',
+  // 25.12: Settings → Provider keys and Notifications.
+  '/settings/provider-keys',
+  '/settings/notifications',
 ] as const;
 
 export type AppPath = (typeof APP_PATHS)[number];

@@ -14,13 +14,12 @@ import type {
   ProviderCredentialsResponse,
 } from '@/lib/client/types';
 import { StudioCapability } from '@/lib/rbac';
-import { PlanLockBadge } from '../billing/plan-lock-badge';
-import { Section } from '../primitives';
 import { useCan } from '../use-can';
 
 // P1 BYOC (operator decision 2026-09-28; spec 6.6 / 12.6): Enterprise organisations add their
 // own provider API keys; Studio then calls those providers with the organisation's keys. Keys
 // are write-only here: after saving only the last four characters (hint) are ever shown.
+// 25.12: the list itself; Settings → Provider keys (provider-keys-screen.tsx) frames it.
 
 /** Catalogue keys (account.providerKeys.unavailable.<key>) for why BYOC is unavailable. */
 const UNAVAILABLE = { disabled: 'disabled', plan_tier: 'planTier' } as const;
@@ -103,10 +102,7 @@ function ProviderRow({
     });
 
   return (
-    <li
-      aria-label={provider.label}
-      className="flex flex-col gap-2 border-b border-border/70 py-3 last:border-0"
-    >
+    <li aria-label={provider.label} className="flex flex-col gap-3 border-b border-border py-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-sm font-medium">{provider.label}</p>
@@ -193,12 +189,7 @@ export function ByocKeysPanel() {
   if (!mayManage || (error instanceof ApiError && error.status === 403)) return null;
 
   return (
-    <Section
-      className="mt-10"
-      title={t('title')}
-      description={t('description')}
-      actions={<PlanLockBadge feature="byocProviderKeys" />}
-    >
+    <div data-slot="provider-keys" className="grid gap-4">
       {error && (
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <p>{t('loadFailed', { reason: errorMessage(error) })}</p>
@@ -210,12 +201,12 @@ export function ByocKeysPanel() {
       {isLoading && <Skeleton className="h-24 rounded-xl" aria-label={t('loading')} />}
       {data && !data.enabled && (
         <p className="flex items-start gap-2 text-sm text-muted-foreground">
-          <KeyRound className="mt-0.5 size-4 shrink-0" />
+          <KeyRound aria-hidden className="mt-0.5 size-4 shrink-0" />
           {t(`unavailable.${UNAVAILABLE[data.reason ?? 'disabled']}`)}
         </p>
       )}
       {data?.enabled && (
-        <ul>
+        <ul aria-label={t('title')} className="border-t border-border">
           {data.providers.map((provider) => (
             <ProviderRow
               key={provider.id}
@@ -226,6 +217,6 @@ export function ByocKeysPanel() {
           ))}
         </ul>
       )}
-    </Section>
+    </div>
   );
 }

@@ -200,6 +200,9 @@ const WORKSPACE_PAGES = [
   '/settings/members',
   '/settings/billing',
   '/settings/audit',
+  // 25.12: Settings → Provider keys and Notifications.
+  '/settings/provider-keys',
+  '/settings/notifications',
 ];
 
 const ACCOUNT_PAGES = ['/account/profile', '/account/security', '/account/export'];

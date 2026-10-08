@@ -138,9 +138,12 @@ describe('ConnectionsScreen', () => {
     expect(within(instagram).getByText('@bakery.ig')).toBeInTheDocument();
     expect(within(instagram).getByText('Connected')).toBeInTheDocument();
     expect(within(instagram).queryByRole('button')).not.toBeInTheDocument();
+    // 25.12: Instagram and Facebook share one card with the guidance and no Connect button.
+    const meta = screen.getByRole('region', { name: 'Instagram and Facebook' });
     expect(
-      within(instagram).getByText('Connect Instagram and Facebook in PostMind settings.'),
+      within(meta).getByText('Connect Instagram and Facebook in PostMind settings.'),
     ).toBeInTheDocument();
+    expect(within(meta).queryByRole('button')).not.toBeInTheDocument();
     const facebook = screen.getByRole('region', { name: 'Facebook' });
     expect(within(facebook).getByText('Needs reconnecting')).toBeInTheDocument();
     expect(within(facebook).queryByRole('button')).not.toBeInTheDocument();
@@ -234,7 +237,7 @@ describe('ConnectionsScreen — Meta connect in standalone mode', () => {
     const navigate = vi.fn();
     const user = userEvent.setup();
     renderScreen(<ConnectionsScreen navigate={navigate} />);
-    const instagram = await screen.findByRole('region', { name: 'Instagram' });
+    const instagram = await screen.findByRole('region', { name: 'Instagram and Facebook' });
     expect(
       within(instagram).getByText(
         'One Facebook login connects the Pages you choose and the Instagram professional accounts linked to them.',
@@ -277,11 +280,13 @@ describe('ConnectionsScreen — Meta connect in standalone mode', () => {
   it('says the Meta app is not set up yet instead of offering Connect', async () => {
     mockFetch(() => ok({ data: [], meta: { connect: 'studio', configured: false } }));
     renderScreen(<ConnectionsScreen />);
-    const facebook = await screen.findByRole('region', { name: 'Facebook' });
-    expect(within(facebook).queryByRole('button')).toBeNull();
+    const meta = await screen.findByRole('region', { name: 'Instagram and Facebook' });
+    expect(within(meta).queryByRole('button')).toBeNull();
     expect(
-      within(facebook).getByText(/Studio’s Meta app still needs its settings/),
+      within(meta).getByText(/Studio’s Meta app still needs its settings/),
     ).toBeInTheDocument();
+    const facebook = screen.getByRole('region', { name: 'Facebook' });
+    expect(within(facebook).getByText('Not available')).toBeInTheDocument();
   });
 
   it('says a platform app is not set up yet instead of offering a Connect that fails', async () => {
@@ -339,6 +344,7 @@ describe('ConnectionsScreen — Meta connect in standalone mode', () => {
         </SWRConfig>,
       ),
     );
-    expect((await screen.findAllByRole('button', { name: button })).length).toBe(2);
+    // 25.12: one Connect button on the shared Instagram and Facebook card.
+    expect(await screen.findAllByRole('button', { name: button })).toHaveLength(1);
   });
 });

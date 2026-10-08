@@ -2712,7 +2712,8 @@
       "guidance": "اربط Instagram وFacebook من إعدادات PostMind.",
       "connectButton": "الربط عبر Facebook",
       "studioGuidance": "تسجيل دخول واحد إلى Facebook يربط الصفحات التي تختارها وحسابات Instagram الاحترافية المرتبطة بها.",
-      "notConfigured": "لا يتوفر Instagram وFacebook بعد: ما زال تطبيق Meta الخاص بـ Studio يحتاج إلى إعداد. تواصل مع المسؤول."
+      "notConfigured": "لا يتوفر Instagram وFacebook بعد: ما زال تطبيق Meta الخاص بـ Studio يحتاج إلى إعداد. تواصل مع المسؤول.",
+      "title": "Instagram وFacebook"
     },
     "descriptionStandalone": "الحسابات التي ينشر عليها Studio. اربط كل حساب للنشاط التجاري المحدد.",
     "connectedMetaNotice": "{count, plural, zero {لم يُربط أي حساب على Facebook أو Instagram} one {تم ربط حساب واحد على Facebook أو Instagram} two {تم ربط حسابين على Facebook وInstagram} few {تم ربط # حسابات على Facebook وInstagram} many {تم ربط # حسابًا على Facebook وInstagram} other {تم ربط # حساب على Facebook وInstagram}}. يمكنك النشر عليها الآن.",
@@ -2744,6 +2745,12 @@
       "reconnect": "أعد ربط TikTok لإرسال المسودات. حتى ذلك الحين، تُنشر المنشورات مباشرة.",
       "saved": "تم حفظ تفضيل النشر على TikTok",
       "goesToDrafts": "TikTok: يذهب إلى مسودات TikTok لديك. أضف صوتًا رائجًا في التطبيق، ثم انشر."
+    },
+    "state": {
+      "connected": "مرتبط",
+      "needsReconnect": "يحتاج إلى إعادة الربط",
+      "notConnected": "غير مرتبط",
+      "unavailable": "غير متاح"
     }
   },
   "library": {
@@ -4932,13 +4939,6 @@
       "membersTitle": "الأعضاء",
       "auditTitle": "سجل التدقيق"
     },
-    "nav": {
-      "aria": "الإعدادات",
-      "organisation": "المؤسسة",
-      "members": "الأعضاء",
-      "billing": "خطتك",
-      "audit": "سجل التدقيق"
-    },
     "page": {
       "eyebrow": "الإعدادات",
       "title": "المؤسسة",
@@ -5096,7 +5096,8 @@
       "leave": "مغادرة",
       "removeTitle": "إزالة {name}؟",
       "removeBody": "يفقدون الوصول إلى هذه المؤسسة فورًا. تبقى مقاطع فيديوهم.",
-      "removed": "تمت إزالة {name}."
+      "removed": "تمت إزالة {name}.",
+      "caption": "الأعضاء"
     },
     "pending": {
       "none": "لا توجد دعوات معلقة.",
@@ -5377,14 +5378,19 @@
         "legacy": "منقولة من خطتك السابقة.",
         "pending": "اعتبارًا من {date}: {count, plural, zero {# قناة} one {قناة واحدة} two {قناتان} few {# قنوات} many {# قناة} other {# قناة}}، {period, select, week {أسبوعيًا} month {شهريًا} other {سنويًا}}.",
         "keepCurrent": "الإبقاء على خطتي الحالية",
-        "paymentPending": "آخر تغيير أجريته بانتظار الدفع. حدّث طريقة الدفع لتطبيقه."
+        "paymentPending": "آخر تغيير أجريته بانتظار الدفع. حدّث طريقة الدفع لتطبيقه.",
+        "price": "السعر",
+        "videosLeft": "{period, select, week {الفيديوهات المتبقية هذا الأسبوع} other {الفيديوهات المتبقية هذا الشهر}}",
+        "leftOf": "{left} من {limit}",
+        "packVideos": "فيديوهات الباقات المتبقية"
       },
       "videos": {
         "title": "{period, select, week {فيديوهات هذا الأسبوع} other {فيديوهات هذا الشهر}}",
         "description": "يُحتسب كل فيديو تبدأه، بما في ذلك الفيديوهات التي لا تزال قيد الإنشاء.",
         "used": "{period, select, week {المستخدم هذا الأسبوع} other {المستخدم هذا الشهر}}",
         "moreFrom": "تتوفر فيديوهات إضافية اعتبارًا من {date}.",
-        "packsLeft": "{count, plural, =0 {لم يتبقَّ أي فيديو من الحزم} zero {لم يتبقَّ أي فيديو من الحزم} one {تبقّى فيديو واحد من الحزم} two {تبقّى فيديوهان من الحزم} few {تبقّت # فيديوهات من الحزم} many {تبقّى # فيديو من الحزم} other {تبقّى # فيديو من الحزم}}"
+        "packsLeft": "{count, plural, =0 {لم يتبقَّ أي فيديو من الحزم} zero {لم يتبقَّ أي فيديو من الحزم} one {تبقّى فيديو واحد من الحزم} two {تبقّى فيديوهان من الحزم} few {تبقّت # فيديوهات من الحزم} many {تبقّى # فيديو من الحزم} other {تبقّى # فيديو من الحزم}}",
+        "left": "المتبقي {left}"
       },
       "channels": {
         "title": "قنواتك",
@@ -5428,7 +5434,8 @@
         "confirmBody": "ستنتهي خطتك في نهاية هذه الفترة. يبقى عملك متاحًا للعرض والتصدير والتنزيل. لا نسترد قيمة الفترات المستخدمة جزئيًا.",
         "confirmBodyDate": "ستنتهي خطتك في {date}. لن يتغير شيء حتى ذلك الحين. بعد ذلك يصبح حسابك للقراءة فقط: يبقى عملك متاحًا للعرض والتصدير والتنزيل. لا نسترد قيمة الفترات المستخدمة جزئيًا.",
         "keep": "الاحتفاظ بخطتي",
-        "confirm": "إلغاء الخطة"
+        "confirm": "إلغاء الخطة",
+        "resumeTitle": "خطتك على وشك الانتهاء"
       },
       "toasts": {
         "applied": "تم تغيير خطتك.",
@@ -6721,5 +6728,33 @@
       "edit": "تعديل الوصف",
       "again": "الإنشاء مرة أخرى"
     }
+  },
+  "settingsNav": {
+    "aria": "أقسام الإعدادات",
+    "title": "الإعدادات",
+    "groups": {
+      "account": "الحساب",
+      "workspace": "مساحة العمل",
+      "publishing": "النشر",
+      "billing": "الفوترة"
+    },
+    "items": {
+      "profile": "الملف الشخصي",
+      "security": "تسجيل الدخول والأمان",
+      "appearance": "المظهر",
+      "notifications": "الإشعارات",
+      "organisation": "المؤسسة",
+      "members": "الأعضاء",
+      "audit": "سجل التدقيق",
+      "approvals": "مسارات الموافقة",
+      "export": "تصدير البيانات",
+      "business": "العلامة التجارية والنشاط",
+      "connections": "الحسابات الاجتماعية",
+      "providerKeys": "مفاتيح المزوّدين",
+      "billing": "خطتك"
+    },
+    "dangerZone": "تغييرات نهائية",
+    "dangerZoneHint": "تؤثر في كل من في المؤسسة ولا يمكن التراجع عنها.",
+    "providerKeysOwners": "يمكن للمالكين والمشرفين فقط إدارة مفاتيح المزوّدين. اطلب من أحدهم إن احتجت إلى تغيير."
   }
 }

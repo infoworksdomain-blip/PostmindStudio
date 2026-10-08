@@ -514,6 +514,9 @@ Plan and audit: the "PostMind Studio Redesign Audit" (Daylight and Darkroom desi
   - [x] **25.8 (review + Image Studio)** Player-first project review (status & actions column, one "Needs your attention" list, tabs in the URL, pipeline with failed/draft states) and the Image Studio page (/images). The capability-driven model selector is a separate PR.
 - [x] **25.9** Calendar, month planner, Blitz and automations: Month / Week / Day views with URL-synced view, day and filters (platform, status, source), month ARIA grid with keyboard moves, "+n more" popovers, campaign labels and lazy thumbnails, Undo after a move, posting times in a side sheet; one-prompt month planner with a preview, week-by-week plan timeline with per-item approve and bulk new topics / delete / approve (sequential per-item calls); Blitz media-first deck, key-cap hints and read-only explanation; automations list with next post, wizard progress, runs timeline; publications filters in the URL.
 - [ ] **25.10** Library and My media.
+- [ ] **25.11** Analytics: summary first, scoped to the selected business.
+- [x] **25.12** Connections, settings, billing and account (regrouped settings).
+- [ ] **25.13** Admin: sectioned side menu, URL-synced tabs, dense tables.
 - [x] **25.11** Analytics: summary first, scoped to the selected business.
 - [ ] **25.12** Connections, settings, billing and account (regrouped settings).
 - [x] **25.13** Admin: sectioned side menu, URL-synced tabs, dense tables.

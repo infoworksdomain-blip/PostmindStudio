@@ -242,9 +242,12 @@ test.describe('security', () => {
     await addMember(db, org.id, mate.id, 'admin');
     await page.goto('/account/security');
     await expect(page.getByText('Email and password')).toBeVisible();
-    const section = page
-      .locator('section')
-      .filter({ has: page.getByRole('heading', { name: 'Delete account' }) });
+    // 25.12: the danger zone's button opens the confirmation with the password and the tick.
+    await page
+      .locator('#delete-account')
+      .getByRole('button', { name: 'Delete my account' })
+      .click();
+    const section = page.getByRole('alertdialog', { name: 'Delete account' });
     const submit = section.getByRole('button', { name: 'Delete my account' });
     await expect(submit).toBeDisabled();
     await section.getByLabel('Password', { exact: true }).fill(user.password);

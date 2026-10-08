@@ -2712,7 +2712,8 @@
       "guidance": "Connect Instagram and Facebook in PostMind settings.",
       "connectButton": "Connect with Facebook",
       "studioGuidance": "One Facebook login connects the Pages you choose and the Instagram professional accounts linked to them.",
-      "notConfigured": "Instagram and Facebook are not available yet: Studio’s Meta app still needs its settings. Ask your administrator."
+      "notConfigured": "Instagram and Facebook are not available yet: Studio’s Meta app still needs its settings. Ask your administrator.",
+      "title": "Instagram and Facebook"
     },
     "descriptionStandalone": "The accounts Studio publishes to. Connect each one for the selected business.",
     "connectedMetaNotice": "{count, plural, one {# Facebook or Instagram account is connected} other {# Facebook and Instagram accounts are connected}}. You can publish to them now.",
@@ -2744,6 +2745,12 @@
       "reconnect": "Reconnect TikTok to send drafts. Until then, posts go out directly.",
       "saved": "TikTok posting preference saved",
       "goesToDrafts": "TikTok: goes to your TikTok drafts. Add a trending sound in the app, then post."
+    },
+    "state": {
+      "connected": "Connected",
+      "needsReconnect": "Needs reconnecting",
+      "notConnected": "Not connected",
+      "unavailable": "Not available"
     }
   },
   "library": {
@@ -4932,13 +4939,6 @@
       "membersTitle": "Members",
       "auditTitle": "Audit log"
     },
-    "nav": {
-      "aria": "Settings",
-      "organisation": "Organisation",
-      "members": "Members",
-      "billing": "Your plan",
-      "audit": "Audit log"
-    },
     "page": {
       "eyebrow": "Settings",
       "title": "Organisation",
@@ -5096,7 +5096,8 @@
       "leave": "Leave",
       "removeTitle": "Remove {name}?",
       "removeBody": "They lose access to this organisation straight away. Their videos stay.",
-      "removed": "{name} was removed."
+      "removed": "{name} was removed.",
+      "caption": "Members"
     },
     "pending": {
       "none": "No pending invitations.",
@@ -5377,14 +5378,19 @@
         "legacy": "Moved over from your previous plan.",
         "pending": "From {date}: {count, plural, one {# channel} other {# channels}}, {period, select, week {weekly} month {monthly} other {yearly}}.",
         "keepCurrent": "Keep my current plan",
-        "paymentPending": "Your last change is waiting for payment. Update your payment method to apply it."
+        "paymentPending": "Your last change is waiting for payment. Update your payment method to apply it.",
+        "price": "Price",
+        "videosLeft": "{period, select, week {Videos left this week} other {Videos left this month}}",
+        "leftOf": "{left} of {limit}",
+        "packVideos": "Pack videos left"
       },
       "videos": {
         "title": "{period, select, week {Videos this week} other {Videos this month}}",
         "description": "Every video you start counts, including ones still being made.",
         "used": "{period, select, week {Used this week} other {Used this month}}",
         "moreFrom": "More videos are included from {date}.",
-        "packsLeft": "{count, plural, =0 {No pack videos left} one {# pack video left} other {# pack videos left}}"
+        "packsLeft": "{count, plural, =0 {No pack videos left} one {# pack video left} other {# pack videos left}}",
+        "left": "{left} left"
       },
       "channels": {
         "title": "Your channels",
@@ -5428,7 +5434,8 @@
         "confirmBody": "Your plan will end at the end of this period. Your work stays available to view, export and download. We don’t refund part-used periods.",
         "confirmBodyDate": "Your plan will end on {date}. Until then nothing changes. After that your account becomes read-only: your work stays available to view, export and download. We don’t refund part-used periods.",
         "keep": "Keep my plan",
-        "confirm": "Cancel plan"
+        "confirm": "Cancel plan",
+        "resumeTitle": "Your plan is ending"
       },
       "toasts": {
         "applied": "Your plan has been changed.",
@@ -6721,5 +6728,33 @@
       "edit": "Edit prompt",
       "again": "Generate again"
     }
+  },
+  "settingsNav": {
+    "aria": "Settings sections",
+    "title": "Settings",
+    "groups": {
+      "account": "Account",
+      "workspace": "Workspace",
+      "publishing": "Publishing",
+      "billing": "Billing"
+    },
+    "items": {
+      "profile": "Profile",
+      "security": "Sign-in and security",
+      "appearance": "Appearance",
+      "notifications": "Notifications",
+      "organisation": "Organisation",
+      "members": "Members",
+      "audit": "Audit log",
+      "approvals": "Approval workflows",
+      "export": "Export data",
+      "business": "Brand and business",
+      "connections": "Social accounts",
+      "providerKeys": "Provider keys",
+      "billing": "Your plan"
+    },
+    "dangerZone": "Permanent changes",
+    "dangerZoneHint": "These affect everyone in the organisation and can’t be undone.",
+    "providerKeysOwners": "Only owners and admins can manage provider keys. Ask one of them if you need a change."
   }
 }

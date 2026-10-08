@@ -14,7 +14,9 @@ import {
 } from '@/components/ui/dialog';
 import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Section } from '../primitives';
+import { DangerRow, DangerZone } from '../settings/danger-zone';
 import { ChannelPicker, type ChannelChoice } from './channel-picker';
 import type { PlanPreviewResponse, PlanView, PricingView } from './types';
 
@@ -24,7 +26,7 @@ import type { PlanPreviewResponse, PlanView, PricingView } from './types';
 //     (GET /billing/plan/preview → invoices.createPreview), and that same proration time is sent
 //     with the change so the charge matches what was shown;
 //   - fewer channels or a shorter period: at the end of the current period, nothing to pay now.
-// Cancel (at the end of the period) and resume live here too.
+// Cancel (at the end of the period, in the page's danger zone) and resume live here too.
 
 const PREVIEW_DELAY_MS = 300;
 
@@ -194,65 +196,49 @@ export function CancelSection({
   const f = useFormat();
   const [confirming, setConfirming] = useState(false);
   const date = endsAt ? f.date(endsAt, { dateStyle: 'long' }) : null;
+  // A plan set to end is not a danger: it offers to keep the plan.
+  if (cancelling)
+    return (
+      <Section id="cancel-plan" title={t('resumeTitle')}>
+        <div className="grid gap-3 text-sm">
+          <p>{date ? t('endsOn', { date }) : t('ends')}</p>
+          <div>
+            <Button
+              disabled={pending !== null}
+              onClick={() => void onResume()}
+              loading={pending === 'resume'}
+            >
+              {t('resume')}
+            </Button>
+          </div>
+        </div>
+      </Section>
+    );
   return (
-    <Section title={t('title')}>
-      <div className="grid gap-3 text-sm">
-        {cancelling ? (
-          <>
-            <p>{date ? t('endsOn', { date }) : t('ends')}</p>
-            <div>
-              <Button
-                disabled={pending !== null}
-                onClick={() => void onResume()}
-                loading={pending === 'resume'}
-              >
-                {t('resume')}
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="text-muted-foreground">{t('body')}</p>
-            <div>
-              <Button
-                variant="outline"
-                disabled={pending !== null}
-                onClick={() => setConfirming(true)}
-              >
-                {t('cancel')}
-              </Button>
-            </div>
-          </>
-        )}
-      </div>
-      {confirming && (
-        <Dialog open onOpenChange={(open) => !open && setConfirming(false)}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{t('confirmTitle')}</DialogTitle>
-              <DialogDescription>
-                {date ? t('confirmBodyDate', { date }) : t('confirmBody')}
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setConfirming(false)}>
-                {t('keep')}
-              </Button>
-              <Button
-                variant="destructive"
-                disabled={pending !== null}
-                onClick={async () => {
-                  await onCancel();
-                  setConfirming(false);
-                }}
-                loading={pending === 'cancel'}
-              >
-                {t('confirm')}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-    </Section>
+    <DangerZone id="cancel-plan" title={t('title')}>
+      <DangerRow
+        description={t('body')}
+        action={
+          <Button
+            variant="outline"
+            className="text-destructive-foreground"
+            disabled={pending !== null}
+            onClick={() => setConfirming(true)}
+          >
+            {t('cancel')}
+          </Button>
+        }
+      />
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        title={t('confirmTitle')}
+        description={date ? t('confirmBodyDate', { date }) : t('confirmBody')}
+        cancelLabel={t('keep')}
+        confirmLabel={t('confirm')}
+        confirmLoading={pending === 'cancel'}
+        onConfirm={onCancel}
+      />
+    </DangerZone>
   );
 }

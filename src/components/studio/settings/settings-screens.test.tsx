@@ -105,7 +105,7 @@ describe('OrganisationSettingsScreen', () => {
     const user = userEvent.setup();
     renderWithSWR(<OrganisationSettingsScreen />);
     await user.click(await screen.findByRole('button', { name: 'Delete organisation…' }));
-    const dialog = await screen.findByRole('dialog');
+    const dialog = await screen.findByRole('alertdialog');
     const confirm = within(dialog).getByRole('button', { name: 'Delete organisation' });
     expect(confirm).toBeDisabled();
     await user.type(within(dialog).getByRole('textbox'), 'Leeds Sourdough Ltd');
