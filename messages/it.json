@@ -78,7 +78,8 @@
         "automations": "Automazioni",
         "home": "Home",
         "plans": "Piani mensili",
-        "images": "Immagini"
+        "images": "Immagini",
+        "media": "I miei media"
       },
       "newPost": "Crea un nuovo post",
       "collapse": "Comprimi la barra laterale",
@@ -2767,7 +2768,10 @@
       "emptyFilters": "Prova una categoria più ampia o meno tag.",
       "more": "Altri riferimenti",
       "noCloseTitle": "Nessuna corrispondenza vicina per «{query}»",
-      "noCloseBody": "Nulla nella libreria è vicino a questa ricerca. Prova altre parole o sfoglia una categoria:"
+      "noCloseBody": "Nulla nella libreria è vicino a questa ricerca. Prova altre parole o sfoglia una categoria:",
+      "gridAria": "Video di riferimento",
+      "pagesAria": "Pagine",
+      "page": "Pagina {page}"
     },
     "filters": {
       "formAria": "Filtra la libreria",
@@ -6756,5 +6760,80 @@
     "dangerZone": "Modifiche definitive",
     "dangerZoneHint": "Riguardano tutta l’organizzazione e non si possono annullare.",
     "providerKeysOwners": "Solo i proprietari e gli amministratori possono gestire le chiavi dei fornitori. Chiedi a uno di loro se ti serve una modifica."
+  },
+  "media": {
+    "page": {
+      "title": "I miei media",
+      "description": "I tuoi video finiti, i video che hai caricato e la tua libreria di immagini, in un unico posto."
+    },
+    "actions": {
+      "uploadVideo": "Carica un video",
+      "addImages": "Aggiungi immagini"
+    },
+    "filters": {
+      "label": "Mostra",
+      "all": "Tutti",
+      "video": "Video",
+      "image": "Immagini",
+      "upload": "Caricamenti"
+    },
+    "scope": {
+      "business": "Attività scelta nella barra in alto.",
+      "all": "Tutte le attività. Scegline una nella barra in alto per restringere."
+    },
+    "grid": {
+      "aria": "Media",
+      "loading": "Caricamento dei media",
+      "pagesAria": "Pagine",
+      "page": "Pagina {page}",
+      "more": "Altri"
+    },
+    "type": {
+      "video": "Video",
+      "upload": "Caricamento",
+      "image": "Immagine"
+    },
+    "uploadKind": {
+      "source_video": "Video caricato",
+      "demo_video": "Video demo"
+    },
+    "imageSource": {
+      "UPLOAD": "Caricata",
+      "GENERATED": "Generata",
+      "SCRAPED": "Dal tuo sito",
+      "STOCK": "Stock"
+    },
+    "untitledVideo": "Video senza titolo",
+    "untitledImage": "Immagine senza titolo",
+    "empty": {
+      "all": {
+        "title": "Ancora niente qui",
+        "body": "Video finiti, caricamenti e immagini compaiono qui man mano che li crei."
+      },
+      "video": {
+        "title": "Nessun video finito",
+        "body": "Un video compare qui dopo aver superato i controlli."
+      },
+      "image": {
+        "title": "Nessuna immagine",
+        "body": "Aggiungi foto in Attività e immagini, oppure creane in Image Studio."
+      },
+      "upload": {
+        "title": "Nessun caricamento",
+        "body": "Carica il tuo video in Crea. Compare qui dopo l’elaborazione."
+      }
+    },
+    "preview": {
+      "loading": "Caricamento del video",
+      "playerAria": "Riproduci {title}",
+      "type": "Tipo",
+      "format": "Formato",
+      "length": "Durata",
+      "size": "Dimensioni",
+      "dimensions": "{width} × {height}",
+      "added": "Aggiunto",
+      "download": "Scarica",
+      "openProject": "Apri progetto"
+    }
   }
 }

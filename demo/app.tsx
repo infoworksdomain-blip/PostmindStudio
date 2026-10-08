@@ -20,6 +20,7 @@ import { AutomationsList } from '@/components/studio/automations/automations-lis
 import { AutomationWizard } from '@/components/studio/automations/automation-wizard';
 import { BlitzScreen } from '@/components/studio/blitz/blitz-screen';
 import { ImageStudioScreen } from '@/components/studio/images/image-studio-screen';
+import { MediaScreen } from '@/components/studio/media/media-screen';
 import { ConnectionsScreen } from '@/components/studio/connections/connections-screen';
 import { ApprovalWorkflowsScreen } from '@/components/studio/approvals/approval-workflows-screen';
 import { parseReference } from '@/components/studio/create/body';
@@ -93,6 +94,8 @@ const RENDER: Record<AppPath, Render> = {
   '/blitz': () => <BlitzScreen />,
   // 25.8: Image Studio.
   '/images': () => <ImageStudioScreen />,
+  // 25.10: My media.
+  '/media': () => <MediaScreen />,
   '/automations': () => <AutomationsList />,
   '/automations/new': () => <AutomationWizard />,
   '/automations/:id': (p) => <AutomationDetailScreen automationId={p.id ?? ''} />,

@@ -19,7 +19,7 @@ describe('navigation map', () => {
       ['home', ['/home']],
       ['create', ['/new', '/blitz', '/images', '/templates']],
       ['plan', ['/calendar', '/plans', '/automations', '/publications']],
-      ['library', ['/projects', '/library', '/business']],
+      ['library', ['/projects', '/library', '/media', '/business']],
       ['insights', ['/analytics']],
       ['settings', ['/connections', '/approvals', '/settings/organisation']],
       ['staff', ['/admin']],

@@ -78,7 +78,8 @@
         "automations": "Automations",
         "home": "Home",
         "plans": "Month plans",
-        "images": "Images"
+        "images": "Images",
+        "media": "My media"
       },
       "newPost": "Create a new post",
       "collapse": "Collapse sidebar",
@@ -2767,7 +2768,10 @@
       "emptyFilters": "Try a broader category or fewer tags.",
       "more": "More references",
       "noCloseTitle": "No close matches for “{query}”",
-      "noCloseBody": "Nothing in the library is close to that search. Try other words, or browse a category:"
+      "noCloseBody": "Nothing in the library is close to that search. Try other words, or browse a category:",
+      "gridAria": "Reference videos",
+      "pagesAria": "Pages",
+      "page": "Page {page}"
     },
     "filters": {
       "formAria": "Filter the library",
@@ -6756,5 +6760,80 @@
     "dangerZone": "Permanent changes",
     "dangerZoneHint": "These affect everyone in the organization and can’t be undone.",
     "providerKeysOwners": "Only owners and admins can manage provider keys. Ask one of them if you need a change."
+  },
+  "media": {
+    "page": {
+      "title": "My media",
+      "description": "Your finished videos, the videos you uploaded and your image library, in one place."
+    },
+    "actions": {
+      "uploadVideo": "Upload a video",
+      "addImages": "Add images"
+    },
+    "filters": {
+      "label": "Show",
+      "all": "All",
+      "video": "Videos",
+      "image": "Images",
+      "upload": "Uploads"
+    },
+    "scope": {
+      "business": "Showing the business picked in the top bar.",
+      "all": "Showing every business. Pick one in the top bar to narrow this down."
+    },
+    "grid": {
+      "aria": "Media",
+      "loading": "Loading media",
+      "pagesAria": "Pages",
+      "page": "Page {page}",
+      "more": "More"
+    },
+    "type": {
+      "video": "Video",
+      "upload": "Upload",
+      "image": "Image"
+    },
+    "uploadKind": {
+      "source_video": "Uploaded video",
+      "demo_video": "Demo video"
+    },
+    "imageSource": {
+      "UPLOAD": "Uploaded",
+      "GENERATED": "Generated",
+      "SCRAPED": "From your website",
+      "STOCK": "Stock"
+    },
+    "untitledVideo": "Untitled video",
+    "untitledImage": "Untitled image",
+    "empty": {
+      "all": {
+        "title": "Nothing here yet",
+        "body": "Finished videos, uploads and images appear here as you make them."
+      },
+      "video": {
+        "title": "No finished videos yet",
+        "body": "A video appears here once it has passed its checks."
+      },
+      "image": {
+        "title": "No images yet",
+        "body": "Add photos in Business & images, or make some in Image Studio."
+      },
+      "upload": {
+        "title": "No uploads yet",
+        "body": "Upload your own video in Create. It appears here once it has been processed."
+      }
+    },
+    "preview": {
+      "loading": "Loading the video",
+      "playerAria": "Play {title}",
+      "type": "Type",
+      "format": "Format",
+      "length": "Length",
+      "size": "Size",
+      "dimensions": "{width} × {height}",
+      "added": "Added",
+      "download": "Download",
+      "openProject": "Open project"
+    }
   }
 }

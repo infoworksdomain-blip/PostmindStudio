@@ -78,7 +78,8 @@
         "automations": "Automatisations",
         "home": "Accueil",
         "plans": "Plans du mois",
-        "images": "Images"
+        "images": "Images",
+        "media": "Mes médias"
       },
       "newPost": "Créer une nouvelle publication",
       "collapse": "Réduire la barre latérale",
@@ -2767,7 +2768,10 @@
       "emptyFilters": "Essayez une catégorie plus large ou moins de tags.",
       "more": "Plus de références",
       "noCloseTitle": "Aucun résultat proche pour « {query} »",
-      "noCloseBody": "Rien dans la bibliothèque ne correspond vraiment à cette recherche. Essayez d’autres mots ou parcourez une catégorie :"
+      "noCloseBody": "Rien dans la bibliothèque ne correspond vraiment à cette recherche. Essayez d’autres mots ou parcourez une catégorie :",
+      "gridAria": "Vidéos de référence",
+      "pagesAria": "Pages",
+      "page": "Page {page}"
     },
     "filters": {
       "formAria": "Filtrer la bibliothèque",
@@ -6756,5 +6760,80 @@
     "dangerZone": "Changements définitifs",
     "dangerZoneHint": "Ils concernent toute l’organisation et ne peuvent pas être annulés.",
     "providerKeysOwners": "Seuls les propriétaires et les administrateurs peuvent gérer les clés de fournisseur. Demandez-leur si vous avez besoin d’un changement."
+  },
+  "media": {
+    "page": {
+      "title": "Mes médias",
+      "description": "Vos vidéos terminées, les vidéos que vous avez importées et votre photothèque, au même endroit."
+    },
+    "actions": {
+      "uploadVideo": "Importer une vidéo",
+      "addImages": "Ajouter des images"
+    },
+    "filters": {
+      "label": "Afficher",
+      "all": "Tout",
+      "video": "Vidéos",
+      "image": "Images",
+      "upload": "Imports"
+    },
+    "scope": {
+      "business": "Entreprise choisie dans la barre du haut.",
+      "all": "Toutes les entreprises. Choisissez-en une dans la barre du haut pour affiner."
+    },
+    "grid": {
+      "aria": "Médias",
+      "loading": "Chargement des médias",
+      "pagesAria": "Pages",
+      "page": "Page {page}",
+      "more": "Suivant"
+    },
+    "type": {
+      "video": "Vidéo",
+      "upload": "Import",
+      "image": "Image"
+    },
+    "uploadKind": {
+      "source_video": "Vidéo importée",
+      "demo_video": "Vidéo de démo"
+    },
+    "imageSource": {
+      "UPLOAD": "Importée",
+      "GENERATED": "Générée",
+      "SCRAPED": "Depuis votre site",
+      "STOCK": "Banque d’images"
+    },
+    "untitledVideo": "Vidéo sans titre",
+    "untitledImage": "Image sans titre",
+    "empty": {
+      "all": {
+        "title": "Rien pour l’instant",
+        "body": "Vos vidéos terminées, imports et images apparaissent ici au fur et à mesure."
+      },
+      "video": {
+        "title": "Aucune vidéo terminée",
+        "body": "Une vidéo apparaît ici une fois ses vérifications passées."
+      },
+      "image": {
+        "title": "Aucune image",
+        "body": "Ajoutez des photos dans Entreprise et images, ou créez-en dans Image Studio."
+      },
+      "upload": {
+        "title": "Aucun import",
+        "body": "Importez votre propre vidéo dans Créer. Elle apparaît ici une fois traitée."
+      }
+    },
+    "preview": {
+      "loading": "Chargement de la vidéo",
+      "playerAria": "Lire {title}",
+      "type": "Type",
+      "format": "Format",
+      "length": "Durée",
+      "size": "Taille",
+      "dimensions": "{width} × {height}",
+      "added": "Ajouté",
+      "download": "Télécharger",
+      "openProject": "Ouvrir le projet"
+    }
   }
 }

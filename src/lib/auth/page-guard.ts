@@ -21,6 +21,7 @@ export const PROTECTED_PAGE_PREFIXES = [
   '/home',
   '/images',
   '/library',
+  '/media',
   '/new',
   '/plans',
   '/projects',

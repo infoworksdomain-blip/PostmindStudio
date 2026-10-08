@@ -1,32 +1,52 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
 import { EmptyState, ErrorState, PageHeader } from '../primitives';
-import { EMPTY_FILTERS, LibraryFilters, type LibraryFilterState } from './library-filters';
+import { LibraryFilters } from './library-filters';
 import { DURATION_FILTERS, flattenCategories, parseTags } from './library-utils';
 import { RecommendedShelf } from './recommended-shelf';
 import type { CategoryNode, LibraryVideoSummary, ListResponse } from './types';
+import { searchFromFilters, useLibraryParams, type LibraryFilterState } from './use-library-params';
 import { useLibrarySearch } from './use-library-search';
 import { VideoCard } from './video-card';
 
-// BACKLOG 10.7 / Addendum A3.1 — browse the reference library: recommended shelf, taxonomy
-// filters, a grid of previews with cursor pagination. A search (13.8) queries the whole library
-// on the server (POST /library/search: meaning, plus title/tag words), within the category and
-// the length, mood and tag filters.
+// BACKLOG 10.7 / Addendum A3.1, redesigned in 25.10 — browse the reference library like a media
+// library: the recommended shelf, then one calm toolbar (search, category, length, mood, tags;
+// kept in the URL) over a grid of tiles with cursor pages. A search (13.8) queries the whole
+// library on the server (POST /library/search: meaning, plus title/tag words), within the
+// category and the length, mood and tag filters.
 
 const PAGE_SIZE = 24;
 /** Browse-a-category suggestions under "No close matches". */
 const MAX_SUGGESTED_CATEGORIES = 8;
+export const LIBRARY_GRID =
+  'grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6';
+
+/** Cursor pages, forgotten whenever the filters change (here or in the URL). */
+function usePages(filters: LibraryFilterState) {
+  const key = searchFromFilters(filters);
+  const [pages, setPages] = useState<{ key: string; cursors: string[] }>({ key, cursors: [] });
+  const cursors = pages.key === key ? pages.cursors : [];
+  return {
+    cursors,
+    next: (cursor: string) => setPages({ key, cursors: [...cursors, cursor] }),
+    previous: () => setPages({ key, cursors: cursors.slice(0, -1) }),
+  };
+}
 
 export function LibraryBrowse() {
   const t = useTranslations('library.browse');
   const tc = useTranslations('common.actions');
-  const [filters, setFilters] = useState<LibraryFilterState>(EMPTY_FILTERS);
-  const [cursors, setCursors] = useState<string[]>([]);
+  const tn = useTranslations('shell.nav.groups');
+  const f = useFormat();
+  const { filters, setFilters } = useLibraryParams();
+  const { cursors, next, previous } = usePages(filters);
   const categories = useApi<ListResponse<CategoryNode>>('/library/categories');
   const categoryOptions = useMemo(
     () => flattenCategories(categories.data?.data ?? []),
@@ -65,40 +85,35 @@ export function LibraryBrowse() {
   );
   const { data, error, isLoading, mutate } = searching ? search : list;
   const visible: LibraryVideoSummary[] = data?.data ?? [];
-
-  const applyFilters = (next: LibraryFilterState) => {
-    setFilters(next);
-    setCursors([]);
-  };
+  const paged = cursors.length > 0 || Boolean(data?.nextCursor);
 
   return (
     <>
-      <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
+      <PageHeader eyebrow={tn('library')} title={t('title')} description={t('description')} />
 
       <RecommendedShelf category={filters.category} />
 
       <section aria-labelledby="library-browse" className="min-w-0">
-        <h2 id="library-browse" className="mb-3 font-display text-2xl">
-          {t('heading')}
-        </h2>
-        <LibraryFilters value={filters} categories={categoryOptions} onChange={applyFilters} />
+        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <h2 id="library-browse" className="text-lg font-semibold tracking-tight">
+            {t('heading')}
+          </h2>
+          {searching && (
+            <p className="text-sm text-muted-foreground" role="status">
+              {filters.category
+                ? t('searchStatusInCategory', { query })
+                : t('searchStatus', { query })}
+            </p>
+          )}
+        </div>
+        <LibraryFilters value={filters} categories={categoryOptions} onChange={setFilters} />
 
-        {searching && (
-          <p className="mt-3 text-sm text-muted-foreground" role="status">
-            {filters.category
-              ? t('searchStatusInCategory', { query })
-              : t('searchStatus', { query })}
-          </p>
-        )}
-        <div className="mt-6">
+        <div className="mt-6 border-t border-border pt-6">
           {error && <ErrorState error={error} onRetry={() => void mutate()} />}
           {isLoading && (
-            <div
-              aria-label={t('loading')}
-              className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
-            >
-              {Array.from({ length: 10 }, (_, i) => (
-                <Skeleton key={i} className="aspect-[9/14] rounded-xl" />
+            <div aria-label={t('loading')} className={LIBRARY_GRID}>
+              {Array.from({ length: 12 }, (_, i) => (
+                <Skeleton key={i} className="aspect-[9/16] rounded-lg" />
               ))}
             </div>
           )}
@@ -115,7 +130,7 @@ export function LibraryBrowse() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => applyFilters({ ...filters, search: '', category: c.slug })}
+                          onClick={() => setFilters({ ...filters, search: '', category: c.slug })}
                         >
                           {c.label}
                         </Button>
@@ -127,7 +142,7 @@ export function LibraryBrowse() {
             />
           )}
           {data && visible.length > 0 && (
-            <ul className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            <ul aria-label={t('gridAria')} className={LIBRARY_GRID}>
               {visible.map((v) => (
                 <li key={v.id} className="min-w-0">
                   <VideoCard video={v} />
@@ -135,25 +150,25 @@ export function LibraryBrowse() {
               ))}
             </ul>
           )}
-          {data && (cursors.length > 0 || data.nextCursor) && (
-            <div className="mt-8 flex justify-between">
-              <Button
-                variant="ghost"
-                disabled={cursors.length === 0}
-                onClick={() => setCursors((c) => c.slice(0, -1))}
-              >
-                {tc('previous')}
+          {data && paged && (
+            <nav
+              aria-label={t('pagesAria')}
+              className="mt-10 flex items-center justify-between gap-3 border-t border-border pt-4"
+            >
+              <Button variant="ghost" disabled={cursors.length === 0} onClick={previous}>
+                <ChevronLeft className="rtl:-scale-x-100" /> {tc('previous')}
               </Button>
+              <span className="font-mono text-xs text-muted-foreground">
+                {t('page', { page: f.number(cursors.length + 1) })}
+              </span>
               <Button
-                variant="ghost"
+                variant="secondary"
                 disabled={!data.nextCursor}
-                onClick={() =>
-                  data.nextCursor && setCursors((c) => [...c, data.nextCursor as string])
-                }
+                onClick={() => data.nextCursor && next(data.nextCursor)}
               >
-                {t('more')}
+                {t('more')} <ChevronRight className="rtl:-scale-x-100" />
               </Button>
-            </div>
+            </nav>
           )}
         </div>
       </section>

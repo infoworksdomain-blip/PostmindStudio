@@ -196,6 +196,19 @@ export function demoVideos(businessId: string | null) {
     .map(present);
 }
 
+/** 25.10: READY source and demo videos (My media), newest first. */
+export function readyVideoUploads(businessId: string | null): Array<ReturnType<typeof present>> {
+  return [...uploads.values()]
+    .filter(
+      (u) =>
+        u.kind !== 'slide_clip' &&
+        u.state === 'READY' &&
+        (businessId === null || u.businessId === businessId),
+    )
+    .sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''))
+    .map(present);
+}
+
 /** 22.1: a seeded demo video, so Create → Hook + demo works before anything is uploaded. */
 export function seedDemoVideo(businessId: string): void {
   const id = 'upl-demo-order-ahead';

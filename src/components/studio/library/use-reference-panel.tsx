@@ -17,10 +17,7 @@ export function UseReferencePanel({ id, allowedModes }: { id: string; allowedMod
   const t = useTranslations('library.useReference');
   return (
     <section aria-labelledby="use-reference" className="grid gap-2">
-      <h2
-        id="use-reference"
-        className="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase"
-      >
+      <h2 id="use-reference" className="text-sm font-semibold tracking-tight">
         {t('heading')}
       </h2>
       {MODES.map((mode) => {
@@ -44,11 +41,11 @@ export function UseReferencePanel({ id, allowedModes }: { id: string; allowedMod
           </>
         );
         const className = cn(
-          'group flex items-center gap-3 rounded-xl border px-4 py-3 text-start text-sm',
+          'group flex items-center gap-3 rounded-lg border px-4 py-3 text-start text-sm',
           allowed
-            ? 'border-border bg-card transition-colors hover:border-foreground/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'
+            ? 'border-border bg-background transition-colors duration-(--duration-fast) hover:border-border-strong hover:bg-surface-raised focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'
             : 'border-dashed border-border opacity-70',
-          allowed && mode === 'TEMPLATE' && 'border-primary/40 bg-primary/5',
+          allowed && mode === 'TEMPLATE' && 'border-primary/50',
         );
         return allowed ? (
           <Link key={mode} href={referenceHref(id, mode)} className={className}>
