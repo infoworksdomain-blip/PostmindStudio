@@ -621,19 +621,9 @@
       "summaryPlatforms": "{count, plural, =0 {कोई प्लैटफ़ॉर्म नहीं} one {# प्लैटफ़ॉर्म} other {# प्लैटफ़ॉर्म}}",
       "summaryAutoPublish": "{count, plural, =0 {ऑटो-पब्लिश: कोई खाता नहीं चुना} one {# खाते पर पोस्ट होगा} other {# खातों पर पोस्ट होगा}}",
       "summaryBrandKit": "ब्रांड किट चालू",
-      "options": "विकल्प",
       "generate": "जनरेट करें",
       "createSlideshow": "स्लाइडशो बनाएँ",
       "sourcesAria": "क्या बनाना है",
-      "sources": {
-        "BRIEF": "वीडियो",
-        "SLIDESHOW": "स्लाइडशो",
-        "UPLOAD": "वीडियो अपलोड करें",
-        "UGC": "UGC अभिनेता",
-        "CAROUSEL": "कैरोसेल (पोस्ट कार्ड)",
-        "HOOK_DEMO": "हुक + डेमो",
-        "WALL_OF_TEXT": "टेक्स्ट वॉल"
-      },
       "templatedNote": "प्लैटफ़ॉर्म और अवधि टेम्पलेट से तय होते हैं। ऊपर लिखा आपका टेक्स्ट वैकल्पिक है — यह टेम्पलेट की रूपरेखा में ख़ास जानकारी जोड़ता है।",
       "noBusiness": {
         "title": "पहले कोई व्यवसाय चुनें",
@@ -642,18 +632,61 @@
       },
       "toast": {
         "slideshowDrafted": "स्लाइडशो का ड्राफ़्ट तैयार है — स्लाइड जाँचें, फिर जनरेट करें।",
-        "generatingUpload": "जनरेट हो रहा है — Studio आपके वीडियो में कैप्शन जोड़ रहा है।",
-        "generatingScript": "जनरेट हो रहा है — Studio स्क्रिप्ट लिख रहा है।",
+        "generatingUpload": "आपका वीडियो बन रहा है — कैप्शन जोड़े जा रहे हैं…",
+        "generatingScript": "आपका वीडियो बन रहा है…",
         "draftNotStarted": "ड्राफ़्ट के रूप में सेव हो गया, लेकिन जनरेशन शुरू नहीं हुआ: {error}",
         "generatingCarousel": "आपका कैरोसेल लिखा जा रहा है…",
-        "generatingFormat": "बन रहा है — Studio टेक्स्ट लिख रहा है और आपका वीडियो बना रहा है।"
+        "generatingFormat": "आपका वीडियो बन रहा है…"
       },
       "planMonth": "या पूरे महीने के वीडियो और स्लाइडशो की योजना बनाएँ",
       "summaryNoAccounts": "कोई खाता कनेक्ट नहीं: समीक्षा के लिए सहेजा जाएगा",
       "summaryForReview": "समीक्षा के लिए सहेजा जाएगा",
       "createCarousel": "कैरोसेल बनाएँ",
       "summaryCarousel": "{count} पोस्ट · {theme, select, dark {डार्क} other {लाइट}} कार्ड",
-      "summarySeconds": "{count, number} सेकंड"
+      "summarySeconds": "{count, number} सेकंड",
+      "formats": {
+        "BRIEF": {
+          "name": "AI वीडियो",
+          "line": "आपके लिए स्क्रिप्ट, शॉट और आवाज़"
+        },
+        "SLIDESHOW": {
+          "name": "स्लाइडशो",
+          "line": "कैप्शन और संगीत के साथ फ़ोटो"
+        },
+        "CAROUSEL": {
+          "name": "कैरोसेल",
+          "line": "स्वाइप करने वाली पोस्ट"
+        },
+        "UPLOAD": {
+          "name": "आपका वीडियो",
+          "line": "आपके अपने वीडियो के लिए कैप्शन और फ़ॉर्मैट"
+        },
+        "UGC": {
+          "name": "क्रिएटर वीडियो (UGC)",
+          "line": "एक AI क्रिएटर आपके प्रोडक्ट के बारे में बताता है"
+        },
+        "HOOK_DEMO": {
+          "name": "हुक + डेमो",
+          "line": "पहले रिएक्शन हुक, फिर आपका डेमो"
+        },
+        "WALL_OF_TEXT": {
+          "name": "टेक्स्ट वॉल",
+          "line": "शांत वीडियो पर टेक्स्ट का एक ब्लॉक"
+        }
+      },
+      "basicDefault": "आपका प्लान स्लाइडशो से शुरू होता है, जो आपकी सीमा में से ¼ वीडियो लेता है। आप कोई भी फ़ॉर्मैट चुन सकते हैं।",
+      "moreOptions": "और विकल्प",
+      "usesQuick": "¼ वीडियो लगता है",
+      "usesVideos": "आपके {count, number} वीडियो लगते हैं",
+      "allowanceLeft": "{period, select, week {इस हफ़्ते} other {इस महीने}} {limit} में से {left} बाकी",
+      "submitShortcut": "जनरेट करने के लिए Ctrl या ⌘ + Enter",
+      "groups": {
+        "format": "प्लैटफ़ॉर्म और अवधि",
+        "brand": "ब्रांड और भाषा",
+        "message": "दर्शक और कॉल टू ऐक्शन",
+        "publishing": "मंज़ूरी और शेड्यूल",
+        "quality": "क्वालिटी"
+      }
     },
     "problems": {
       "businessRequired": "पहले कोई व्यवसाय चुनें।",
@@ -693,7 +726,6 @@
         "defaultKit": "{name} (डिफ़ॉल्ट)"
       },
       "advanced": {
-        "toggle": "उन्नत विकल्प",
         "audience": "लक्षित दर्शक",
         "audiencePlaceholder": "जैसे पहली बार घर ख़रीदने वाले",
         "cta": "कॉल टू ऐक्शन",
@@ -894,6 +926,27 @@
       },
       "length": "अवधि",
       "seconds": "{count, number} सेकंड"
+    },
+    "videoModel": {
+      "legend": "वीडियो मॉडल",
+      "automatic": "ऑटोमैटिक (सुझाया गया)",
+      "automaticLine": "Studio हर क्लिप के लिए उपलब्ध मॉडल चुनता है और व्यस्त होने पर बदल देता है।",
+      "speed": "हर क्लिप {minutes, number} मिनट",
+      "maxClip": "{seconds, number} सेकंड तक",
+      "costStaff": "6 सेकंड के क्लिप के {amount}",
+      "droppedChoice": "आपका चुना मॉडल इस क्वालिटी स्तर पर उपलब्ध नहीं है, इसलिए ‘ऑटोमैटिक’ इस्तेमाल होगा।",
+      "hint": {
+        "BRIEF": "इस वीडियो के AI क्लिप बनाता है।",
+        "UGC": "AI सीन बनाता है। क्रिएटर के अपने क्लिप हमेशा क्रिएटर मॉडल से बनते हैं।",
+        "HOOK_DEMO": "रिएक्शन हुक बनाता है।"
+      },
+      "capability": {
+        "text_to_video": "सिर्फ़ टेक्स्ट",
+        "image_to_video": "सिर्फ़ फ़ोटो",
+        "both": "टेक्स्ट या फ़ोटो"
+      },
+      "change": "मॉडल बदलें",
+      "hide": "मॉडल छिपाएँ"
     }
   },
   "review": {

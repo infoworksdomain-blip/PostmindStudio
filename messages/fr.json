@@ -621,19 +621,9 @@
       "summaryPlatforms": "{count, plural, =0 {Aucune plateforme} one {# plateforme} other {# plateformes}}",
       "summaryAutoPublish": "{count, plural, =0 {publication automatique : aucun compte choisi} one {publié sur # compte} other {publié sur # comptes}}",
       "summaryBrandKit": "kit de marque activé",
-      "options": "Options",
       "generate": "Générer",
       "createSlideshow": "Créer le diaporama",
       "sourcesAria": "Que voulez-vous créer ?",
-      "sources": {
-        "BRIEF": "Vidéo",
-        "SLIDESHOW": "Diaporama",
-        "UPLOAD": "Importer une vidéo",
-        "UGC": "Acteur UGC",
-        "CAROUSEL": "Carrousel (cartes de posts)",
-        "HOOK_DEMO": "Accroche + démo",
-        "WALL_OF_TEXT": "Mur de texte"
-      },
       "templatedNote": "Les plateformes et la durée sont définies par le modèle. Le texte ci-dessus est facultatif : il précise la trame du modèle.",
       "noBusiness": {
         "title": "Choisissez d’abord une entreprise",
@@ -642,18 +632,61 @@
       },
       "toast": {
         "slideshowDrafted": "Diaporama préparé — vérifiez les diapositives, puis lancez la génération.",
-        "generatingUpload": "Génération en cours — Studio sous-titre votre vidéo.",
-        "generatingScript": "Génération en cours — Studio rédige le script.",
+        "generatingUpload": "Création de votre vidéo — ajout des sous-titres…",
+        "generatingScript": "Création de votre vidéo…",
         "draftNotStarted": "Enregistré comme brouillon, mais la génération n’a pas démarré : {error}",
         "generatingCarousel": "Rédaction de votre carrousel…",
-        "generatingFormat": "Génération en cours : Studio rédige le texte et crée votre vidéo."
+        "generatingFormat": "Création de votre vidéo…"
       },
       "planMonth": "Ou planifiez tout un mois de vidéos et de diaporamas",
       "summaryNoAccounts": "aucun compte connecté : enregistré pour relecture",
       "summaryForReview": "enregistré pour relecture",
       "createCarousel": "Créer le carrousel",
       "summaryCarousel": "{count} posts · cartes {theme, select, dark {sombres} other {claires}}",
-      "summarySeconds": "{count, number} s"
+      "summarySeconds": "{count, number} s",
+      "formats": {
+        "BRIEF": {
+          "name": "Vidéo IA",
+          "line": "Écrite, tournée et doublée pour vous"
+        },
+        "SLIDESHOW": {
+          "name": "Diaporama",
+          "line": "Photos avec légendes et musique"
+        },
+        "CAROUSEL": {
+          "name": "Carrousel",
+          "line": "Un post à faire défiler"
+        },
+        "UPLOAD": {
+          "name": "Votre vidéo",
+          "line": "Sous-titres et formats pour votre propre vidéo"
+        },
+        "UGC": {
+          "name": "Vidéo créateur (UGC)",
+          "line": "Un créateur IA parle de votre produit"
+        },
+        "HOOK_DEMO": {
+          "name": "Accroche + démo",
+          "line": "Une réaction en accroche, puis votre démo"
+        },
+        "WALL_OF_TEXT": {
+          "name": "Mur de texte",
+          "line": "Un bloc de texte sur une vidéo calme"
+        }
+      },
+      "basicDefault": "Votre forfait commence par Diaporama, qui utilise ¼ de vidéo de votre quota. Vous pouvez choisir n’importe quel format.",
+      "moreOptions": "Plus d’options",
+      "usesQuick": "Utilise ¼ de vidéo",
+      "usesVideos": "Utilise {count, number} de vos vidéos",
+      "allowanceLeft": "{left} sur {limit} restants {period, select, week {cette semaine} other {ce mois-ci}}",
+      "submitShortcut": "Ctrl ou ⌘ + Entrée pour générer",
+      "groups": {
+        "format": "Plateformes et durée",
+        "brand": "Marque et langue",
+        "message": "Public et appel à l’action",
+        "publishing": "Validation et planification",
+        "quality": "Qualité"
+      }
     },
     "problems": {
       "businessRequired": "Choisissez d’abord une entreprise.",
@@ -693,7 +726,6 @@
         "defaultKit": "{name} (par défaut)"
       },
       "advanced": {
-        "toggle": "Options avancées",
         "audience": "Public cible",
         "audiencePlaceholder": "ex. primo-accédants",
         "cta": "Appel à l’action",
@@ -894,6 +926,27 @@
       },
       "length": "Durée",
       "seconds": "{count, number} s"
+    },
+    "videoModel": {
+      "legend": "Modèle vidéo",
+      "automatic": "Automatique (recommandé)",
+      "automaticLine": "Studio choisit un modèle disponible pour chaque clip et en change si l’un est occupé.",
+      "speed": "{minutes, number} min par clip",
+      "maxClip": "jusqu’à {seconds, number} s",
+      "costStaff": "{amount} par clip de 6 s",
+      "droppedChoice": "Le modèle choisi n’est pas disponible à ce niveau de qualité : le mode automatique est utilisé.",
+      "hint": {
+        "BRIEF": "Crée les clips IA de cette vidéo.",
+        "UGC": "Crée les scènes IA. Les clips du créateur utilisent toujours les modèles dédiés.",
+        "HOOK_DEMO": "Crée la réaction d’accroche."
+      },
+      "capability": {
+        "text_to_video": "Texte uniquement",
+        "image_to_video": "Photo uniquement",
+        "both": "Texte ou photo"
+      },
+      "change": "Changer de modèle",
+      "hide": "Masquer les modèles"
     }
   },
   "review": {

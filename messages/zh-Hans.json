@@ -621,19 +621,9 @@
       "summaryPlatforms": "{count, plural, =0 {未选平台} other {# 个平台}}",
       "summaryAutoPublish": "{count, plural, =0 {自动发布：未选择账号} other {发布到 # 个账号}}",
       "summaryBrandKit": "已启用品牌套件",
-      "options": "选项",
       "generate": "生成",
       "createSlideshow": "创建幻灯片",
       "sourcesAria": "要制作的内容",
-      "sources": {
-        "BRIEF": "视频",
-        "SLIDESHOW": "幻灯片",
-        "UPLOAD": "上传视频",
-        "UGC": "UGC 演员",
-        "CAROUSEL": "轮播图（帖子卡片）",
-        "HOOK_DEMO": "钩子 + 演示",
-        "WALL_OF_TEXT": "文字墙"
-      },
       "templatedNote": "平台和时长由模板决定。上方文字为选填，可为模板大纲补充具体内容。",
       "noBusiness": {
         "title": "请先选择商家",
@@ -642,18 +632,61 @@
       },
       "toast": {
         "slideshowDrafted": "幻灯片草稿已生成——请检查幻灯片，然后生成。",
-        "generatingUpload": "正在生成——Studio 正在为您的视频添加字幕。",
-        "generatingScript": "正在生成——Studio 正在撰写脚本。",
+        "generatingUpload": "正在制作你的视频——正在添加字幕…",
+        "generatingScript": "正在制作你的视频…",
         "draftNotStarted": "已保存为草稿，但未能开始生成：{error}",
         "generatingCarousel": "正在撰写您的轮播图…",
-        "generatingFormat": "正在生成：Studio 正在撰写文字并制作你的视频。"
+        "generatingFormat": "正在制作你的视频…"
       },
       "planMonth": "或者规划一整个月的视频和幻灯片",
       "summaryNoAccounts": "没有已连接的账号：保存以供审核",
       "summaryForReview": "保存以供审核",
       "createCarousel": "创建轮播图",
       "summaryCarousel": "{count} 条帖子 · {theme, select, dark {深色} other {浅色}}卡片",
-      "summarySeconds": "{count, number} 秒"
+      "summarySeconds": "{count, number} 秒",
+      "formats": {
+        "BRIEF": {
+          "name": "AI 视频",
+          "line": "为你撰写脚本、生成画面并配音"
+        },
+        "SLIDESHOW": {
+          "name": "幻灯片",
+          "line": "配文字和音乐的照片"
+        },
+        "CAROUSEL": {
+          "name": "轮播图",
+          "line": "可滑动浏览的帖子"
+        },
+        "UPLOAD": {
+          "name": "你的视频",
+          "line": "为你自己的视频添加字幕并生成各平台格式"
+        },
+        "UGC": {
+          "name": "创作者视频（UGC）",
+          "line": "AI 创作者介绍你的产品"
+        },
+        "HOOK_DEMO": {
+          "name": "钩子 + 演示",
+          "line": "先用反应镜头吸引注意，再播放你的演示"
+        },
+        "WALL_OF_TEXT": {
+          "name": "文字墙",
+          "line": "在舒缓的视频上显示一段文字"
+        }
+      },
+      "basicDefault": "你的套餐默认使用幻灯片，它只占用额度中的 ¼ 个视频。你可以选择任意格式。",
+      "moreOptions": "更多选项",
+      "usesQuick": "占用 ¼ 个视频",
+      "usesVideos": "占用 {count, number} 个视频额度",
+      "allowanceLeft": "{period, select, week {本周} other {本月}}剩余 {left}/{limit}",
+      "submitShortcut": "按 Ctrl 或 ⌘ + Enter 生成",
+      "groups": {
+        "format": "平台和时长",
+        "brand": "品牌和语言",
+        "message": "受众和行动号召",
+        "publishing": "审批和排期",
+        "quality": "质量"
+      }
     },
     "problems": {
       "businessRequired": "请先选择商家。",
@@ -693,7 +726,6 @@
         "defaultKit": "{name}（默认）"
       },
       "advanced": {
-        "toggle": "高级选项",
         "audience": "目标受众",
         "audiencePlaceholder": "例如：首次购房者",
         "cta": "行动号召",
@@ -894,6 +926,27 @@
       },
       "length": "时长",
       "seconds": "{count, number} 秒"
+    },
+    "videoModel": {
+      "legend": "视频模型",
+      "automatic": "自动（推荐）",
+      "automaticLine": "Studio 会为每个片段选择可用的模型，遇到繁忙时自动切换。",
+      "speed": "每个片段 {minutes, number} 分钟",
+      "maxClip": "最长 {seconds, number} 秒",
+      "costStaff": "每个 6 秒片段 {amount}",
+      "droppedChoice": "你选择的模型在此质量等级下不可用，因此将使用自动模式。",
+      "hint": {
+        "BRIEF": "用于生成本视频中的 AI 片段。",
+        "UGC": "用于生成 AI 场景。创作者本人的片段始终使用创作者模型。",
+        "HOOK_DEMO": "用于生成开头的反应镜头。"
+      },
+      "capability": {
+        "text_to_video": "仅文字",
+        "image_to_video": "仅图片",
+        "both": "文字或图片"
+      },
+      "change": "更换模型",
+      "hide": "收起模型"
     }
   },
   "review": {

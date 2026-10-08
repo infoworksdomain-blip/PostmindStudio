@@ -621,19 +621,9 @@
       "summaryPlatforms": "{count, plural, =0 {Ninguna plataforma} one {# plataforma} other {# plataformas}}",
       "summaryAutoPublish": "{count, plural, =0 {publicación automática: ninguna cuenta elegida} one {se publica en # cuenta} other {se publica en # cuentas}}",
       "summaryBrandKit": "kit de marca activado",
-      "options": "Opciones",
       "generate": "Generar",
       "createSlideshow": "Crear presentación",
       "sourcesAria": "Qué crear",
-      "sources": {
-        "BRIEF": "Vídeo",
-        "SLIDESHOW": "Presentación",
-        "UPLOAD": "Subir un vídeo",
-        "UGC": "Actor UGC",
-        "CAROUSEL": "Carrusel (tarjetas de publicación)",
-        "HOOK_DEMO": "Gancho + demo",
-        "WALL_OF_TEXT": "Muro de texto"
-      },
       "templatedNote": "Las plataformas y la duración vienen de la plantilla. Tu texto de arriba es opcional: añade detalles al esquema de la plantilla.",
       "noBusiness": {
         "title": "Primero elige un negocio",
@@ -642,18 +632,61 @@
       },
       "toast": {
         "slideshowDrafted": "Borrador de la presentación listo: revisa las diapositivas y luego genera.",
-        "generatingUpload": "Generando: Studio está subtitulando tu vídeo.",
-        "generatingScript": "Generando: Studio está escribiendo el guion.",
+        "generatingUpload": "Creando tu vídeo: añadiendo subtítulos…",
+        "generatingScript": "Creando tu vídeo…",
         "draftNotStarted": "Guardado como borrador, pero la generación no ha empezado: {error}",
         "generatingCarousel": "Escribiendo tu carrusel…",
-        "generatingFormat": "Generando: Studio está escribiendo el texto y creando tu vídeo."
+        "generatingFormat": "Creando tu vídeo…"
       },
       "planMonth": "O planifica un mes entero de vídeos y presentaciones",
       "summaryNoAccounts": "sin cuentas conectadas: se guarda para revisar",
       "summaryForReview": "se guarda para revisar",
       "createCarousel": "Crear carrusel",
       "summaryCarousel": "{count} publicaciones · tarjetas {theme, select, dark {oscuras} other {claras}}",
-      "summarySeconds": "{count, number} s"
+      "summarySeconds": "{count, number} s",
+      "formats": {
+        "BRIEF": {
+          "name": "Vídeo con IA",
+          "line": "Guion, imágenes y voz por ti"
+        },
+        "SLIDESHOW": {
+          "name": "Presentación",
+          "line": "Fotos con textos y música"
+        },
+        "CAROUSEL": {
+          "name": "Carrusel",
+          "line": "Una publicación para deslizar"
+        },
+        "UPLOAD": {
+          "name": "Tu vídeo",
+          "line": "Subtítulos y formatos para tu propio vídeo"
+        },
+        "UGC": {
+          "name": "Vídeo de creador (UGC)",
+          "line": "Un creador con IA habla de tu producto"
+        },
+        "HOOK_DEMO": {
+          "name": "Gancho + demo",
+          "line": "Una reacción como gancho y luego tu demo"
+        },
+        "WALL_OF_TEXT": {
+          "name": "Muro de texto",
+          "line": "Un bloque de texto sobre un vídeo tranquilo"
+        }
+      },
+      "basicDefault": "Tu plan empieza con Presentación, que usa ¼ de vídeo de tu cupo. Puedes elegir cualquier formato.",
+      "moreOptions": "Más opciones",
+      "usesQuick": "Usa ¼ de vídeo",
+      "usesVideos": "Usa {count, number} de tus vídeos",
+      "allowanceLeft": "Quedan {left} de {limit} {period, select, week {esta semana} other {este mes}}",
+      "submitShortcut": "Ctrl o ⌘ + Intro para generar",
+      "groups": {
+        "format": "Plataformas y duración",
+        "brand": "Marca e idioma",
+        "message": "Público y llamada a la acción",
+        "publishing": "Aprobación y programación",
+        "quality": "Calidad"
+      }
     },
     "problems": {
       "businessRequired": "Primero elige un negocio.",
@@ -693,7 +726,6 @@
         "defaultKit": "{name} (predeterminado)"
       },
       "advanced": {
-        "toggle": "Opciones avanzadas",
         "audience": "Público objetivo",
         "audiencePlaceholder": "p. ej., personas que compran su primera vivienda",
         "cta": "Llamada a la acción",
@@ -894,6 +926,27 @@
       },
       "length": "Duración",
       "seconds": "{count, number} s"
+    },
+    "videoModel": {
+      "legend": "Modelo de vídeo",
+      "automatic": "Automático (recomendado)",
+      "automaticLine": "Studio elige un modelo disponible para cada clip y cambia si uno está ocupado.",
+      "speed": "{minutes, number} min por clip",
+      "maxClip": "hasta {seconds, number} s",
+      "costStaff": "{amount} por clip de 6 s",
+      "droppedChoice": "El modelo elegido no está disponible en este nivel de calidad, así que se usa Automático.",
+      "hint": {
+        "BRIEF": "Crea los clips con IA de este vídeo.",
+        "UGC": "Crea las escenas con IA. Los clips del creador siempre usan los modelos de creador.",
+        "HOOK_DEMO": "Crea la reacción del gancho."
+      },
+      "capability": {
+        "text_to_video": "Solo texto",
+        "image_to_video": "Solo foto",
+        "both": "Texto o foto"
+      },
+      "change": "Cambiar modelo",
+      "hide": "Ocultar modelos"
     }
   },
   "review": {

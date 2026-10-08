@@ -71,13 +71,13 @@ function promptFits(prompt: string, max: number): boolean {
 
 // 4:5 is offered by none of these models; the nearest portrait ratio is used and the composer's
 // fit "cover" crops the difference (as for Luma). 1:1 is skipped where no square ratio exists.
-const PORTRAIT_LANDSCAPE: Partial<Record<AspectRatio, string>> = {
+export const PORTRAIT_LANDSCAPE: Partial<Record<AspectRatio, string>> = {
   '9:16': '9:16',
   '16:9': '16:9',
   '4:5': '9:16',
 };
 
-const H3_RATIOS: Record<AspectRatio, string> = {
+export const H3_RATIOS: Record<AspectRatio, string> = {
   '9:16': '9:16',
   '16:9': '16:9',
   '1:1': '1:1',
@@ -85,11 +85,11 @@ const H3_RATIOS: Record<AspectRatio, string> = {
 };
 
 const H3_MIN_SEC = 0.92;
-const H3_MAX_SEC = 15;
+export const H3_MAX_SEC = 15;
 const H3_MAX_PROMPT = 50_000;
-const LTX_DURATIONS = [6, 8, 10, 12, 14, 16, 18, 20] as const;
+export const LTX_DURATIONS = [6, 8, 10, 12, 14, 16, 18, 20] as const;
 const LTX_MAX_PROMPT = 5000;
-const VEO_LITE_DURATIONS = [4, 6, 8] as const;
+export const VEO_LITE_DURATIONS = [4, 6, 8] as const;
 // fal does not state a Veo 3.1 Lite prompt limit; Veo 3.1 Fast's schema caps prompts at 20000.
 const VEO_LITE_MAX_PROMPT = 20_000;
 
