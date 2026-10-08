@@ -3164,7 +3164,25 @@
         "forceApprovals": "强制批准",
         "beta": "测试版",
         "users": "用户",
-        "subscriptions": "订阅"
+        "subscriptions": "订阅",
+        "billing": "订阅与计费"
+      },
+      "menu": {
+        "label": "管理分区",
+        "jump": "前往分区",
+        "halted": "已停止",
+        "groups": {
+          "operations": "运维",
+          "content": "内容",
+          "customers": "客户",
+          "platform": "平台"
+        }
+      },
+      "billingViews": {
+        "label": "视图",
+        "overview": "概览与 MRR",
+        "records": "Stripe 记录",
+        "entitlements": "权益覆盖"
       }
     },
     "cost": {
@@ -5285,7 +5303,9 @@
           "reason": "移除原因",
           "button": "移除覆盖设置",
           "cleared": "覆盖设置已移除",
-          "trialWarning": "Stripe 仍显示试用：移除覆盖设置会恢复试用上限。若要保持关闭，请先保存一个勾选“立即结束试用”的覆盖设置。"
+          "trialWarning": "Stripe 仍显示试用：移除覆盖设置会恢复试用上限。若要保持关闭，请先保存一个勾选“立即结束试用”的覆盖设置。",
+          "confirmTitle": "移除此覆盖？",
+          "confirmButton": "是，移除"
         },
         "trial": {
           "title": "试用",

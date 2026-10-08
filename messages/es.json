@@ -3164,7 +3164,25 @@
         "forceApprovals": "Aprobaciones forzadas",
         "beta": "Beta",
         "users": "Usuarios",
-        "subscriptions": "Suscripciones"
+        "subscriptions": "Suscripciones",
+        "billing": "Suscripciones y facturación"
+      },
+      "menu": {
+        "label": "Secciones de administración",
+        "jump": "Ir a la sección",
+        "halted": "Detenido",
+        "groups": {
+          "operations": "Operaciones",
+          "content": "Contenido",
+          "customers": "Clientes",
+          "platform": "Plataforma"
+        }
+      },
+      "billingViews": {
+        "label": "Vista",
+        "overview": "Resumen y MRR",
+        "records": "Registros de Stripe",
+        "entitlements": "Ajustes manuales de derechos"
       }
     },
     "cost": {
@@ -5285,7 +5303,9 @@
           "reason": "Motivo para quitarlo",
           "button": "Quitar ajuste manual",
           "cleared": "Ajuste manual quitado",
-          "trialWarning": "Stripe sigue mostrando una prueba: al eliminar la anulación vuelven los límites de la prueba. Para evitarlo, guarde antes una anulación con «Finalizar la prueba ahora»."
+          "trialWarning": "Stripe sigue mostrando una prueba: al eliminar la anulación vuelven los límites de la prueba. Para evitarlo, guarde antes una anulación con «Finalizar la prueba ahora».",
+          "confirmTitle": "¿Quitar este ajuste manual?",
+          "confirmButton": "Sí, quitar"
         },
         "trial": {
           "title": "Prueba",

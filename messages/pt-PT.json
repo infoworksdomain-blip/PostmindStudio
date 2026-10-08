@@ -3164,7 +3164,25 @@
         "forceApprovals": "Aprovações forçadas",
         "beta": "Beta",
         "users": "Utilizadores",
-        "subscriptions": "Subscrições"
+        "subscriptions": "Subscrições",
+        "billing": "Subscrições e faturação"
+      },
+      "menu": {
+        "label": "Secções de administração",
+        "jump": "Ir para a secção",
+        "halted": "Parado",
+        "groups": {
+          "operations": "Operações",
+          "content": "Conteúdo",
+          "customers": "Clientes",
+          "platform": "Plataforma"
+        }
+      },
+      "billingViews": {
+        "label": "Vista",
+        "overview": "Visão geral e MRR",
+        "records": "Registos do Stripe",
+        "entitlements": "Substituições de direitos"
       }
     },
     "cost": {
@@ -5285,7 +5303,9 @@
           "reason": "Motivo da remoção",
           "button": "Remover substituição",
           "cleared": "Substituição removida",
-          "trialWarning": "A Stripe ainda mostra um teste: remover a substituição traz de volta os limites do teste. Para o evitar, guarde primeiro uma substituição com «Encerrar o teste agora»."
+          "trialWarning": "A Stripe ainda mostra um teste: remover a substituição traz de volta os limites do teste. Para o evitar, guarde primeiro uma substituição com «Encerrar o teste agora».",
+          "confirmTitle": "Remover esta substituição?",
+          "confirmButton": "Sim, remover"
         },
         "trial": {
           "title": "Teste",

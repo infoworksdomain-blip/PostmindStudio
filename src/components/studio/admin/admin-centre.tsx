@@ -2,10 +2,8 @@
 
 import { ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useApi } from '@/lib/client/api';
 import { useMe } from '../account/use-me';
 import { EmptyState, ErrorState, PageHeader } from '../primitives';
@@ -19,13 +17,15 @@ import { RedrivePanel } from './redrive-panel';
 import { ProvidersPanel, QueuesPanel } from './health-panels';
 import { LegalReadinessWarning } from './legal-readiness-warning';
 import { OrganisationsTab } from './organisations/organisations-tab';
-import { SubscriptionsTab } from './subscriptions/subscriptions-tab';
 import { UsersTab } from './users/users-tab';
 import { SafetyReviewPanel } from './safety-review-panel';
 import { UsagePanel } from './usage-panel';
 import { BetaPanel } from './beta-panel';
 import { SafetyAuditPanel } from './safety-audit-panel';
 import { AdminBillingTab } from './billing/billing-tab';
+import { AdminMenu } from './admin-menu';
+import { groupOf, SECTION_KEY, type AdminSection, type BillingView } from './admin-sections';
+import { useAdminSection } from './use-admin-section';
 import { isForbidden, type KillSwitchState } from './types';
 
 // BACKLOG 10.11 / spec 16.4 — Admin Centre (PostMind staff only). Every /admin route calls
@@ -62,57 +62,58 @@ export function StaffOnly() {
   );
 }
 
-const TABS = [
-  'kill-switch',
-  'features',
-  'redrive',
-  'library',
-  'cost',
-  'queues',
-  'providers',
-  'safety',
-  'safety-audit',
-  'organisations',
-  // Phase 18: the standalone directory tabs.
-  'users',
-  'subscriptions',
-  'usage',
-  'dead-letters',
-  'force-approvals',
-  'beta',
-] as const;
-
-type Tab = (typeof TABS)[number];
-
-// Tab value (URL ?tab=) → catalogue key under admin.centre.tabs.
-const TAB_KEY = {
-  'kill-switch': 'killSwitch',
-  features: 'features',
-  redrive: 'redrive',
-  library: 'library',
-  cost: 'cost',
-  queues: 'queues',
-  providers: 'providers',
-  safety: 'safety',
-  'safety-audit': 'safetyAudit',
-  organisations: 'organisations',
-  users: 'users',
-  subscriptions: 'subscriptions',
-  usage: 'usage',
-  'dead-letters': 'deadLetters',
-  'force-approvals': 'forceApprovals',
-  beta: 'beta',
-} as const satisfies Record<Tab, string>;
+/** Each section's panel. */
+function SectionPanel({
+  section,
+  view,
+  onViewChange,
+}: {
+  section: AdminSection;
+  view: BillingView;
+  onViewChange: (view: BillingView) => void;
+}) {
+  switch (section) {
+    case 'kill-switch':
+      return <KillSwitchPanel />;
+    case 'queues':
+      return <QueuesPanel />;
+    case 'dead-letters':
+      return <DeadLetterPanel />;
+    case 'redrive':
+      return <RedrivePanel />;
+    case 'providers':
+      return <ProvidersPanel />;
+    case 'library':
+      return <LibraryAdminPanel />;
+    case 'safety':
+      return <SafetyReviewPanel />;
+    case 'safety-audit':
+      return <SafetyAuditPanel />;
+    case 'force-approvals':
+      return <ForceApprovalsPanel />;
+    case 'organisations':
+      return <OrganisationsTab />;
+    case 'users':
+      return <UsersTab />;
+    case 'billing':
+      return <AdminBillingTab view={view} onViewChange={onViewChange} />;
+    case 'usage':
+      return <UsagePanel />;
+    case 'beta':
+      return <BetaPanel />;
+    case 'features':
+      return <FeaturesPanel />;
+    case 'cost':
+      return <CostReportPanel />;
+  }
+}
 
 export function AdminCentre() {
   const t = useTranslations('admin.centre');
-  const tBilling = useTranslations('billing.admin');
   const probe = useApi<KillSwitchState>('/admin/kill-switch');
-  // ?tab= opens a tab directly (the safety-review notification links to ?tab=safety).
-  const requested = useSearchParams()?.get('tab') ?? '';
-  const initialTab = ([...TABS, 'billing'] as readonly string[]).includes(requested)
-    ? requested
-    : 'kill-switch';
+  // ?tab= (and ?view=) open a section directly — the safety-review notification links to
+  // ?tab=safety — and stay in sync with the menu (25.13).
+  const { section, view, hrefFor, open } = useAdminSection();
   const header = (
     <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
   );
@@ -139,73 +140,39 @@ export function AdminCentre() {
       </>
     );
 
+  const title = t(`tabs.${SECTION_KEY[section]}`);
   return (
     <>
       {header}
       <LegalReadinessWarning />
-      <Tabs defaultValue={initialTab} className="min-w-0 gap-6">
-        {/* 18 tabs do not fit one row: a centred, scrolling row pushed the first tabs (Kill switch,
-            Features, Redrive) out of reach under the sidebar at 1280 px (20.10). They wrap. */}
-        <TabsList className="h-auto max-w-full flex-wrap justify-start group-data-horizontal/tabs:h-auto">
-          {TABS.map((tab) => (
-            <TabsTrigger key={tab} value={tab}>
-              {t(`tabs.${TAB_KEY[tab]}`)}
-            </TabsTrigger>
-          ))}
-          <TabsTrigger value="billing">{tBilling('tab')}</TabsTrigger>
-        </TabsList>
-        <TabsContent value="kill-switch">
-          <KillSwitchPanel />
-        </TabsContent>
-        <TabsContent value="features">
-          <FeaturesPanel />
-        </TabsContent>
-        <TabsContent value="redrive">
-          <RedrivePanel />
-        </TabsContent>
-        <TabsContent value="library">
-          <LibraryAdminPanel />
-        </TabsContent>
-        <TabsContent value="cost">
-          <CostReportPanel />
-        </TabsContent>
-        <TabsContent value="queues">
-          <QueuesPanel />
-        </TabsContent>
-        <TabsContent value="providers">
-          <ProvidersPanel />
-        </TabsContent>
-        <TabsContent value="safety">
-          <SafetyReviewPanel />
-        </TabsContent>
-        <TabsContent value="organisations">
-          <OrganisationsTab />
-        </TabsContent>
-        <TabsContent value="users">
-          <UsersTab />
-        </TabsContent>
-        <TabsContent value="subscriptions">
-          <SubscriptionsTab />
-        </TabsContent>
-        <TabsContent value="usage">
-          <UsagePanel />
-        </TabsContent>
-        <TabsContent value="dead-letters">
-          <DeadLetterPanel />
-        </TabsContent>
-        <TabsContent value="force-approvals">
-          <ForceApprovalsPanel />
-        </TabsContent>
-        <TabsContent value="safety-audit">
-          <SafetyAuditPanel />
-        </TabsContent>
-        <TabsContent value="beta">
-          <BetaPanel />
-        </TabsContent>
-        <TabsContent value="billing">
-          <AdminBillingTab />
-        </TabsContent>
-      </Tabs>
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-10">
+        <AdminMenu
+          current={section}
+          hrefFor={hrefFor}
+          onOpen={(next) => open(next)}
+          halted={probe.data.global.enabled}
+        />
+        <section
+          aria-labelledby="admin-section-title"
+          data-section={section}
+          className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6"
+        >
+          <div className="grid gap-0.5">
+            <p className="text-xs font-medium text-muted-foreground">
+              {t(`menu.groups.${groupOf(section)}`)}
+            </p>
+            <h2 id="admin-section-title" className="font-display text-xl leading-tight">
+              {title}
+            </h2>
+          </div>
+          <SectionPanel
+            key={section}
+            section={section}
+            view={view}
+            onViewChange={(next) => open('billing', next)}
+          />
+        </section>
+      </div>
     </>
   );
 }

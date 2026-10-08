@@ -3164,7 +3164,25 @@
         "forceApprovals": "Approvazioni forzate",
         "beta": "Beta",
         "users": "Utenti",
-        "subscriptions": "Abbonamenti"
+        "subscriptions": "Abbonamenti",
+        "billing": "Abbonamenti e fatturazione"
+      },
+      "menu": {
+        "label": "Sezioni di amministrazione",
+        "jump": "Vai alla sezione",
+        "halted": "Fermato",
+        "groups": {
+          "operations": "Operazioni",
+          "content": "Contenuti",
+          "customers": "Clienti",
+          "platform": "Piattaforma"
+        }
+      },
+      "billingViews": {
+        "label": "Vista",
+        "overview": "Panoramica e MRR",
+        "records": "Record Stripe",
+        "entitlements": "Override dei diritti"
       }
     },
     "cost": {
@@ -5285,7 +5303,9 @@
           "reason": "Motivo della rimozione",
           "button": "Rimuovi override",
           "cleared": "Override rimosso",
-          "trialWarning": "Stripe mostra ancora una prova: rimuovendo la deroga tornano i limiti della prova. Per evitarlo, salva prima una deroga con «Termina la prova ora»."
+          "trialWarning": "Stripe mostra ancora una prova: rimuovendo la deroga tornano i limiti della prova. Per evitarlo, salva prima una deroga con «Termina la prova ora».",
+          "confirmTitle": "Rimuovere questo override?",
+          "confirmButton": "Sì, rimuovi"
         },
         "trial": {
           "title": "Prova",

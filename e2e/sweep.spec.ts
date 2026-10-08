@@ -585,7 +585,9 @@ test('a superadmin with no organisation reaches every admin tab', async ({ page 
 
   await w.visit('/admin', { expectPath: /^\/admin$/ });
   await expect(page.getByRole('heading', { name: 'Admin Centre' })).toBeVisible();
-  const tabs = page.getByRole('tab');
+  // 25.13: the sections are links in the admin side menu.
+  const tabs = page.getByRole('navigation', { name: 'Admin sections' }).getByRole('link');
+  await tabs.first().waitFor();
   const count = await tabs.count();
   for (let i = 0; i < count; i += 1) {
     const tab = tabs.nth(i);
@@ -623,7 +625,10 @@ test('a superadmin with no organisation reaches every admin tab', async ({ page 
     },
   });
   w.label('/admin organisations: end trial');
-  await page.getByRole('tab', { name: 'Organisations' }).click();
+  await page
+    .getByRole('navigation', { name: 'Admin sections' })
+    .getByRole('link', { name: 'Organisations' })
+    .click();
   await page.getByLabel('Search organisations').fill(`Sweep Trial ${run}`);
   await page.getByRole('button', { name: 'Search', exact: true }).click();
   await page.getByRole('button', { name: `Open Sweep Trial ${run}` }).click();

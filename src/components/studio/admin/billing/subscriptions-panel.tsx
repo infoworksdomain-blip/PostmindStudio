@@ -53,10 +53,14 @@ export function SubscriptionsPanel() {
     {
       id: 'organisation',
       header: t('columns.organisation'),
+      rowHeader: true,
+      sortValue: (s) => s.organisationName ?? s.organisationId,
       cell: (s) => (
         <>
           <span className="block font-medium">{s.organisationName ?? t('unknownOrg')}</span>
-          <span className="block text-xs text-muted-foreground">{s.organisationId}</span>
+          <span className="block font-mono text-xs font-normal text-muted-foreground" dir="ltr">
+            {s.organisationId}
+          </span>
         </>
       ),
     },
@@ -70,12 +74,15 @@ export function SubscriptionsPanel() {
       id: 'mrr',
       header: t('columns.mrr'),
       align: 'end',
-      className: 'tabular-nums',
+      className: 'font-mono text-xs',
+      sortValue: (s) => s.mrrPence,
       cell: (s) => f.pence(s.mrrPence),
     },
     {
       id: 'periodEnd',
       header: t('columns.periodEnd'),
+      className: 'font-mono text-xs',
+      sortValue: (s) => (s.currentPeriodEnd ? new Date(s.currentPeriodEnd) : null),
       cell: (s) => f.date(s.currentPeriodEnd, { dateStyle: 'medium' }),
     },
     {
@@ -157,6 +164,7 @@ export function SubscriptionsPanel() {
         ) : (
           <DataTable
             caption={t('caption')}
+            dense
             columns={columns}
             rows={subscriptions}
             getRowId={(s) => s.id}

@@ -323,6 +323,17 @@ describe('DataTable', () => {
     expect(screen.queryByRole('region', { name: 'Actions for the selected rows' })).toBeNull();
   });
 
+  it('renders a rowHeader column as th scope=row so each row is named', () => {
+    const columns: DataTableColumn<Row>[] = [{ ...COLUMNS[0]!, rowHeader: true }, COLUMNS[1]!];
+    render(<DataTable caption="Spend" columns={columns} rows={ROWS} getRowId={(r) => r.id} />);
+    const table = screen.getByRole('table', { name: 'Spend' });
+    const header = within(table).getByRole('rowheader', { name: 'Beta' });
+    expect(header.tagName).toBe('TH');
+    expect(header).toHaveAttribute('scope', 'row');
+    expect(within(table).getAllByRole('rowheader')).toHaveLength(3);
+    expect(within(table).getByRole('cell', { name: '20' })).toBeInTheDocument();
+  });
+
   it('renders loading and empty rows', () => {
     const { rerender } = render(
       <DataTable caption="T" columns={COLUMNS} rows={undefined} getRowId={(r) => r.id} />,
