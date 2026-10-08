@@ -194,6 +194,8 @@ const WORKSPACE_PAGES = [
   '/business',
   // 25.8: Image Studio.
   '/images',
+  // 25.10: My media.
+  '/media',
   '/connections',
   '/approvals',
   '/settings/organisation',

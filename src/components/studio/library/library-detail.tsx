@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { mediaAspect } from '@/components/ui/media-tile';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError, useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
+import { cn } from '@/lib/utils';
 import { EmptyState, ErrorState } from '../primitives';
 import { BlueprintTimeline } from './blueprint-timeline';
 import { useAnalysisLabels } from './analysis-labels';
@@ -13,7 +15,8 @@ import { SimilarShelf } from './similar-shelf';
 import type { BlueprintResponse, LibraryVideoDetail } from './types';
 import { UseReferencePanel } from './use-reference-panel';
 
-// BACKLOG 10.7 — one reference video: preview, metadata, analysed structure (the
+// BACKLOG 10.7, redesigned in 25.10 (a large player on a matte stage beside the facts and the
+// "Use as reference" actions) — one reference video: preview, metadata, analysed structure (the
 // TEMPLATE blueprint when the licence allows it, otherwise only the INSPIRE style signature),
 // similar videos and "Use as reference".
 // BACKLOG 20.17 (operator decision 2026-10-01): the preview has sound. It is not muted and never
@@ -21,11 +24,11 @@ import { UseReferencePanel } from './use-reference-panel';
 // presses play. Hover previews on cards (video-card.tsx) stay muted. Still no download: the
 // browser's download control is hidden and the signed URL lives 10 minutes (A3.10).
 
-function Fact({ label, value }: { label: string; value: string }) {
+function Fact({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="min-w-0">
       <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="mt-0.5 truncate text-sm font-medium">{value}</dd>
+      <dd className={cn('mt-0.5 truncate text-sm font-medium', mono && 'font-mono')}>{value}</dd>
     </div>
   );
 }
@@ -51,7 +54,7 @@ function StructureSection({ id }: { id: string }) {
           {data.blueprint ? (
             <BlueprintTimeline blueprint={data.blueprint} />
           ) : (
-            <p className="rounded-xl border border-dashed border-border px-4 py-5 text-sm text-muted-foreground">
+            <p className="border-s-2 border-border-strong py-1 ps-4 text-sm text-muted-foreground">
               {t('inspireOnly')}
             </p>
           )}
@@ -85,7 +88,7 @@ function StructureSection({ id }: { id: string }) {
   }
   return (
     <section aria-labelledby="library-structure" className="min-w-0">
-      <h2 id="library-structure" className="mb-4 font-display text-2xl">
+      <h2 id="library-structure" className="mb-4 text-lg font-semibold tracking-tight">
         {t('heading')}
       </h2>
       {body}
@@ -105,7 +108,7 @@ export function LibraryDetail({ id }: { id: string }) {
   const back = (
     <Link
       href="/library"
-      className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+      className="mb-6 inline-flex items-center gap-1.5 rounded-control text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
     >
       <ArrowLeft className="size-4 rtl:-scale-x-100" /> {t('back')}
     </Link>
@@ -128,72 +131,80 @@ export function LibraryDetail({ id }: { id: string }) {
     );
   if (isLoading || !data)
     return (
-      <div aria-label={t('loading')} className="grid gap-6 md:grid-cols-[18rem_1fr]">
-        <Skeleton className="aspect-[9/16] rounded-2xl" />
-        <Skeleton className="h-64 rounded-xl" />
+      <div aria-label={t('loading')} className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <Skeleton className="h-[min(72dvh,680px)] rounded-panel" />
+        <Skeleton className="h-64 rounded-panel" />
       </div>
     );
 
   const video = data.video;
+  const landscape = mediaAspect(video.aspectRatio) === '16:9';
   return (
     <>
       {back}
-      <div className="grid gap-8 md:grid-cols-[minmax(0,18rem)_1fr] md:gap-12">
-        <div className="mx-auto w-full max-w-[18rem]">
-          <video
-            src={video.previewUrl}
-            poster={video.thumbnailUrl}
-            loop
-            playsInline
-            controls
-            controlsList="nodownload"
-            disablePictureInPicture
-            onContextMenu={(e) => e.preventDefault()}
-            preload="metadata"
-            aria-label={t('previewAria', { title: video.title })}
-            className="aspect-[9/16] w-full rounded-2xl bg-secondary object-cover shadow-[0_24px_48px_-24px_rgb(0_0_0/0.35)]"
-          />
-          <p className="mt-2 text-center text-xs text-muted-foreground">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-12">
+        {/* The stage: the player is the largest thing on the page, on a quiet matte. */}
+        <figure className="m-0 min-w-0">
+          <div className="grid place-items-center rounded-panel bg-surface-raised p-3 sm:p-6 dark:bg-black/50">
+            <video
+              src={video.previewUrl}
+              poster={video.thumbnailUrl}
+              loop
+              playsInline
+              controls
+              controlsList="nodownload"
+              disablePictureInPicture
+              onContextMenu={(e) => e.preventDefault()}
+              preload="metadata"
+              aria-label={t('previewAria', { title: video.title })}
+              className={cn(
+                'block max-w-full rounded-lg bg-black object-contain shadow-overlay',
+                landscape ? 'aspect-video w-full' : 'aspect-[9/16] h-[min(72dvh,680px)] w-auto',
+              )}
+            />
+          </div>
+          <figcaption className="mt-2 text-center text-xs text-muted-foreground">
             {t('previewNote', { minutes: Math.round(video.previewExpiresInSec / 60) })}
-          </p>
-        </div>
+          </figcaption>
+        </figure>
         <div className="min-w-0">
-          <p className="mb-2 text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
-            {video.category.name}
-          </p>
-          <h1 className="font-display text-4xl leading-none break-words md:text-5xl">
+          <p className="mb-2 text-xs font-medium text-muted-foreground">{video.category.name}</p>
+          <h1 className="font-display text-[1.75rem] leading-[1.1] break-words md:text-[2.25rem]">
             {video.title}
           </h1>
           {video.description && (
-            <p className="mt-4 max-w-prose text-sm text-muted-foreground">{video.description}</p>
+            <p className="mt-3 text-[0.9375rem] leading-relaxed text-foreground-secondary">
+              {video.description}
+            </p>
           )}
-          <dl className="mt-6 grid grid-cols-2 gap-4 border-y border-border/70 py-4 sm:grid-cols-4">
-            <Fact label={tf('length')} value={f.duration(video.durationSec)} />
-            <Fact label={tf('aspect')} value={video.aspectRatio} />
+          <dl className="mt-6 grid grid-cols-2 gap-4 border-y border-border py-4">
+            <Fact label={tf('length')} value={f.duration(video.durationSec)} mono />
+            <Fact label={tf('aspect')} value={video.aspectRatio} mono />
             <Fact
               label={tf('shots')}
               value={video.analysis ? f.number(video.analysis.shotCount) : none}
+              mono
             />
             <Fact label={tf('pace')} value={labels.pace(video.analysis?.paceTag)} />
           </dl>
           {video.tags.length > 0 && (
             <ul aria-label={t('tagsAria')} className="mt-4 flex flex-wrap gap-1.5">
-              {video.tags.map((t) => (
+              {video.tags.map((tag) => (
                 <li
-                  key={t}
+                  key={tag}
                   className="rounded-full bg-surface-raised px-2.5 py-0.5 text-xs text-foreground-secondary"
                 >
-                  {t}
+                  {tag}
                 </li>
               ))}
             </ul>
           )}
-          <div className="mt-8 max-w-md">
+          <div className="mt-8">
             <UseReferencePanel id={video.id} allowedModes={video.allowedModes} />
           </div>
         </div>
       </div>
-      <div className="mt-14 grid gap-14">
+      <div className="mt-rhythm-section grid gap-rhythm-section">
         <StructureSection id={video.id} />
         <SimilarShelf id={video.id} />
       </div>

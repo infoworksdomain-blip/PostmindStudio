@@ -227,10 +227,15 @@ export function thumbnailSvg(text: string, aspect: string, poster: string): stri
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
+/** 25.10: a render's current thumbnail (an uploaded / regenerated one, else the project's poster). */
+export function demoRenderThumbnail(renderId: string): string {
+  const { project, render } = findRender(renderId);
+  return thumbnails.get(render.id) ?? renderPoster(project);
+}
+
 route('GET', '/renders/:id', ({ params }) => {
-  const { project, render } = findRender(params.id ?? '');
-  const url = thumbnails.get(render.id) ?? renderPoster(project);
-  return { render: { ...render, thumbnailUrl: url } };
+  const { render } = findRender(params.id ?? '');
+  return { render: { ...render, thumbnailUrl: demoRenderThumbnail(render.id) } };
 });
 
 route('POST', '/renders/:id/thumbnail', ({ params, body }) => {

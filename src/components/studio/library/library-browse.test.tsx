@@ -6,6 +6,15 @@ import { withLocale } from '../../../../test/i18n-wrapper';
 import { BusinessProvider } from '../business-context';
 import { LibraryBrowse } from './library-browse';
 import { mockFetch, renderWithSWR, summary } from './test-helpers';
+import { filtersFromSearch, searchFromFilters } from './use-library-params';
+
+// 25.10: the filters live in the URL.
+const nav = vi.hoisted(() => ({ search: '', replace: vi.fn() }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), replace: nav.replace }),
+  usePathname: () => '/library',
+  useSearchParams: () => new URLSearchParams(nav.search),
+}));
 
 const categories = {
   ok: true,
@@ -24,6 +33,8 @@ const categories = {
 };
 
 afterEach(() => {
+  nav.search = '';
+  nav.replace.mockClear();
   vi.unstubAllGlobals();
   window.localStorage.clear();
 });
@@ -248,6 +259,44 @@ describe('LibraryBrowse', () => {
       'href',
       '/business',
     );
+  });
+});
+
+describe('LibraryBrowse URL filters', () => {
+  it('reads and writes the filters as ?q=&category=&length=&mood=&tags=', () => {
+    const f = filtersFromSearch('q=gym&category=food&length=medium&mood=calm&tags=a,b');
+    expect(f).toEqual({
+      search: 'gym',
+      category: 'food',
+      duration: 'medium',
+      mood: 'calm',
+      tags: 'a,b',
+    });
+    expect(filtersFromSearch('length=forever').duration).toBe('any');
+    expect(searchFromFilters(f)).toBe('?q=gym&category=food&length=medium&mood=calm&tags=a%2Cb');
+    expect(searchFromFilters(filtersFromSearch(''))).toBe('');
+  });
+
+  it('opens on the filters a link asks for and keeps changes in the URL', async () => {
+    const user = userEvent.setup();
+    nav.search = 'category=food&length=short';
+    const { calls } = mockFetch([
+      { match: '/library/categories', body: categories },
+      { match: '/library/videos', body: { ok: true, data: [summary()], nextCursor: null } },
+    ]);
+    renderWithSWR(<LibraryBrowse />);
+    await screen.findByRole('link', { name: /Morning coffee/ });
+    expect(screen.getByLabelText('Length')).toHaveValue('short');
+    const first = new URL(
+      calls.find((c) => c.url.includes('/library/videos'))?.url ?? '',
+      'http://x',
+    );
+    expect(first.searchParams.get('category')).toBe('food');
+    expect(first.searchParams.get('durationMax')).toBe('15');
+    await user.selectOptions(screen.getByLabelText('Length'), 'long');
+    expect(nav.replace).toHaveBeenLastCalledWith('/library?category=food&length=long', {
+      scroll: false,
+    });
   });
 });
 

@@ -78,7 +78,8 @@
         "automations": "自动化",
         "home": "首页",
         "plans": "月度计划",
-        "images": "图片"
+        "images": "图片",
+        "media": "我的媒体"
       },
       "newPost": "创建新帖子",
       "collapse": "收起侧边栏",
@@ -2767,7 +2768,10 @@
       "emptyFilters": "请尝试更宽泛的分类或减少标签。",
       "more": "更多参考视频",
       "noCloseTitle": "没有与“{query}”接近的结果",
-      "noCloseBody": "资料库中没有与该搜索接近的内容。请换个词，或浏览某个分类："
+      "noCloseBody": "资料库中没有与该搜索接近的内容。请换个词，或浏览某个分类：",
+      "gridAria": "参考视频",
+      "pagesAria": "分页",
+      "page": "第 {page} 页"
     },
     "filters": {
       "formAria": "筛选视频库",
@@ -6756,5 +6760,80 @@
     "dangerZone": "永久性更改",
     "dangerZoneHint": "这些更改会影响组织中的所有人，且无法撤销。",
     "providerKeysOwners": "只有所有者和管理员可以管理服务商密钥。如需更改，请联系他们。"
+  },
+  "media": {
+    "page": {
+      "title": "我的媒体",
+      "description": "你的成品视频、你上传的视频和你的图片库，集中在一处。"
+    },
+    "actions": {
+      "uploadVideo": "上传视频",
+      "addImages": "添加图片"
+    },
+    "filters": {
+      "label": "显示",
+      "all": "全部",
+      "video": "视频",
+      "image": "图片",
+      "upload": "上传"
+    },
+    "scope": {
+      "business": "正在显示顶部栏中选择的商家。",
+      "all": "正在显示所有商家。在顶部栏选择一个商家以缩小范围。"
+    },
+    "grid": {
+      "aria": "媒体",
+      "loading": "正在加载媒体",
+      "pagesAria": "分页",
+      "page": "第 {page} 页",
+      "more": "更多"
+    },
+    "type": {
+      "video": "视频",
+      "upload": "上传",
+      "image": "图片"
+    },
+    "uploadKind": {
+      "source_video": "上传的视频",
+      "demo_video": "演示视频"
+    },
+    "imageSource": {
+      "UPLOAD": "已上传",
+      "GENERATED": "已生成",
+      "SCRAPED": "来自你的网站",
+      "STOCK": "图库"
+    },
+    "untitledVideo": "未命名视频",
+    "untitledImage": "未命名图片",
+    "empty": {
+      "all": {
+        "title": "这里还没有内容",
+        "body": "成品视频、上传内容和图片会在你创建后出现在这里。"
+      },
+      "video": {
+        "title": "还没有成品视频",
+        "body": "视频通过检查后会出现在这里。"
+      },
+      "image": {
+        "title": "还没有图片",
+        "body": "在“商家与图片”中添加照片，或在 Image Studio 中生成。"
+      },
+      "upload": {
+        "title": "还没有上传",
+        "body": "在“创建”中上传你自己的视频，处理完成后会出现在这里。"
+      }
+    },
+    "preview": {
+      "loading": "正在加载视频",
+      "playerAria": "播放 {title}",
+      "type": "类型",
+      "format": "格式",
+      "length": "时长",
+      "size": "尺寸",
+      "dimensions": "{width} × {height}",
+      "added": "添加时间",
+      "download": "下载",
+      "openProject": "打开项目"
+    }
   }
 }

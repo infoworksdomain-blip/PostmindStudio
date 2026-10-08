@@ -12,11 +12,7 @@ import type { LibraryVideoSummary, ListResponse } from './types';
 // business's profile (GET /library/recommended?businessId=&category=).
 
 function Note({ children }: { children: ReactNode }) {
-  return (
-    <p className="rounded-xl border border-dashed border-border px-4 py-5 text-sm text-muted-foreground">
-      {children}
-    </p>
-  );
+  return <p className="border-t border-border py-4 text-sm text-muted-foreground">{children}</p>;
 }
 
 export function RecommendedShelf({ category }: { category: string }) {
@@ -56,12 +52,12 @@ export function RecommendedShelf({ category }: { category: string }) {
     );
 
   return (
-    <section aria-labelledby="library-recommended" className="mb-10 min-w-0">
-      <div className="mb-4 flex items-baseline justify-between gap-3">
-        <h2 id="library-recommended" className="font-display text-2xl">
+    <section aria-labelledby="library-recommended" className="mb-rhythm-section min-w-0">
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h2 id="library-recommended" className="text-lg font-semibold tracking-tight">
           {t('heading')}
         </h2>
-        <p className="hidden text-xs text-muted-foreground sm:block">{t('subheading')}</p>
+        <p className="text-xs text-muted-foreground">{t('subheading')}</p>
       </div>
       {body}
     </section>

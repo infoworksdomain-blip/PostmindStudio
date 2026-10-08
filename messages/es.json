@@ -78,7 +78,8 @@
         "automations": "Automatizaciones",
         "home": "Inicio",
         "plans": "Planes mensuales",
-        "images": "Imágenes"
+        "images": "Imágenes",
+        "media": "Mis medios"
       },
       "newPost": "Crear una publicación nueva",
       "collapse": "Contraer la barra lateral",
@@ -2767,7 +2768,10 @@
       "emptyFilters": "Prueba con una categoría más amplia o menos etiquetas.",
       "more": "Más referencias",
       "noCloseTitle": "No hay coincidencias cercanas para «{query}»",
-      "noCloseBody": "Nada en la biblioteca se parece a esta búsqueda. Prueba con otras palabras o explora una categoría:"
+      "noCloseBody": "Nada en la biblioteca se parece a esta búsqueda. Prueba con otras palabras o explora una categoría:",
+      "gridAria": "Vídeos de referencia",
+      "pagesAria": "Páginas",
+      "page": "Página {page}"
     },
     "filters": {
       "formAria": "Filtrar la biblioteca",
@@ -6756,5 +6760,80 @@
     "dangerZone": "Cambios permanentes",
     "dangerZoneHint": "Afectan a toda la organización y no se pueden deshacer.",
     "providerKeysOwners": "Solo los propietarios y administradores pueden gestionar las claves de proveedor. Pídeselo a uno de ellos si necesitas un cambio."
+  },
+  "media": {
+    "page": {
+      "title": "Mis medios",
+      "description": "Tus vídeos terminados, los vídeos que subiste y tu biblioteca de imágenes, en un solo lugar."
+    },
+    "actions": {
+      "uploadVideo": "Subir un vídeo",
+      "addImages": "Añadir imágenes"
+    },
+    "filters": {
+      "label": "Mostrar",
+      "all": "Todo",
+      "video": "Vídeos",
+      "image": "Imágenes",
+      "upload": "Subidas"
+    },
+    "scope": {
+      "business": "Mostrando el negocio elegido en la barra superior.",
+      "all": "Mostrando todos los negocios. Elige uno en la barra superior para acotar."
+    },
+    "grid": {
+      "aria": "Medios",
+      "loading": "Cargando medios",
+      "pagesAria": "Páginas",
+      "page": "Página {page}",
+      "more": "Más"
+    },
+    "type": {
+      "video": "Vídeo",
+      "upload": "Subida",
+      "image": "Imagen"
+    },
+    "uploadKind": {
+      "source_video": "Vídeo subido",
+      "demo_video": "Vídeo de demostración"
+    },
+    "imageSource": {
+      "UPLOAD": "Subida",
+      "GENERATED": "Generada",
+      "SCRAPED": "De tu web",
+      "STOCK": "De archivo"
+    },
+    "untitledVideo": "Vídeo sin título",
+    "untitledImage": "Imagen sin título",
+    "empty": {
+      "all": {
+        "title": "Aún no hay nada",
+        "body": "Los vídeos terminados, las subidas y las imágenes aparecen aquí a medida que los creas."
+      },
+      "video": {
+        "title": "Aún no hay vídeos terminados",
+        "body": "Un vídeo aparece aquí cuando supera sus comprobaciones."
+      },
+      "image": {
+        "title": "Aún no hay imágenes",
+        "body": "Añade fotos en Negocio e imágenes, o crea algunas en Image Studio."
+      },
+      "upload": {
+        "title": "Aún no hay subidas",
+        "body": "Sube tu propio vídeo en Crear. Aparece aquí cuando se ha procesado."
+      }
+    },
+    "preview": {
+      "loading": "Cargando el vídeo",
+      "playerAria": "Reproducir {title}",
+      "type": "Tipo",
+      "format": "Formato",
+      "length": "Duración",
+      "size": "Tamaño",
+      "dimensions": "{width} × {height}",
+      "added": "Añadido",
+      "download": "Descargar",
+      "openProject": "Abrir proyecto"
+    }
   }
 }

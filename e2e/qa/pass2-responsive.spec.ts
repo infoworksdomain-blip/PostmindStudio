@@ -132,6 +132,8 @@ const KEY_PAGES = (w: World): Array<[string, string, RegExp | string]> => [
   ['business and images', '/business', 'Business & images'],
   // 25.8: Image Studio.
   ['image studio', '/images', 'Images'],
+  // 25.10: My media.
+  ['my media', '/media', 'My media'],
   ['settings', '/settings/organisation', 'Organisation'],
 ];
 
