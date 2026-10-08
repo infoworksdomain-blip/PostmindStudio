@@ -381,7 +381,8 @@ test.describe('Your plan', () => {
     await expect(change.getByText(/Applies now: you pay/)).toBeVisible();
     const review = change.getByRole('button', { name: 'Review change' });
     await review.scrollIntoViewIfNeeded();
-    await expect(review).toBeInViewport({ ratio: 1 });
+    // Fully on screen, allowing for sub-pixel layout (0.99: a fraction of a pixel at 375 px).
+    await expect(review).toBeInViewport({ ratio: 0.99 });
     await expect(review).toBeEnabled();
     await expect(packs.getByRole('button', { name: /^Buy 5 HD videos/ })).toBeVisible();
     await expect(cancel.getByRole('button', { name: 'Cancel plan' })).toBeVisible();
