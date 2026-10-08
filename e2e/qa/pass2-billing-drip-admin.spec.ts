@@ -196,8 +196,10 @@ test.describe('Your plan', () => {
       timeout: 60_000,
     });
     await expect(owner.getByText('Active', { exact: true })).toBeVisible();
-    // The plan summary's price line (the change picker below repeats the bare total).
-    await expect(owner.getByText(`${gbp(8_700)} a month · excl. VAT`)).toBeVisible();
+    // The plan summary's price fact (25.12: the VAT note sits beside the total).
+    const price = owner.locator('dd').filter({ hasText: `${gbp(8_700)} a month` });
+    await expect(price).toBeVisible();
+    await expect(price).toContainText('excl. VAT');
     await expect(owner.getByText(`Renews on ${longDate(mock.periodEnd)}.`)).toBeVisible();
     await expect(owner.getByRole('heading', { name: 'Videos this month' })).toBeVisible();
     await expect(owner.getByRole('heading', { name: 'Your channels' })).toBeVisible();
@@ -253,7 +255,9 @@ test.describe('Your plan', () => {
       prorationDate: PRORATION_DATE,
     });
     await expect(owner.getByText('4 channels, monthly', { exact: true })).toBeVisible();
-    await expect(owner.getByText(`${gbp(11_600)} a month · excl. VAT`)).toBeVisible();
+    await expect(owner.locator('dd').filter({ hasText: `${gbp(11_600)} a month` })).toContainText(
+      'excl. VAT',
+    );
   });
 
   test('fewer channels: the preview says nothing to pay now; the change waits, then is undone', async () => {

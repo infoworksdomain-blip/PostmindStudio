@@ -145,9 +145,12 @@ describe.each(LOCALES)('Manage screens in %s', (locale) => {
         : ok({ data: [], keys: [] }),
     );
     renderScreen(withLocale(locale, <ConnectionsScreen navigate={vi.fn()} />));
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(m.connections.title);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      m.settingsNav.items.connections,
+    );
     expect(await screen.findByText(m.connections.posts.tiktok)).toBeInTheDocument();
-    expect(screen.getAllByText(m.connections.notConnected).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(m.connections.meta.guidance)).toHaveLength(2);
+    expect(screen.getAllByText(m.connections.state.notConnected).length).toBeGreaterThan(0);
+    // 25.12: Facebook and Instagram share one Meta card.
+    expect(screen.getAllByText(m.connections.meta.guidance)).toHaveLength(1);
   });
 });
