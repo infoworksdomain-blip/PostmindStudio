@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_STYLE } from './params';
 import {
+  charsPerLine,
   fontPx,
   fontSources,
   needsPreRender,
@@ -360,6 +361,28 @@ describe('overlayClip — clip placement', () => {
   it('includes a rotate transform when rotationDeg is non-zero', () => {
     const clip = overlayClip(overlayRow({ rotationDeg: -4 }), { frame: FRAME, offsetSec: 0 });
     expect(clip.transform).toEqual({ rotate: { angle: -4 } });
+  });
+});
+
+describe('overlayClip — balanced lines (25 polish)', () => {
+  const block =
+    'Three things our regulars order every Saturday morning before the market opener, fire';
+
+  it('leaves the text to the renderer by default', () => {
+    const clip = overlayClip(overlayRow({ text: block }), { frame: FRAME, offsetSec: 0 });
+    expect((clip.asset as Record<string, unknown>).text).toBe(block);
+  });
+
+  it('breaks the text into even lines within the estimated width when asked', () => {
+    const row = overlayRow({ text: block, fontSizePct: 4.4 });
+    const clip = overlayClip(row, { frame: FRAME, offsetSec: 0, balanceLines: true });
+    const text = (clip.asset as Record<string, unknown>).text as string;
+    const lines = text.split('\n');
+    const max = charsPerLine(fontPx(row, FRAME), FRAME);
+    expect(lines.length).toBeGreaterThan(1);
+    expect(lines.every((l) => [...l].length <= max)).toBe(true);
+    expect(lines.join(' ')).toBe(block);
+    expect(lines[lines.length - 1]?.split(' ').length).toBeGreaterThan(1);
   });
 });
 

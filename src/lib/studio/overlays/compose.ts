@@ -71,6 +71,8 @@ export async function buildOverlayTrack(
     preRender: PreRenderDeps;
     /** 15.C5: the script's language — non-Latin fonts and RTL (overlays/script-fonts.ts). */
     language?: string | null;
+    /** 25 polish: even line breaks for native text clips (the wall-of-text block). */
+    balanceLines?: boolean;
   },
 ): Promise<OverlayTrack> {
   const track: OverlayTrack = { clips: [], fonts: [], skipped: [] };
@@ -106,7 +108,13 @@ export async function buildOverlayTrack(
       track.clips.push(preRenderedClip(overlay, { src, offsetSec }));
     } else {
       families.add(overlay.fontFamily);
-      track.clips.push(overlayClip(overlay, { frame: input.frame, offsetSec }));
+      track.clips.push(
+        overlayClip(overlay, {
+          frame: input.frame,
+          offsetSec,
+          balanceLines: input.balanceLines ?? false,
+        }),
+      );
     }
   }
   track.fonts = fontSources(families, input.preRender.fontsBaseUrl);
