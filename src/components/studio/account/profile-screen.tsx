@@ -14,7 +14,7 @@ import { PageHeader, Section } from '../primitives';
 import { ThemeSwitcher } from '../theme-switcher';
 
 // Phase 18 Track A — /account/profile: name, the language Studio emails you in, and email change
-// (§5.5: the current address approves the change, the new one confirms it).
+// (§5.5: the current address approves the change, the new one confirms it), and Appearance.
 
 const LANGUAGE_NAMES: Record<string, string> = {
   'en-GB': 'English (UK)',
@@ -82,7 +82,7 @@ export function ProfileScreen() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="max-w-3xl">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
       <AuthError error={error} />
       <div className="space-y-10">
@@ -154,7 +154,13 @@ export function ProfileScreen() {
             </Button>
           </form>
         </Section>
-        <Section title={t('appearanceTitle')} description={t('appearanceDescription')}>
+        {/* 25.12: Settings → Appearance links here (/account/profile#appearance). */}
+        <Section
+          id="appearance"
+          className="scroll-mt-24"
+          title={t('appearanceTitle')}
+          description={t('appearanceDescription')}
+        >
           <ThemeSwitcher />
         </Section>
       </div>

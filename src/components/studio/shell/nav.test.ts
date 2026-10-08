@@ -41,6 +41,8 @@ describe('navigation map', () => {
     expect(isNavActive('/projects/p1', '/projects')).toBe(true);
     expect(isNavActive('/plans/new', '/plans')).toBe(true);
     expect(isNavActive('/settings/billing', '/settings/organisation')).toBe(true);
+    expect(isNavActive('/settings/provider-keys', '/settings/organisation')).toBe(true);
+    expect(isNavActive('/account/security', '/settings/organisation')).toBe(true);
     expect(isNavActive('/projectsx', '/projects')).toBe(false);
     expect(isNavActive('/home', '/new')).toBe(false);
   });

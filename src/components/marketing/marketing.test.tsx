@@ -6,42 +6,46 @@ import { LandingPage } from './landing-page';
 import { LegalDocumentView } from './legal-document-view';
 import { MarketingShell } from './marketing-shell';
 
-// Phase 18 Track E — the public landing page, the marketing frame and the legal document view in
-// en-GB, ar (right to left) and zh-Hans.
+// Phase 18 Track E / 25.5 — the public landing page, the marketing frame and the legal document view
+// in en-GB, ar (right to left) and zh-Hans.
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/' }));
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe('LandingPage', () => {
-  // Operator decision 2026-10-04 (marketing.features.pricing from .i18n-tmp/frag-costs/en-GB.json).
-  it('promises one simple price per channel, never budgets, spend or cost caps', () => {
+  it('teases one price per channel from the channel plan, never budgets, spend or cost caps', () => {
     render(<LandingPage />);
-    const features = screen
-      .getByRole('heading', { name: /one-person marketing team/ })
+    const pricing = screen
+      .getByRole('heading', { name: 'One simple price per channel' })
       .closest('section') as HTMLElement;
-    expect(within(features).getByText('One simple price per channel')).toBeInTheDocument();
-    expect(features).not.toHaveTextContent(/budget|spending|cost/i);
+    expect(pricing).toHaveTextContent('£29');
+    expect(pricing).toHaveTextContent('per channel a month');
+    expect(pricing).toHaveTextContent('8 short HD videos a month, or up to 32 quick posts');
+    expect(pricing).toHaveTextContent('¼ of a video');
+    expect(pricing).not.toHaveTextContent(/budget|spending|cost/i);
+    expect(within(pricing).getByRole('link', { name: /See pricing/ })).toHaveAttribute(
+      'href',
+      '/pricing',
+    );
   });
 
-  it('tells the SME story and sends visitors to sign-up and pricing', () => {
+  it('says what Studio does and sends visitors to sign-up and pricing', () => {
     render(
       <MarketingShell entityName="Crumb Ltd">
         <LandingPage />
       </MarketingShell>,
     );
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'A month of short videos, made before your coffee cools.',
-    );
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1).toHaveTextContent('Create, plan and publish your social videos from one brief.');
+    expect(h1).not.toHaveTextContent(/coffee cools/);
     const trials = screen.getAllByRole('link', { name: /Start free trial/ });
+    expect(trials.length).toBeGreaterThanOrEqual(3);
     expect(trials.every((a) => a.getAttribute('href') === '/sign-up')).toBe(true);
-    expect(screen.getAllByRole('link', { name: /pricing|Compare plans/i })[0]).toHaveAttribute(
+    expect(screen.getAllByRole('link', { name: /See pricing/ })[0]).toHaveAttribute(
       'href',
       '/pricing',
     );
-    expect(screen.getByRole('heading', { name: 'Brief. Review. Publish.' })).toBeVisible();
-    const platforms = screen.getByRole('heading', { name: 'One brief, cut for every feed' });
-    expect(platforms.parentElement).toHaveTextContent('TikTok');
     const legal = screen.getByRole('navigation', { name: 'Legal' });
     expect(within(legal).getAllByRole('link')).toHaveLength(6);
     expect(within(legal).getByRole('link', { name: 'Data Processing Agreement' })).toHaveAttribute(
@@ -49,6 +53,46 @@ describe('LandingPage', () => {
       '/legal/dpa',
     );
     expect(screen.getByText(/Crumb Ltd/)).toBeVisible();
+  });
+
+  it('has the ten sections in order, each a labelled region with one h2', () => {
+    const { container } = render(<LandingPage />);
+    const titles = [...container.querySelectorAll('section[aria-labelledby]')].map(
+      (s) => document.getElementById(s.getAttribute('aria-labelledby')!)?.textContent,
+    );
+    expect(titles).toEqual([
+      'Create, plan and publish your social videos from one brief.',
+      'Every kind of post a small business needs.',
+      'A finished video from one sentence.',
+      'Your month, on one calendar.',
+      'One post, every platform you use.',
+      'One prompt, a month of posts.',
+      'See what works, then make more of it.',
+      'Your colours, your voice, your sign-off.',
+      'One simple price per channel',
+      'Make your first post today.',
+    ]);
+  });
+
+  it('names the platforms as text, the real features and no provider or safety claim', () => {
+    const { container } = render(<LandingPage />);
+    const platforms = screen.getByRole('list', { name: 'Platforms Studio publishes to' });
+    expect(
+      within(platforms)
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual(['TikTok', 'Instagram', 'YouTube Shorts', 'Facebook', 'LinkedIn', 'X']);
+    for (const feature of [
+      'Plan my month',
+      'Blitz',
+      'Automations',
+      'Approvals that fit your team',
+    ]) {
+      expect(screen.getByText(feature)).toBeVisible();
+    }
+    const text = container.textContent ?? '';
+    expect(text).not.toMatch(/content safety|Seedance|Runway|Luma|Kling|Veo|AI-powered/i);
+    expect(text).not.toMatch(/Stock photos/);
   });
 
   it('renders in Arabic (right to left) and Simplified Chinese', () => {

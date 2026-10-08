@@ -1,27 +1,72 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
-import { Link2, Loader2, RefreshCw, Unplug } from 'lucide-react';
+import { Link2, RefreshCw, Unplug } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { StatusPill } from '@/components/ui/status-pill';
 import { useFormat } from '@/lib/client/format';
 import type { PlatformConnection } from '@/lib/client/types';
-import { StateBadge } from '../primitives';
 import { CheckedLine } from './checked-line';
 import { ConfirmDialog } from '../publications/confirm-dialog';
+import { platformState, STATE_TONE, type PlatformState } from './connection-status';
 import type { OAUTH_PLATFORMS } from './platforms';
 import { TikTokPostModeSetting } from './tiktok-post-mode';
 
-// One platform row: its connected accounts (with a visible needs-reconnect state), a connect
-// button and per-account disconnect behind a confirmation.
+// BACKLOG 25.12 — one platform in the Connections list: its mark, name, what Studio does there
+// and one connection state, the primary action, then its accounts (each with when it was
+// connected or why it stopped working, Reconnect and Disconnect behind a confirmation).
 
 type PlatformInfo = (typeof OAUTH_PLATFORMS)[number];
+
+/** A quiet monogram: no third-party logos, the name beside it carries the meaning. */
+export function PlatformMark({ label }: { label: string }) {
+  return (
+    <span
+      aria-hidden
+      className="grid size-10 shrink-0 place-items-center rounded-field bg-surface-raised text-sm font-semibold text-foreground-secondary"
+    >
+      {label.charAt(0)}
+    </span>
+  );
+}
+
+/** The heading block of a platform: name, state pill and what Studio can do there. */
+export function PlatformHeading({
+  id,
+  label,
+  state,
+  children,
+}: {
+  id: PlatformConnection['platform'];
+  label: string;
+  state: PlatformState;
+  children?: ReactNode;
+}) {
+  const t = useTranslations('connections');
+  return (
+    <div className="min-w-0 flex-1">
+      <div className="flex flex-wrap items-center gap-2">
+        <h2 id={`platform-${id}`} className="text-base font-semibold tracking-tight">
+          {label}
+        </h2>
+        <StatusPill tone={STATE_TONE[state]} dot>
+          {t(`state.${state}`)}
+        </StatusPill>
+      </div>
+      <p className="mt-0.5 text-sm text-foreground-secondary">{t(`posts.${id}`)}</p>
+      {children}
+    </div>
+  );
+}
 
 export function AccountRow({
   connection,
   label,
   connecting,
   canReconnect = true,
+  staleText,
+  connectedText,
   onReconnect,
   onDisconnect,
   onSettingsChanged,
@@ -31,8 +76,13 @@ export function AccountRow({
   connecting: boolean;
   /** False while the platform's app is not set up: a Reconnect would only fail. */
   canReconnect?: boolean;
-  onReconnect: () => void;
-  onDisconnect: () => Promise<boolean>;
+  /** Overrides why a stale account stopped working (Meta's own wording). */
+  staleText?: string;
+  /** Overrides "Connected <date>" (an account registered by PostMind). */
+  connectedText?: string;
+  onReconnect?: () => void;
+  /** Absent: the account is read-only here (managed in PostMind). */
+  onDisconnect?: () => Promise<boolean>;
   /** 22.7: refresh after a setting changed (TikTok posting preference); absent = no settings. */
   onSettingsChanged?: () => void | Promise<unknown>;
 }) {
@@ -42,48 +92,60 @@ export function AccountRow({
   const stale = connection.state === 'needs_reconnect';
   const account = connection.platformAccountName;
   return (
-    <li className="flex flex-wrap items-center justify-between gap-3 py-3">
-      <div className="min-w-0">
-        <p className="flex flex-wrap items-center gap-2">
-          <span className="truncate font-medium">{connection.platformAccountName}</span>
+    <li className="grid gap-2 py-3.5">
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">{account}</p>
           {stale ? (
-            <StateBadge label={t('needsReconnecting')} tone="warn" />
+            <p className="mt-0.5 max-w-prose text-xs leading-relaxed text-warning-foreground">
+              {staleText ?? t('stale')}
+            </p>
           ) : (
-            <StateBadge label={t('connected')} tone="good" />
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {connectedText ?? t('connectedOn', { date: f.date(connection.connectedAt) })}
+            </p>
           )}
-        </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {stale ? t('stale') : t('connectedOn', { date: f.date(connection.connectedAt) })}
-        </p>
-        {!stale && <CheckedLine connection={connection} />}
-        {connection.platform === 'tiktok' && onSettingsChanged && (
-          <TikTokPostModeSetting connection={connection} onChanged={onSettingsChanged} />
-        )}
+          {!stale && <CheckedLine connection={connection} />}
+        </div>
+        <div className="flex flex-wrap items-center gap-1">
+          {stale && canReconnect && onReconnect && (
+            <Button size="sm" loading={connecting} onClick={onReconnect}>
+              {!connecting && <RefreshCw />} {t('reconnect')}
+            </Button>
+          )}
+          {onDisconnect && (
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label={t('disconnectAria', { account })}
+              onClick={() => setConfirming(true)}
+            >
+              <Unplug /> <span className="sr-only sm:not-sr-only">{t('disconnect')}</span>
+            </Button>
+          )}
+        </div>
       </div>
-      <div className="flex items-center gap-1">
-        {stale && canReconnect && (
-          <Button size="sm" disabled={connecting} onClick={onReconnect}>
-            {connecting ? <Loader2 className="animate-spin" /> : <RefreshCw />} {t('reconnect')}
-          </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="sm"
-          aria-label={t('disconnectAria', { account })}
-          onClick={() => setConfirming(true)}
-        >
-          <Unplug /> <span className="sr-only sm:not-sr-only">{t('disconnect')}</span>
-        </Button>
-      </div>
-      <ConfirmDialog
-        open={confirming}
-        onOpenChange={setConfirming}
-        title={t('disconnectConfirm.title', { account })}
-        description={t('disconnectConfirm.body', { platform: label })}
-        confirmLabel={t('disconnect')}
-        onConfirm={onDisconnect}
-      />
+      {connection.platform === 'tiktok' && onSettingsChanged && (
+        <TikTokPostModeSetting connection={connection} onChanged={onSettingsChanged} />
+      )}
+      {onDisconnect && (
+        <ConfirmDialog
+          open={confirming}
+          onOpenChange={setConfirming}
+          title={t('disconnectConfirm.title', { account })}
+          description={t('disconnectConfirm.body', { platform: label })}
+          confirmLabel={t('disconnect')}
+          onConfirm={onDisconnect}
+        />
+      )}
     </li>
+  );
+}
+
+/** The accounts under a platform, indented to line up with its name. */
+export function AccountList({ children }: { children: ReactNode }) {
+  return (
+    <ul className="mt-3 divide-y divide-border border-t border-border sm:ms-14">{children}</ul>
   );
 }
 
@@ -107,54 +169,48 @@ export function PlatformCard({
 }) {
   const t = useTranslations('connections');
   const connected = connections.length > 0;
+  const state = platformState(connections, configured);
   return (
-    <section
-      aria-labelledby={`platform-${platform.id}`}
-      className="grid gap-4 border-b border-border/70 py-6 md:grid-cols-[14rem_1fr]"
-    >
-      <div>
-        <h2 id={`platform-${platform.id}`} className="font-display text-3xl leading-none">
-          {platform.label}
-        </h2>
-        <p className="mt-1.5 text-xs text-muted-foreground">{t(`posts.${platform.id}`)}</p>
-      </div>
-      <div className="min-w-0">
-        {connected ? (
-          <ul className="divide-y divide-border/70">
-            {connections.map((c) => (
-              <AccountRow
-                key={c.id}
-                connection={c}
-                label={platform.label}
-                connecting={connecting}
-                canReconnect={configured}
-                onReconnect={onConnect}
-                onDisconnect={() => onDisconnect(c)}
-                onSettingsChanged={onSettingsChanged}
-              />
-            ))}
-          </ul>
-        ) : (
-          <p className="py-3 text-sm text-muted-foreground">{t('notConnected')}</p>
-        )}
-        {configured ? (
+    <section aria-labelledby={`platform-${platform.id}`} className="border-b border-border py-5">
+      <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
+        <PlatformMark label={platform.label} />
+        <PlatformHeading id={platform.id} label={platform.label} state={state}>
+          {!configured && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t('notConfigured', { platform: platform.label })}
+            </p>
+          )}
+        </PlatformHeading>
+        {configured && (
           <Button
-            className="mt-2"
             variant={connected ? 'outline' : 'default'}
-            disabled={connecting}
+            size="sm"
+            loading={connecting}
             onClick={onConnect}
           >
-            {connecting ? <Loader2 className="animate-spin" /> : <Link2 />}
+            {!connecting && <Link2 />}
             {connected
               ? t('addAnother', { platform: platform.label })
               : t('connect', { platform: platform.label })}
           </Button>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            {t('notConfigured', { platform: platform.label })}
-          </p>
         )}
       </div>
+      {connected && (
+        <AccountList>
+          {connections.map((c) => (
+            <AccountRow
+              key={c.id}
+              connection={c}
+              label={platform.label}
+              connecting={connecting}
+              canReconnect={configured}
+              onReconnect={onConnect}
+              onDisconnect={() => onDisconnect(c)}
+              onSettingsChanged={onSettingsChanged}
+            />
+          ))}
+        </AccountList>
+      )}
     </section>
   );
 }

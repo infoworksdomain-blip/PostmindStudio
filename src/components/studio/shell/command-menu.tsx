@@ -30,6 +30,7 @@ import {
   type CommandEntry,
   type CommandGroup,
 } from './command-model';
+import { SETTINGS_ITEMS } from '../settings/settings-map';
 import { NAV } from './nav';
 import { useShowStaff } from './use-show-staff';
 
@@ -67,6 +68,7 @@ function useStaticEntries(): Entry[] {
   const tn = useTranslations('shell.nav.items');
   const tg = useTranslations('shell.nav.groups');
   const tt = useTranslations('shell.theme');
+  const ts = useTranslations('settingsNav');
   const showStaff = useShowStaff();
   const { businessId, setBusinessId, ready } = useBusiness();
   const { setChoice } = useThemeChoice();
@@ -83,20 +85,17 @@ function useStaticEntries(): Entry[] {
       keywords: n.group === 'home' ? undefined : tg(n.group),
       href: n.href,
     }));
-    const account: Entry[] = [
-      {
-        id: 'nav:/account/profile',
-        group: 'navigate',
-        label: t('profile'),
-        href: '/account/profile',
-      },
-      {
-        id: 'nav:/account/export',
-        group: 'navigate',
-        label: tn('export'),
-        href: '/account/export',
-      },
-    ];
+    // 25.12: every Settings page the sidebar does not list (Appearance is the theme commands).
+    const navHrefs = new Set(NAV.map((n) => n.href));
+    const settings: Entry[] = SETTINGS_ITEMS.filter(
+      (item) => item.key !== 'appearance' && !navHrefs.has(item.href),
+    ).map((item) => ({
+      id: `nav:${item.href}`,
+      group: 'navigate',
+      label: item.key === 'profile' ? t('profile') : ts(`items.${item.key}`),
+      keywords: ts('title'),
+      href: item.href,
+    }));
     const create: Entry[] = [
       { id: 'create:new', group: 'create', label: t('createNew'), href: '/new' },
       { id: 'create:template', group: 'create', label: t('useTemplate'), href: '/templates' },
@@ -118,8 +117,8 @@ function useStaticEntries(): Entry[] {
       keywords: tt('label'),
       run: () => setChoice(choice),
     }));
-    return [...nav, ...account, ...create, ...switching, ...appearance];
-  }, [t, tn, tg, tt, showStaff, businesses.data, businessId, setBusinessId, setChoice]);
+    return [...nav, ...settings, ...create, ...switching, ...appearance];
+  }, [t, tn, tg, tt, ts, showStaff, businesses.data, businessId, setBusinessId, setChoice]);
 }
 
 function useProjectEntries(query: string): {

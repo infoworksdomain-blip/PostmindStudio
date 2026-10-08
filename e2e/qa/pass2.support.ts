@@ -46,10 +46,41 @@ export const WORKSPACE_PAGES = [
   '/settings/members',
   '/settings/billing',
   '/settings/audit',
+  '/settings/provider-keys',
+  '/settings/notifications',
   '/account/profile',
   '/account/security',
   '/account/export',
 ];
+
+/**
+ * Turn on two-step verification from /account/security. In CI every request shares one rate-limit
+ * bucket (no client IP), so a burst of staff sign-ups can get the enrol call refused; retry after the
+ * window instead of failing with no setup link.
+ */
+export async function enableTwoFactor(page: Page, password: string): Promise<void> {
+  for (let attempt = 1; ; attempt += 1) {
+    await page.goto('/account/security');
+    const twoFactor = page
+      .locator('section')
+      .filter({ has: page.getByRole('heading', { name: 'Two-step verification' }) });
+    await twoFactor.getByLabel('Password', { exact: true }).fill(password);
+    const [enrol] = await Promise.all([
+      page.waitForResponse((r) => r.url().includes('/two-factor/enable')),
+      page.getByRole('button', { name: 'Set up' }).click(),
+    ]);
+    const body = (await enrol.json().catch(() => ({}))) as { totpURI?: string };
+    if (enrol.ok() && body.totpURI) {
+      await page.getByLabel('Code from the app').fill(totp(body.totpURI));
+      await page.getByRole('button', { name: 'Turn on' }).click();
+      return;
+    }
+    if (attempt >= 5) {
+      throw new Error(`2FA enrol refused (HTTP ${enrol.status()}) after ${attempt} attempts`);
+    }
+    await page.waitForTimeout(15_000);
+  }
+}
 
 export function totp(uri: string): string {
   const secret = new URL(uri).searchParams.get('secret') ?? '';
@@ -76,23 +107,14 @@ export async function staffPage(
   playwrightRequest: Parameters<typeof createUser>[0],
   db: Db,
   viewport?: { width: number; height: number },
+  /** One staff user per spec file: files run in parallel and each cleans up its own user. */
+  label = 'staff',
 ): Promise<{ page: Page; email: string; userId: string }> {
-  const email = `qa-p2-staff-${run}@example.test`;
+  const email = `qa-p2-staff-${label}-${run}@example.test`;
   const userId = await createUser(playwrightRequest, db, baseURL, email, 'QA Staff');
   await db.user.update({ where: { email }, data: { role: 'superadmin' } });
   const page = await signedInPage(browser, baseURL, email, { viewport });
-  await page.goto('/account/security');
-  const twoFactor = page
-    .locator('section')
-    .filter({ has: page.getByRole('heading', { name: 'Two-step verification' }) });
-  await twoFactor.getByLabel('Password', { exact: true }).fill(password);
-  const [enrol] = await Promise.all([
-    page.waitForResponse((r) => r.url().includes('/two-factor/enable')),
-    page.getByRole('button', { name: 'Set up' }).click(),
-  ]);
-  const { totpURI } = (await enrol.json()) as { totpURI: string };
-  await page.getByLabel('Code from the app').fill(totp(totpURI));
-  await page.getByRole('button', { name: 'Turn on' }).click();
+  await enableTwoFactor(page, password);
   await expect(page.getByText('Two-step verification is on.').first()).toBeVisible({
     timeout: 60_000,
   });

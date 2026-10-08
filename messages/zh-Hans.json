@@ -622,19 +622,9 @@
       "summaryPlatforms": "{count, plural, =0 {未选平台} other {# 个平台}}",
       "summaryAutoPublish": "{count, plural, =0 {自动发布：未选择账号} other {发布到 # 个账号}}",
       "summaryBrandKit": "已启用品牌套件",
-      "options": "选项",
       "generate": "生成",
       "createSlideshow": "创建幻灯片",
       "sourcesAria": "要制作的内容",
-      "sources": {
-        "BRIEF": "视频",
-        "SLIDESHOW": "幻灯片",
-        "UPLOAD": "上传视频",
-        "UGC": "UGC 演员",
-        "CAROUSEL": "轮播图（帖子卡片）",
-        "HOOK_DEMO": "钩子 + 演示",
-        "WALL_OF_TEXT": "文字墙"
-      },
       "templatedNote": "平台和时长由模板决定。上方文字为选填，可为模板大纲补充具体内容。",
       "noBusiness": {
         "title": "请先选择商家",
@@ -643,18 +633,61 @@
       },
       "toast": {
         "slideshowDrafted": "幻灯片草稿已生成——请检查幻灯片，然后生成。",
-        "generatingUpload": "正在生成——Studio 正在为您的视频添加字幕。",
-        "generatingScript": "正在生成——Studio 正在撰写脚本。",
+        "generatingUpload": "正在制作你的视频——正在添加字幕…",
+        "generatingScript": "正在制作你的视频…",
         "draftNotStarted": "已保存为草稿，但未能开始生成：{error}",
         "generatingCarousel": "正在撰写您的轮播图…",
-        "generatingFormat": "正在生成：Studio 正在撰写文字并制作你的视频。"
+        "generatingFormat": "正在制作你的视频…"
       },
       "planMonth": "或者规划一整个月的视频和幻灯片",
       "summaryNoAccounts": "没有已连接的账号：保存以供审核",
       "summaryForReview": "保存以供审核",
       "createCarousel": "创建轮播图",
       "summaryCarousel": "{count} 条帖子 · {theme, select, dark {深色} other {浅色}}卡片",
-      "summarySeconds": "{count, number} 秒"
+      "summarySeconds": "{count, number} 秒",
+      "formats": {
+        "BRIEF": {
+          "name": "AI 视频",
+          "line": "为你撰写脚本、生成画面并配音"
+        },
+        "SLIDESHOW": {
+          "name": "幻灯片",
+          "line": "配文字和音乐的照片"
+        },
+        "CAROUSEL": {
+          "name": "轮播图",
+          "line": "可滑动浏览的帖子"
+        },
+        "UPLOAD": {
+          "name": "你的视频",
+          "line": "为你自己的视频添加字幕并生成各平台格式"
+        },
+        "UGC": {
+          "name": "创作者视频（UGC）",
+          "line": "AI 创作者介绍你的产品"
+        },
+        "HOOK_DEMO": {
+          "name": "钩子 + 演示",
+          "line": "先用反应镜头吸引注意，再播放你的演示"
+        },
+        "WALL_OF_TEXT": {
+          "name": "文字墙",
+          "line": "在舒缓的视频上显示一段文字"
+        }
+      },
+      "basicDefault": "你的套餐默认使用幻灯片，它只占用额度中的 ¼ 个视频。你可以选择任意格式。",
+      "moreOptions": "更多选项",
+      "usesQuick": "占用 ¼ 个视频",
+      "usesVideos": "占用 {count, number} 个视频额度",
+      "allowanceLeft": "{period, select, week {本周} other {本月}}剩余 {left}/{limit}",
+      "submitShortcut": "按 Ctrl 或 ⌘ + Enter 生成",
+      "groups": {
+        "format": "平台和时长",
+        "brand": "品牌和语言",
+        "message": "受众和行动号召",
+        "publishing": "审批和排期",
+        "quality": "质量"
+      }
     },
     "problems": {
       "businessRequired": "请先选择商家。",
@@ -694,7 +727,6 @@
         "defaultKit": "{name}（默认）"
       },
       "advanced": {
-        "toggle": "高级选项",
         "audience": "目标受众",
         "audiencePlaceholder": "例如：首次购房者",
         "cta": "行动号召",
@@ -895,6 +927,27 @@
       },
       "length": "时长",
       "seconds": "{count, number} 秒"
+    },
+    "videoModel": {
+      "legend": "视频模型",
+      "automatic": "自动（推荐）",
+      "automaticLine": "Studio 会为每个片段选择可用的模型，遇到繁忙时自动切换。",
+      "speed": "每个片段 {minutes, number} 分钟",
+      "maxClip": "最长 {seconds, number} 秒",
+      "costStaff": "每个 6 秒片段 {amount}",
+      "droppedChoice": "你选择的模型在此质量等级下不可用，因此将使用自动模式。",
+      "hint": {
+        "BRIEF": "用于生成本视频中的 AI 片段。",
+        "UGC": "用于生成 AI 场景。创作者本人的片段始终使用创作者模型。",
+        "HOOK_DEMO": "用于生成开头的反应镜头。"
+      },
+      "capability": {
+        "text_to_video": "仅文字",
+        "image_to_video": "仅图片",
+        "both": "文字或图片"
+      },
+      "change": "更换模型",
+      "hide": "收起模型"
     }
   },
   "review": {
@@ -1428,7 +1481,7 @@
       "none": "还没有视频。"
     },
     "menu": {
-      "trigger": "{name} 的更多操作",
+      "trigger": "更多操作",
       "download": "下载视频",
       "templateDescription": "保留此视频的格式、镜头结构和发布设置，用它们开始新视频。"
     }
@@ -1842,7 +1895,15 @@
       "agendaAria": "日程",
       "emptyMonth": "本月没有排期或发布的内容。",
       "moreOpen": "{count, plural, other {还有 # 个空闲时段}}",
-      "morePlanned": "另有 {count} 条已规划"
+      "morePlanned": "另有 {count} 条已规划",
+      "moreAria": "显示 {date} 的全部内容（另有 {count, number} 项）",
+      "dayAria": "当天的帖子",
+      "weekAria": "本周各天",
+      "todayAria": "{date}，今天",
+      "today": "今天",
+      "quietDay": "暂无安排",
+      "emptyWeek": "本周没有已排期或已发布的内容。",
+      "emptyDayView": "当天没有已排期或已发布的内容。"
     },
     "event": {
       "untitled": "未命名项目",
@@ -1864,7 +1925,11 @@
       "newTime": "新时间",
       "cancel": "取消",
       "moving": "正在移动…",
-      "submit": "移动"
+      "submit": "移动",
+      "undo": "撤销",
+      "undone": "已移回 {date}",
+      "movedLive": "已将“{name}”移至 {date}。可在通知中撤销。",
+      "undoneLive": "已将“{name}”移回 {date}。"
     },
     "drip": {
       "title": "定时发布队列",
@@ -1988,6 +2053,48 @@
           "none": "空"
         }
       }
+    },
+    "previousWeek": "上一周",
+    "nextWeek": "下一周",
+    "previousDay": "前一天",
+    "nextDay": "后一天",
+    "views": {
+      "label": "日历视图",
+      "month": "月",
+      "week": "周",
+      "day": "日"
+    },
+    "filters": {
+      "label": "筛选",
+      "platformLabel": "平台",
+      "statusLabel": "状态",
+      "sourceLabel": "来源",
+      "allPlatforms": "所有平台",
+      "anyStatus": "任何状态",
+      "anySource": "任何来源",
+      "clear": "清除筛选",
+      "showing": "显示 {shown, number} / {total, number} 条帖子",
+      "status": {
+        "SCHEDULED": "已排期",
+        "PUBLISHING": "发布中",
+        "PUBLISHED": "已发布",
+        "FAILED": "失败",
+        "PLANNED": "制作中（月度计划）"
+      },
+      "source": {
+        "plan": "月度计划",
+        "automation": "自动化",
+        "manual": "手动创建"
+      }
+    },
+    "postingTimes": {
+      "open": "发布时间",
+      "title": "发布时间",
+      "description": "此商家已批准但未设日期的视频何时发布。保存的时间会以空闲时段显示在日历上。"
+    },
+    "campaign": {
+      "plan": "月度计划 · {date}",
+      "automation": "自动化 · {name}"
     }
   },
   "business": {
@@ -2606,7 +2713,8 @@
       "guidance": "请在 PostMind 设置中连接 Instagram 和 Facebook。",
       "connectButton": "使用 Facebook 连接",
       "studioGuidance": "一次 Facebook 登录即可连接你选择的公共主页，以及与其关联的 Instagram 专业账号。",
-      "notConfigured": "Instagram 和 Facebook 暂不可用：Studio 的 Meta 应用尚未完成设置。请联系你的管理员。"
+      "notConfigured": "Instagram 和 Facebook 暂不可用：Studio 的 Meta 应用尚未完成设置。请联系你的管理员。",
+      "title": "Instagram 和 Facebook"
     },
     "descriptionStandalone": "Studio 发布内容的账号。请为所选商家逐一连接。",
     "connectedMetaNotice": "{count, plural, other {已连接 # 个 Facebook 和 Instagram 账号}}。现在即可向这些账号发布。",
@@ -2638,6 +2746,12 @@
       "reconnect": "重新连接 TikTok 才能发送草稿。在此之前，帖子将直接发布。",
       "saved": "TikTok 发布偏好已保存",
       "goesToDrafts": "TikTok：进入你的 TikTok 草稿。在应用中添加热门音乐，然后发布。"
+    },
+    "state": {
+      "connected": "已连接",
+      "needsReconnect": "需要重新连接",
+      "notConnected": "未连接",
+      "unavailable": "不可用"
     }
   },
   "library": {
@@ -2785,44 +2899,55 @@
     "dashboard": {
       "eyebrow": "管理",
       "title": "数据分析",
-      "description": "查看已发布视频的表现及制作成本。",
       "rangeLabel": "日期范围",
       "rangeOption": "{days, plural, other {# 天}}",
-      "descriptionNoCost": "查看已发布视频的表现。"
+      "scopeAll": "所有商家",
+      "scopeBusiness": "{name}",
+      "scopeSelected": "所选商家",
+      "window": "最近 {days, plural, other {# 天}}",
+      "costScope": "支出涵盖您组织中的所有商家。",
+      "loadingAria": "正在加载分析数据"
     },
     "metrics": {
       "views": "播放量",
-      "watchTime": "观看时长",
-      "engagement": "互动"
+      "watchTime": "观看时长"
     },
     "overview": {
       "loadingAria": "正在加载概览",
-      "viewsHeading": "播放量 · 最近 {days, plural, other {# 天}}",
-      "summary": "共 {publications, plural, other {# 条发布}} · 新建 {projects, plural, other {# 个项目}}",
+      "summary": "最近 {days, plural, other {# 天}}内您的 {posts, plural, other {# 条帖子}}获得了 {count, plural, other {{views} 次观看}}，互动率为 {rate}。",
       "watchTime": "观看时长",
-      "engagement": "互动",
-      "engagementHint": "占播放量的 {rate}",
-      "shares": "分享",
-      "savesHint": "{saves, plural, other {{formatted} 次收藏}}",
-      "spend": "支出",
-      "spendHint": "服务商费用",
-      "pending": "…"
+      "engagementHint": "{count} 次点赞、评论、分享和收藏",
+      "regionLabel": "摘要",
+      "summaryNoViews": "最近 {days, plural, other {# 天}}内发布了 {posts, plural, other {# 条帖子}}。观看数据通常在帖子上线约一天后出现。",
+      "summaryLead": "其中 {share} 的观看来自 {platform}。",
+      "views": "观看次数",
+      "viewsHint": "{publications, plural, other {# 条帖子}} · 新建 {projects, plural, other {# 个项目}}",
+      "watchTimeHint": "平均每次观看 {avg}",
+      "engagementRate": "互动率",
+      "sharesSaves": "分享和收藏",
+      "sharesSavesHint": "{shares} 次分享 · {saves} 次收藏",
+      "empty": {
+        "title": "最近 {days, plural, other {# 天}}没有发布帖子",
+        "body": "帖子发布约一天后会出现分析数据。可以选择更长的时间段，或从您的项目中发布一个视频。",
+        "action": "前往项目"
+      },
+      "windowNote": "本周期内发布的帖子的累计数据，统计至当前。"
     },
     "trend": {
-      "title": "每日活动",
+      "title": "增长与覆盖",
       "metricLabel": "指标",
       "loadingAria": "正在加载图表",
       "total": {
-        "views": "该时段内共 {count, plural, other {{value} 次播放}}",
-        "watchTime": "该时段内观看时长 {value}",
-        "engagement": "该时段内共 {value} 次互动"
+        "views": "本周期新增 {count, plural, other {{value} 次观看}}",
+        "watchTime": "本周期新增观看时长 {value}"
       },
       "chartLabel": {
         "views": "每日播放量，最近 {days, plural, other {# 天}}",
-        "watchTime": "每日观看时长，最近 {days, plural, other {# 天}}",
-        "engagement": "每日互动，最近 {days, plural, other {# 天}}"
+        "watchTime": "每日观看时长，最近 {days, plural, other {# 天}}"
       },
-      "estimated": "部分日期为估算值：缺少数据快照，增长量已在空缺期间平均分摊。"
+      "estimated": "部分日期为估算值：缺少数据快照，增长量已在空缺期间平均分摊。",
+      "description": "您所有帖子每天新增的观看次数",
+      "quiet": "本周期暂无新增。随着您的帖子被观看，图表会逐渐填充。"
     },
     "platforms": {
       "title": "按平台",
@@ -2832,15 +2957,16 @@
       "hint": "{posts, plural, other {# 条帖子}} · {engagement} 次互动"
     },
     "leaderboard": {
-      "title": "热门视频",
-      "description": "按播放量排序的发布",
+      "title": "热门帖子",
+      "description": "本周期观看次数最多的帖子",
       "empty": "此时段内没有发布内容。",
       "listLabel": "热门发布",
       "untitled": "无标题帖子",
       "meta": "{platform} · {date}",
       "openOn": "在 {platform} 上打开",
       "analyticsFor": "“{caption}”的数据分析",
-      "analyticsForUntitled": "无标题帖子的数据分析"
+      "analyticsForUntitled": "无标题帖子的数据分析",
+      "views": "次观看"
     },
     "cost": {
       "title": "支出",
@@ -2889,7 +3015,8 @@
         "avgWatched": "平均观看比例",
         "likes": "点赞",
         "commentsShares": "评论 · 分享",
-        "commentsSharesValue": "{comments} · {shares}"
+        "commentsSharesValue": "{comments} · {shares}",
+        "saves": "收藏"
       },
       "viewsOverTime": {
         "title": "播放量趋势",
@@ -2925,6 +3052,39 @@
         "body": "它可能已被移除，或链接有误。",
         "action": "返回分析"
       }
+    },
+    "change": {
+      "up": "比上一周期增长 <n>{pct}</n>",
+      "down": "比上一周期下降 <n>{pct}</n>",
+      "flat": "与上一周期持平"
+    },
+    "engagement": {
+      "title": "互动",
+      "description": "每天新增的点赞、评论、分享和收藏",
+      "total": "本周期新增互动：{value}",
+      "chartLabel": "每日互动，最近 {days, plural, other {# 天}}",
+      "quiet": "本周期暂无点赞、评论、分享或收藏。",
+      "mixTitle": "互动构成",
+      "mixRate": "占本周期帖子观看次数的 {rate}",
+      "mixNoViews": "本周期的帖子暂无观看。",
+      "mixLabel": "按类型划分的互动",
+      "mixEmpty": "本周期的帖子暂无互动。",
+      "parts": {
+        "likes": "点赞",
+        "comments": "评论",
+        "shares": "分享",
+        "saves": "收藏"
+      }
+    },
+    "bestTimes": {
+      "title": "最佳发布时间",
+      "description": "您的帖子在哪些时段获得最多观看（与最佳时段相比）",
+      "listLabel": "最佳发布时间",
+      "slot": "{day} {time}",
+      "empty": "最近 180 天内还没有可供参考的帖子。",
+      "basis": "基于最近 180 天的 {videos, plural, other {# 条帖子}}。时间为 {timezone}。仅供参考，并非规则。",
+      "fromMemory": "帖子还太少，因此这是您商家的常用发布时间。时间为 {timezone}。",
+      "littleData": "目前只有 {videos, plural, other {# 条帖子}}，请将其视为初步参考；达到 {min} 条后会更可靠。时间为 {timezone}。"
     }
   },
   "admin": {
@@ -3015,7 +3175,25 @@
         "forceApprovals": "强制批准",
         "beta": "测试版",
         "users": "用户",
-        "subscriptions": "订阅"
+        "subscriptions": "订阅",
+        "billing": "订阅与计费"
+      },
+      "menu": {
+        "label": "管理分区",
+        "jump": "前往分区",
+        "halted": "已停止",
+        "groups": {
+          "operations": "运维",
+          "content": "内容",
+          "customers": "客户",
+          "platform": "平台"
+        }
+      },
+      "billingViews": {
+        "label": "视图",
+        "overview": "概览与 MRR",
+        "records": "Stripe 记录",
+        "entitlements": "权益覆盖"
       }
     },
     "cost": {
@@ -4268,8 +4446,9 @@
   },
   "marketing": {
     "meta": {
-      "title": "PostMind Studio · 面向小微企业的 AI 短视频",
-      "description": "只需一句话，即可生成符合品牌调性的短视频，适配 TikTok、Reels、Shorts、Facebook、LinkedIn 和 X。审核、批准并在同一处发布。"
+      "title": "PostMind Studio · 为小微企业打造短视频和帖子",
+      "description": "只需一份简报，即可为您的小微企业制作、规划并发布短视频和帖子：脚本、视频、配音、音乐和字幕都符合您的品牌，并排期发布到 TikTok、Instagram、YouTube、Facebook、LinkedIn 和 X。",
+      "ogAlt": "PostMind Studio：一份简报即可制作、规划并发布短视频"
     },
     "nav": {
       "home": "PostMind Studio 首页",
@@ -4279,9 +4458,9 @@
       "startTrial": "开始免费试用"
     },
     "hero": {
-      "eyebrow": "面向小微企业的 AI 视频工作室",
-      "title": "一个月的短视频，<em>在您的咖啡变凉之前完成。</em>",
-      "lede": "告诉 Studio 您想表达的内容。它会撰写脚本，拍摄或采集每个场景素材，为视频添加符合您品牌的配音、音乐和字幕，并针对每个平台进行剪辑。您来审核，它负责发布。",
+      "eyebrow": "面向小微企业的视频工作室",
+      "title": "制作、规划并发布您的社交视频，<em>只需一份简报。</em>",
+      "lede": "告诉 Studio 您想表达什么。它会撰写脚本、制作视频，按您的品牌添加配音、音乐和字幕，并为您使用的每个平台排期发布。您来审批，它来发布。",
       "primaryCta": "开始免费试用",
       "secondaryCta": "查看定价",
       "assurances": {
@@ -4289,146 +4468,171 @@
         "yourBrand": "专属于您的色彩、字体和口吻",
         "cancelAnytime": "随时取消"
       },
-      "frames": {
-        "one": "早上 7 点新鲜出炉",
-        "two": "认识面包师",
-        "three": "一个周末，三条面包"
-      },
-      "slate": {
-        "scene": "场景 01",
-        "take": "第 1 次拍摄"
-      },
-      "phoneAlt": "示例竖屏视频：烘焙纸上一只划了花纹的酸面包，字幕为“早上 7 点新鲜出炉”"
-    },
-    "platforms": {
-      "title": "一份创意简介，适配每个信息流"
-    },
-    "steps": {
-      "eyebrow": "使用流程",
-      "title": "构思。审核。发布。",
-      "brief": {
-        "title": "写下一句话",
-        "body": "描述视频内容，粘贴网页链接，或选择一个模板。Studio 会在几秒内起草脚本和分镜脚本。"
-      },
-      "review": {
-        "title": "查看成片",
-        "body": "并排查看每种格式，替换镜头、修改字幕或要求重新拍摄。未经您批准，任何内容都不会发布。"
-      },
-      "publish": {
-        "title": "按计划发布",
-        "body": "立即发布或规划接下来的一个月。Studio 会发布到每个账户，并将浏览量、点赞和评论汇总到一个仪表盘中。"
+      "reelLabel": "使用 PostMind Studio 制作的三条帖子",
+      "madeWith": "使用 PostMind Studio 制作。展示的商家均为示例。",
+      "alts": {
+        "bread": "用 Studio 制作的 AI 视频：木板上一只金黄的酸种面包冒着热气，镜头缓缓推近",
+        "market": "用 Studio 制作的 AI 视频：一位女士走过阳光明媚的食品市集，对摊主微笑",
+        "coastline": "用 Studio 为海边度假小屋制作的幻灯片，配文“可住二至六人的海景小屋”"
       }
     },
-    "samples": {
-      "eyebrow": "样片集",
-      "title": "一份简介，多种形式。",
-      "body": "为 TikTok、Reels 和 Shorts 提供竖版，为信息流提供方形和竖幅，为 YouTube 和 LinkedIn 提供宽屏。",
-      "note": "图库照片，用于展示 Studio 制作的各种画幅，并非客户视频。",
-      "captions": {
-        "market": "周六市集，上午 8 点",
-        "studio": "我们如何塑形酸种面包",
-        "salon": "周五理发，立即预约",
-        "gym": "早上 6 点课程，仅剩三个名额"
+    "motion": {
+      "pause": "暂停视频",
+      "play": "播放视频"
+    },
+    "formats": {
+      "eyebrow": "一份简报，全部格式",
+      "title": "小微企业需要的每一种帖子。",
+      "body": "AI 视频、幻灯片和文字墙帖子，每一种都为竖屏信息流而做。这些全部由 Studio 根据一句话简报制作。",
+      "note": "Studio 为示例商家制作的真实作品。",
+      "stripLabel": "使用 Studio 制作的示例帖子",
+      "kinds": {
+        "aiVideo": "AI 视频",
+        "slideshow": "幻灯片",
+        "wallOfText": "文字墙"
+      },
+      "types": {
+        "bakery": "酸种面包店",
+        "boutique": "亚麻精品店",
+        "gym": "健身工作室",
+        "cottages": "海边度假小屋",
+        "florist": "花店",
+        "coffee": "咖啡店"
       },
       "alts": {
-        "market": "街边集市上的面包摊，面包堆放在红格子桌布上",
-        "studio": "沾满面粉的双手在木案板上揉面",
-        "salon": "黑色垫子上摆放着剪刀、剃刀和梳子",
-        "gym": "健身房架子上一排排哑铃"
+        "seedanceBread": "木板上一只金黄的酸种面包，冒着热气",
+        "pulseStudioText": "健身工作室的文字墙帖子：三次简短的力量训练胜过一次漫长的苦练，首节课免费",
+        "atelierWren": "铁锈色与鼠尾草色的水洗亚麻褶皱，配文“铁锈色与鼠尾草色水洗亚麻”",
+        "greenleafFlorist": "一朵红玫瑰，配文“大丽花、波斯菊和晚季玫瑰”",
+        "coastlineStaysText": "海边度假小屋的文字墙帖子：海岸的秋天、空旷的海滩、欢迎携带狗狗",
+        "harbourCoffee": "浓缩咖啡流入白色杯中，配文“单一产地浓缩咖啡”",
+        "northsideBakery": "橙色背景上的乡村白面包，配文“乡村白面包，早上 6 点出炉”",
+        "pulseStudio": "一名男子用弹力带训练，配文“45 分钟小班课”",
+        "coastlineStays": "岩石海岸上方的小屋，配文“可住二至六人的海景小屋”"
       }
     },
-    "features": {
-      "eyebrow": "为小团队打造",
-      "title": "一人营销团队所需的一切。",
-      "body": "Studio 负责制作工作，让您把时间花在业务本身，而不是剪辑时间线上。",
-      "brand": {
-        "title": "始终如一的品牌形象",
-        "body": "标志、色彩、字体和语调都保存在品牌套件中，每个视频都会遵循它。"
+    "video": {
+      "eyebrow": "视频生成",
+      "title": "一句话，生成一条完整视频。",
+      "body": "Studio 把您的简报变成脚本和分镜清单，用领先的视频模型生成每个镜头，再按您的品牌添加配音、音乐和字幕，并为每个平台剪辑成片。",
+      "briefLabel": "简报",
+      "brief": "“一位女士走过阳光明媚的食品市集，对摊主微笑。”",
+      "alt": "用 Studio 根据该简报制作的 AI 视频：一位女士走过阳光明媚的食品市集，对摊主微笑",
+      "steps": {
+        "script": {
+          "title": "脚本",
+          "body": "开场钩子、核心信息和相应镜头，为您的受众和每个平台而写。"
+        },
+        "shots": {
+          "title": "镜头",
+          "body": "每个场景都根据脚本生成，或用您自己的照片和素材制作。"
+        },
+        "sound": {
+          "title": "配音和音乐",
+          "body": "自然的配音和背景音乐，音量针对手机扬声器调好。"
+        },
+        "captions": {
+          "title": "字幕",
+          "body": "逐字对齐的字幕，使用您的字体和颜色，静音观看也一目了然。"
+        }
       },
-      "approvals": {
-        "title": "适配您团队的审批流程",
-        "body": "邀请同事并赋予合适的角色。创作者起草，所有者审批，杜绝意外发布。"
-      },
-      "calendar": {
-        "title": "自动为您发布的日历",
-        "body": "规划接下来的一个月，将帖子拖到新的时间段，让 Studio 在每个平台的最佳时机自动发布。"
-      },
-      "languages": {
-        "title": "支持十一种语言",
-        "body": "使用英语、法语、西班牙语、阿拉伯语、德语、意大利语、葡萄牙语、印地语或中文工作，并为使用相应语言的客户制作视频。"
-      },
-      "library": {
-        "title": "灵感随取随用",
-        "body": "浏览经过验证的短视频案例库，以其中一个作为您自己创作的起点。"
-      },
-      "pricing": {
-        "title": "每个频道一个简单价格",
-        "body": "每连接一个社交频道，支付一个固定价格，并包含视频。无需盯着用量计数，也不会有意外账单。"
+      "scriptAlt": "项目的“脚本”标签页：开场钩子、受众、语气，以及 TikTok 和 YouTube Shorts 的脚本",
+      "scriptCaption": "每份脚本和分镜清单都可以查看和修改。"
+    },
+    "plan": {
+      "eyebrow": "规划和排期",
+      "title": "整个月，尽在一个日历中。",
+      "body": "已批准的帖子会填入空闲时段，并在合适的时间发布到每个账号。打开任意帖子即可预览、修改时间、批准或重新制作。",
+      "alt": "十月的日历，整个月都有已排期和已发布的帖子"
+    },
+    "publish": {
+      "eyebrow": "全平台发布",
+      "title": "一条帖子，发遍您的所有平台。",
+      "body": "只需连接一次账号。Studio 会把每条帖子裁成合适的尺寸，并按排期发布。",
+      "platformsLabel": "Studio 可发布的平台",
+      "points": {
+        "auto": {
+          "title": "自动发布",
+          "body": "帖子会在您选定的时间发布到各个平台，播放量和互动数据会回到 Studio。"
+        },
+        "drafts": {
+          "title": "需要时存为草稿",
+          "body": "也可以把 TikTok 帖子发送到草稿箱，在应用中添加热门音乐后再发布。"
+        }
       }
+    },
+    "autopilot": {
+      "eyebrow": "月度规划、Blitz 和自动化",
+      "title": "一个提示，一整个月的帖子。",
+      "body": "描述您的业务和目标。Studio 会规划整个月、撰写每条帖子，并在日期到来前制作好。",
+      "gridCaption": "为示例商家准备的一个月帖子，全部由 Studio 制作。",
+      "items": {
+        "planner": {
+          "title": "规划我的月份",
+          "body": "一个提示即可生成包含创意、文案和格式的完整日历。批准前可随意修改。"
+        },
+        "blitz": {
+          "title": "Blitz",
+          "body": "滑动浏览现成的帖子创意：留下喜欢的，跳过其余的。"
+        },
+        "automations": {
+          "title": "自动化",
+          "body": "每周或每月自动持续发布，不超出您套餐的额度。"
+        }
+      }
+    },
+    "insights": {
+      "eyebrow": "数据分析",
+      "title": "看清什么有效，再多做一些。",
+      "body": "每条帖子在每个平台的播放量、观看时长和互动数据集中在一处，让每份简报都比上一份更好。",
+      "alt": "数据分析页面：30 天播放量、观看时长、互动和每日活动图表"
+    },
+    "brand": {
+      "eyebrow": "品牌套件和审批",
+      "title": "您的色彩、您的语气、由您批准。",
+      "alt": "一家面包店的图片库：面包、糕点、咖啡和一个标志",
+      "items": {
+        "brand": {
+          "title": "每条帖子都带有您的品牌",
+          "body": "标志、颜色、字体和语气都保存在品牌套件中，每条帖子都遵循它；您自己的照片则放在图片库里。"
+        },
+        "approvals": {
+          "title": "适配您团队的审批流程",
+          "body": "邀请同事并赋予合适的角色。创作者起草，所有者审批，杜绝意外发布。"
+        },
+        "languages": {
+          "title": "支持十一种语言",
+          "body": "使用英语、法语、西班牙语、阿拉伯语、德语、意大利语、葡萄牙语、印地语或中文工作，并为使用相应语言的客户制作视频。"
+        }
+      }
+    },
+    "pricing": {
+      "eyebrow": "价格",
+      "title": "每个频道一个简单价格",
+      "per": "每个频道每月",
+      "body": "每个频道每月包含 {videos} 条短 HD 视频，或最多 {quick} 条快速帖子：轮播、幻灯片和文字视频各计为 ¼ 条视频。",
+      "points": {
+        "billing": "可按周、按月或按年付费",
+        "vat": "价格不含增值税",
+        "cancel": "随时可取消"
+      },
+      "cta": "查看定价"
     },
     "closing": {
       "eyebrow": "随时可以开始",
-      "title": "您的第一条视频，十分钟即可完成。",
+      "title": "今天就制作您的第一条帖子。",
       "body": "创建账户，添加业务和品牌信息，连接平台并制作您的第一条视频。引导式设置将全程为您指引。",
       "primaryCta": "开始免费试用",
-      "secondaryCta": "比较套餐",
+      "secondaryCta": "查看定价",
       "fineprint": "价格不含增值税。您可以随时在账单设置中取消。"
     },
     "footer": {
-      "tagline": "面向小微企业的 AI 短视频制作与发布平台。",
+      "tagline": "面向小微企业的短视频和帖子：在一处制作、规划和发布。",
+      "productAria": "产品",
+      "productTitle": "产品",
       "copyright": "© {year} {entity}",
       "legalAria": "法律信息",
       "legalTitle": "法律信息"
-    },
-    "flow": {
-      "eyebrow": "从简报到发布",
-      "title": "看一条视频如何诞生。",
-      "body": "六个步骤，一次一个界面。这些都是 Studio 的真实界面，填入了一家示例面包店的数据。",
-      "note": "界面来自 Studio 演示版，使用虚构面包店 Leeds Sourdough 的示例数据。",
-      "roleCarousel": "轮播",
-      "roleSlide": "幻灯片",
-      "stepsLabel": "步骤",
-      "slideLabel": "第 {current} 张，共 {total} 张",
-      "previous": "上一步",
-      "next": "下一步",
-      "pause": "暂停幻灯片",
-      "play": "播放幻灯片",
-      "brief": {
-        "tab": "简报",
-        "title": "写一句话",
-        "body": "说明视频的内容，或粘贴一个网页。Studio 会选择平台、时长和品牌套件，你可以随时修改。",
-        "alt": "“创建”界面，输入了一段关于黑麦面包的简报，旁边是“生成”按钮"
-      },
-      "script": {
-        "tab": "脚本",
-        "title": "阅读脚本和分镜清单",
-        "body": "Studio 为每种画幅写好开场钩子、核心信息和脚本，并配上相应镜头。你可以改写某一句，或要求再来一版。",
-        "alt": "项目的“脚本”标签页：开场钩子、受众、语气，以及 TikTok 和 YouTube Shorts 的脚本"
-      },
-      "generate": {
-        "tab": "生成",
-        "title": "画面、配音和音乐",
-        "body": "Studio 用 AI 视频和图像模型生成每个镜头，或使用你自己的照片和图库素材，再按你的品牌加上配音、音乐和字幕。",
-        "alt": "一家面包店的图片库：面包、糕点、咖啡和一个标志"
-      },
-      "review": {
-        "tab": "审核",
-        "title": "发布前检查每个版本",
-        "body": "并排观看每种画幅。在你批准之前，会自动运行多项检查，包括内容安全和品牌套件。",
-        "alt": "一个待审核的 TikTok 版本，已通过包括内容安全在内的质量检查"
-      },
-      "calendar": {
-        "tab": "日历",
-        "title": "提前规划下个月",
-        "body": "已批准的视频会放入日历的空闲时段，并在合适的时间发布到每个账号。",
-        "alt": "九月日历，早晚都排有发布计划"
-      },
-      "analytics": {
-        "tab": "数据分析",
-        "title": "看看哪些内容有效",
-        "body": "每条视频的播放量、观看时长和互动集中在一处，让下一份简报更好。",
-        "alt": "数据分析页面：30 天播放量、观看时长、互动和每日活动图表"
-      }
     }
   },
   "pricing": {
@@ -4534,7 +4738,7 @@
       "panelLabel": "关于 PostMind Studio",
       "valueStatement": "只需几句话介绍您的业务，就能为每个渠道制作短视频。",
       "valueDetail": "Studio 会撰写脚本，按您的品牌制作视频，并在您连接的渠道上排期发布。",
-      "panelAlt": "PostMind Studio 中一条酸面包的 TikTok 视频，已通过质量检查。"
+      "panelAlt": "两篇用 PostMind Studio 制作的帖子：一段酸面包的 AI 视频和一组海边小屋的幻灯片。"
     },
     "errors": {
       "invalidCredentials": "该邮箱和密码与任何账户都不匹配。",
@@ -4739,13 +4943,6 @@
       "membersTitle": "成员",
       "auditTitle": "审计日志"
     },
-    "nav": {
-      "aria": "设置",
-      "organisation": "组织",
-      "members": "成员",
-      "billing": "我的套餐",
-      "audit": "审计日志"
-    },
     "page": {
       "eyebrow": "设置",
       "title": "组织",
@@ -4903,7 +5100,8 @@
       "leave": "离开",
       "removeTitle": "移除 {name}？",
       "removeBody": "对方将立即失去此组织的访问权限，其视频将会保留。",
-      "removed": "{name} 已被移除。"
+      "removed": "{name} 已被移除。",
+      "caption": "成员"
     },
     "pending": {
       "none": "暂无待处理的邀请。",
@@ -5110,7 +5308,9 @@
           "reason": "移除原因",
           "button": "移除覆盖设置",
           "cleared": "覆盖设置已移除",
-          "trialWarning": "Stripe 仍显示试用：移除覆盖设置会恢复试用上限。若要保持关闭，请先保存一个勾选“立即结束试用”的覆盖设置。"
+          "trialWarning": "Stripe 仍显示试用：移除覆盖设置会恢复试用上限。若要保持关闭，请先保存一个勾选“立即结束试用”的覆盖设置。",
+          "confirmTitle": "移除此覆盖？",
+          "confirmButton": "是，移除"
         },
         "trial": {
           "title": "试用",
@@ -5182,14 +5382,19 @@
         "legacy": "已从您之前的套餐迁移。",
         "pending": "自 {date} 起：{count, plural, other {# 个频道}}，{period, select, week {按周付费} month {按月付费} other {按年付费}}。",
         "keepCurrent": "保留当前套餐",
-        "paymentPending": "您的上一次更改正在等待付款。请更新付款方式以使其生效。"
+        "paymentPending": "您的上一次更改正在等待付款。请更新付款方式以使其生效。",
+        "price": "价格",
+        "videosLeft": "{period, select, week {本周剩余视频} other {本月剩余视频}}",
+        "leftOf": "{left} / {limit}",
+        "packVideos": "剩余套餐包视频"
       },
       "videos": {
         "title": "{period, select, week {本周视频} other {本月视频}}",
         "description": "您开始制作的每个视频都会计入，包括仍在制作中的视频。",
         "used": "{period, select, week {本周已用} other {本月已用}}",
         "moreFrom": "自 {date} 起将包含更多视频。",
-        "packsLeft": "{count, plural, =0 {视频包中没有剩余视频} other {视频包中剩余 # 个视频}}"
+        "packsLeft": "{count, plural, =0 {视频包中没有剩余视频} other {视频包中剩余 # 个视频}}",
+        "left": "剩余 {left}"
       },
       "channels": {
         "title": "您的频道",
@@ -5233,7 +5438,8 @@
         "confirmBody": "您的套餐将在本周期结束时终止。您的作品仍可查看、导出和下载。未用完的周期不予退款。",
         "confirmBodyDate": "您的套餐将于 {date} 结束。在此之前一切不变。之后您的账户将变为只读：您的作品仍可查看、导出和下载。未用完的周期不予退款。",
         "keep": "保留我的套餐",
-        "confirm": "取消套餐"
+        "confirm": "取消套餐",
+        "resumeTitle": "你的套餐即将结束"
       },
       "toasts": {
         "applied": "您的套餐已更改。",
@@ -5672,7 +5878,26 @@
       "someWithoutAccount": "会制作但不会自动发布（没有已连接的账号）：{platforms}。",
       "connectAccount": "连接账号",
       "ugcActors": "用 UGC 演员制作推荐和产品视频",
-      "ugcActorsHint": "由 AI 生成的演员介绍您的产品。每个此类视频占用 {count, number} 个视频额度。仅限英语。"
+      "ugcActorsHint": "由 AI 生成的演员介绍您的产品。每个此类视频占用 {count, number} 个视频额度。仅限英语。",
+      "prompt": {
+        "title": "规划好你的下个月",
+        "body": "选择开始日期。Studio 会根据你的网站、品牌套件和以往帖子写出每个主题，在制作之前由你检查列表。",
+        "summary": "{perDay} · {videos, number}% 视频 · {platforms}",
+        "yourTimes": "你的发布时间",
+        "noPlatforms": "尚未选择平台",
+        "options": "更多选项"
+      },
+      "preview": {
+        "title": "Studio 将制作的内容",
+        "upTo": "帖子，最多",
+        "split": "视频：{videos, number} · 幻灯片：{slideshows, number}",
+        "dates": "日期",
+        "range": "{start} – {end}",
+        "networks": "平台",
+        "noNetworks": "尚未选择",
+        "review": "Studio 先写主题。在制作之前，你可以检查和编辑列表。",
+        "rolling": "之后每条帖子会在发布前约 3 天制作，因此在那之前的修改仍然有效。"
+      }
     },
     "allowance": {
       "title": "本月",
@@ -5836,7 +6061,11 @@
       "removeConfirm": "它的发布会被取消，时间也会释放。计划的其余部分照常进行。",
       "removedToast": "帖子已移除",
       "createsAt": "计划于 {date} 创建",
-      "createsLater": "{count, plural, other {另有 # 条帖子将在临近发布时间时创建。}}"
+      "createsLater": "{count, plural, other {另有 # 条帖子将在临近发布时间时创建。}}",
+      "approve": "批准",
+      "approveAria": "批准“{title}”",
+      "approved": "已批准：将按时发布",
+      "rolling": "Studio 会在每条帖子发布前约 3 天制作；等待中的帖子会显示其制作时间。"
     },
     "list": {
       "title": "月度计划",
@@ -5847,6 +6076,24 @@
       "emptyBody": "让 Studio 起草一个月的视频和幻灯片，然后一次性生成并排期。",
       "range": "{start} – {end}",
       "posts": "{count, plural, other {# 条帖子}}"
+    },
+    "timeline": {
+      "week": "第 {n, number} 周",
+      "range": "{start} – {end}"
+    },
+    "bulk": {
+      "label": "批量操作",
+      "selectAll": "全选",
+      "selected": "已选 {count, number} 条",
+      "selectItem": "选择“{title}”",
+      "progress": "处理中… {done, number}/{total, number}",
+      "summaryOk": "完成：已更改 {count, number} 条。",
+      "summaryPartial": "已完成 {ok, number} 条，{failed, number} 条无法更改。请逐条重试。",
+      "regenerate": "新主题（{count, number}）",
+      "delete": "删除（{count, number}）",
+      "deleteConfirmTitle": "删除所选帖子（{count, number}）？",
+      "deleteConfirmBody": "它们会从此草稿中移除。目前尚未制作任何内容。",
+      "approveAll": "批准所有待审（{count, number}）"
     }
   },
   "errorPage": {
@@ -6133,7 +6380,9 @@
       "beats": "脚本",
       "stillAlt": "来自你图库的一张图片",
       "mentionsBusiness": "提到了你的商家",
-      "allowanceQuick": "保留后使用套餐中的 ¼ 个视频"
+      "allowanceQuick": "保留后使用套餐中的 ¼ 个视频",
+      "hintEdit": "先编辑",
+      "hintDrag": "或拖动卡片"
     },
     "keep": {
       "title": "保留",
@@ -6145,7 +6394,8 @@
       "editHint": "打开后可修改文字和图片。",
       "cancel": "取消",
       "confirm": "保留",
-      "previewNote": "{units, plural, other {现在开始制作，使用套餐中的 # 个视频。}}"
+      "previewNote": "{units, plural, other {现在开始制作，使用套餐中的 # 个视频。}}",
+      "noPublishRole": "你的角色无法发布或排期，因此保留的帖子会先打开以供编辑。"
     },
     "skip": {
       "title": "为什么跳过？（可选）",
@@ -6218,6 +6468,9 @@
       "noNudges": "暂时没有。跳过原因和保留的内容会一点点调整它。",
       "reset": "清除 Blitz 学到的内容",
       "percent": "{value}%"
+    },
+    "readOnly": {
+      "role": "你的角色可以浏览这些帖子，但不能保留或跳过。请联系所有者或管理员。"
     }
   },
   "automations": {
@@ -6229,7 +6482,19 @@
       "pickBody": "一个自动化为一个商家发布内容。请在页面顶部选择一个。",
       "loading": "正在加载自动化…",
       "empty": "还没有自动化",
-      "emptyBody": "设置一个，Studio 就会每周为你制作并发布内容。"
+      "emptyBody": "设置一个，Studio 就会每周为你制作并发布内容。",
+      "columns": {
+        "name": "自动化",
+        "status": "状态",
+        "makes": "制作内容",
+        "next": "下一条帖子"
+      },
+      "next": {
+        "review": "待你审核后",
+        "paused": "已暂停",
+        "draft": "未开始",
+        "none": "暂无待发"
+      }
     },
     "status": {
       "DRAFT": "草稿",
@@ -6296,7 +6561,9 @@
       "back": "上一步",
       "next": "下一步",
       "create": "创建并开始",
-      "started": "自动化已开始。正在撰写第一批帖子。"
+      "started": "自动化已开始。正在撰写第一批帖子。",
+      "stepOf": "第 {n, number} 步，共 {total, number} 步",
+      "stepDone": "（已完成）"
     },
     "detail": {
       "back": "所有自动化",
@@ -6333,7 +6600,10 @@
       "reroll": "换个话题",
       "rerolled": "已换成新话题。",
       "remove": "删除",
-      "keep": "保留"
+      "keep": "保留",
+      "runs": "运行记录",
+      "runRange": "{start} – {end}",
+      "runPosted": "已发布 {posted, number}/{total, number}"
     },
     "review": {
       "title": "审核：{name}",
@@ -6462,6 +6732,34 @@
       "edit": "编辑提示词",
       "again": "再次生成"
     }
+  },
+  "settingsNav": {
+    "aria": "设置分区",
+    "title": "设置",
+    "groups": {
+      "account": "账户",
+      "workspace": "工作区",
+      "publishing": "发布",
+      "billing": "账单"
+    },
+    "items": {
+      "profile": "个人资料",
+      "security": "登录与安全",
+      "appearance": "外观",
+      "notifications": "通知",
+      "organisation": "组织",
+      "members": "成员",
+      "audit": "审计日志",
+      "approvals": "审批流程",
+      "export": "导出数据",
+      "business": "品牌与业务",
+      "connections": "社交账号",
+      "providerKeys": "服务商密钥",
+      "billing": "我的套餐"
+    },
+    "dangerZone": "永久性更改",
+    "dangerZoneHint": "这些更改会影响组织中的所有人，且无法撤销。",
+    "providerKeysOwners": "只有所有者和管理员可以管理服务商密钥。如需更改，请联系他们。"
   },
   "media": {
     "page": {

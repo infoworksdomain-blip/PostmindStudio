@@ -33,6 +33,8 @@ export interface PlannedPost {
   status: 'QUEUED' | 'GENERATING' | 'READY' | 'HELD';
   /** 24.2: the post's project once it has one (live status chip, side panel). */
   projectId?: string | null;
+  /** 25.9: the automation whose period this is (null = a hand-made month plan). */
+  automationId?: string | null;
 }
 
 export const SUMMARY_DAYS = 30;

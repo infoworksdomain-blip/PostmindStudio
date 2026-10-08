@@ -31,20 +31,20 @@ export function OpenSlot({ at, compact = false }: { at: string; compact?: boolea
   );
 }
 
-/** Scroll to the drip queue panel and focus its heading. */
-export function focusDripQueue(): void {
-  const heading = document.getElementById('drip-heading');
-  heading?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
-  heading?.focus({ preventScroll: true });
-}
-
 /** "Next 30 days: 12 posts scheduled · 8 open slots" (or how to turn the queue on). */
-export function MonthAheadSummary({ upcoming }: { upcoming: UpcomingSlots | undefined }) {
+export function MonthAheadSummary({
+  upcoming,
+  onSetTimes,
+}: {
+  upcoming: UpcomingSlots | undefined;
+  /** 25.9: opens the "Posting times" sheet. */
+  onSetTimes: () => void;
+}) {
   const t = useTranslations('calendar.summary');
   if (!upcoming) return null;
   const scheduled = upcoming.scheduled;
   return (
-    <p className="mb-3 text-sm text-muted-foreground">
+    <p className="text-sm text-muted-foreground">
       {upcoming.enabled
         ? t('next', { scheduled, open: upcoming.openSlots.length })
         : t.rich('queueOff', {
@@ -53,7 +53,8 @@ export function MonthAheadSummary({ upcoming }: { upcoming: UpcomingSlots | unde
             link: (chunks) => (
               <button
                 type="button"
-                onClick={focusDripQueue}
+                onClick={onSetTimes}
+                aria-haspopup="dialog"
                 className="text-foreground underline underline-offset-2"
               >
                 {chunks}

@@ -23,6 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { api, useApi, useErrorMessage } from '@/lib/client/api';
+import { PageHeader } from './primitives';
 
 // BACKLOG 13.24 — notification preferences (GET|PATCH /notification-preferences): per kind,
 // in-app and email. Phase 18 §2.8: emailDelivery is "active" when Studio sends email (Resend),
@@ -155,13 +156,34 @@ function PreferencesTable() {
   );
 }
 
-/** Phase 18: the dialog description follows the email delivery state (SWR shares the request). */
-function PreferencesDescription() {
+/** Phase 18: the description follows the email delivery state (SWR shares the request). */
+function usePreferencesDescription(): string {
   const t = useTranslations('shell.preferences');
   const te = useTranslations('email.preferences');
   const res = useApi<PreferencesResponse>('/notification-preferences');
   const pending = !res.data || res.data.emailDelivery === 'pending_setup';
-  return <DialogDescription>{pending ? t('description') : te('description')}</DialogDescription>;
+  return pending ? t('description') : te('description');
+}
+
+function PreferencesDescription() {
+  return <DialogDescription>{usePreferencesDescription()}</DialogDescription>;
+}
+
+/** 25.12: the same preferences inline, as the Settings → Notifications page. */
+export function NotificationPreferencesScreen() {
+  const tn = useTranslations('settingsNav');
+  return (
+    <>
+      <PageHeader
+        eyebrow={tn('title')}
+        title={tn('items.notifications')}
+        description={usePreferencesDescription()}
+      />
+      <div className="max-w-2xl border-t border-border pt-4">
+        <PreferencesTable />
+      </div>
+    </>
+  );
 }
 
 export function NotificationPreferencesButton() {

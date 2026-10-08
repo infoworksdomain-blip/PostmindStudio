@@ -495,7 +495,21 @@ function find(id: string | undefined) {
   return a;
 }
 
-route('GET', '/automations', () => ({ automations }));
+/** 25.9: the list's "Next post" (services/automations.ts nextPostTimes). */
+function nextPostAt(a: DemoAutomation): string | null {
+  if (a.status !== 'ACTIVE' && a.status !== 'GENERATING') return null;
+  const at = Date.now();
+  const next = (periods.get(a.id) ?? []).find(
+    (i) =>
+      ['QUEUED', 'GENERATING', 'READY', 'SCHEDULED'].includes(i.status) &&
+      Date.parse(i.slotAt) >= at,
+  );
+  return next?.slotAt ?? null;
+}
+
+route('GET', '/automations', () => ({
+  automations: automations.map((a) => ({ ...a, nextPostAt: nextPostAt(a) })),
+}));
 
 route('POST', '/automations/estimate', ({ body }) => {
   const b = (body ?? {}) as { cadence?: DemoAutomation['cadence']; duration?: string };

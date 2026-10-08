@@ -132,7 +132,9 @@ describe('SwipeDeck', () => {
     drag(-180);
     act(() => vi.runAllTimers());
     expect(onKeep).toHaveBeenCalledTimes(1);
-    fireEvent.keyDown(screen.getByRole('group'), { key: 'ArrowRight' });
+    fireEvent.keyDown(screen.getByRole('group', { name: 'Carousel: First' }), {
+      key: 'ArrowRight',
+    });
     act(() => vi.runAllTimers());
     expect(onSkip).toHaveBeenCalledTimes(1);
   });

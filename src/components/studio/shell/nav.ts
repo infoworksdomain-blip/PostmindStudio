@@ -89,9 +89,10 @@ export const NAV_GROUPS: readonly NavGroup[] = [
   'staff',
 ];
 
-/** The navigation entry a path belongs to (/settings/* all light up Settings). */
+/** The navigation entry a path belongs to (/settings/* and the /account/* pages light up Settings). */
 export function isNavActive(pathname: string, href: string): boolean {
-  if (href.startsWith('/settings/')) return pathname.startsWith('/settings/');
+  if (href.startsWith('/settings/'))
+    return pathname.startsWith('/settings/') || pathname.startsWith('/account/');
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

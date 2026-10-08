@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react';
+import { renderWithSWR } from '../review/test-helpers';
 import { describe, expect, it, vi } from 'vitest';
 import type { CreateState } from './body';
-import { AdvancedOptions } from './create-options';
+import { BudgetField } from './create-options';
+import { MoreOptions, type MoreOptionsProps } from './create-more-options';
 
 const base: CreateState = {
   brief: 'A video',
@@ -21,28 +23,75 @@ const base: CreateState = {
 };
 
 function renderOptions(over: Partial<CreateState>) {
-  render(
-    <AdvancedOptions
-      state={{ ...base, ...over }}
-      onChange={vi.fn()}
-      open
-      onToggle={vi.fn()}
-      showCosts
-    />,
-  );
+  render(<BudgetField state={{ ...base, ...over }} onChange={vi.fn()} />);
   return screen.getByLabelText('Budget cap (£)');
 }
 
-describe('AdvancedOptions budget for customers (operator decision 2026-10-04)', () => {
+function moreOptions(over: Partial<MoreOptionsProps> = {}) {
+  const props: MoreOptionsProps = {
+    state: base,
+    onChange: vi.fn(),
+    open: true,
+    onToggle: vi.fn(),
+    view: { templated: false, canUseTemplate: false, fixedLength: false },
+    businessId: null,
+    kits: [],
+    templates: { data: [], error: undefined, retry: vi.fn(), choose: vi.fn() },
+    planTier: 'STANDARD',
+    workflows: [],
+    canSchedule: true,
+    showCosts: false,
+    ...over,
+  };
+  return renderWithSWR(<MoreOptions {...props} />);
+}
+
+describe('More options (25.7)', () => {
   it('has no budget field, hint or amount unless the viewer is platform staff', () => {
-    render(<AdvancedOptions state={base} onChange={vi.fn()} open onToggle={vi.fn()} />);
+    moreOptions();
     expect(screen.getByLabelText('Approval')).toBeInTheDocument();
     expect(screen.queryByLabelText(/Budget/)).not.toBeInTheDocument();
     expect(screen.queryByText(/£/)).not.toBeInTheDocument();
   });
+
+  it('groups every option under one disclosure, by what it decides', () => {
+    moreOptions({ showCosts: true });
+    expect(screen.getByRole('button', { name: 'More options' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    for (const name of [
+      'Platforms and length',
+      'Brand and language',
+      'Audience and call to action',
+      'Approval and schedule',
+      'Quality',
+    ])
+      expect(screen.getByRole('heading', { name })).toBeInTheDocument();
+    expect(screen.getByLabelText('Budget cap (£)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Quality tier')).toBeInTheDocument();
+  });
+
+  it('shows only what a carousel uses, and nothing while closed', () => {
+    const { unmount } = moreOptions({ state: { ...base, source: 'CAROUSEL' } });
+    expect(
+      screen.queryByRole('heading', { name: 'Approval and schedule' }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: 'TikTok' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Brand kit')).toBeInTheDocument();
+    unmount();
+    moreOptions({ open: false });
+    expect(screen.queryByLabelText('Approval')).not.toBeInTheDocument();
+  });
+
+  it('drops the length choice for fixed-length formats and templates', () => {
+    moreOptions({ view: { templated: false, canUseTemplate: false, fixedLength: true } });
+    expect(screen.queryByRole('radio', { name: 'Long' })).not.toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'TikTok' })).toBeInTheDocument();
+  });
 });
 
-describe('AdvancedOptions budget default for staff (operator decision 2)', () => {
+describe('BudgetField default for staff (operator decision 2)', () => {
   it('shows the short-form default for short videos, with how the pause and raise work', () => {
     expect(renderOptions({})).toHaveAttribute('placeholder', 'Default £3.50');
     expect(screen.getByText(/Generation pauses at 90% of this/)).toHaveTextContent(

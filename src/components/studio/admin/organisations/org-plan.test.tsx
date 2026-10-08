@@ -7,7 +7,8 @@ import { mockFetch, renderWithSWR, type MockRoute } from '../../library/test-hel
 import type { AdminEntitlementsResponse } from '../../billing/types';
 import { EntitlementsPanel } from '../billing/entitlements-panel';
 import { OrganisationSettings } from '../organisation-panel';
-import { OrganisationsTab, type AdminOrgRow } from './organisations-tab';
+import { OrganisationsTab } from './organisations-tab';
+import type { AdminOrgRow } from './types';
 
 // 20.27 (operator 2026-10-03): staff change an organisation's plan, access and trial from the
 // Organisations tab: the list shows the trial, the detail shows the plan, the trial and its cost,

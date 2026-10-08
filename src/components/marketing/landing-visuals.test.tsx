@@ -1,169 +1,265 @@
 // @vitest-environment jsdom
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { STUDIO_CLIPS } from '@/lib/marketing/media';
 import { withLocale } from '../../../test/i18n-wrapper';
-import { ADVANCE_MS, FlowCarousel } from './flow-carousel';
 import { LandingPage } from './landing-page';
+import {
+  ClipMedia,
+  RevealOnScroll,
+  VideosToggle,
+  setVideosPaused,
+  videoAllowed,
+} from './landing/motion';
 
-// BACKLOG 20.8 — the landing page's images (alt, size, loading priority) and the product-flow
-// carousel (tabs, keyboard, Previous/Next, auto-advance that stops on hover, focus, pause and
-// reduced motion; right to left in Arabic).
+// 25.5 — the landing page's media: real Studio posters (alt, size, <picture> sources, one LCP
+// image), no video on phones / reduced motion / Save-Data, play while in view, one pause control
+// (WCAG 2.2.2), and the scroll reveal that never hides content by default.
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/' }));
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-  vi.useRealTimers();
+type MediaQueries = { wide?: boolean; reduced?: boolean };
+
+function stubMatchMedia({ wide = true, reduced = false }: MediaQueries = {}) {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((query: string) => ({
+      matches: query.includes('min-width') ? wide : query.includes('reduce') ? reduced : false,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })),
+  );
+}
+
+/** IntersectionObserver whose callbacks a test can fire. */
+const observers: Array<{ cb: IntersectionObserverCallback; els: Element[] }> = [];
+class FakeIO {
+  constructor(public cb: IntersectionObserverCallback) {
+    observers.push({ cb, els: (this.els = []) });
+  }
+  els: Element[];
+  observe(el: Element) {
+    this.els.push(el);
+  }
+  unobserve() {}
+  disconnect() {}
+}
+function intersect(el: Element, isIntersecting: boolean) {
+  for (const o of observers.filter((x) => x.els.includes(el))) {
+    o.cb([{ target: el, isIntersecting } as IntersectionObserverEntry], {} as IntersectionObserver);
+  }
+}
+
+beforeEach(() => {
+  observers.length = 0;
+  vi.stubGlobal('IntersectionObserver', FakeIO);
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+  setVideosPaused(false);
 });
 
-describe('LandingPage images', () => {
-  it('gives every image alt text (empty when decorative), a width and a height', () => {
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+describe('LandingPage media', () => {
+  it('gives every image alt text, a width and a height, from real Studio output or screens', () => {
     const { container } = render(<LandingPage />);
     const imgs = [...container.querySelectorAll('img')];
-    expect(imgs.length).toBeGreaterThan(10);
+    expect(imgs.length).toBeGreaterThan(20);
     for (const img of imgs) {
       expect(img.hasAttribute('alt')).toBe(true);
       expect(Number(img.getAttribute('width'))).toBeGreaterThan(0);
       expect(Number(img.getAttribute('height'))).toBeGreaterThan(0);
-      expect(img.getAttribute('src')).toMatch(/^\/marketing\/(photos|screens)\/[\w-]+\.webp$/);
+      expect(img.getAttribute('src')).toMatch(
+        /^\/marketing\/(studio|screens)\/[\w-]+\.(webp|jpg)$/,
+      );
     }
+    expect(container.innerHTML).not.toContain('/marketing/photos/');
   });
 
-  it('loads only the hero phone eagerly with high priority; everything else is lazy', () => {
+  it('loads the three hero posters eagerly, only the LCP bread poster at high priority; the rest are lazy', () => {
     const { container } = render(<LandingPage />);
     const eager = [...container.querySelectorAll('img')].filter(
       (img) => img.getAttribute('loading') !== 'lazy',
     );
-    expect(eager).toHaveLength(1);
-    expect(eager[0]).toHaveAttribute('fetchpriority', 'high');
-    expect(eager[0]).toHaveAttribute('src', '/marketing/photos/sourdough-loaf.webp');
-    expect(screen.getByRole('img', { name: /sourdough loaf on baking paper/ })).toBe(eager[0]);
+    expect(eager.map((img) => img.getAttribute('src'))).toEqual([
+      '/marketing/studio/seedance-market.jpg',
+      '/marketing/studio/seedance-bread.jpg',
+      '/marketing/studio/coastline-stays-slideshow.jpg',
+    ]);
+    for (const img of eager) {
+      expect(img).toHaveAttribute('loading', 'eager');
+      expect(img).toHaveAttribute('width', '720');
+      expect(img).toHaveAttribute('height', '1280');
+    }
+    const high = [...container.querySelectorAll('img[fetchpriority]')];
+    expect(high).toHaveLength(1);
+    const lcp = high[0]!;
+    expect(lcp).toHaveAttribute('fetchpriority', 'high');
+    expect(lcp).toHaveAttribute('src', '/marketing/studio/seedance-bread.jpg');
+    const source = lcp.parentElement!.querySelector('source')!;
+    expect(source).toHaveAttribute('type', 'image/webp');
+    expect(source.getAttribute('srcset')).toBe(
+      '/marketing/studio/seedance-bread-360.webp 360w, /marketing/studio/seedance-bread-720.webp 720w',
+    );
+    expect(
+      screen.getByRole('img', {
+        name: /golden sourdough loaf on a wooden board, steam rising, the camera/,
+      }),
+    ).toBe(lcp);
   });
 
-  it('describes the contact sheet photos', () => {
+  it('labels each post "<business type> · <format>" in one run, with no stray punctuation', () => {
     render(<LandingPage />);
-    expect(screen.getByRole('img', { name: /bread stall at a street market/ })).toBeTruthy();
-    expect(screen.getByRole('img', { name: /dumbbells/ })).toBeTruthy();
-    expect(screen.getByText('Friday cuts, book now')).toBeVisible();
-    expect(screen.getByText(/Stock photos showing the shapes/)).toBeVisible();
+    const strip = screen.getByRole('region', { name: 'Example posts made with Studio' });
+    expect(strip).toHaveAttribute('tabindex', '0');
+    const labels = [...strip.querySelectorAll('figcaption')].map((fc) =>
+      [...fc.children].map((c) => c.textContent),
+    );
+    expect(labels).toHaveLength(9);
+    expect(labels.slice(0, 3)).toEqual([
+      ['Northside Bakery', 'Sourdough bakery · AI video'],
+      ['Pulse Studio', 'Fitness studio · Wall of text'],
+      ['Atelier Wren', 'Linen boutique · Slideshow'],
+    ]);
+    for (const [, label] of labels) expect(label).toMatch(/^[^,·]+ · [^,·]+$/);
+  });
+
+  it.each(['fr', 'ar', 'zh-Hans'] as const)(
+    'labels the strip without stray punctuation in %s',
+    (locale) => {
+      render(withLocale(locale, <LandingPage />));
+      const captions = [...document.querySelectorAll('figcaption')].filter((fc) =>
+        fc.closest('[role=region]'),
+      );
+      expect(captions).toHaveLength(9);
+      for (const fc of captions) {
+        expect(fc.lastElementChild?.textContent).toMatch(/^[^,،、·]+ · [^,،、·]+$/);
+      }
+    },
+  );
+
+  it('renders no video on the server or on phones, and no pause control', () => {
+    stubMatchMedia({ wide: false });
+    const { container } = render(<LandingPage />);
+    expect(container.querySelector('video')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Pause videos' })).toBeNull();
+  });
+
+  it('renders no video with reduced motion or Save-Data', () => {
+    stubMatchMedia({ reduced: true });
+    expect(videoAllowed()).toBe(false);
+    stubMatchMedia();
+    vi.stubGlobal('navigator', { ...navigator, connection: { saveData: true } });
+    expect(videoAllowed()).toBe(false);
   });
 });
 
-describe('FlowCarousel', () => {
-  const tabs = () => screen.getAllByRole('tab');
-  const selected = () => tabs().find((t) => t.getAttribute('aria-selected') === 'true');
-  const visiblePanels = () =>
-    screen.getAllByRole('tabpanel', { hidden: true }).filter((p) => !p.hidden);
-  const region = () => screen.getByRole('region', { name: 'Watch a video get made.' });
-
-  it('is a labelled carousel with six step tabs, one visible slide and its screen', () => {
-    render(<FlowCarousel />);
-    expect(region()).toHaveAttribute('aria-roledescription', 'carousel');
-    expect(screen.getByRole('tablist', { name: 'Steps' })).toBeTruthy();
-    expect(tabs().map((t) => t.textContent)).toEqual([
-      '01Brief',
-      '02Script',
-      '03Generate',
-      '04Review',
-      '05Calendar',
-      '06Analytics',
-    ]);
-    expect(selected()).toHaveTextContent('Brief');
-    expect(tabs().map((t) => t.tabIndex)).toEqual([0, -1, -1, -1, -1, -1]);
-    expect(visiblePanels()).toHaveLength(1);
-    const panel = visiblePanels()[0]!;
-    expect(panel).toHaveAttribute('aria-roledescription', 'slide');
-    expect(panel).toHaveAttribute('aria-label', '1 of 6');
-    expect(selected()).toHaveAttribute('aria-controls', panel.id);
-    const shots = within(panel).getAllByRole('img', { hidden: true });
-    expect(shots.map((i) => i.getAttribute('src'))).toEqual([
-      '/marketing/screens/brief-light.webp',
-      '/marketing/screens/brief-dark.webp',
-    ]);
-    expect(shots[0]).toHaveAccessibleName(/Create screen with a brief/);
-    for (const img of shots) expect(img).toHaveAttribute('loading', 'lazy');
+describe('ClipMedia', () => {
+  it('mounts a muted, preload=none loop on wide screens and plays it only while in view', () => {
+    stubMatchMedia();
+    const { container } = render(
+      <ClipMedia clip={STUDIO_CLIPS.atelierWren} alt="Linen" sizes="20rem" />,
+    );
+    const video = container.querySelector('video')!;
+    expect(video).toHaveAttribute('preload', 'none');
+    expect(video.muted).toBe(true);
+    expect(video).toHaveAttribute('aria-hidden', 'true');
+    expect(video.querySelector('source')).toHaveAttribute(
+      'src',
+      '/marketing/studio/atelier-wren-slideshow.mp4',
+    );
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
+    act(() => intersect(container.firstElementChild!, true));
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+    act(() => intersect(container.firstElementChild!, false));
+    expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled();
   });
 
-  it('moves with the arrow keys, Home and End, and keeps focus on the selected tab', () => {
-    render(<FlowCarousel />);
-    tabs()[0]!.focus();
-    fireEvent.keyDown(tabs()[0]!, { key: 'ArrowRight' });
-    expect(selected()).toHaveTextContent('Script');
-    expect(document.activeElement).toBe(selected());
-    expect(visiblePanels()[0]).toHaveAttribute('aria-label', '2 of 6');
-    fireEvent.keyDown(selected()!, { key: 'End' });
-    expect(selected()).toHaveTextContent('Analytics');
-    fireEvent.keyDown(selected()!, { key: 'ArrowRight' });
-    expect(selected()).toHaveTextContent('Brief');
-    fireEvent.keyDown(selected()!, { key: 'ArrowLeft' });
-    expect(selected()).toHaveTextContent('Analytics');
-    fireEvent.keyDown(selected()!, { key: 'Home' });
-    expect(selected()).toHaveTextContent('Brief');
+  it('in hover mode plays only while the pointer is over it', () => {
+    stubMatchMedia();
+    const { container } = render(
+      <ClipMedia clip={STUDIO_CLIPS.pulseStudio} alt="Gym" sizes="16rem" play="hover" />,
+    );
+    const root = container.firstElementChild!;
+    act(() => intersect(root, true));
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
+    fireEvent.pointerEnter(root);
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+    fireEvent.pointerLeave(root);
+    expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled();
   });
 
-  it('has Previous and Next buttons that wrap round', () => {
-    render(<FlowCarousel />);
-    fireEvent.click(screen.getByRole('button', { name: 'Next step' }));
-    expect(selected()).toHaveTextContent('Script');
-    fireEvent.click(screen.getByRole('button', { name: 'Previous step' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Previous step' }));
-    expect(selected()).toHaveTextContent('Analytics');
+  it('stops every clip when the visitor presses Pause videos, and resumes on Play videos', () => {
+    stubMatchMedia();
+    const { container } = render(
+      <>
+        <ClipMedia clip={STUDIO_CLIPS.seedanceBread} alt="Bread" sizes="20rem" />
+        <VideosToggle />
+      </>,
+    );
+    act(() => intersect(container.firstElementChild!, true));
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Pause videos' }));
+    expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled();
+    const play = screen.getByRole('button', { name: 'Play videos' });
+    expect(play).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(play);
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('RevealOnScroll', () => {
+  /** Lay out: the element with data-testid "below" sits at `belowTop`, everything else at 10. */
+  function layout(belowTop: () => number) {
+    return vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      return { top: this.dataset.testid === 'below' ? belowTop() : 10 } as DOMRect;
+    });
+  }
+  const page = () => (
+    <RevealOnScroll>
+      <div data-reveal data-testid="above" />
+      <div data-reveal data-testid="below" />
+    </RevealOnScroll>
+  );
+
+  it('hides nothing when nothing is below the fold', () => {
+    stubMatchMedia();
+    render(page());
+    // jsdom lays nothing out (every top is 0), so everything stays visible.
+    expect(screen.getByTestId('above').dataset.reveal).not.toBe('waiting');
+    expect(screen.getByTestId('below').dataset.reveal).not.toBe('waiting');
   });
 
-  it('advances on its own, waits on hover and focus, and stops for good when paused', () => {
-    vi.useFakeTimers();
-    render(<FlowCarousel />);
-    const live = () => visiblePanels()[0]!.parentElement!;
-    act(() => vi.advanceTimersByTime(ADVANCE_MS));
-    expect(selected()).toHaveTextContent('Script');
-    expect(live()).toHaveAttribute('aria-live', 'off');
-
-    fireEvent.mouseEnter(region());
-    act(() => vi.advanceTimersByTime(ADVANCE_MS * 2));
-    expect(selected()).toHaveTextContent('Script');
-    fireEvent.mouseLeave(region());
-    act(() => vi.advanceTimersByTime(ADVANCE_MS));
-    expect(selected()).toHaveTextContent('Generate');
-
-    fireEvent.focus(tabs()[2]!);
-    act(() => vi.advanceTimersByTime(ADVANCE_MS * 2));
-    expect(selected()).toHaveTextContent('Generate');
-    fireEvent.blur(tabs()[2]!, { relatedTarget: document.body });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Pause the slideshow' }));
-    act(() => vi.advanceTimersByTime(ADVANCE_MS * 3));
-    expect(selected()).toHaveTextContent('Generate');
-    expect(live()).toHaveAttribute('aria-live', 'polite');
-    expect(screen.getByRole('button', { name: 'Play the slideshow' })).toBeTruthy();
+  it('marks below-the-fold content waiting, then shows it once scrolled into (or past) view', () => {
+    stubMatchMedia();
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      cb(0);
+      return 0; // ran synchronously: nothing left pending
+    });
+    let top = 5000;
+    layout(() => top);
+    render(page());
+    const below = screen.getByTestId('below');
+    expect(screen.getByTestId('above').dataset.reveal).not.toBe('waiting');
+    expect(below.dataset.reveal).toBe('waiting');
+    top = 3000;
+    fireEvent.scroll(window);
+    expect(below.dataset.reveal).toBe('waiting');
+    top = -2000; // a jump straight past it (End key, anchor) still reveals it
+    fireEvent.scroll(window);
+    expect(below.dataset.reveal).toBe('shown');
   });
 
-  it('stops rotating once the visitor picks a step', () => {
-    vi.useFakeTimers();
-    render(<FlowCarousel />);
-    fireEvent.click(tabs()[3]!);
-    act(() => vi.advanceTimersByTime(ADVANCE_MS * 3));
-    expect(selected()).toHaveTextContent('Review');
-  });
-
-  it('never advances on its own when the visitor prefers reduced motion', () => {
-    vi.stubGlobal('matchMedia', (q: string) => ({
-      matches: q.includes('reduce'),
-      media: q,
-      addEventListener: () => {},
-      removeEventListener: () => {},
-    }));
-    vi.useFakeTimers();
-    render(<FlowCarousel />);
-    act(() => vi.advanceTimersByTime(ADVANCE_MS * 3));
-    expect(selected()).toHaveTextContent('Brief');
-    expect(screen.getByRole('button', { name: 'Play the slideshow' })).toBeTruthy();
-  });
-
-  it('follows the reading direction in Arabic: ArrowLeft goes forward', () => {
-    render(withLocale('ar', <FlowCarousel />));
-    expect(document.documentElement.dir).toBe('rtl');
-    fireEvent.keyDown(tabs()[0]!, { key: 'ArrowLeft' });
-    expect(tabs()[1]).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('tablist').textContent).toMatch(/[؀-ۿ]/);
+  it('does nothing with reduced motion', () => {
+    stubMatchMedia({ reduced: true });
+    layout(() => 5000);
+    render(page());
+    expect(screen.getByTestId('below').dataset.reveal).not.toBe('waiting');
   });
 });

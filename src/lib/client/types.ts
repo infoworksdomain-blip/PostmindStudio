@@ -127,7 +127,14 @@ export interface Publication {
   latestMetrics?: { views: number; likes: number; comments: number; at: string } | null;
   /** Per-platform extras (15.A2 tiktokMode "inbox" + note; 15.A9 captionTruncated). */
   metadata?: Record<string, unknown> | null;
+  /** 25.9: the month plan or automation the post belongs to (list endpoint; null = neither). */
+  campaign?: PublicationCampaign | null;
 }
+
+/** 25.9 (services/publication-campaigns.ts): where a calendar post came from. */
+export type PublicationCampaign =
+  | { kind: 'plan'; planId: string; startDate: string; days: number }
+  | { kind: 'automation'; planId: string; automationId: string; name: string };
 
 export interface ProjectDetail extends Project {
   /** 20.18: directions ideation suggested while the brief is too vague (empty otherwise). */

@@ -95,6 +95,10 @@ const PAIRS: Array<[string, string, number]> = [
   ['--ring', '--card', UI],
   ['--input', '--background', UI],
   ['--input', '--card', UI],
+  // 25.12: meter fills (data by default, warning from 80 %, destructive at 100 %) on the track.
+  ['--data', '--secondary', UI],
+  ['--warning', '--secondary', UI],
+  ['--destructive', '--secondary', UI],
   // Chart marks against the card they sit on.
   ['--chart-1', '--card', UI],
   ['--chart-2', '--card', UI],

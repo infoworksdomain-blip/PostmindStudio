@@ -33,6 +33,7 @@ import { billingOverview, internalCostThisMonth, videoQuota } from '../billing-s
 import { CONNECTIONS, DEMO_BUSINESS_ID } from '../ids';
 import { demoHashtags } from '../hashtags-data';
 import { DemoHttpError, route } from '../registry';
+import type { PublicationCampaign } from '@/lib/client/types';
 import type { ProjectContent } from './projects-content';
 import {
   baseProject,
@@ -469,8 +470,18 @@ export function demoPlannedPosts(window: { fromMs: number; toMs: number }) {
           title: i.title,
           kind: i.kind,
           status: i.status,
+          // 25.9: a hand-made month plan, not an automation period (the calendar's source filter).
+          automationId: null,
         })),
     );
+}
+
+/** 25.9: the sample month plan as a calendar post's campaign (GET /publications `campaign`). */
+export function demoPlanCampaign(): PublicationCampaign | null {
+  const plan = plans.get('plan-october');
+  return plan
+    ? { kind: 'plan', planId: plan.id, startDate: plan.startDate, days: plan.days }
+    : null;
 }
 
 /** 20.9: every time an active plan holds (the drip queue never offers them). */

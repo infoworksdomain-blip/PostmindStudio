@@ -503,16 +503,25 @@ Plan and audit: the "PostMind Studio Redesign Audit" (Daylight and Darkroom desi
 - [x] **25.2** Tokens and themes: Daylight and Darkroom tokens mapped onto the shadcn variables (canvas/surface/raised/active, line/line-strong, ink 1–3, signal, data, success/warning/error with text-safe foregrounds and soft washes, scrim, charts, role radii, elevation, motion, z-index, section rhythm), WCAG AA contrast test for both themes, film grain removed, Geist + Geist Mono replace Inter + Instrument Serif, Light / Dark / System (default System) in the account menu, top bar and a new Appearance section on /account/profile, amber/emerald/black/white chrome replaced with tokens, RTL check extended to `src/components/ui`.
 - [x] **25.3** Core components: one primitive per job (Button + IconButton, NativeSelect/Select, ConfirmDialog + useConfirm, ChoiceChips, SegmentedControl, StatusPill, Tooltip, DataTable, Dialog/Sheet/menus/toasts restyled, open Section, EmptyState/ErrorState/Skeleton), raw elements migrated. MediaTile moves to 25.10 (Library).
 - [x] **25.4** App shell and navigation: Create / Plan / Library / Insights / Settings, month plans in the nav, mobile business switcher, command menu, sign-in redirect for /blitz, /plans*, /automations*, a home screen.
+- [x] **25.5** Homepage and public site: real renders, pricing and legal restyled, favicon, app icon, link-preview image, optimised media.
+- [ ] **25.6** Sign-in and onboarding: branded auth flows, onboarding progress and skippable steps.
 - [ ] **25.5** Homepage and public site: real renders, pricing and legal restyled, favicon, app icon, link-preview image, optimised media.
 - [x] **25.6** Sign-in and onboarding: branded auth flows, onboarding progress and skippable steps.
+- [x] **25.7** Create workspace: format rail first, progressive options, live cost and allowance.
+- [ ] **25.8** Video Studio, Image Studio and project review: capability-driven model selector (done with 25.7: catalogue, GET /video-models, the Create picker), real job states with measured ETA, player-first review, Image Studio page.
 - [ ] **25.7** Create workspace: format rail first, progressive options, live cost and allowance.
 - [ ] **25.8** Video Studio, Image Studio and project review: capability-driven model selector, real job states with measured ETA, player-first review, Image Studio page.
   - [x] **25.8 (review + Image Studio)** Player-first project review (status & actions column, one "Needs your attention" list, tabs in the URL, pipeline with failed/draft states) and the Image Studio page (/images). The capability-driven model selector is a separate PR.
 - [ ] **25.9** Calendar, month planner, Blitz and automations.
 - [x] **25.10** Library and My media.
+- [x] **25.9** Calendar, month planner, Blitz and automations: Month / Week / Day views with URL-synced view, day and filters (platform, status, source), month ARIA grid with keyboard moves, "+n more" popovers, campaign labels and lazy thumbnails, Undo after a move, posting times in a side sheet; one-prompt month planner with a preview, week-by-week plan timeline with per-item approve and bulk new topics / delete / approve (sequential per-item calls); Blitz media-first deck, key-cap hints and read-only explanation; automations list with next post, wizard progress, runs timeline; publications filters in the URL.
+- [ ] **25.10** Library and My media.
 - [ ] **25.11** Analytics: summary first, scoped to the selected business.
-- [ ] **25.12** Connections, settings, billing and account (regrouped settings).
+- [x] **25.12** Connections, settings, billing and account (regrouped settings).
 - [ ] **25.13** Admin: sectioned side menu, URL-synced tabs, dense tables.
+- [x] **25.11** Analytics: summary first, scoped to the selected business.
+- [ ] **25.12** Connections, settings, billing and account (regrouped settings).
+- [x] **25.13** Admin: sectioned side menu, URL-synced tabs, dense tables.
 - [ ] **25.14** Responsive, accessibility (WCAG 2.2 AA, axe on every route) and performance.
 - [ ] **25.15** Regression: every route in four modes, main journeys end to end, old-design sweep.
 - [ ] **25.16** Redesign report (route matrix, scores) and demo + live updated.

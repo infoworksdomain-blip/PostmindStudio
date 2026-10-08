@@ -10,6 +10,8 @@ export type Metric = (typeof METRICS)[number];
 export interface OverviewResponse {
   ok: true;
   days: number;
+  /** 25.11: the business the totals are narrowed to; null (or absent) = all businesses. */
+  businessId?: string | null;
   publications: number;
   projectsCreated: number;
   totals: {
@@ -31,6 +33,8 @@ export interface TimeseriesResponse {
 
 export interface LeaderboardEntry {
   id: string;
+  /** 25.11: the published render (its thumbnail comes from GET /renders/:id). */
+  renderId?: string;
   platform: string;
   platformUrl: string | null;
   publishedAt: string | null;
@@ -74,6 +78,10 @@ export interface PublicationAnalyticsResponse {
   ok: true;
   publication: {
     id: string;
+    /** 25.11: present on current servers; the drill-down shows the render's thumbnail. */
+    projectId?: string;
+    renderId?: string;
+    caption?: string | null;
     platform: string;
     platformUrl: string | null;
     publishedAt: string | null;
@@ -92,4 +100,24 @@ export interface PublicationAnalyticsResponse {
   retention: Array<{ atPct: number; watchingPct: number }>;
   /** viewerPercentage by age group and gender (YouTube). */
   demographics: Array<{ ageGroup: string; gender: string; pct: number }>;
+}
+
+/** GET /analytics/best-times (15.A6) — advisory; weekday 0 = Sunday, hour in `timezone`. */
+export interface BestSlot {
+  weekday: number;
+  hour: number;
+  /** Mean views relative to the best slot, 0–1. */
+  score: number;
+  basis: string;
+}
+
+export interface BestTimesResponse {
+  ok: true;
+  data: BestSlot[];
+  bestPerDay: BestSlot[];
+  sufficientData: boolean;
+  videos: number;
+  minVideos: number;
+  timezone: string;
+  styleMemory: { peakHourUtc: number; hour: number | null; summary: string } | null;
 }

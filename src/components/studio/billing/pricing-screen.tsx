@@ -6,7 +6,6 @@ import { ArrowRight, Check } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { useFormat } from '@/lib/client/format';
-import { PageHeader } from '../primitives';
 import { ChannelPicker, usePackName, type ChannelChoice } from './channel-picker';
 import type { PricingView } from './types';
 
@@ -48,12 +47,12 @@ function Included() {
   const t = useTranslations('pricing.included');
   return (
     <section aria-labelledby="included-heading" className="grid gap-4">
-      <h2 id="included-heading" className="font-display text-3xl leading-none">
+      <h2 id="included-heading" className="font-display text-2xl md:text-3xl">
         {t('title')}
       </h2>
-      <ul className="grid gap-2 text-sm sm:grid-cols-2">
+      <ul className="grid gap-x-10 border-t border-border sm:grid-cols-2">
         {INCLUDED.map((item) => (
-          <li key={item} className="flex items-start gap-2">
+          <li key={item} className="flex items-start gap-2.5 border-b border-border py-3.5 text-sm">
             <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
             {t(`items.${item}`)}
           </li>
@@ -71,16 +70,19 @@ function Packs({ pricing }: { pricing: PricingView }) {
   return (
     <section aria-labelledby="packs-heading" className="grid gap-4">
       <div className="grid gap-1.5">
-        <h2 id="packs-heading" className="font-display text-3xl leading-none">
+        <h2 id="packs-heading" className="font-display text-2xl md:text-3xl">
           {t('title')}
         </h2>
         <p className="max-w-2xl text-sm text-muted-foreground">{t('description')}</p>
       </div>
       <ul className="grid gap-3 sm:grid-cols-2">
         {pricing.topUps.map((pack) => (
-          <li key={pack.lookupKey} className="grid gap-1 rounded-xl border border-border p-4">
+          <li
+            key={pack.lookupKey}
+            className="grid gap-1 rounded-panel bg-surface-raised p-5 ring-1 ring-border"
+          >
             <p className="font-medium">{name(pack)}</p>
-            <p className="font-display text-2xl tabular-nums">
+            <p className="font-display text-3xl tabular-nums">
               {pack.unitAmountPence === null
                 ? tPlan('priceUnavailable')
                 : f.pence(pack.unitAmountPence)}
@@ -106,14 +108,16 @@ function Faq({ pricing }: { pricing: PricingView }) {
   const prices = { weekly: amount('week'), monthly: amount('month'), yearly: amount('year') };
   return (
     <section aria-labelledby="faq-heading" className="grid gap-4">
-      <h2 id="faq-heading" className="font-display text-3xl leading-none">
+      <h2 id="faq-heading" className="font-display text-2xl md:text-3xl">
         {t('title')}
       </h2>
-      <div className="divide-y divide-border rounded-xl border border-border">
+      <div className="divide-y divide-border border-y border-border">
         {FAQ.map((item) => (
-          <details key={item} className="group p-4">
-            <summary className="cursor-pointer font-medium">{t(`items.${item}.q`)}</summary>
-            <p className="mt-2 text-sm text-muted-foreground">
+          <details key={item} className="group py-5">
+            <summary className="cursor-pointer font-medium marker:text-muted-foreground">
+              {t(`items.${item}.q`)}
+            </summary>
+            <p className="mt-2 max-w-3xl text-[0.9375rem] leading-relaxed text-muted-foreground">
               {item === 'period' ? t('items.period.a', prices) : t(`items.${item}.a`)}
             </p>
           </details>
@@ -128,17 +132,22 @@ export function PricingScreen({ pricing }: { pricing: PricingView }) {
   const [choice, setChoice] = useState<ChannelChoice>({ channels: 3, interval: 'month' });
   const trial = pricing.trial.days > 0;
   return (
-    <div className="mx-auto grid w-full max-w-5xl grid-cols-[minmax(0,1fr)] gap-12 px-4 py-10 md:px-8 md:py-16">
-      <PageHeader
-        eyebrow={t('hero.eyebrow')}
-        title={t('hero.title')}
-        description={t('hero.description')}
-      />
+    <div className="mx-auto grid w-full max-w-5xl grid-cols-[minmax(0,1fr)] gap-16 px-4 py-14 md:px-8 md:py-20">
+      <header className="max-w-3xl">
+        <p className="inline-flex items-center gap-2 text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">
+          <span aria-hidden className="size-2 rounded-full bg-primary" />
+          {t('hero.eyebrow')}
+        </p>
+        <h1 className="mt-5 font-display text-[clamp(2.5rem,1.6rem+3vw,4rem)] leading-[1.02] text-balance">
+          {t('hero.title')}
+        </h1>
+        <p className="mt-5 text-lg text-pretty text-muted-foreground">{t('hero.description')}</p>
+      </header>
       <section
         aria-labelledby="plan-heading"
-        className="grid gap-6 rounded-2xl border border-primary bg-card p-5 shadow-lg shadow-primary/10 md:p-8"
+        className="grid gap-6 rounded-[1.75rem] bg-surface-raised p-6 shadow-raised ring-1 ring-border md:p-10"
       >
-        <h2 id="plan-heading" className="font-display text-2xl leading-none">
+        <h2 id="plan-heading" className="font-display text-2xl">
           {t('plan.title')}
         </h2>
         {!pricing.available && (

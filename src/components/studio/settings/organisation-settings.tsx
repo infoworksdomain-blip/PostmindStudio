@@ -1,18 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { TriangleAlert } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -22,9 +14,9 @@ import { LOCALE_INFO, LOCALES } from '@/lib/i18n/locales';
 import { hardNavigate, hardReload } from '@/lib/client/navigate';
 import { ErrorState, PageHeader, Section } from '../primitives';
 import { countryOptions } from './countries';
+import { DangerRow, DangerZone } from './danger-zone';
 import type { MembersResponse } from './members-screen';
 import { useSettingsError } from './settings-errors';
-import { SettingsNav } from './settings-nav';
 
 // Phase 18 §3 /settings/organisation — details (name, logo, country for tax, default locale),
 // transfer of ownership (owner) and deletion (owner; type the name to confirm). PATCH /org,
@@ -204,18 +196,15 @@ function withPassword<T extends Record<string, unknown>>(body: T, password: stri
 
 function TransferOwnership() {
   const t = useTranslations('orgSettings.transfer');
-  const tc = useTranslations('common.actions');
   const errorMessage = useSettingsError();
   const { data } = useApi<MembersResponse>('/members');
   const [memberId, setMemberId] = useState('');
   const [password, setPassword] = useState('');
   const [open, setOpen] = useState(false);
-  const [pending, setPending] = useState(false);
   const candidates = data?.members.filter((m) => !m.isYou) ?? [];
   const chosen = candidates.find((m) => m.id === memberId);
 
-  async function transfer() {
-    setPending(true);
+  async function transfer(): Promise<boolean> {
     try {
       await api('/org/transfer-ownership', {
         method: 'POST',
@@ -223,102 +212,91 @@ function TransferOwnership() {
       });
       toast.success(t('done', { name: chosen?.name ?? '' }));
       hardReload();
+      return true;
     } catch (err) {
       toast.error(errorMessage(err));
-      setPending(false);
+      return false;
     }
   }
 
   return (
-    <Section title={t('title')} description={t('description')}>
-      {candidates.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t('nobody')}</p>
-      ) : (
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="grid gap-1.5">
-            <Label htmlFor="transfer-to">{t('to')}</Label>
-            <NativeSelect
-              id="transfer-to"
-              value={memberId}
-              onChange={(e) => setMemberId(e.target.value)}
-            >
-              <option value="">{t('choose')}</option>
-              {candidates.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name} · {m.email}
-                </option>
-              ))}
-            </NativeSelect>
-          </div>
+    <DangerRow
+      title={t('title')}
+      description={t('description')}
+      action={
+        candidates.length > 0 ? (
           <Button variant="outline" disabled={!chosen} onClick={() => setOpen(true)}>
             {t('action')}
           </Button>
+        ) : undefined
+      }
+    >
+      {candidates.length === 0 ? (
+        <p className="mt-2 text-sm text-muted-foreground">{t('nobody')}</p>
+      ) : (
+        <div className="mt-3 grid max-w-sm gap-1.5">
+          <Label htmlFor="transfer-to">{t('to')}</Label>
+          <NativeSelect
+            id="transfer-to"
+            value={memberId}
+            onChange={(e) => setMemberId(e.target.value)}
+          >
+            <option value="">{t('choose')}</option>
+            {candidates.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name} · {m.email}
+              </option>
+            ))}
+          </NativeSelect>
         </div>
       )}
-      <Dialog
+      <ConfirmDialog
         open={open}
         onOpenChange={(next) => {
           setOpen(next);
           if (!next) setPassword('');
         }}
+        title={t('confirmTitle')}
+        description={t('confirmBody', { name: chosen?.name ?? '' })}
+        confirmLabel={t('action')}
+        onConfirm={transfer}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('confirmTitle')}</DialogTitle>
-            <DialogDescription>{t('confirmBody', { name: chosen?.name ?? '' })}</DialogDescription>
-          </DialogHeader>
-          <ReauthPasswordField id="transfer-password" value={password} onChange={setPassword} />
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(false)}>
-              {tc('cancel')}
-            </Button>
-            <Button onClick={() => void transfer()} loading={pending}>
-              {t('action')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </Section>
+        <ReauthPasswordField id="transfer-password" value={password} onChange={setPassword} />
+      </ConfirmDialog>
+    </DangerRow>
   );
 }
 
 function DeleteOrganisation({ org }: { org: OrganisationSettings }) {
   const t = useTranslations('orgSettings.delete');
-  const tc = useTranslations('common.actions');
   const errorMessage = useSettingsError();
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState('');
   const [password, setPassword] = useState('');
-  const [pending, setPending] = useState(false);
 
-  async function remove() {
-    setPending(true);
+  async function remove(): Promise<boolean> {
     try {
       await api('/org', { method: 'DELETE', body: withPassword({ confirmName: typed }, password) });
       toast.success(t('done'));
       hardNavigate('/');
+      return true;
     } catch (err) {
       toast.error(errorMessage(err));
-      setPending(false);
+      return false;
     }
   }
 
   return (
-    <section
-      aria-labelledby="org-danger"
-      className="rounded-xl border border-destructive/30 bg-destructive/[0.03] p-5"
+    <DangerRow
+      title={t('title')}
+      description={t('description')}
+      action={
+        <Button variant="destructive" onClick={() => setOpen(true)}>
+          {t('action')}
+        </Button>
+      }
     >
-      <h2
-        id="org-danger"
-        className="flex items-center gap-2 text-sm font-semibold text-destructive"
-      >
-        <TriangleAlert aria-hidden className="size-4" /> {t('title')}
-      </h2>
-      <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{t('description')}</p>
-      <Button variant="destructive" className="mt-4" onClick={() => setOpen(true)}>
-        {t('action')}
-      </Button>
-      <Dialog
+      <ConfirmDialog
         open={open}
         onOpenChange={(next) => {
           setOpen(next);
@@ -327,43 +305,30 @@ function DeleteOrganisation({ org }: { org: OrganisationSettings }) {
             setPassword('');
           }
         }}
+        title={t('confirmTitle', { name: org.name })}
+        description={t('confirmBody')}
+        confirmLabel={t('confirm')}
+        confirmDisabled={typed.trim() !== org.name}
+        onConfirm={remove}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('confirmTitle', { name: org.name })}</DialogTitle>
-            <DialogDescription>{t('confirmBody')}</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-1.5">
-            <Label htmlFor="org-delete-confirm">{t('typeName', { name: org.name })}</Label>
-            <Input
-              id="org-delete-confirm"
-              value={typed}
-              onChange={(e) => setTyped(e.target.value)}
-              autoComplete="off"
-            />
-          </div>
-          <ReauthPasswordField id="org-delete-password" value={password} onChange={setPassword} />
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(false)}>
-              {tc('cancel')}
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={typed.trim() !== org.name}
-              onClick={() => void remove()}
-              loading={pending}
-            >
-              {t('confirm')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </section>
+        <div className="grid gap-1.5">
+          <Label htmlFor="org-delete-confirm">{t('typeName', { name: org.name })}</Label>
+          <Input
+            id="org-delete-confirm"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            autoComplete="off"
+          />
+        </div>
+        <ReauthPasswordField id="org-delete-password" value={password} onChange={setPassword} />
+      </ConfirmDialog>
+    </DangerRow>
   );
 }
 
 export function OrganisationSettingsScreen() {
   const t = useTranslations('orgSettings.page');
+  const tn = useTranslations('settingsNav');
   const { data, error, mutate } = useApi<OrganisationResponse>('/org');
   const [org, setOrg] = useState<OrganisationSettings | null>(null);
   useEffect(() => {
@@ -373,7 +338,6 @@ export function OrganisationSettingsScreen() {
   return (
     <>
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
-      <SettingsNav />
       {error ? (
         <ErrorState error={error} onRetry={() => void mutate()} />
       ) : !org ? (
@@ -382,10 +346,10 @@ export function OrganisationSettingsScreen() {
         <div className="grid gap-10">
           <DetailsForm key={org.id} org={org} onSaved={setOrg} />
           {org.yourRole === 'owner' && (
-            <>
+            <DangerZone title={tn('dangerZone')} description={tn('dangerZoneHint')}>
               <TransferOwnership />
               <DeleteOrganisation org={org} />
-            </>
+            </DangerZone>
           )}
         </div>
       )}

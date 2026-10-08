@@ -65,3 +65,5 @@ import './p18-billing';
 // Review build: the admin Billing tab (entitlement overrides, MRR) and the account security page.
 import './p18-admin-billing';
 import './p18-account';
+// 25.8: the AI-clip video models Create offers (GET /video-models sample data).
+import './p25-video-models';

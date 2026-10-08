@@ -38,7 +38,8 @@ describe('CreateScreen in other locales', () => {
     renderWithSWR(withLocale('zh-Hans', <CreateScreen initialReference={null} />));
     expect(await screen.findByLabelText('视频的主题是什么？')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '生成' })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /选项/ }));
-    expect(screen.getByRole('radio', { name: /幻灯片/ })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: '更多选项' }));
+    expect(screen.getByRole('radio', { name: '幻灯片' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '平台和时长' })).toBeInTheDocument();
   });
 });

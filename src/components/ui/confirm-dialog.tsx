@@ -29,6 +29,12 @@ export interface ConfirmDialogProps {
   destructive?: boolean;
   /** Resolve true to close the dialog; false keeps it open. A void return closes it. */
   onConfirm: () => Promise<boolean | void> | boolean | void;
+  /** 25.12: fields the confirmation needs (a password, typing a name), between text and buttons. */
+  children?: ReactNode;
+  /** 25.12: keeps the confirm button disabled until those fields are filled in. */
+  confirmDisabled?: boolean;
+  /** 25.12: shows the confirm button busy while the caller's own request runs. */
+  confirmLoading?: boolean;
 }
 
 export function ConfirmDialog({
@@ -40,6 +46,9 @@ export function ConfirmDialog({
   cancelLabel,
   destructive = true,
   onConfirm,
+  children,
+  confirmDisabled = false,
+  confirmLoading = false,
 }: ConfirmDialogProps) {
   const t = useTranslations('common.actions');
   const [busy, setBusy] = useState(false);
@@ -56,7 +65,7 @@ export function ConfirmDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(next) => !busy && onOpenChange(next)}>
+    <Dialog open={open} onOpenChange={(next) => !busy && !confirmLoading && onOpenChange(next)}>
       <DialogContent
         role="alertdialog"
         showCloseButton={false}
@@ -74,18 +83,20 @@ export function ConfirmDialog({
             <DialogDescription className="sr-only">{title}</DialogDescription>
           )}
         </DialogHeader>
+        {children}
         <DialogFooter>
           <Button
             ref={cancelRef}
             variant="outline"
-            disabled={busy}
+            disabled={busy || confirmLoading}
             onClick={() => onOpenChange(false)}
           >
             {cancelLabel ?? t('cancel')}
           </Button>
           <Button
             variant={destructive ? 'destructive' : 'default'}
-            loading={busy}
+            disabled={confirmDisabled}
+            loading={busy || confirmLoading}
             onClick={() => void confirm()}
           >
             {confirmLabel}
