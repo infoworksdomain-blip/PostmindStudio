@@ -1,57 +1,51 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { ExternalLink, Hash, Repeat2, ShieldAlert, Trash2 } from 'lucide-react';
+import { Check, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
+import { StudioCapability } from '@/lib/rbac';
 import { ConfirmDialog } from '../publications/confirm-dialog';
 import { Stat } from '../primitives';
-import { ItemForm } from './plan-editor';
-import { ItemCopyEditor } from './item-copy';
-import {
-  CappedNotice,
-  CreatesAtText,
-  HoldNotice,
-  ItemMeta,
-  ItemStatusBadge,
-  ReasonText,
-} from './plan-parts';
-import {
-  canChangeScheduled,
-  createsLaterCount,
-  groupByDay,
-  type Plan,
-  type PlanItem,
-} from './plan-model';
-import { useLiveStatus } from '../live/live-projects-context';
-import { StatusChip } from '../live/status-chip';
-
-type Method = 'POST' | 'PATCH' | 'PUT' | 'DELETE';
+import { useCan } from '../use-can';
+import { useBulkRun } from './bulk-run';
+import { PlanBulkBar, useBulkSummary } from './plan-bulk-bar';
+import type { Call } from './plan-draft-item';
+import { PlanItemRow } from './plan-item-row';
+import { CappedNotice, HoldNotice } from './plan-parts';
+import { approvableItems, canChangeScheduled, createsLaterCount, type Plan } from './plan-model';
+import { PlanTimeline } from './plan-timeline';
 
 // 20.9 — a plan that is generating, scheduled or finished: counts by status, a notice while the
 // runner is held (kill switch, spending limit, daily limit), every post with its status and a
 // link to its project, and the review window — swap a post for another topic or remove it before
-// its time — plus "Cancel plan".
+// its time — plus "Cancel plan". 25.9: the posts sit on the week-by-week timeline; a post waiting
+// for review can be approved where it is (POST /projects/:id/approve, as the review screen), and
+// "Approve all waiting" approves them one after another with progress and a summary.
 
 const STATS = ['SCHEDULED', 'GENERATING', 'READY', 'HELD', 'FAILED', 'POSTED'] as const;
 
 export function PlanView({ plan, onChange }: { plan: Plan; onChange: () => Promise<void> }) {
   const t = useTranslations('plans.view');
   const ts = useTranslations('plans.itemStatus');
+  const tb = useTranslations('plans.bulk');
   const f = useFormat();
   const errorMessage = useErrorMessage();
+  const summary = useBulkSummary();
+  const bulk = useBulkRun();
+  const mayApprove = useCan(StudioCapability.ProjectApprove);
   const [cancelling, setCancelling] = useState(false);
   const now = Date.now();
   const open = plan.status === 'GENERATING' || plan.status === 'SCHEDULED';
   // 23.6: queued posts waiting for their creation time are not being made yet.
   const waiting = createsLaterCount(plan.items, now);
   const generating = plan.counts.GENERATING + Math.max(0, plan.counts.QUEUED - waiting);
+  const approvable = mayApprove ? approvableItems(plan.items) : [];
 
-  async function call(path: string, method: Method, body?: unknown, success?: string) {
+  const call: Call = async (path, method, body, success) => {
     try {
       await api(path, { method, body, idempotencyKey: newIdempotencyKey() });
       if (success) toast.success(success);
@@ -61,7 +55,19 @@ export function PlanView({ plan, onChange }: { plan: Plan; onChange: () => Promi
       toast.error(errorMessage(err));
       return false;
     }
-  }
+  };
+
+  const approveAll = async () => {
+    const result = await bulk.run(approvable, (item) =>
+      api(`/projects/${item.projectId}/approve`, {
+        method: 'POST',
+        body: {},
+        idempotencyKey: newIdempotencyKey(),
+      }),
+    );
+    (result.failed.length ? toast.error : toast.success)(summary(result));
+    await onChange();
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -83,38 +89,49 @@ export function PlanView({ plan, onChange }: { plan: Plan; onChange: () => Promi
       {plan.counts.HELD > 0 && (
         <p
           role="status"
-          className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm"
+          className="flex items-start gap-2 rounded-panel border border-destructive/30 bg-destructive-soft p-3 text-sm"
         >
           <ShieldAlert className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden />
           {t('heldNote', { count: plan.counts.HELD })}
         </p>
       )}
-      {open && <p className="text-sm text-muted-foreground">{t('reviewWindow')}</p>}
+      {open && (
+        <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+          <p>{t('reviewWindow')}</p>
+          {/* 23.6 rolling generation; each waiting post says when (CreatesAtText). */}
+          <p>{t('rolling')}</p>
+        </div>
+      )}
       {waiting > 0 && (
         <p className="text-xs text-muted-foreground">{t('createsLater', { count: waiting })}</p>
       )}
 
-      <ol aria-label={t('daysAria')} className="flex flex-col gap-6">
-        {groupByDay(plan.items, plan.timezone).map(({ day, items }) => (
-          <li key={day} className="flex flex-col gap-2">
-            <h3 className="text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
-              {f.date(`${day}T12:00:00Z`, { dateStyle: 'full', timeZone: 'UTC' })}
-            </h3>
-            <ul className="flex flex-col gap-2">
-              {items.map((item) => (
-                <ItemRow
-                  key={item.id}
-                  plan={plan}
-                  item={item}
-                  now={now}
-                  changeable={open && canChangeScheduled(item, now)}
-                  call={call}
-                />
-              ))}
-            </ul>
-          </li>
-        ))}
-      </ol>
+      {(approvable.length > 0 || bulk.running) && (
+        <PlanBulkBar label={tb('label')} selectable={0} selected={0} progress={bulk.progress}>
+          <Button size="sm" disabled={bulk.running} onClick={() => void approveAll()}>
+            <Check /> {tb('approveAll', { count: approvable.length })}
+          </Button>
+        </PlanBulkBar>
+      )}
+
+      <PlanTimeline
+        items={plan.items}
+        timezone={plan.timezone}
+        startDate={plan.startDate}
+        label={t('daysAria')}
+        renderItem={(item) => (
+          <PlanItemRow
+            key={item.id}
+            plan={plan}
+            item={item}
+            now={now}
+            changeable={open && canChangeScheduled(item, now)}
+            mayApprove={mayApprove}
+            locked={bulk.running}
+            call={call}
+          />
+        )}
+      />
 
       {open && (
         <div>
@@ -134,121 +151,5 @@ export function PlanView({ plan, onChange }: { plan: Plan; onChange: () => Promi
         }
       />
     </div>
-  );
-}
-
-type Call = (path: string, method: Method, body?: unknown, success?: string) => Promise<boolean>;
-
-/** 24.2: the post's live stage and ETA while its project is being made (SSE). */
-function LiveChip({ projectId }: { projectId: string }) {
-  const live = useLiveStatus(projectId);
-  return live ? <StatusChip live={live} /> : null;
-}
-
-function ItemRow({
-  plan,
-  item,
-  now,
-  changeable,
-  call,
-}: {
-  plan: Plan;
-  item: PlanItem;
-  now: number;
-  changeable: boolean;
-  call: Call;
-}) {
-  const t = useTranslations('plans.view');
-  const th = useTranslations('hashtags.plan');
-  const [swapping, setSwapping] = useState(false);
-  const [removing, setRemoving] = useState(false);
-  const [copyOpen, setCopyOpen] = useState(false);
-  const path = `/content-plans/${plan.id}/items/${item.id}`;
-  const faded = item.status === 'REMOVED' || item.status === 'SKIPPED';
-  return (
-    <li
-      className={
-        faded
-          ? 'rounded-lg border border-dashed border-border p-3 opacity-70'
-          : 'rounded-lg border border-border p-3'
-      }
-    >
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
-          <ItemMeta item={item} timezone={plan.timezone} />
-          <p className="mt-1 font-medium">{item.title}</p>
-          <CreatesAtText item={item} timezone={plan.timezone} now={now} />
-          <ReasonText reason={item.statusReason} />
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          <ItemStatusBadge status={item.status} />
-          {item.projectId && <LiveChip projectId={item.projectId} />}
-        </div>
-      </div>
-      {swapping ? (
-        <ItemForm
-          item={item}
-          saveLabel={t('swapSubmit')}
-          onCancel={() => setSwapping(false)}
-          onSave={async (body) => {
-            const done = await call(path, 'PATCH', body, t('swapped'));
-            if (done) setSwapping(false);
-          }}
-        />
-      ) : (
-        <div className="mt-2 flex flex-wrap gap-1">
-          {item.projectId && (
-            <Button asChild size="sm" variant="ghost">
-              <Link
-                href={`/projects/${item.projectId}`}
-                aria-label={t('openAria', { title: item.title })}
-              >
-                <ExternalLink /> {t('open')}
-              </Link>
-            </Button>
-          )}
-          {changeable && (
-            <>
-              <Button
-                size="sm"
-                variant="ghost"
-                aria-expanded={copyOpen}
-                aria-label={th('openAria', { title: item.title })}
-                onClick={() => setCopyOpen((o) => !o)}
-              >
-                <Hash /> {th('open')}
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                aria-label={t('swapAria', { title: item.title })}
-                onClick={() => setSwapping(true)}
-              >
-                <Repeat2 /> {t('swap')}
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                aria-label={t('removeAria', { title: item.title })}
-                onClick={() => setRemoving(true)}
-              >
-                <Trash2 /> {t('remove')}
-              </Button>
-            </>
-          )}
-        </div>
-      )}
-      {copyOpen && !swapping && (
-        <ItemCopyEditor plan={plan} item={item} call={call} onDone={() => setCopyOpen(false)} />
-      )}
-      <ConfirmDialog
-        open={removing}
-        onOpenChange={setRemoving}
-        title={t('removeAria', { title: item.title })}
-        description={t('removeConfirm')}
-        confirmLabel={t('remove')}
-        onConfirm={() => call(path, 'DELETE', undefined, t('removedToast'))}
-      />
-    </li>
   );
 }

@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
+import { cn } from '@/lib/utils';
 import {
   MAX_POSTS_PER_WEEK,
   MAX_POSTS_PER_DAY,
@@ -24,7 +25,7 @@ import { PostingScheduleEditor } from './schedule-editor';
 import { initialSchedule, resolveDraft, viewerZone } from './schedule-model';
 import { SchedulePreview } from './schedule-preview';
 
-// 15.A5 — the business's drip queue under the calendar (spec 3.1 "drip queue", 9.9 stagger):
+// 15.A5 — the business's drip queue (25.9: in the calendar's "Posting times" sheet) (spec 3.1 "drip queue", 9.9 stagger):
 // weekly posting slots in a time zone; approved SCHEDULED videos without a start time take the
 // next free slot and their platforms are staggered from there.
 // GET/PUT /api/studio/businesses/:id/drip-queue.
@@ -56,7 +57,14 @@ interface Draft {
   custom: DripSlot[];
 }
 
-export function DripQueuePanel({ onSaved }: { onSaved?: () => void } = {}) {
+export function DripQueuePanel({
+  onSaved,
+  bare = false,
+}: {
+  onSaved?: () => void;
+  /** 25.9: inside the calendar's "Posting times" sheet (no card frame of its own). */
+  bare?: boolean;
+} = {}) {
   const t = useTranslations('calendar.drip');
   const ts = useTranslations('calendar.drip.schedule');
   const f = useFormat();
@@ -124,7 +132,10 @@ export function DripQueuePanel({ onSaved }: { onSaved?: () => void } = {}) {
 
   const showSave = Boolean(draft) || !queue || !queue.enabled;
   return (
-    <section aria-labelledby="drip-heading" className="mt-8 rounded-xl border border-border p-4">
+    <section
+      aria-labelledby="drip-heading"
+      className={bare ? undefined : 'mt-8 rounded-xl border border-border p-4'}
+    >
       <h3 id="drip-heading" tabIndex={-1} className="font-display text-xl outline-none">
         {t('title')}
       </h3>
@@ -153,7 +164,9 @@ export function DripQueuePanel({ onSaved }: { onSaved?: () => void } = {}) {
         <p className="mt-2 text-sm text-muted-foreground">{t('off')}</p>
       )}
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
+      <div
+        className={cn('mt-4 grid gap-4', !bare && 'lg:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]')}
+      >
         <PostingScheduleEditor
           schedule={current.schedule}
           onChange={changeSchedule}

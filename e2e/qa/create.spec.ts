@@ -207,9 +207,7 @@ test.describe('Create and Plan my month without a plan', () => {
     await signIn(page, a.email);
     await page.goto('/plans/new');
     await expect(page.getByRole('heading', { name: 'Plan my month' }).first()).toBeVisible();
-    await page
-      .getByRole('combobox', { name: /TikTok account/ })
-      .selectOption({ label: 'Bakery TikTok' });
+    // 25.9: the only connected TikTok account is picked for you (accounts sit under More options).
     await page.getByRole('button', { name: 'Draft my month' }).click();
     await expect(
       page.getByRole('dialog', { name: 'Choose a plan to start creating' }),
@@ -231,6 +229,8 @@ test.describe('Plan my month with a plan', () => {
     const w = new Watcher(page, queueUp ? [] : QUEUE_DOWN);
     await signIn(page, a.email);
     await page.goto('/plans/new');
+    // 25.9: posts a day, the mix and accounts sit behind More options.
+    await page.getByRole('button', { name: 'More options' }).click();
     await expect(page.getByRole('radio', { name: '4 a day' })).toBeVisible();
     await expect(page.getByRole('radio', { name: 'Use my posting times' })).toBeDisabled();
     await page.getByRole('radio', { name: '4 a day' }).click();

@@ -81,6 +81,10 @@ describe.skipIf(!hasDb)('failure reasons in API responses', { timeout: 60_000 },
     expect(customer.status).toBe(200);
     expect(text(customer.json)).toContain('youtube_short/unavailable:');
     expect(text(customer.json)).not.toMatch(/ECONNREFUSED|10\.0\.0\.1/);
+    // 25.9: a hand-made post belongs to no month plan or automation.
+    const rows = (customer.json as { data: Array<{ campaign: unknown }> }).data;
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((row) => row.campaign === null)).toBe(true);
 
     const staff = await call(publicationsRoute.GET, { token: 'staff' });
     expect(text(staff.json)).toContain(RAW_PUB);

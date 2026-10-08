@@ -410,11 +410,12 @@ test('an organisation owner can use every workflow that needs no provider', asyn
 
   // Publications filters, analytics ranges.
   await w.visit('/publications');
-  for (const tab of ['Scheduled', 'Live', 'Failed', 'Cancelled & taken down', 'All']) {
-    await page.getByRole('radio', { name: tab }).click();
+  // 25.3 / 25.9: the filters are one radio group (no tabs without panels), kept in the URL.
+  for (const filter of ['Scheduled', 'Live', 'Failed', 'Cancelled & taken down', 'All']) {
+    await page.getByRole('radio', { name: filter }).click();
     await w.settle();
   }
-  await w.check('/publications tabs');
+  await w.check('/publications filters');
   await w.visit('/analytics');
   for (const range of ['7 days', '90 days', '30 days']) {
     await page.getByRole('radio', { name: range }).click();
@@ -432,11 +433,20 @@ test('an organisation owner can use every workflow that needs no provider', asyn
   await w.settle();
   await page.getByRole('button', { name: 'Previous month' }).click();
   await page.getByRole('button', { name: 'Today' }).click();
-  await page.getByRole('radio', { name: 'Times a week' }).click();
-  await page.getByLabel('Posts a week').selectOption('3');
-  await page.getByRole('radio', { name: 'Pick times for me' }).click();
-  await page.getByRole('button', { name: /Save schedule/ }).click();
+  // 25.9: Week and Day views over the same data, then the posting times in their side sheet.
+  await page.getByRole('radio', { name: 'Week' }).click();
   await w.settle();
+  await page.getByRole('radio', { name: 'Day' }).click();
+  await w.settle();
+  await page.getByRole('radio', { name: 'Month' }).click();
+  await page.getByRole('button', { name: 'Posting times', exact: true }).click();
+  const times = page.getByRole('dialog', { name: 'Posting times' });
+  await times.getByRole('radio', { name: 'Times a week' }).click();
+  await times.getByLabel('Posts a week').selectOption('3');
+  await times.getByRole('radio', { name: 'Pick times for me' }).click();
+  await times.getByRole('button', { name: /Save schedule/ }).click();
+  await w.settle();
+  await page.keyboard.press('Escape');
   await expect(page.getByText(/open slot/i).first()).toBeVisible();
   await w.check('/calendar posting plan');
 

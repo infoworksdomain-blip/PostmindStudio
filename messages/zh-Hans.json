@@ -1894,7 +1894,15 @@
       "agendaAria": "日程",
       "emptyMonth": "本月没有排期或发布的内容。",
       "moreOpen": "{count, plural, other {还有 # 个空闲时段}}",
-      "morePlanned": "另有 {count} 条已规划"
+      "morePlanned": "另有 {count} 条已规划",
+      "moreAria": "显示 {date} 的全部内容（另有 {count, number} 项）",
+      "dayAria": "当天的帖子",
+      "weekAria": "本周各天",
+      "todayAria": "{date}，今天",
+      "today": "今天",
+      "quietDay": "暂无安排",
+      "emptyWeek": "本周没有已排期或已发布的内容。",
+      "emptyDayView": "当天没有已排期或已发布的内容。"
     },
     "event": {
       "untitled": "未命名项目",
@@ -1916,7 +1924,11 @@
       "newTime": "新时间",
       "cancel": "取消",
       "moving": "正在移动…",
-      "submit": "移动"
+      "submit": "移动",
+      "undo": "撤销",
+      "undone": "已移回 {date}",
+      "movedLive": "已将“{name}”移至 {date}。可在通知中撤销。",
+      "undoneLive": "已将“{name}”移回 {date}。"
     },
     "drip": {
       "title": "定时发布队列",
@@ -2040,6 +2052,48 @@
           "none": "空"
         }
       }
+    },
+    "previousWeek": "上一周",
+    "nextWeek": "下一周",
+    "previousDay": "前一天",
+    "nextDay": "后一天",
+    "views": {
+      "label": "日历视图",
+      "month": "月",
+      "week": "周",
+      "day": "日"
+    },
+    "filters": {
+      "label": "筛选",
+      "platformLabel": "平台",
+      "statusLabel": "状态",
+      "sourceLabel": "来源",
+      "allPlatforms": "所有平台",
+      "anyStatus": "任何状态",
+      "anySource": "任何来源",
+      "clear": "清除筛选",
+      "showing": "显示 {shown, number} / {total, number} 条帖子",
+      "status": {
+        "SCHEDULED": "已排期",
+        "PUBLISHING": "发布中",
+        "PUBLISHED": "已发布",
+        "FAILED": "失败",
+        "PLANNED": "制作中（月度计划）"
+      },
+      "source": {
+        "plan": "月度计划",
+        "automation": "自动化",
+        "manual": "手动创建"
+      }
+    },
+    "postingTimes": {
+      "open": "发布时间",
+      "title": "发布时间",
+      "description": "此商家已批准但未设日期的视频何时发布。保存的时间会以空闲时段显示在日历上。"
+    },
+    "campaign": {
+      "plan": "月度计划 · {date}",
+      "automation": "自动化 · {name}"
     }
   },
   "business": {
@@ -5793,7 +5847,26 @@
       "someWithoutAccount": "会制作但不会自动发布（没有已连接的账号）：{platforms}。",
       "connectAccount": "连接账号",
       "ugcActors": "用 UGC 演员制作推荐和产品视频",
-      "ugcActorsHint": "由 AI 生成的演员介绍您的产品。每个此类视频占用 {count, number} 个视频额度。仅限英语。"
+      "ugcActorsHint": "由 AI 生成的演员介绍您的产品。每个此类视频占用 {count, number} 个视频额度。仅限英语。",
+      "prompt": {
+        "title": "规划好你的下个月",
+        "body": "选择开始日期。Studio 会根据你的网站、品牌套件和以往帖子写出每个主题，在制作之前由你检查列表。",
+        "summary": "{perDay} · {videos, number}% 视频 · {platforms}",
+        "yourTimes": "你的发布时间",
+        "noPlatforms": "尚未选择平台",
+        "options": "更多选项"
+      },
+      "preview": {
+        "title": "Studio 将制作的内容",
+        "upTo": "帖子，最多",
+        "split": "视频：{videos, number} · 幻灯片：{slideshows, number}",
+        "dates": "日期",
+        "range": "{start} – {end}",
+        "networks": "平台",
+        "noNetworks": "尚未选择",
+        "review": "Studio 先写主题。在制作之前，你可以检查和编辑列表。",
+        "rolling": "之后每条帖子会在发布前约 3 天制作，因此在那之前的修改仍然有效。"
+      }
     },
     "allowance": {
       "title": "本月",
@@ -5957,7 +6030,11 @@
       "removeConfirm": "它的发布会被取消，时间也会释放。计划的其余部分照常进行。",
       "removedToast": "帖子已移除",
       "createsAt": "计划于 {date} 创建",
-      "createsLater": "{count, plural, other {另有 # 条帖子将在临近发布时间时创建。}}"
+      "createsLater": "{count, plural, other {另有 # 条帖子将在临近发布时间时创建。}}",
+      "approve": "批准",
+      "approveAria": "批准“{title}”",
+      "approved": "已批准：将按时发布",
+      "rolling": "Studio 会在每条帖子发布前约 3 天制作；等待中的帖子会显示其制作时间。"
     },
     "list": {
       "title": "月度计划",
@@ -5968,6 +6045,24 @@
       "emptyBody": "让 Studio 起草一个月的视频和幻灯片，然后一次性生成并排期。",
       "range": "{start} – {end}",
       "posts": "{count, plural, other {# 条帖子}}"
+    },
+    "timeline": {
+      "week": "第 {n, number} 周",
+      "range": "{start} – {end}"
+    },
+    "bulk": {
+      "label": "批量操作",
+      "selectAll": "全选",
+      "selected": "已选 {count, number} 条",
+      "selectItem": "选择“{title}”",
+      "progress": "处理中… {done, number}/{total, number}",
+      "summaryOk": "完成：已更改 {count, number} 条。",
+      "summaryPartial": "已完成 {ok, number} 条，{failed, number} 条无法更改。请逐条重试。",
+      "regenerate": "新主题（{count, number}）",
+      "delete": "删除（{count, number}）",
+      "deleteConfirmTitle": "删除所选帖子（{count, number}）？",
+      "deleteConfirmBody": "它们会从此草稿中移除。目前尚未制作任何内容。",
+      "approveAll": "批准所有待审（{count, number}）"
     }
   },
   "errorPage": {
@@ -6254,7 +6349,9 @@
       "beats": "脚本",
       "stillAlt": "来自你图库的一张图片",
       "mentionsBusiness": "提到了你的商家",
-      "allowanceQuick": "保留后使用套餐中的 ¼ 个视频"
+      "allowanceQuick": "保留后使用套餐中的 ¼ 个视频",
+      "hintEdit": "先编辑",
+      "hintDrag": "或拖动卡片"
     },
     "keep": {
       "title": "保留",
@@ -6266,7 +6363,8 @@
       "editHint": "打开后可修改文字和图片。",
       "cancel": "取消",
       "confirm": "保留",
-      "previewNote": "{units, plural, other {现在开始制作，使用套餐中的 # 个视频。}}"
+      "previewNote": "{units, plural, other {现在开始制作，使用套餐中的 # 个视频。}}",
+      "noPublishRole": "你的角色无法发布或排期，因此保留的帖子会先打开以供编辑。"
     },
     "skip": {
       "title": "为什么跳过？（可选）",
@@ -6339,6 +6437,9 @@
       "noNudges": "暂时没有。跳过原因和保留的内容会一点点调整它。",
       "reset": "清除 Blitz 学到的内容",
       "percent": "{value}%"
+    },
+    "readOnly": {
+      "role": "你的角色可以浏览这些帖子，但不能保留或跳过。请联系所有者或管理员。"
     }
   },
   "automations": {
@@ -6350,7 +6451,19 @@
       "pickBody": "一个自动化为一个商家发布内容。请在页面顶部选择一个。",
       "loading": "正在加载自动化…",
       "empty": "还没有自动化",
-      "emptyBody": "设置一个，Studio 就会每周为你制作并发布内容。"
+      "emptyBody": "设置一个，Studio 就会每周为你制作并发布内容。",
+      "columns": {
+        "name": "自动化",
+        "status": "状态",
+        "makes": "制作内容",
+        "next": "下一条帖子"
+      },
+      "next": {
+        "review": "待你审核后",
+        "paused": "已暂停",
+        "draft": "未开始",
+        "none": "暂无待发"
+      }
     },
     "status": {
       "DRAFT": "草稿",
@@ -6417,7 +6530,9 @@
       "back": "上一步",
       "next": "下一步",
       "create": "创建并开始",
-      "started": "自动化已开始。正在撰写第一批帖子。"
+      "started": "自动化已开始。正在撰写第一批帖子。",
+      "stepOf": "第 {n, number} 步，共 {total, number} 步",
+      "stepDone": "（已完成）"
     },
     "detail": {
       "back": "所有自动化",
@@ -6454,7 +6569,10 @@
       "reroll": "换个话题",
       "rerolled": "已换成新话题。",
       "remove": "删除",
-      "keep": "保留"
+      "keep": "保留",
+      "runs": "运行记录",
+      "runRange": "{start} – {end}",
+      "runPosted": "已发布 {posted, number}/{total, number}"
     },
     "review": {
       "title": "审核：{name}",

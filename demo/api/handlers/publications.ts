@@ -11,6 +11,24 @@ import {
   updatePublication,
 } from './publications-store';
 import { demoLatestMetrics } from './p15-a-publishing';
+import { demoPlanCampaign } from './p20-plan-month';
+import { PROJECTS } from '../ids';
+
+/**
+ * 25.9 (services/publication-campaigns.ts): the sample automation posts the "morning ritual"
+ * series; the wholesale posts belong to the sample month plan; the rest were made by hand.
+ */
+function demoCampaign(p: Publication): Publication['campaign'] {
+  if (p.id.startsWith('pub-series-'))
+    return {
+      kind: 'automation',
+      planId: 'plan-aut-3',
+      automationId: 'aut-weekly',
+      name: '1 a day, every week',
+    };
+  if (p.projectId === PROJECTS.wholesale.id) return demoPlanCampaign();
+  return null;
+}
 
 const STATES = ['SCHEDULED', 'PUBLISHING', 'PUBLISHED', 'FAILED', 'CANCELLED', 'TAKEN_DOWN'];
 const PLATFORMS = [
@@ -81,7 +99,11 @@ route('GET', '/publications', ({ query }) => {
   const start = cursor ? all.findIndex((p) => p.id === cursor) + 1 : 0;
   const rows = all.slice(start, start + limit + 1);
   // 15.A8: rows carry their latest metrics snapshot.
-  const page = rows.slice(0, limit).map((p) => ({ ...p, latestMetrics: demoLatestMetrics(p) }));
+  const page = rows.slice(0, limit).map((p) => ({
+    ...p,
+    latestMetrics: demoLatestMetrics(p),
+    campaign: demoCampaign(p),
+  }));
   return { data: page, nextCursor: rows.length > limit ? (page.at(-1)?.id ?? null) : null };
 });
 

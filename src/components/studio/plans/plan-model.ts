@@ -297,3 +297,74 @@ export function buildPlanBody(state: PlanFormState, businessId: string, timezone
     ...(state.ugcActors && { ugcActors: true }),
   };
 }
+
+/** 25.9: what "Draft my month" will ask for, for the planner's preview. */
+export interface PlanPreviewModel {
+  count: number;
+  videos: number;
+  slideshows: number;
+  /** First and last local day (YYYY-MM-DD). */
+  startDate: string;
+  endDate: string;
+  /** Posts on each day of the plan (an even spread when the posting times are used). */
+  perDay: number[];
+}
+
+const PREVIEW_DAY_MS = 86_400_000;
+
+export function planPreview(
+  state: Pick<PlanFormState, 'startDate' | 'days' | 'postsPerDay' | 'useDripSlots' | 'videoShare'>,
+  postingTimesPerWeek: number,
+): PlanPreviewModel {
+  const days = Math.max(0, Math.round(state.days) || 0);
+  const count = state.useDripSlots
+    ? Math.round((postingTimesPerWeek * days) / 7)
+    : requestedPosts(days, state.postsPerDay);
+  const videos = Math.round((count * Math.min(100, Math.max(0, state.videoShare))) / 100);
+  const start = Date.parse(`${state.startDate}T12:00:00Z`);
+  const endDate = Number.isFinite(start)
+    ? new Date(start + Math.max(0, days - 1) * PREVIEW_DAY_MS).toISOString().slice(0, 10)
+    : state.startDate;
+  // Spread the posts over the days like the slot planner does: whole posts, earliest days first.
+  const perDay = Array.from({ length: days }, (_, i) =>
+    Math.min(4, Math.floor(((i + 1) * count) / days) - Math.floor((i * count) / days)),
+  );
+  return { count, videos, slideshows: count - videos, startDate: state.startDate, endDate, perDay };
+}
+
+/** 25.9: one week of a plan (week 1 starts on the plan's first day), its days in time order. */
+export interface PlanWeek {
+  /** 1-based. */
+  index: number;
+  /** First and last local day of the week inside the plan (YYYY-MM-DD). */
+  start: string;
+  end: string;
+  days: Array<{ day: string; items: PlanItem[] }>;
+}
+
+/** Items grouped by plan week (7 days from startDate), then by local day. */
+export function groupByWeek(
+  items: readonly PlanItem[],
+  timezone: string,
+  startDate: string,
+): PlanWeek[] {
+  const origin = Date.parse(`${startDate}T12:00:00Z`);
+  const weeks = new Map<number, PlanWeek>();
+  for (const group of groupByDay(items, timezone)) {
+    const offset = Math.round((Date.parse(`${group.day}T12:00:00Z`) - origin) / PREVIEW_DAY_MS);
+    const index = Number.isFinite(offset) ? Math.max(0, Math.floor(offset / 7)) + 1 : 1;
+    const week = weeks.get(index) ?? { index, start: group.day, end: group.day, days: [] };
+    weeks.set(index, {
+      ...week,
+      start: group.day < week.start ? group.day : week.start,
+      end: group.day > week.end ? group.day : week.end,
+      days: [...week.days, group],
+    });
+  }
+  return [...weeks.values()].sort((a, b) => a.index - b.index);
+}
+
+/** 25.9: items waiting for the owner's review that the bulk "Approve" can approve. */
+export function approvableItems(items: readonly PlanItem[]): PlanItem[] {
+  return items.filter((i) => i.status === 'READY' && i.projectId !== null);
+}

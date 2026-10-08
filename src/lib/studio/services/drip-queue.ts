@@ -366,6 +366,8 @@ export async function getUpcomingSlots(
         kind: true,
         status: true,
         projectId: true,
+        // 25.9: the calendar's source filter tells automation posts from month-plan posts.
+        plan: { select: { automationId: true } },
       },
       orderBy: { slotAt: 'asc' },
     }),
@@ -402,6 +404,7 @@ export async function getUpcomingSlots(
       status: i.status,
       // 24.2: the live status chip and the side panel follow the post's project once it has one.
       projectId: i.projectId,
+      automationId: i.plan.automationId,
     })),
   };
 }

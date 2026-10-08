@@ -1894,7 +1894,15 @@
       "agendaAria": "Agenda",
       "emptyMonth": "Nada agendado ou publicado neste mês.",
       "moreOpen": "{count, plural, one {+# horário livre} other {+# horários livres}}",
-      "morePlanned": "+{count} planejadas"
+      "morePlanned": "+{count} planejadas",
+      "moreAria": "Ver tudo em {date} (mais {count, number})",
+      "dayAria": "Publicações deste dia",
+      "weekAria": "Dias da semana",
+      "todayAria": "{date}, hoje",
+      "today": "Hoje",
+      "quietDay": "Nada planejado",
+      "emptyWeek": "Nada agendado nem publicado nesta semana.",
+      "emptyDayView": "Nada agendado nem publicado neste dia."
     },
     "event": {
       "untitled": "Projeto sem título",
@@ -1916,7 +1924,11 @@
       "newTime": "Novo horário",
       "cancel": "Cancelar",
       "moving": "Movendo…",
-      "submit": "Mover"
+      "submit": "Mover",
+      "undo": "Desfazer",
+      "undone": "Movida de volta para {date}",
+      "movedLive": "“{name}” foi movida para {date}. Dá para desfazer na notificação.",
+      "undoneLive": "“{name}” voltou para {date}."
     },
     "drip": {
       "title": "Fila de postagem",
@@ -2040,6 +2052,48 @@
           "none": "vazia"
         }
       }
+    },
+    "previousWeek": "Semana anterior",
+    "nextWeek": "Próxima semana",
+    "previousDay": "Dia anterior",
+    "nextDay": "Próximo dia",
+    "views": {
+      "label": "Visualização do calendário",
+      "month": "Mês",
+      "week": "Semana",
+      "day": "Dia"
+    },
+    "filters": {
+      "label": "Filtros",
+      "platformLabel": "Plataforma",
+      "statusLabel": "Status",
+      "sourceLabel": "Origem",
+      "allPlatforms": "Todas as plataformas",
+      "anyStatus": "Qualquer status",
+      "anySource": "Qualquer origem",
+      "clear": "Limpar filtros",
+      "showing": "Mostrando {shown, number} de {total, number} publicações",
+      "status": {
+        "SCHEDULED": "Agendada",
+        "PUBLISHING": "Publicando",
+        "PUBLISHED": "Publicada",
+        "FAILED": "Falhou",
+        "PLANNED": "Em produção (plano do mês)"
+      },
+      "source": {
+        "plan": "Plano do mês",
+        "automation": "Automação",
+        "manual": "Feita manualmente"
+      }
+    },
+    "postingTimes": {
+      "open": "Horários de publicação",
+      "title": "Horários de publicação",
+      "description": "Quando os vídeos aprovados sem data deste negócio são publicados. Os horários salvos aparecem no calendário como horários livres."
+    },
+    "campaign": {
+      "plan": "Plano do mês · {date}",
+      "automation": "Automação · {name}"
     }
   },
   "business": {
@@ -5793,7 +5847,26 @@
       "someWithoutAccount": "Criadas, mas não publicadas automaticamente (nenhuma conta conectada): {platforms}.",
       "connectAccount": "Conectar uma conta",
       "ugcActors": "Fazer vídeos de depoimento e de produto com atores UGC",
-      "ugcActorsHint": "Um ator gerado fala sobre o seu produto. Cada um desses vídeos usa {count, number} dos seus vídeos. Somente em inglês."
+      "ugcActorsHint": "Um ator gerado fala sobre o seu produto. Cada um desses vídeos usa {count, number} dos seus vídeos. Somente em inglês.",
+      "prompt": {
+        "title": "Seu próximo mês, planejado",
+        "body": "Escolha quando começa. O Studio escreve cada tema a partir do seu site, do kit de marca e das publicações anteriores, e você confere a lista antes de qualquer coisa ser feita.",
+        "summary": "{perDay} · {videos, number}% vídeos · {platforms}",
+        "yourTimes": "Seus horários de publicação",
+        "noPlatforms": "nenhuma plataforma ainda",
+        "options": "Mais opções"
+      },
+      "preview": {
+        "title": "O que o Studio vai fazer",
+        "upTo": "Publicações, no máximo",
+        "split": "Vídeos: {videos, number} · Apresentações: {slideshows, number}",
+        "dates": "Datas",
+        "range": "{start} – {end}",
+        "networks": "Redes",
+        "noNetworks": "Nenhuma escolhida ainda",
+        "review": "O Studio escreve primeiro os temas. Você revisa e edita a lista antes de qualquer coisa ser feita.",
+        "rolling": "Depois, cada publicação é feita cerca de 3 dias antes de sair, então suas alterações até lá ainda valem."
+      }
     },
     "allowance": {
       "title": "Este mês",
@@ -5957,7 +6030,11 @@
       "removeConfirm": "A publicação dela é cancelada e o horário liberado. O restante do plano continua.",
       "removedToast": "Publicação removida",
       "createsAt": "Programada para ser criada em {date}",
-      "createsLater": "{count, plural, one {Mais # publicação será criada perto do horário de publicação.} other {Mais # publicações serão criadas perto do horário de publicação.}}"
+      "createsLater": "{count, plural, one {Mais # publicação será criada perto do horário de publicação.} other {Mais # publicações serão criadas perto do horário de publicação.}}",
+      "approve": "Aprovar",
+      "approveAria": "Aprovar “{title}”",
+      "approved": "Aprovada: sai no horário dela",
+      "rolling": "O Studio faz cada publicação cerca de 3 dias antes do horário; uma publicação em espera mostra quando será criada."
     },
     "list": {
       "title": "Planos mensais",
@@ -5968,6 +6045,24 @@
       "emptyBody": "Deixe o Studio preparar um mês de vídeos e apresentações e depois gere e agende tudo de uma vez.",
       "range": "{start} – {end}",
       "posts": "{count, plural, one {# publicação} other {# publicações}}"
+    },
+    "timeline": {
+      "week": "Semana {n, number}",
+      "range": "{start} – {end}"
+    },
+    "bulk": {
+      "label": "Ações em massa",
+      "selectAll": "Selecionar tudo",
+      "selected": "{count, number} selecionadas",
+      "selectItem": "Selecionar “{title}”",
+      "progress": "Processando… {done, number} de {total, number}",
+      "summaryOk": "Pronto: {count, number} alteradas.",
+      "summaryPartial": "{ok, number} feitas, {failed, number} não puderam ser alteradas. Tente uma por uma.",
+      "regenerate": "Novos temas ({count, number})",
+      "delete": "Excluir ({count, number})",
+      "deleteConfirmTitle": "Excluir as publicações selecionadas ({count, number})?",
+      "deleteConfirmBody": "Elas saem deste rascunho. Nada foi feito ainda.",
+      "approveAll": "Aprovar todas as pendentes ({count, number})"
     }
   },
   "errorPage": {
@@ -6254,7 +6349,9 @@
       "beats": "Roteiro",
       "stillAlt": "Uma imagem da sua biblioteca",
       "mentionsBusiness": "Cita sua empresa",
-      "allowanceQuick": "Usa ¼ de vídeo do seu plano se você mantiver"
+      "allowanceQuick": "Usa ¼ de vídeo do seu plano se você mantiver",
+      "hintEdit": "Editar antes",
+      "hintDrag": "Ou arraste o cartão"
     },
     "keep": {
       "title": "Manter",
@@ -6266,7 +6363,8 @@
       "editHint": "Abre a publicação para você mudar o texto e as imagens.",
       "cancel": "Cancelar",
       "confirm": "Manter",
-      "previewNote": "{units, plural, one {Ela é criada agora e usa # vídeo do seu plano.} other {Ela é criada agora e usa # vídeos do seu plano.}}"
+      "previewNote": "{units, plural, one {Ela é criada agora e usa # vídeo do seu plano.} other {Ela é criada agora e usa # vídeos do seu plano.}}",
+      "noPublishRole": "Sua função não pode publicar nem agendar, então uma publicação mantida abre primeiro para edição."
     },
     "skip": {
       "title": "Por que pular? (opcional)",
@@ -6339,6 +6437,9 @@
       "noNudges": "Nada ainda. Os motivos para pular e o que você mantém ajustam isso aos poucos.",
       "reset": "Apagar o que o Blitz aprendeu",
       "percent": "{value}%"
+    },
+    "readOnly": {
+      "role": "Sua função pode ver estas publicações, mas não pode mantê-las nem pulá-las. Peça a um proprietário ou administrador."
     }
   },
   "automations": {
@@ -6350,7 +6451,19 @@
       "pickBody": "Uma automação publica para uma empresa. Escolha uma no topo da página.",
       "loading": "Carregando automações…",
       "empty": "Nenhuma automação ainda",
-      "emptyBody": "Configure uma e o Studio cria e publica seu conteúdo toda semana."
+      "emptyBody": "Configure uma e o Studio cria e publica seu conteúdo toda semana.",
+      "columns": {
+        "name": "Automação",
+        "status": "Status",
+        "makes": "O que faz",
+        "next": "Próxima publicação"
+      },
+      "next": {
+        "review": "Depois da sua revisão",
+        "paused": "Pausada",
+        "draft": "Não iniciada",
+        "none": "Nada previsto"
+      }
     },
     "status": {
       "DRAFT": "Rascunho",
@@ -6417,7 +6530,9 @@
       "back": "Voltar",
       "next": "Avançar",
       "create": "Criar e iniciar",
-      "started": "Automação iniciada. As primeiras publicações estão sendo escritas."
+      "started": "Automação iniciada. As primeiras publicações estão sendo escritas.",
+      "stepOf": "Etapa {n, number} de {total, number}",
+      "stepDone": "(concluído)"
     },
     "detail": {
       "back": "Todas as automações",
@@ -6454,7 +6569,10 @@
       "reroll": "Novo assunto",
       "rerolled": "Chegou um novo assunto.",
       "remove": "Remover",
-      "keep": "Manter"
+      "keep": "Manter",
+      "runs": "Execuções",
+      "runRange": "{start} – {end}",
+      "runPosted": "{posted, number} de {total, number} publicadas"
     },
     "review": {
       "title": "Revisão: {name}",
