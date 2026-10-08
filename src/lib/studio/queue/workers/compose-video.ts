@@ -342,6 +342,8 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
       frame: outputDimensions(aspectRatio, preset.resolution),
       organisationId: project.organisationId,
       language, // 15.C5: overlay fonts + RTL per script language (overlays/script-fonts.ts)
+      // 25 polish: the wall-of-text block is broken into even lines (overlays/balanced-wrap.ts).
+      balanceLines: project.sourceType === 'WALL_OF_TEXT',
       preRender: {
         storage: deps.storage,
         bucket: deps.config.rendersBucket,

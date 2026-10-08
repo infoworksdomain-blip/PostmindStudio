@@ -2,13 +2,22 @@
 // so every picture is a data: URL and every video is a short canvas animation recorded in the
 // browser with MediaRecorder (blob: URL). All of it is labelled as sample media.
 //
+// 25 polish: render posters (the review player, variant cards, analytics, Blitz and the calendar
+// preview) are the real Studio-made showcase posters (public/marketing/studio, already inlined for
+// the landing page, so they add nothing to the bundle), with the same SAMPLE mark.
+//
 // Phase 20.8: the photographic scenes are real photos (Unsplash licence, listed in
 // public/marketing/SOURCES.md), inlined by the build through @/lib/marketing/media-src; each is
 // cropped to the requested size on a canvas with the SAMPLE mark, and the sample videos pan and zoom
 // slowly across the same photo. The brand-kit logo is an original SVG. The earlier canvas drawings
 // remain as the fallback while a photo decodes (and for the "studio" wordmark).
 
-import { MARKETING_PHOTOS, type MarketingPhoto } from '@/lib/marketing/media';
+import {
+  MARKETING_PHOTOS,
+  STUDIO_CLIPS,
+  type MarketingPhoto,
+  type StudioClipName,
+} from '@/lib/marketing/media';
 import { marketingSrc } from '@/lib/marketing/media-src';
 
 export type SceneKind =
@@ -76,10 +85,84 @@ function scenePhoto(kind: SceneKind): HTMLImageElement | null {
   return img.complete && img.naturalWidth > 0 ? img : null;
 }
 
-/** Start decoding every scene photo (the demo opens on the landing page, long before a screen
- *  asks for a thumbnail). */
+/** Showcase posters for a made video, food and the high street first (the sample is a bakery). */
+export const VIDEO_POSTERS: readonly StudioClipName[] = [
+  'northsideBakery',
+  'seedanceBread',
+  'harbourCoffee',
+  'seedanceMarket',
+  'greenleafFlorist',
+  'atelierWren',
+  'coastlineStays',
+  'pulseStudio',
+];
+/** Showcase posters for a wall-of-text video. */
+export const WALL_OF_TEXT_POSTERS: readonly StudioClipName[] = [
+  'pulseStudioText',
+  'coastlineStaysText',
+];
+
+export type PosterKind = 'video' | 'wall_of_text';
+
+/** The showcase poster for `seed` (a project id): the same one every time. */
+export function posterClipFor(seed: string, kind: PosterKind = 'video'): StudioClipName {
+  const list = kind === 'wall_of_text' ? WALL_OF_TEXT_POSTERS : VIDEO_POSTERS;
+  let hash = 0;
+  for (const ch of seed) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  return list[hash % list.length] ?? 'northsideBakery';
+}
+
+/** The poster file's URL (the 360 px WebP; the demo build inlines the 720 px one for it). */
+export function posterSrc(name: StudioClipName): string {
+  return marketingSrc(STUDIO_CLIPS[name].poster.small.path);
+}
+
+const posterImages = new Map<StudioClipName, HTMLImageElement>();
+const posterCache = new Map<StudioClipName, string>();
+
+function posterImage(name: StudioClipName): HTMLImageElement | null {
+  if (typeof Image === 'undefined') return null;
+  let img = posterImages.get(name);
+  if (!img) {
+    img = new Image();
+    img.decoding = 'async';
+    img.src = posterSrc(name);
+    posterImages.set(name, img);
+  }
+  return img.complete && img.naturalWidth > 0 ? img : null;
+}
+
+/** Poster size (9:16, as the showcase posters are). */
+const POSTER_W = 360;
+const POSTER_H = 640;
+
+/**
+ * A sample render poster: the showcase poster for `seed` with the SAMPLE mark, or the plain poster
+ * file while it is still decoding (and where there is no canvas).
+ */
+export function samplePoster(seed: string, kind: PosterKind = 'video'): string {
+  const name = posterClipFor(seed, kind);
+  const hit = posterCache.get(name);
+  if (hit) return hit;
+  const img = posterImage(name);
+  if (!img) return posterSrc(name);
+  try {
+    const [canvas, ctx] = ctx2d(POSTER_W, POSTER_H);
+    drawCover(ctx, img, POSTER_W, POSTER_H, 0);
+    sampleMark(ctx, POSTER_W, POSTER_H);
+    const url = canvas.toDataURL('image/jpeg', 0.85);
+    posterCache.set(name, url);
+    return url;
+  } catch {
+    return posterSrc(name);
+  }
+}
+
+/** Start decoding every scene photo and showcase poster (the demo opens on the landing page, long
+ *  before a screen asks for a thumbnail). */
 export function preloadScenePhotos(): void {
   for (const kind of Object.keys(SCENE_PHOTOS) as SceneKind[]) scenePhoto(kind);
+  for (const name of [...VIDEO_POSTERS, ...WALL_OF_TEXT_POSTERS]) posterImage(name);
 }
 
 /** Draw `img` to cover w×h; `t` (seconds) drives a slow zoom and pan for the sample videos. */

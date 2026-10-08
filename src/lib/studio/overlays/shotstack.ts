@@ -1,4 +1,5 @@
 import { roundSec } from '../pipeline/edl';
+import { balanceWrap } from './balanced-wrap';
 import { PRE_RENDERED_ANIMATIONS, type Animation, type OverlayStyle } from './params';
 import { directionalText, type TextDirection } from './script-fonts';
 
@@ -161,14 +162,19 @@ const AVG_GLYPH_EM = 0.56;
 /** Line box height for the estimate (rich-text's default spacing, generous). */
 const LINE_BOX_EM = 1.3;
 
+/** Estimated characters per line of the text box (90 % of the frame width) at `font` px. */
+export function charsPerLine(font: number, frame: FrameSize): number {
+  const width = Math.round(frame.width * 0.9);
+  return Math.max(1, Math.floor(width / (font * AVG_GLYPH_EM)));
+}
+
 /**
  * The text box height: room for four lines (every overlay before 22.2), or more when the text
  * needs it. 22.2: a wall-of-text block has up to 10 lines that also wrap, and rich-text draws
  * nothing outside its box, so the box grows with the estimated wrapped line count.
  */
 export function overlayBoxHeight(text: string, font: number, frame: FrameSize): number {
-  const width = Math.round(frame.width * 0.9);
-  const perLine = Math.max(1, Math.floor(width / (font * AVG_GLYPH_EM)));
+  const perLine = charsPerLine(font, frame);
   const lines = text
     .split(/\r?\n/)
     .reduce((n, line) => n + Math.max(1, Math.ceil([...line].length / perLine)), 0);
@@ -177,10 +183,24 @@ export function overlayBoxHeight(text: string, font: number, frame: FrameSize): 
   );
 }
 
-export function overlayClip(
-  overlay: OverlayRow,
-  input: { frame: FrameSize; offsetSec: number },
-): Record<string, unknown> {
+export interface OverlayClipInput {
+  frame: FrameSize;
+  offsetSec: number;
+  /**
+   * 25 polish: break the text into even lines here (overlays/balanced-wrap.ts) instead of leaving
+   * the renderer's greedy wrap to strand a word on the last line (the wall-of-text block).
+   */
+  balanceLines?: boolean;
+}
+
+/** The overlay with its text broken into balanced lines at the box's estimated width. */
+export function withBalancedLines(overlay: OverlayRow, frame: FrameSize): OverlayRow {
+  const text = balanceWrap(overlay.text, charsPerLine(fontPx(overlay, frame), frame));
+  return text === overlay.text ? overlay : { ...overlay, text };
+}
+
+export function overlayClip(source: OverlayRow, input: OverlayClipInput): Record<string, unknown> {
+  const overlay = input.balanceLines ? withBalancedLines(source, input.frame) : source;
   const x = roundSec(overlay.anchorX - 0.5);
   const y = roundSec(0.5 - overlay.anchorY); // Shotstack offset.y is positive upwards
   const start = roundSec(input.offsetSec + overlay.startAtSec);

@@ -67,3 +67,5 @@ import './p18-admin-billing';
 import './p18-account';
 // 25.8: the AI-clip video models Create offers (GET /video-models sample data).
 import './p25-video-models';
+// 25 polish: the calendar side panel's preview (GET /projects/:id/preview) with showcase posters.
+import './p25-post-preview';

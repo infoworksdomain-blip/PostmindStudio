@@ -125,6 +125,27 @@ describe('buildOverlayTrack', () => {
     expect(track.skipped).toEqual([]);
   });
 
+  it('balances the text lines of native clips when balanceLines is set', async () => {
+    const text = 'Three things our regulars order every Saturday morning before the market opener';
+    const row = overlayRowRecord({ text, animationIn: 'fadeIn', animationOut: 'fadeOut' });
+    const plain = await buildOverlayTrack([{ row, offsetSec: 0 }], {
+      frame: FRAME,
+      organisationId: 'org-1',
+      preRender: preRenderDeps(),
+    });
+    const balanced = await buildOverlayTrack([{ row, offsetSec: 0 }], {
+      frame: FRAME,
+      organisationId: 'org-1',
+      preRender: preRenderDeps(),
+      balanceLines: true,
+    });
+    const textOf = (t: typeof plain) =>
+      ((t.clips[0] as Record<string, unknown>).asset as Record<string, unknown>).text as string;
+    expect(textOf(plain)).toBe(text);
+    expect(textOf(balanced)).toContain('\n');
+    expect(textOf(balanced).split('\n').join(' ')).toBe(text);
+  });
+
   it('produces a pre-rendered video clip for an overlay that needs pre-render', async () => {
     const spy = vi
       .spyOn(prerenderModule, 'preRenderOverlay')

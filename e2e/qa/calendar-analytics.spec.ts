@@ -397,6 +397,8 @@ test.describe('analytics', () => {
     await expect(summary).toContainText('Your 1 post from the last 7 days');
     await page.getByRole('radio', { name: '90 days' }).click();
     await expect(summary).toContainText('Your 2 posts from the last 90 days');
+    // The URL is written in a transition: reload only once it carries the new period.
+    await expect(page).toHaveURL(/\/analytics\?days=90$/);
     await page.reload();
     await expect(page.getByRole('radio', { name: '90 days' })).toHaveAttribute(
       'aria-checked',
