@@ -420,7 +420,8 @@ test('an organisation owner can use every workflow that needs no provider', asyn
     await page.getByRole('radio', { name: range }).click();
     await w.settle();
   }
-  for (const metric of ['Watch time', 'Engagement', 'Views']) {
+  // 25.11: the growth chart switches Views / Watch time; engagement has its own section.
+  for (const metric of ['Watch time', 'Views']) {
     await page.getByRole('radio', { name: metric }).click();
   }
   await w.check('/analytics ranges');
