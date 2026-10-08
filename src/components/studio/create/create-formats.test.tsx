@@ -29,6 +29,7 @@ const SERVER_WALL = {
   chars: SERVER_WALL_CHARS,
 };
 import { CreateScreen } from './create-screen';
+import { openMoreOptions } from './create-test-helpers';
 
 // 22.1 / 22.2: Create → "Hook + demo" and "Wall of text".
 
@@ -59,7 +60,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 async function choose(name: string) {
-  await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+  await openMoreOptions();
   await userEvent.click(screen.getByRole('radio', { name }));
 }
 
@@ -97,9 +98,7 @@ describe('Create → Hook + demo', () => {
       },
     });
     expect(body.brief).toBeUndefined();
-    expect(toast.success).toHaveBeenCalledWith(
-      'Generating — Studio is writing the text and making your video.',
-    );
+    expect(toast.success).toHaveBeenCalledWith('Making your video…');
   });
 
   it('with no demo videos it says to upload one and does not submit', async () => {

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockFetch, renderWithSWR, type MockRoute } from '../review/test-helpers';
 import { CreateScreen } from './create-screen';
+import { openMoreOptions } from './create-test-helpers';
 
 const push = vi.fn();
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }), usePathname: () => '/new' }));
@@ -89,7 +90,7 @@ describe('CreateScreen', () => {
       name: 'Spring menu launch',
       businessId: 'biz_1',
       sourceType: 'BRIEF',
-      targetFormats: [{ platform: 'youtube_short', aspectRatio: '9:16', durationSec: 45 }],
+      targetFormats: [{ platform: 'youtube_short', aspectRatio: '9:16', durationSec: 30 }],
       brief: { rawInput: 'Spring menu launch' },
       brandKitId: 'kit_1',
       // 20.12: the business's only YouTube account is pre-selected and auto-publish is on.
@@ -118,12 +119,11 @@ describe('CreateScreen', () => {
     const api = mockFetch(routes([meAs('staff')]));
     renderWithSWR(<CreateScreen initialReference={null} />);
     await userEvent.type(screen.getByLabelText('What’s the video about?'), 'Launch');
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    await openMoreOptions();
     await userEvent.click(screen.getByRole('checkbox', { name: 'TikTok' }));
     await userEvent.click(screen.getByRole('radio', { name: 'Long' }));
     await waitFor(() => expect(screen.getByLabelText('Brand kit')).toHaveValue('kit_1'));
     await userEvent.selectOptions(screen.getByLabelText('Brand kit'), '');
-    await userEvent.click(screen.getByRole('button', { name: 'Advanced options' }));
     await userEvent.type(screen.getByLabelText('Budget cap (£)'), '12.50');
     await userEvent.selectOptions(screen.getByLabelText('Approval'), 'AUTO_APPROVE');
     await userEvent.click(screen.getByRole('button', { name: 'Generate' }));
@@ -143,8 +143,7 @@ describe('CreateScreen', () => {
     const api = mockFetch(routes([meAs('user')]));
     renderWithSWR(<CreateScreen initialReference={null} />);
     await userEvent.type(screen.getByLabelText('What’s the video about?'), 'Launch');
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
-    await userEvent.click(screen.getByRole('button', { name: 'Advanced options' }));
+    await openMoreOptions();
     await waitFor(() => expect(api.find('GET', '/me').length).toBeGreaterThan(0));
     expect(screen.getByLabelText('Approval')).toBeInTheDocument();
     expect(screen.queryByLabelText(/Budget/)).not.toBeInTheDocument();
@@ -159,7 +158,7 @@ describe('CreateScreen', () => {
     const api = mockFetch(routes());
     renderWithSWR(<CreateScreen initialReference={null} />);
     await userEvent.type(screen.getByLabelText('What’s the video about?'), 'Five cafe tips');
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    await openMoreOptions();
     await userEvent.click(screen.getByRole('radio', { name: /Slideshow/ }));
     await userEvent.click(await screen.findByRole('radio', { name: /Listicle 5/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Create slideshow' }));

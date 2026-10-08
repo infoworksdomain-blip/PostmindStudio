@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockFetch, renderWithSWR, type MockRoute } from '../review/test-helpers';
 import { buildCreateBody, EMPTY_UGC, ugcBody, validateCreate, type CreateState } from './body';
 import { CreateScreen } from './create-screen';
+import { openMoreOptions } from './create-test-helpers';
 
 // BACKLOG 21.4 — the "UGC actor" option on Create: the source, the product and actor choices, the
 // allowance note ("uses 2 of your videos", never a cost), the body sent to POST /projects and the
@@ -48,8 +49,8 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 async function chooseUgc() {
-  await userEvent.click(screen.getByRole('button', { name: /Options/ }));
-  await userEvent.click(screen.getByRole('radio', { name: /UGC actor/ }));
+  await openMoreOptions();
+  await userEvent.click(screen.getByRole('radio', { name: /Creator video/ }));
 }
 
 describe('Create: UGC actor (21.4)', () => {

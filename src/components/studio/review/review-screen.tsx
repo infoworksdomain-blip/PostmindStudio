@@ -175,7 +175,6 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
         )}
         <ReviewStatus
           project={project}
-          projectName={name}
           selected={selected}
           live={live.statuses.get(project.id)}
           attention={attention}

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthFrame } from './auth-frame';
 
 // 25.6 — the signed-out frame: wordmark, the form in <main>, the language switcher, and a brand
-// panel (hidden below lg by CSS) showing a real product screen in both themes.
+// panel (hidden below lg by CSS) showing two posts made with Studio (25.5 showcase media).
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
@@ -34,15 +34,17 @@ describe('AuthFrame', () => {
     const panel = screen.getByRole('complementary', { name: 'About PostMind Studio' });
     expect(panel.className).toContain('hidden');
     expect(panel.className).toContain('lg:flex');
-    const images = within(panel).getAllByRole('img');
-    expect(images.map((img) => img.getAttribute('src'))).toEqual([
-      '/marketing/screens/review-light.webp',
-      '/marketing/screens/review-dark.webp',
+    // Two posts made with Studio, described as one picture; the posters themselves are decorative.
+    const picture = within(panel).getByRole('img', { name: /made with PostMind Studio/ });
+    const posters = picture.querySelectorAll('img');
+    expect([...posters].map((img) => img.getAttribute('src'))).toEqual([
+      '/marketing/studio/seedance-bread.jpg',
+      '/marketing/studio/coastline-stays-slideshow.jpg',
     ]);
-    for (const img of images) {
-      expect(img).toHaveAttribute('width', '1200');
-      expect(img).toHaveAttribute('height', '750');
-      expect(img).toHaveAttribute('loading', 'lazy');
+    for (const img of posters) {
+      expect(img).toHaveAttribute('alt', '');
+      expect(img).toHaveAttribute('width', '540');
+      expect(img).toHaveAttribute('height', '960');
     }
   });
 });

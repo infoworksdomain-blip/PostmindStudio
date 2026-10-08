@@ -42,7 +42,7 @@ export const RESOLUTION = '720p';
 // Pricing page, "ray-3.2 — per-video pricing", Video generation, Standard dynamic range, 720p.
 const USD_PER_CLIP: Record<LumaDuration, number> = { '5s': 0.3, '10s': 0.9 };
 const MIN_DURATION_SEC = 1;
-const MAX_DURATION_SEC = 10;
+export const MAX_DURATION_SEC = 10;
 const MAX_PROMPT_CHARS = 6000;
 // Docs: "a 5s/720p generation typically completes in well under two minutes".
 const TYPICAL_LATENCY_SEC = 120;
@@ -52,7 +52,7 @@ type LumaDuration = '5s' | '10s';
 
 // Ray 3.2 accepts 9:16, 3:4, 1:1, 4:3, 16:9, 21:9. 4:5 is not offered, so 4:5 shots use the
 // nearest portrait ratio (3:4) and the composer's fit "cover" crops the small difference.
-const RATIO: Record<AspectRatio, string> = {
+export const RATIO: Record<AspectRatio, string> = {
   '9:16': '9:16',
   '16:9': '16:9',
   '1:1': '1:1',

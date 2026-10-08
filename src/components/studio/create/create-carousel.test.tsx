@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockFetch, renderWithSWR, type MockRoute } from '../review/test-helpers';
 import { buildCreateBody, validateCreate, type CreateState } from './body';
 import { CreateScreen } from './create-screen';
+import { openMoreOptions } from './create-test-helpers';
 
 // 21.6: Create → Carousel (post cards).
 
@@ -34,8 +35,8 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 async function chooseCarousel() {
-  await userEvent.click(screen.getByRole('button', { name: /Options/ }));
-  await userEvent.click(screen.getByRole('radio', { name: 'Carousel (post cards)' }));
+  await openMoreOptions();
+  await userEvent.click(screen.getByRole('radio', { name: 'Carousel' }));
 }
 
 describe('Create → Carousel', () => {

@@ -118,7 +118,7 @@ export const ReviewPlayer = forwardRef<
             label: (
               <>
                 {f.platform(r.targetPlatform)}
-                <span className="tabular text-muted-foreground">{r.aspectRatio}</span>
+                <span className="tabular font-normal">{r.aspectRatio}</span>
               </>
             ),
           }))}
