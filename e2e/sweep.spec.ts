@@ -1,4 +1,5 @@
-import { createHmac, randomUUID } from 'node:crypto';
+import { enableTwoFactor } from './qa/pass2.support';
+import { randomUUID } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Page, type Response } from '@playwright/test';
@@ -152,22 +153,6 @@ class Watcher {
         .catch(() => undefined);
     }
   }
-}
-
-function totp(uri: string): string {
-  const secret = new URL(uri).searchParams.get('secret') ?? '';
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = '';
-  for (const c of secret.replace(/=+$/, '').toUpperCase()) {
-    bits += alphabet.indexOf(c).toString(2).padStart(5, '0');
-  }
-  const bytes = Buffer.from(bits.match(/.{8}/g)!.map((b) => parseInt(b, 2)));
-  const counter = Buffer.alloc(8);
-  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30_000)));
-  const hmac = createHmac('sha1', bytes).update(counter).digest();
-  const offset = hmac[hmac.length - 1]! & 0xf;
-  const code = (hmac.readUInt32BE(offset) & 0x7fffffff) % 1_000_000;
-  return String(code).padStart(6, '0');
 }
 
 async function signIn(page: Page, as = email): Promise<void> {
@@ -581,18 +566,7 @@ test('a superadmin with no organisation reaches every admin tab', async ({ page 
 
   // Admin tools need 2FA: turn it on through the account page.
   w.label('/account/security 2FA');
-  await page.goto('/account/security');
-  const twoFactor = page
-    .locator('section')
-    .filter({ has: page.getByRole('heading', { name: 'Two-step verification' }) });
-  await twoFactor.getByLabel('Password', { exact: true }).fill(password);
-  const [enrol] = await Promise.all([
-    page.waitForResponse((r) => r.url().includes('/two-factor/enable')),
-    page.getByRole('button', { name: 'Set up' }).click(),
-  ]);
-  const { totpURI } = (await enrol.json()) as { totpURI: string };
-  await page.getByLabel('Code from the app').fill(totp(totpURI));
-  await page.getByRole('button', { name: 'Turn on' }).click();
+  await enableTwoFactor(page, password);
   await expect(page.getByText('Two-step verification is on.').first()).toBeVisible();
   await w.check();
   // From here on a 403 is an error: the Admin Centre must work without an organisation.

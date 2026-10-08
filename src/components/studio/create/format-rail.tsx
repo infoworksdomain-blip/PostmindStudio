@@ -118,7 +118,7 @@ export function FormatRail({ value, onChange, note }: FormatRailProps) {
               >
                 {t(`formats.${key}.name`)}
               </span>
-              <span id={lineId} className="text-xs leading-snug text-muted-foreground">
+              <span id={lineId} className="text-xs leading-snug text-foreground-secondary">
                 {t(`formats.${key}.line`)}
               </span>
             </button>

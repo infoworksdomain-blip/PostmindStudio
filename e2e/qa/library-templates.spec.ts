@@ -1,4 +1,5 @@
-import { createHmac, randomUUID } from 'node:crypto';
+import { enableTwoFactor } from './pass2.support';
+import { randomUUID } from 'node:crypto';
 import { expect, test, type BrowserContext, type Page, type Response } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
 import { chooseLanguage, chooseTheme } from './shell.support';
@@ -113,21 +114,6 @@ class Watcher {
   expectClean(): void {
     expect(this.issues).toEqual([]);
   }
-}
-
-function totp(uri: string): string {
-  const secret = new URL(uri).searchParams.get('secret') ?? '';
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = '';
-  for (const c of secret.replace(/=+$/, '').toUpperCase()) {
-    bits += alphabet.indexOf(c).toString(2).padStart(5, '0');
-  }
-  const bytes = Buffer.from(bits.match(/.{8}/g)!.map((b) => parseInt(b, 2)));
-  const counter = Buffer.alloc(8);
-  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30_000)));
-  const hmac = createHmac('sha1', bytes).update(counter).digest();
-  const offset = hmac[hmac.length - 1]! & 0xf;
-  return String((hmac.readUInt32BE(offset) & 0x7fffffff) % 1_000_000).padStart(6, '0');
 }
 
 test.skip(!hasDb, 'DATABASE_URL is not set: the library QA needs the app’s database');
@@ -824,18 +810,7 @@ test('staff: the Library tab lists, edits, bulk-reviews and retires; others are 
   await signUp(page, staffEmail, 'QA Staff');
   await db.user.update({ where: { email: staffEmail }, data: { role: 'superadmin' } });
   await signIn(page, staffEmail);
-  await page.goto('/account/security');
-  const twoFactor = page
-    .locator('section')
-    .filter({ has: page.getByRole('heading', { name: 'Two-step verification' }) });
-  await twoFactor.getByLabel('Password', { exact: true }).fill(password);
-  const [enrol] = await Promise.all([
-    page.waitForResponse((r) => r.url().includes('/two-factor/enable')),
-    page.getByRole('button', { name: 'Set up' }).click(),
-  ]);
-  const { totpURI } = (await enrol.json()) as { totpURI: string };
-  await page.getByLabel('Code from the app').fill(totp(totpURI));
-  await page.getByRole('button', { name: 'Turn on' }).click();
+  await enableTwoFactor(page, password);
   await expect(page.getByText('Two-step verification is on.').first()).toBeVisible();
 
   // From here on a 403 other than no_organisation is an error.
