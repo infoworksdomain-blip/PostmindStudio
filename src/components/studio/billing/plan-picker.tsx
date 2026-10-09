@@ -43,7 +43,7 @@ export function IntervalSwitch({
         onChange={onChange}
         options={INTERVALS.map((option) => ({ value: option, label: t(option) }))}
       />
-      <p className="text-xs text-muted-foreground">{t('yearlyHint')}</p>
+      <p className="text-xs text-foreground-secondary">{t('yearlyHint')}</p>
     </div>
   );
 }
@@ -118,13 +118,13 @@ function PlanCard({
       </div>
       <div className="grid gap-1" aria-live="polite">
         {amount === null ? (
-          <p className="font-display text-xl text-muted-foreground">{t('priceUnavailable')}</p>
+          <p className="font-display text-xl text-foreground-secondary">{t('priceUnavailable')}</p>
         ) : (
           <p className="font-display text-3xl leading-none tabular-nums">
             {t(`total.${interval}`, { amount: f.pence(amount) })}
           </p>
         )}
-        <p className="text-xs text-muted-foreground">{t('exclVat')}</p>
+        <p className="text-xs text-foreground-secondary">{t('exclVat')}</p>
         {saving !== null && saving > 0 && (
           <p className="text-sm font-medium text-success-foreground">
             {t('yearlySaving', { amount: f.pence(saving) })}
@@ -140,7 +140,7 @@ function PlanCard({
           t('platforms'),
         ].map((line) => (
           <li key={line} className="flex items-start gap-2">
-            <Check className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+            <Check className="mt-0.5 size-3.5 shrink-0 text-foreground-secondary" aria-hidden />
             {line}
           </li>
         ))}
@@ -222,7 +222,7 @@ export function PlanPicker({
         ))}
       </div>
       {value.interval === 'week' && (
-        <p className="text-sm text-muted-foreground">{t('weeklyNote')}</p>
+        <p className="text-sm text-foreground-secondary">{t('weeklyNote')}</p>
       )}
     </div>
   );
