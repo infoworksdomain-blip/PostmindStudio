@@ -196,8 +196,8 @@
       "moreFrom": "More videos are included from {date}.",
       "planExceededTitle": "{period, select, week {You’ve used this week’s videos} other {You’ve used this month’s videos}}",
       "planWarningTitle": "{period, select, week {You’re close to this week’s video limit} other {You’re close to this month’s video limit}}",
-      "planBlockedBody": "New videos are paused until {date}. Add a channel or buy a video pack to keep creating.",
-      "planResetBody": "More videos are included from {date}. Add a channel or buy a video pack for more.",
+      "planBlockedBody": "New videos are paused until {date}. Upgrade your plan or buy a video pack to keep creating.",
+      "planResetBody": "More videos are included from {date}. Upgrade your plan or buy a video pack for more.",
       "quickPostsNote": "Carousels, slideshows, wall of text and hook + demo videos count as ¼ of a video."
     },
     "pageTitle": {
@@ -314,7 +314,7 @@
       "forbidden": "You don’t have permission to do that.",
       "feature_disabled": "This feature isn’t switched on for your organisation.",
       "plan_tier": "This feature isn’t included in your plan.",
-      "quota_exceeded": "You’ve used your plan’s videos for now. Add a channel or buy a video pack to keep creating.",
+      "quota_exceeded": "You’ve used your plan’s videos for now. Upgrade your plan or buy a video pack to keep creating.",
       "not_found": "We couldn’t find that. It may have been deleted.",
       "conflict": "That changed while you were working on it. Refresh and try again.",
       "validation_error": "Some of the details aren’t valid. Check them and try again.",
@@ -339,7 +339,6 @@
       "auto_publish_account_required": "Choose a connected account to post to, or turn auto-publish and the schedule off.",
       "auto_publish_account_unavailable": "A chosen account is no longer connected. Reconnect it or choose another account.",
       "queue_unavailable": "Publishing is temporarily unavailable. Nothing was posted or kept; try again in a moment.",
-      "channel_limit": "Your plan doesn’t include a channel for this platform. Add a channel on Your plan to publish here.",
       "no_demo_video": "Upload a demo video of your product or app first."
     }
   },
@@ -550,7 +549,7 @@
     },
     "videoAllowanceUsed": {
       "title": "{period, select, week {This week’s} other {This month’s}} videos are used",
-      "body": "{used, number} of {limit, number} videos made {period, select, week {this week} other {this month}}. More are included at the start of next {period, select, week {week} other {month}}.{blocked, select, yes { To make more before then, add a channel or buy a video pack.} other {}}"
+      "body": "{used, number} of {limit, number} videos made {period, select, week {this week} other {this month}}. More are included at the start of next {period, select, week {week} other {month}}.{blocked, select, yes { To make more before then, upgrade your plan or buy a video pack.} other {}}"
     },
     "costPlain": {
       "projectAlert": {
@@ -2732,10 +2731,6 @@
     },
     "notConfigured": "{platform} is not available yet: Studio’s {platform} app still needs its settings. Ask your administrator.",
     "readOnly": "Only owners and admins can connect or disconnect accounts.",
-    "channelLimit": {
-      "body": "{count, plural, one {Your plan includes # channel,} other {Your plan includes # channels,}} so {blockedCount, plural, one {{blocked} is connected but won’t publish.} other {{blocked} are connected but won’t publish.}}",
-      "action": "Add a channel"
-    },
     "tiktokPostMode": {
       "legend": "How this account posts to TikTok",
       "drafts": "Send to TikTok drafts",
@@ -4608,15 +4603,17 @@
     },
     "pricing": {
       "eyebrow": "Pricing",
-      "title": "One simple price per channel",
-      "per": "per channel a month",
-      "body": "Every channel includes {videos} short HD videos a month, or up to {quick} quick posts: carousels, slideshows and text videos count as ¼ of a video.",
+      "title": "Three simple plans",
+      "body": "Every plan posts to TikTok, Instagram, YouTube, Facebook, LinkedIn and X. Quick posts such as carousels, slideshows and text videos count as ¼ of a video.",
       "points": {
         "billing": "Pay weekly, monthly or yearly",
         "vat": "Prices exclude VAT",
         "cancel": "Cancel any time"
       },
-      "cta": "See pricing"
+      "cta": "See pricing",
+      "perMonth": "a month, excl. VAT",
+      "plansAria": "Plans",
+      "packs": "Need more? Video packs: {small, number} HD videos for {smallPrice} or {large, number} for {largePrice}, on any plan."
     },
     "closing": {
       "eyebrow": "Ready when you are",
@@ -4641,11 +4638,11 @@
     },
     "hero": {
       "eyebrow": "Pricing",
-      "title": "One simple plan: pay per channel",
-      "description": "Choose how many social platforms you publish to and how often you pay. Every channel includes 8 short HD videos a month, or up to 32 quick posts."
+      "title": "Three plans. Every platform.",
+      "description": "Choose Starter, Growth or Pro and how often you pay. Every plan posts to TikTok, Instagram, YouTube, Facebook, LinkedIn and X."
     },
     "plan": {
-      "title": "Build your plan"
+      "title": "Choose your plan"
     },
     "unavailable": "Prices can’t be shown right now. Please try again shortly.",
     "trialNote": "Try it free for {days, plural, one {# day} other {# days}} with {videos} videos. Card required; cancel any time before the trial ends and you pay nothing.",
@@ -4656,18 +4653,17 @@
     "included": {
       "title": "Every plan includes",
       "items": {
-        "videos": "8 short videos per channel each month, made for you from a short brief",
         "hd": "HD video, captions and music",
         "platforms": "Publishing to TikTok, Instagram, YouTube Shorts, Facebook, LinkedIn and X",
         "scheduling": "A content calendar and automatic scheduling",
         "brand": "Your brand kit on every video",
         "library": "Reference video library for ideas",
-        "quickPosts": "Or up to 32 quick posts per channel a month: carousels, slideshows and text videos count as ¼ of a video"
+        "quickPosts": "Quick posts count as ¼ of a video: carousels, slideshows, wall of text and hook + demo videos"
       }
     },
     "packs": {
       "title": "Need more videos?",
-      "description": "Buy a one-off HD video pack at any time. Pack videos work on any channel, are used after your plan’s videos, and last 3 months."
+      "description": "Buy a one-off HD video pack at any time, on any plan. Pack videos are used after your plan’s videos and last 3 months."
     },
     "topUps": {
       "short": "{quantity, plural, one {# HD video} other {# HD videos}}",
@@ -4676,25 +4672,21 @@
     "faq": {
       "title": "Questions",
       "items": {
-        "channel": {
-          "q": "What is a channel?",
-          "a": "A channel is one social platform you publish to, such as TikTok or Instagram. Pay for 1 to 6 channels. You can connect more accounts, but only the channels you pay for publish."
-        },
         "period": {
           "q": "Weekly, monthly or yearly?",
-          "a": "Monthly is {monthly} per channel. Weekly is {weekly} per channel a week, which costs more over a month. Yearly is {yearly} per channel, paid upfront: 2 months free. Videos are included each week on weekly plans and each month on monthly and yearly plans."
+          "a": "{plan} is {monthly} a month. Weekly is {weekly} a week, which costs more over a month. Yearly is {yearly}, paid upfront: 2 months free. Every plan works the same way. Videos are included each week on weekly plans and each calendar month on monthly and yearly plans."
         },
         "change": {
           "q": "Can I change my plan later?",
-          "a": "Yes, on Your plan. Adding channels or moving to a longer period applies straight away; you pay only the difference for the rest of the period. Removing channels or moving to a shorter period applies at the end of the period you’ve paid for."
+          "a": "Yes, on Your plan. Moving to a higher plan, or to a longer period on the same plan, applies straight away; you pay only the difference for the rest of the period. Moving to a lower plan, or to a shorter period, applies at the end of the period you’ve paid for."
         },
         "limit": {
           "q": "What happens when I’ve used my videos?",
-          "a": "New videos pause until more are included at the start of the next week or month. Add a channel or buy a video pack to keep going straight away."
+          "a": "New videos pause until more are included at the start of the next week or month. Upgrade your plan or buy a video pack to keep going straight away."
         },
         "packs": {
           "q": "How do video packs work?",
-          "a": "A pack of 5 or 15 HD videos is a one-off purchase. Pack videos work on any channel, are used after your plan’s videos, and last 3 months."
+          "a": "A pack of 5 or 15 HD videos is a one-off purchase on any plan. Pack videos are used after your plan’s videos and last 3 months."
         },
         "vat": {
           "q": "Do prices include VAT?",
@@ -4706,7 +4698,11 @@
         },
         "quickPosts": {
           "q": "Do carousels and slideshows count as a whole video?",
-          "a": "No. Carousels, slideshows, wall of text and hook + demo videos are quick posts and count as ¼ of a video, so a channel’s 8 videos a month can be up to 32 quick posts. An AI video counts as 1 video and a UGC actor video as 2. Video pack videos are counted the same way."
+          "a": "No. Carousels, slideshows, wall of text and hook + demo videos are quick posts and count as ¼ of a video, so {plan}’s {videos, number} videos a month can be up to {quick, number} quick posts. An AI video counts as 1 video and a UGC actor video as 2. Video pack videos are counted the same way."
+        },
+        "platforms": {
+          "q": "Which platforms can I post to?",
+          "a": "All six, on every plan: TikTok, Instagram, YouTube, Facebook, LinkedIn and X. Connect your accounts and Studio posts to each of them."
         }
       }
     }
@@ -5129,7 +5125,7 @@
     "header": {
       "eyebrow": "Settings",
       "title": "Your plan",
-      "description": "Your channels, videos, video packs, payment details and invoices."
+      "description": "Your plan, videos, video packs, payment details and invoices."
     },
     "loading": "Loading billing",
     "notEnabled": {
@@ -5182,7 +5178,7 @@
     },
     "credits": {
       "title": "Video packs",
-      "description": "One-off HD video packs for any channel. Pack videos are used after your plan’s videos and last 3 months.",
+      "description": "One-off HD video packs for any plan. Pack videos are used after your plan’s videos and last 3 months.",
       "buy": "Buy",
       "buyAria": "Buy {pack} for {amount}",
       "noPacks": "Choose a plan first to buy video packs.",
@@ -5212,7 +5208,7 @@
     },
     "picker": {
       "title": "Choose your plan",
-      "description": "Pick how many channels and how often to pay. You pay securely with Stripe; prices exclude VAT.",
+      "description": "Pick a plan and how often to pay. You pay securely with Stripe; prices exclude VAT.",
       "trial": "Start free trial",
       "redirecting": "Opening secure checkout…",
       "subscribe": "Continue to payment",
@@ -5296,11 +5292,10 @@
           "endTrial": "End the trial now",
           "endTrialHelp": "The trial’s allowance and its {daily} a day / {total} total cost caps stop for good, even after this override expires or is removed; the plan’s caps (and any cost-cap override) apply. Stripe is not changed: its trial still ends, and bills, on its own date.",
           "trialNote": "Any saved override pauses the trial’s caps while it is active. Tick “End the trial now” to stop them for good.",
-          "channelPlan": "Channel plan",
-          "channelPlanHelp": "Channels (1 to 6 social platforms) set the video allowance, the cost caps and how many platforms can be connected; the interval sets how often the allowance is released. Keep current uses the Stripe subscription’s values. Not used with Enterprise.",
-          "channels": "Channels",
-          "channelsOption": "{count, plural, one {# channel} other {# channels}}",
-          "interval": "Billing interval"
+          "interval": "Billing interval",
+          "studioPlan": "Plan override",
+          "studioPlanHelp": "The plan sets the video allowance, seats, businesses and cost caps; the interval sets how often the allowance is released. Keep current uses the Stripe subscription’s values. Not used with Enterprise.",
+          "plan": "Plan"
         },
         "clear": {
           "title": "Remove the override",
@@ -5333,18 +5328,18 @@
           "accessReadOnly": "Read-only blocks every change in this organisation except billing, account settings and exports.",
           "endTrial": "Ending the trial cannot be undone: its caps will not apply to this organisation again."
         },
-        "channelPlan": "Channel plan",
-        "noChannelPlan": "No channel plan",
-        "channelPlanValue": "{count, plural, one {# channel} other {# channels}} · {interval, select, week {weekly} month {monthly} year {yearly} other {{interval}}}",
-        "channelPlanSource": "{source, select, admin {(set by staff)} other {(from Stripe)}}",
         "intervalValues": {
           "week": "Weekly",
           "month": "Monthly",
           "year": "Yearly"
         },
-        "overrideChannels": "Channels: {count, plural, one {# channel} other {# channels}}",
         "overrideInterval": "Billed {interval, select, week {weekly} month {monthly} year {yearly} other {{interval}}}",
-        "subscriptionChannelLine": "{tier} · {count, plural, one {# channel} other {# channels}} · {interval} · ends {date}"
+        "studioPlan": "Plan",
+        "noStudioPlan": "No plan",
+        "planValue": "{plan} · {interval, select, week {weekly} month {monthly} year {yearly} other {{interval}}}",
+        "overridePlan": "Plan: {plan}",
+        "subscriptionPlanLine": "{plan} · {interval} · ends {date}",
+        "planSource": "{source, select, admin {(set by staff)} other {(from Stripe)}}"
       },
       "subscriptions": {
         "title": "Subscriptions",
@@ -5353,8 +5348,6 @@
         "mrr": "Monthly recurring revenue",
         "mrrHelp": "Active and past-due subscriptions; annual plans divided by 12; excl. VAT.",
         "total": "{count, plural, =0 {No subscriptions} one {# subscription} other {# subscriptions}}",
-        "byTier": "By tier",
-        "byTierAria": "Subscriptions by tier",
         "tierLine": "{count} · {mrr}",
         "byStatus": "By status",
         "byStatusAria": "Subscriptions by status",
@@ -5363,24 +5356,26 @@
         "caption": "Subscriptions",
         "columns": {
           "organisation": "Organisation",
-          "tier": "Tier",
           "interval": "Billing",
           "mrr": "MRR",
           "periodEnd": "Period ends",
-          "status": "Status"
+          "status": "Status",
+          "plan": "Plan"
         },
         "cancelling": "Cancelling",
         "unknownOrg": "Unknown organisation",
         "unknownTier": "Unknown",
-        "empty": "No subscriptions match."
+        "empty": "No subscriptions match.",
+        "byPlan": "By plan",
+        "byPlanAria": "Subscriptions by plan"
       }
     },
     "yourPlan": {
       "summary": {
         "title": "Your plan",
-        "headline": "{count, plural, one {# channel} other {# channels}}, {period, select, week {weekly} month {monthly} other {yearly}}",
+        "headline": "{plan}, {period, select, week {weekly} month {monthly} other {yearly}}",
         "legacy": "Moved over from your previous plan.",
-        "pending": "From {date}: {count, plural, one {# channel} other {# channels}}, {period, select, week {weekly} month {monthly} other {yearly}}.",
+        "pending": "From {date}: {plan}, {period, select, week {weekly} month {monthly} other {yearly}}.",
         "keepCurrent": "Keep my current plan",
         "paymentPending": "Your last change is waiting for payment. Update your payment method to apply it.",
         "price": "Price",
@@ -5396,30 +5391,20 @@
         "packsLeft": "{count, plural, =0 {No pack videos left} one {# pack video left} other {# pack videos left}}",
         "left": "{left} left"
       },
-      "channels": {
-        "title": "Your channels",
-        "description": "{count, plural, one {Your plan publishes to # channel.} other {Your plan publishes to # channels.}}",
-        "noneConnected": "No channels connected yet.",
-        "connect": "Connect accounts",
-        "publishing": "Publishing to: {list}.",
-        "blocked": "{count, plural, one {{list} is connected but doesn’t publish: your plan has no channel left for it.} other {{list} are connected but don’t publish: your plan has no channels left for them.}}",
-        "addChannel": "Add a channel",
-        "spare": "{count, plural, one {You can connect # more channel.} other {You can connect # more channels.}}"
-      },
       "change": {
         "title": "Change your plan",
-        "description": "Add or remove channels, or change how often you pay. You’ll see the new price and when it applies before anything changes.",
+        "description": "Move to another plan or change how often you pay. You’ll see the new price and when it applies before anything changes.",
         "previewing": "Working out the new price…",
         "previewFailed": "We couldn’t work out the new price. Try again in a moment.",
         "appliesNow": "New price: {price}. Applies now: you pay {due} today for the rest of this period.",
         "appliesLater": "New price: {price}. Applies on {date}. Nothing to pay now.",
-        "nowRule": "More channels and longer periods apply straight away, and you only pay the difference.",
-        "laterRule": "Fewer channels and shorter periods apply at the end of the period you’ve paid for, so you keep what you’ve paid for until then.",
+        "nowRule": "A higher plan, or a longer period on the same plan, applies straight away, and you only pay the difference.",
+        "laterRule": "A lower plan, or a shorter period on the same plan, applies at the end of the period you’ve paid for, so you keep what you’ve paid for until then.",
         "review": "Review change",
         "reset": "Start again",
         "confirmTitle": "Confirm your new plan",
-        "confirmFrom": "Now: {channels, plural, one {# channel} other {# channels}}, {period, select, week {weekly} month {monthly} other {yearly}}",
-        "confirmTo": "New: {channels, plural, one {# channel} other {# channels}}, {period, select, week {weekly} month {monthly} other {yearly}}",
+        "confirmFrom": "Now: {plan}, {period, select, week {weekly} month {monthly} other {yearly}}",
+        "confirmTo": "New: {plan}, {period, select, week {weekly} month {monthly} other {yearly}}",
         "cancel": "Go back",
         "confirm": "Confirm change",
         "confirmPay": "Pay {amount} and change",
@@ -5458,7 +5443,7 @@
     },
     "quota": {
       "title": "You’ve used your plan’s videos for now",
-      "body": "Add a channel for more videos each week or month, or buy a video pack to keep going today.",
+      "body": "Upgrade your plan for more videos each week or month, or buy a video pack to keep going today.",
       "quickPosts": "Quick posts go further: carousels, slideshows, wall of text and hook + demo videos count as ¼ of a video."
     },
     "planRequired": {
@@ -5473,10 +5458,10 @@
       "choosePlan": "Choose a plan",
       "updatePayment": "Update payment method",
       "notNow": "Not now",
-      "addChannel": "Add a channel",
       "buyPack": "Buy a video pack",
       "viewPlan": "See the plan",
-      "manageMembers": "Manage members"
+      "manageMembers": "Manage members",
+      "upgradePlan": "Upgrade your plan"
     },
     "askOwner": "Only an organisation owner can change the plan or billing. Ask an owner to do this.",
     "lock": {
@@ -5486,10 +5471,6 @@
     "seatLimit": {
       "title": "Every seat on your plan is in use",
       "body": "Your plan has no free seat for another person. Remove someone first, or contact support."
-    },
-    "channelLimit": {
-      "title": "Add a channel to publish here",
-      "body": "{count, plural, one {Your plan includes # channel} other {Your plan includes # channels}}: {list}. Add a channel to publish to {platform} too."
     }
   },
   "email": {
@@ -5607,7 +5588,7 @@
       "topupReceipt": {
         "subject": "Your video pack is ready: {packName}",
         "heading": "Video pack added",
-        "body": "Thank you. Your {packName} pack has been added. Use it on any channel within 3 months. Stripe sends the receipt separately.",
+        "body": "Thank you. Your {packName} pack has been added. Use it within 3 months, on any plan. Stripe sends the receipt separately.",
         "cta": "Open Your plan"
       },
       "accountDeletionScheduled": {
@@ -5684,8 +5665,7 @@
       "pagesAria": "Organisation pages",
       "pageInfo": "{from}–{to} of {total}",
       "previous": "Previous",
-      "next": "Next",
-      "channelPlan": "{count, plural, one {# channel} other {# channels}} · {interval, select, week {weekly} month {monthly} year {yearly} other {{interval}}}"
+      "next": "Next"
     },
     "detail": {
       "back": "All organisations",
@@ -6179,45 +6159,37 @@
       "close": "Close"
     }
   },
-  "channelPlan": {
+  "planPicker": {
+    "label": "Plan",
     "interval": {
       "label": "How often you pay",
       "week": "Weekly",
       "month": "Monthly",
-      "year": "Yearly"
+      "year": "Yearly",
+      "yearlyHint": "Pay yearly and get 2 months free."
     },
-    "channels": {
-      "label": "Channels",
-      "fewer": "Remove a channel",
-      "more": "Add a channel",
-      "value": "{count, plural, one {# channel} other {# channels}}",
-      "hint": "A channel is one social platform you publish to: TikTok, Instagram, YouTube Shorts, Facebook, LinkedIn or X."
-    },
+    "mostPopular": "Most popular",
     "total": {
       "week": "{amount} a week",
       "month": "{amount} a month",
       "year": "{amount} a year"
     },
-    "perChannel": {
-      "week": "{amount} per channel a week",
-      "month": "{amount} per channel a month",
-      "year": "{amount} per channel a year"
-    },
-    "included": {
-      "week": "{count, plural, one {# video} other {# videos}} a week included ({perChannel} per channel)",
-      "month": "{count, plural, one {# video} other {# videos}} a month included ({perChannel} per channel)",
-      "year": "{count, plural, one {# video} other {# videos}} a year included ({perChannel} per channel each month)"
-    },
-    "hd": "Short videos in HD",
     "exclVat": "excl. VAT",
+    "videos": {
+      "week": "{count, plural, one {# HD video} other {# HD videos}} a week",
+      "month": "{count, plural, one {# HD video} other {# HD videos}} a month"
+    },
+    "quickPosts": "Or up to {count, number} quick posts: carousels, slideshows and text videos count as ¼",
+    "businesses": "{count, plural, one {# business} other {# businesses}}",
+    "seats": "{count, plural, one {# seat} other {# seats}}",
+    "platforms": "Posts to every platform",
     "yearlySaving": "2 months free: you save {amount} a year",
     "weeklyNote": "Weekly costs more than monthly. Pay monthly or yearly to save.",
     "priceUnavailable": "Price unavailable",
     "packs": {
       "name": "{quantity, plural, one {# HD video} other {# HD videos}}",
-      "validity": "Use on any channel within {months, plural, one {# month} other {# months}}"
-    },
-    "quickPosts": "Or up to {count, number} quick posts: carousels, slideshows and text videos count as ¼"
+      "validity": "Use within {months, plural, one {# month} other {# months}}, on any plan"
+    }
   },
   "carousel": {
     "editor": {
@@ -6532,7 +6504,7 @@
         "summary": "Summary"
       },
       "channelsTitle": "Where should it post?",
-      "channelsHint": "Choose the networks it posts to, within your plan’s channels.",
+      "channelsHint": "Choose the networks it posts to. Every plan posts to every platform.",
       "noAccount": "{platform} is not connected: its posts are saved for review instead.",
       "cadenceTitle": "How often?",
       "mode": {
@@ -6577,7 +6549,7 @@
       "cancelConfirm": "Cancel this automation? Posts not yet out are cancelled.",
       "pauseReason": {
         "owner": "Paused by you. Posts already made still go out.",
-        "allowance": "Your plan’s videos are used up. Add a channel or buy a video pack, then resume.",
+        "allowance": "Your plan’s videos are used up. Upgrade your plan or buy a video pack, then resume.",
         "billing": "Paused because billing needs attention.",
         "owner_left": "Paused because the person who set it up left the organisation.",
         "plan_missing": "Paused: its current period could not be found.",

@@ -13,22 +13,24 @@ import {
 import { createStripeClient, isTestModeKey } from '../../src/lib/studio/billing/stripe-client';
 import { listPricesByLookupKeys } from '../../src/lib/studio/billing/stripe-lookup';
 
-// Phase 18 §2.7 / 21.5 — create the Studio catalogue in a Stripe TEST-mode account:
-//   the channel product (studio_channel, metadata studio_tier=STANDARD, tax code SaaS business
-//   use) with three recurring per-unit GBP prices — studio_channel_weekly £9.50/week,
-//   studio_channel_monthly £29/month, studio_channel_yearly £290/year — where the subscription
-//   item's quantity is the number of channels (1–6); and the HD video packs studio_pack_hd5 (£15,
-//   5 videos) and studio_pack_hd15 (£39, 15 videos), each a product with a one-time price. All
-//   tax_behavior=exclusive; amounts from catalogue REFERENCE_PRICES_PENCE (channel-plan.ts).
+// Phase 18 §2.7 / 26.1 — create the Studio catalogue in a Stripe TEST-mode account:
+//   one product per plan (studio_plan_starter / studio_plan_growth / studio_plan_pro, metadata
+//   studio_tier=STANDARD + studio_plan, tax code SaaS business use), each with three recurring GBP
+//   prices, quantity 1 — lookup keys studio_<plan>_<weekly|monthly|yearly>: Starter £9.50 / £29 /
+//   £290, Growth £22.50 / £69 / £690, Pro £48.50 / £149 / £1,490 — and the HD video packs
+//   studio_pack_hd5 (£17, 5 videos) and studio_pack_hd15 (£45, 15 videos), each a product with a
+//   one-time price. All tax_behavior=exclusive; amounts from catalogue REFERENCE_PRICES_PENCE
+//   (plans.ts).
 //
 //   STRIPE_SECRET_KEY=sk_test_… npx tsx scripts/billing/seed-stripe-test.ts [--dry-run]
 //
 // Idempotent: an existing product is left alone; a lookup key whose active price already has the
 // right amount, currency and interval is left alone; otherwise a new price is created with
-// transfer_lookup_key=true (the key moves; the old price keeps its subscribers). The old tier
-// prices (studio_<tier>_<interval>, studio_topup_*) are not touched: archive them in the
-// dashboard once scripts/billing/migrate-channel-plans.ts has moved every subscription. Refuses
-// live keys: in live mode the operator creates prices in the dashboard (runbooks/billing-stripe.md).
+// transfer_lookup_key=true (the key moves; the old price keeps its subscribers — so the pack keys
+// move to £17 / £45). The 21.5 channel prices (studio_channel_*) and older tier prices are not
+// touched: archive them in the dashboard once scripts/billing/migrate-to-tiers.ts has moved every
+// subscription. Refuses live keys: in live mode the operator creates prices in the dashboard
+// (runbooks/billing-stripe.md).
 async function ensureProduct(stripe: Stripe, spec: ProductSpec, dryRun: boolean) {
   try {
     const existing = await stripe.products.retrieve(spec.id);

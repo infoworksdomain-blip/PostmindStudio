@@ -10,22 +10,23 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError, useApi } from '@/lib/client/api';
 import { EmptyState, ErrorState, PageHeader, Section } from '../primitives';
 import type { UsageResponse } from '../usage-meter';
-import { AllowanceSection, ChannelsSection, TopUpsSection, UsageSection } from './billing-sections';
+import { AllowanceSection, TopUpsSection, UsageSection } from './billing-sections';
 import { PaymentSection } from './payment-section';
 import { planStatus, PlanSummary, type PlanStatus } from './plan-summary';
-import { ChannelPicker, choiceFromParams, type ChannelChoice } from './channel-picker';
+import { choiceFromParams, PlanPicker } from './plan-picker';
 import { CancelSection, ChangePlanSection } from './plan-change-section';
 import {
   isLiveSubscription,
   type BillingResponse,
+  type PlanChoice,
   type PlansResponse,
   type PricingView,
 } from './types';
 import { useBillingActions, type CheckoutIntent } from './use-billing-actions';
 
-// Phase 18 §3 / 21.5 "Your plan" (/settings/billing) — one page for the per-channel plan. 25.12
-// reads it top to bottom: what you have (plan-summary.tsx), what you have used this period,
-// payment method and invoices, changing the plan, video packs, the channels, team and storage, and
+// Phase 18 §3 / 26.1 "Your plan" (/settings/billing) — one page for the plan (Starter, Growth or
+// Pro). 25.12 reads it top to bottom: what you have (plan-summary.tsx), what you have used this
+// period, payment method and invoices, changing the plan, video packs, team and storage, and
 // cancelling last. Organisations without a plan choose one here (Stripe Checkout). Owners manage
 // it (studio:billing:manage); everyone else sees it read-only with "ask an owner". Data: GET
 // /billing, /billing/plans, /billing/invoices, /usage, /billing/plan/preview. No generation cost is
@@ -69,7 +70,7 @@ function ReturnBanner() {
   );
 }
 
-/** No plan yet: choose channels and how often to pay, then Stripe Checkout. */
+/** No plan yet: choose a plan and how often to pay, then Stripe Checkout. */
 function ChoosePlan({
   billing,
   pricing,
@@ -84,11 +85,12 @@ function ChoosePlan({
   const t = useTranslations('billing.picker');
   const tPlan = useTranslations('billing.plan');
   const params = useSearchParams();
-  const [choice, setChoice] = useState<ChannelChoice>(() =>
-    choiceFromParams(params, { channels: 1, interval: 'month' }, 6),
+  const [choice, setChoice] = useState<PlanChoice>(() =>
+    choiceFromParams(params, { plan: 'growth', interval: 'month' }),
   );
   const trial = billing.trialEligible && (pricing?.trial.days ?? 0) > 0;
-  const unit = pricing?.intervals.find((i) => i.interval === choice.interval)?.unitAmountPence;
+  const unit = pricing?.plans.find((p) => p.plan === choice.plan)?.prices[choice.interval]
+    .unitAmountPence;
   return (
     <Section title={t('title')} description={t('description')}>
       {!billing.checkoutEnabled && (
@@ -98,7 +100,7 @@ function ChoosePlan({
         <Skeleton className="h-64 rounded-xl" />
       ) : (
         <div className="grid gap-6">
-          <ChannelPicker id="choose-plan" value={choice} onChange={setChoice} pricing={pricing} />
+          <PlanPicker id="choose-plan" value={choice} onChange={setChoice} pricing={pricing} />
           {trial && (
             <p className="text-sm text-muted-foreground">
               {t('trialNote', { days: pricing.trial.days, videos: pricing.trial.videos })}
@@ -108,7 +110,7 @@ function ChoosePlan({
             <Button
               className="w-full sm:w-auto"
               disabled={pending !== null || !billing.checkoutEnabled || unit == null}
-              onClick={() => onChoose({ kind: 'channels', ...choice }, 'plan')}
+              onClick={() => onChoose({ kind: 'plan', ...choice }, 'plan')}
               loading={pending === 'plan'}
             >
               {trial ? t('trial') : t('subscribe')}
@@ -232,7 +234,6 @@ export function BillingScreen() {
           pending={pending}
           onBuy={(intent, key) => void checkout(intent, key)}
         />
-        <ChannelsSection billing={billing} />
         <UsageSection billing={billing} />
         {live && billing.canManage && billing.plan?.source !== 'admin' && (
           <CancelSection

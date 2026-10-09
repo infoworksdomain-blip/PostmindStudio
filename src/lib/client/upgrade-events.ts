@@ -8,8 +8,6 @@ export const UPGRADE_CODES = [
   'quota_exceeded',
   'plan_required',
   'billing_required',
-  // 21.5: publishing to a platform past the paid channels ("add a channel", not an error).
-  'channel_limit',
 ] as const;
 
 export type UpgradeCode = (typeof UPGRADE_CODES)[number];

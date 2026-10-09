@@ -23,7 +23,7 @@ import {
 import { BillingMock, gbp } from './billing.mocks';
 
 // QA agent 1 — /settings/organisation, /settings/members, /settings/audit, /settings/billing
-// ("Your plan", 21.5 per-channel plan) and the upgrade dialog. Stripe is never called: the
+// ("Your plan", 26.1 Starter / Growth / Pro) and the upgrade dialog. Stripe is never called: the
 // Your-plan endpoints, checkout and portal answers are mocked in the browser (billing.mocks.ts),
 // and the plan states are seeded in studio.org_entitlements / subscriptions.
 
@@ -493,7 +493,7 @@ test.describe('audit log', () => {
 });
 
 test.describe('billing and the upgrade dialog', () => {
-  test('no plan: choose channels and how often to pay, checkout with channels, return banners', async ({
+  test('no plan: choose a plan and how often to pay, checkout with the plan, return banners', async ({
     page,
     context,
   }) => {
@@ -506,7 +506,7 @@ test.describe('billing and the upgrade dialog', () => {
     const mock = new BillingMock(null, origin);
     await mock.install(page);
     // A link from /pricing (via sign-up) arrives with the choice already made.
-    await w.visit(page, '/settings/billing?channels=2&interval=week');
+    await w.visit(page, '/settings/billing?plan=starter&interval=week');
     await expect(page.getByText('Your organisation doesn’t have a plan yet.')).toBeVisible();
     await expect(page.getByText('No plan', { exact: true }).first()).toBeVisible();
     await shot(page, 'settings-billing-no-plan');
@@ -514,32 +514,44 @@ test.describe('billing and the upgrade dialog', () => {
       .locator('section')
       .filter({ has: page.getByRole('heading', { name: 'Choose your plan', exact: true }) })
       .last();
-    await expect(picker.getByText('2 channels', { exact: true })).toBeVisible();
+    const plans = picker.getByRole('radiogroup', { name: 'Plan' });
+    await expect(plans.getByRole('radio', { name: 'Starter' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
     const period = picker.getByRole('radiogroup', { name: 'How often you pay' });
     await expect(period.getByRole('radio', { name: 'Weekly' })).toHaveAttribute(
       'aria-checked',
       'true',
     );
-    await expect(picker.getByText(`${gbp(1_800)} a week`, { exact: true })).toBeVisible();
+    await expect(picker.getByText(`${gbp(950)} a week`, { exact: true })).toBeVisible();
+    await expect(picker.getByTestId('plan-option-starter')).toContainText('2 HD videos a week');
     // No tier cards, no old toggle.
     await expect(page.getByRole('button', { name: /^Choose (Basic|Standard|Plus)/ })).toHaveCount(
       0,
     );
     await expect(page.getByRole('radio', { name: 'Annual' })).toHaveCount(0);
-    // Change the choice: 3 channels, yearly (2 months free).
-    await picker.getByRole('button', { name: 'Add a channel' }).click();
+    // Change the choice: Growth, yearly (2 months free).
+    await plans.getByRole('radio', { name: 'Growth' }).click();
     await period.getByRole('radio', { name: 'Yearly' }).click();
-    await expect(picker.getByText('3 channels', { exact: true })).toBeVisible();
-    await expect(picker.getByText(`${gbp(87_000)} a year`, { exact: true })).toBeVisible();
-    await expect(picker.getByText(/^2 months free: you save/)).toBeVisible();
+    await expect(plans.getByRole('radio', { name: 'Growth' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await expect(picker.getByText(`${gbp(69_000)} a year`, { exact: true })).toBeVisible();
+    await expect(
+      picker
+        .getByTestId('plan-option-growth')
+        .getByText(`2 months free: you save ${gbp(13_800)} a year`),
+    ).toBeVisible();
     // Video packs need a plan first.
     await expect(page.getByText('Choose a plan first to buy video packs.')).toBeVisible();
-    // Checkout asks for the channels and the period; the browser follows the returned URL.
+    // Checkout asks for the plan and the period; the browser follows the returned URL.
     await picker.getByRole('button', { name: /^(Start free trial|Continue to payment)$/ }).click();
     await expect(page).toHaveURL(/checkout=success/);
     expect(mock.sent('POST', '/billing/checkout')[0]?.body).toMatchObject({
-      kind: 'channels',
-      channels: 3,
+      kind: 'plan',
+      plan: 'growth',
       interval: 'year',
       locale: expect.any(String),
     });
@@ -568,24 +580,24 @@ test.describe('billing and the upgrade dialog', () => {
     }> = [
       {
         label: 'active',
-        seed: (o) => givePlan(db, o, 'STANDARD', { source: 'admin', channels: 3 }),
-        expect: ['3 channels, monthly', 'Custom plan set by PostMind staff.'],
+        seed: (o) => givePlan(db, o, 'STANDARD', { source: 'admin', plan: 'growth' }),
+        expect: ['Growth, monthly', 'Custom plan set by PostMind staff.'],
       },
       {
         label: 'past due',
         seed: (o) =>
           givePlan(db, o, 'STANDARD', {
             source: 'stripe',
-            channels: 2,
+            plan: 'starter',
             interval: 'year',
             graceUntil: new Date(Date.now() + 3 * 86_400_000),
           }),
-        expect: ['2 channels, yearly', 'Payment failed', /We couldn’t take your last payment/],
+        expect: ['Starter, yearly', 'Payment failed', /We couldn’t take your last payment/],
       },
       {
         label: 'read only',
         seed: (o) =>
-          givePlan(db, o, 'STANDARD', { access: 'read_only', source: 'stripe', channels: 1 }),
+          givePlan(db, o, 'STANDARD', { access: 'read_only', source: 'stripe', plan: 'starter' }),
         expect: ['Read-only', /Your account is read-only/],
       },
     ];
@@ -618,7 +630,7 @@ test.describe('billing and the upgrade dialog', () => {
     browser,
   }) => {
     const { org } = await ownerWithOrg(context, db, 'bill3');
-    await givePlan(db, org.id, 'STANDARD', { channels: 3 });
+    await givePlan(db, org.id, 'STANDARD', { plan: 'growth' });
     const admin = await newCtx(browser, '10.244.1.1');
     const user = await createUser(admin, db, 'bill3-admin');
     await addMember(db, org.id, user.id, 'admin');
@@ -626,7 +638,7 @@ test.describe('billing and the upgrade dialog', () => {
     await setActiveOrg(db, user.id, org.id);
     const p = await admin.newPage();
     await p.goto('/settings/billing');
-    await expect(p.getByText('3 channels, monthly', { exact: true })).toBeVisible();
+    await expect(p.getByText('Growth, monthly', { exact: true })).toBeVisible();
     await expect(p.getByText(/organisation owner|ask an owner/i).first()).toBeVisible();
     for (const name of ['Open billing portal', 'Review change', 'Cancel plan', 'Manage billing']) {
       await expect(p.getByRole('button', { name })).toHaveCount(0);
@@ -638,14 +650,14 @@ test.describe('billing and the upgrade dialog', () => {
     expect(
       (
         await admin.request.post('/api/studio/billing/checkout', {
-          data: { kind: 'channels', channels: 1, interval: 'month' },
+          data: { kind: 'plan', plan: 'starter', interval: 'month' },
         })
       ).status(),
     ).toBe(403);
     expect(
       (
         await admin.request.post('/api/studio/billing/plan', {
-          data: { channels: 4, interval: 'month', prorationDate: null },
+          data: { plan: 'pro', interval: 'month', prorationDate: null },
         })
       ).status(),
     ).toBe(403);
@@ -653,7 +665,7 @@ test.describe('billing and the upgrade dialog', () => {
     await admin.close();
   });
 
-  test('the upgrade dialog: plan required, billing required, videos used, not in plan, channel limit; Not now closes', async ({
+  test('the upgrade dialog: plan required, billing required, videos used, not in plan; no channel limit; Not now closes', async ({
     page,
     context,
   }) => {
@@ -686,9 +698,10 @@ test.describe('billing and the upgrade dialog', () => {
         code: 'quota_exceeded',
         status: 403,
         title: /You’ve used your plan’s videos for now/,
+        body: /Upgrade your plan for more videos each week or month, or buy a video pack/,
         links: [
           { name: /^Buy a video pack$/, href: '/settings/billing#topups' },
-          { name: /^Add a channel$/, href: '/settings/billing#change' },
+          { name: /^Upgrade your plan$/, href: '/settings/billing#change' },
         ],
       },
       {
@@ -697,14 +710,6 @@ test.describe('billing and the upgrade dialog', () => {
         title: /Not included in your plan/,
         details: { requiredTier: 'PLUS' },
         links: [{ name: /^See the plan$/, href: '/pricing' }],
-      },
-      {
-        code: 'channel_limit',
-        status: 403,
-        title: /Add a channel to publish here/,
-        body: /Your plan includes 1 channel: TikTok\. Add a channel to publish to Instagram too\./,
-        details: { channels: 1, platform: 'instagram', allowedPlatforms: ['tiktok'] },
-        links: [{ name: /^Add a channel$/, href: '/settings/billing#change' }],
       },
     ];
     for (const c of cases) {
@@ -734,21 +739,34 @@ test.describe('billing and the upgrade dialog', () => {
       // No tier names, no "Upgrade" to a tier, no top-ups.
       await expect(dialog).not.toContainText(/\b(Basic|Standard|Plus|Enterprise)\b/);
       await expect(dialog).not.toContainText(/top-up/i);
+      await expect(dialog).not.toContainText(/channel/i);
       await shot(page, `upgrade-dialog-${c.code}`);
       await dialog.getByRole('button', { name: 'Not now' }).click();
       await expect(dialog).toHaveCount(0);
       await page.unroute('**/api/studio/templates**');
     }
+    // 26.1: every plan posts to every platform, so channel_limit is not an upgrade block any more.
+    await page.route('**/api/studio/templates**', (route) =>
+      route.fulfill({
+        status: 403,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: false, error: 'channel_limit', message: 'channel_limit' }),
+      }),
+    );
+    await page.goto('/templates');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await page.unroute('**/api/studio/templates**');
   });
 
   test('billing is checked for the past-due banner on every page', async ({ page, context }) => {
     const { org } = await ownerWithOrg(context, db, 'bill5');
     await givePlan(db, org.id, 'STANDARD', {
       source: 'stripe',
-      channels: 2,
+      plan: 'growth',
       graceUntil: new Date(Date.now() + 2 * 86_400_000),
     });
-    // 21.5: a per-channel subscription (2 channels, monthly) whose last payment failed.
+    // 26.1: a Growth monthly subscription whose last payment failed.
     await db.subscription.create({
       data: {
         id: `sub_qa1_${randomUUID().slice(0, 8)}`,
@@ -756,8 +774,8 @@ test.describe('billing and the upgrade dialog', () => {
         stripeCustomerId: 'cus_qa1',
         status: 'past_due',
         interval: 'month',
-        lookupKey: 'studio_channel_monthly',
-        quantity: 2,
+        lookupKey: 'studio_growth_monthly',
+        quantity: 1,
       },
     });
     await page.goto('/projects');

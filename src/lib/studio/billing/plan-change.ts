@@ -4,24 +4,28 @@ import { AuditAction } from '../../audit-sink';
 import { ConflictError, NotFoundError } from '../../errors';
 import { planForLookupKey } from './catalogue';
 import {
-  assertChannelCount,
-  CHANNEL_LOOKUP_KEYS,
-  channelIntervalForLookupKey,
-  LEGACY_TIER_CHANNELS,
+  assertPlanChoice,
+  LEGACY_TIER_PLANS,
   planChangeTiming,
-  type ChannelInterval,
-  type ChannelPlanChoice,
+  planLookupKey,
+  planOfSubscription,
   type PlanChangeTiming,
-} from './channel-plan';
+  type PlanChoice,
+  type PlanId,
+  type PlanInterval,
+} from './plans';
 import type { StripeGateway, SubscriptionState } from './gateway';
 import { governingSubscription, syncSubscription, type BillingSyncDeps } from './sync';
 
-// Phase 21.5 — "Your plan": change channels (1–6) and interval, cancel and resume, all from
-// Studio (the Stripe Customer Portal is kept for payment methods and invoices only).
+// Phase 21.5 / 26.1 — "Your plan": change the plan (Starter / Growth / Pro) and interval, cancel
+// and resume, all from Studio (the Stripe Customer Portal is kept for payment methods and
+// invoices only). The subscription keeps one item; a change swaps its price, quantity 1 (a
+// legacy 21.5 channel subscription's quantity goes back to 1 with it).
 //
-//   Rules (operator decision 2026-10-04): upgrades apply NOW with proration (invoiced at once,
-//   applied once paid); downgrades apply at the END of the period (a subscription schedule).
-//   What counts as which: channel-plan.ts planChangeTiming. While the subscription is trialing
+//   Rules (operator decision 2026-10-04, kept in 26.1): upgrades apply NOW with proration
+//   (invoiced at once, applied once paid); downgrades apply at the END of the period (a
+//   subscription schedule). What counts as which: plans.ts planChangeTiming (a higher plan is an
+//   upgrade; on the same plan a longer interval is). While the subscription is trialing
 //   every change applies now with no proration: nothing is charged until the trial ends, and the
 //   first invoice is for the plan chosen by then.
 //
@@ -45,9 +49,9 @@ export interface CurrentPlan {
   customerId: string;
   itemId: string | null;
   status: string;
-  channels: number;
-  interval: ChannelInterval;
-  /** The channel plan, or a legacy tier price mapped to channels (21.5 migration rule). */
+  plan: PlanId;
+  interval: PlanInterval;
+  /** A legacy price (21.5 channels by quantity, or an old tier) mapped to a plan. */
   legacy: boolean;
   scheduleId: string | null;
   cancelAtPeriodEnd: boolean;
@@ -57,8 +61,8 @@ export interface CurrentPlan {
 
 export interface PlanChangePreviewView {
   timing: PlanChangeTiming;
-  current: ChannelPlanChoice;
-  next: ChannelPlanChoice;
+  current: PlanChoice;
+  next: PlanChoice;
   /** The new plan's price per period (excl. VAT), from the live Stripe price. */
   nextPricePence: number;
   currency: string;
@@ -87,30 +91,35 @@ function stripeKey(organisationId: string, intent: string): string {
   return `studio-${intent}-${digest.slice(0, 40)}`;
 }
 
-/** The governing subscription as a channel plan (legacy tiers mapped by the migration rule). */
+/** The plan a subscription row pays for: a plan price, or a legacy price mapped to a plan. */
+function planOfRow(sub: {
+  lookupKey: string | null;
+  quantity: number;
+}): (PlanChoice & { legacy: boolean }) | null {
+  const found = planOfSubscription(sub);
+  if (found) return found;
+  const tier = sub.lookupKey ? planForLookupKey(sub.lookupKey) : undefined;
+  if (!tier || tier.tier === 'ENTERPRISE') return null;
+  return { plan: LEGACY_TIER_PLANS[tier.tier], interval: tier.interval, legacy: true };
+}
+
+/** The governing subscription as a plan (legacy prices mapped by the 26.1 rules). */
 export async function currentPlan(
   db: Pick<PrismaClient, 'subscription'>,
   organisationId: string,
 ): Promise<CurrentPlan | null> {
   const sub = governingSubscription(await db.subscription.findMany({ where: { organisationId } }));
   if (!sub) return null;
-  const channelInterval = channelIntervalForLookupKey(sub.lookupKey);
-  let channels = sub.quantity;
-  let interval: ChannelInterval | undefined = channelInterval;
-  if (!channelInterval) {
-    const legacy = sub.lookupKey ? planForLookupKey(sub.lookupKey) : undefined;
-    if (!legacy || legacy.tier === 'ENTERPRISE') return null;
-    channels = LEGACY_TIER_CHANNELS[legacy.tier];
-    interval = legacy.interval;
-  }
+  const found = planOfRow(sub);
+  if (!found) return null;
   return {
     subscriptionId: sub.id,
     customerId: sub.stripeCustomerId,
     itemId: null,
     status: sub.status,
-    channels: Math.max(1, channels),
-    interval: interval ?? 'month',
-    legacy: !channelInterval,
+    plan: found.plan,
+    interval: found.interval,
+    legacy: found.legacy,
     scheduleId: sub.scheduleId,
     cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
     currentPeriodEnd: sub.currentPeriodEnd,
@@ -134,15 +143,15 @@ async function changeablePlan(deps: PlanChangeDeps, organisationId: string) {
   return { plan: { ...plan, itemId: live.itemId, scheduleId: live.scheduleId }, live };
 }
 
-async function channelPrice(gateway: StripeGateway, interval: ChannelInterval) {
-  const lookupKey = CHANNEL_LOOKUP_KEYS[interval];
+async function planPrice(gateway: StripeGateway, next: PlanChoice) {
+  const lookupKey = planLookupKey(next.plan, next.interval);
   const [price] = (await gateway.listPrices([lookupKey])).filter((p) => p.active);
   if (!price || price.unitAmountPence === null)
     throw new NotFoundError(`No active Stripe price has the lookup key ${lookupKey}`);
   return { id: price.id, unitAmountPence: price.unitAmountPence, currency: price.currency };
 }
 
-function timingFor(plan: CurrentPlan, next: ChannelPlanChoice): PlanChangeTiming {
+function timingFor(plan: CurrentPlan, next: PlanChoice): PlanChangeTiming {
   const timing = planChangeTiming(plan, next);
   // A trial is charged nothing until it ends: every change applies at once.
   return timing === 'period_end' && plan.status === 'trialing' ? 'now' : timing;
@@ -152,17 +161,17 @@ function timingFor(plan: CurrentPlan, next: ChannelPlanChoice): PlanChangeTiming
 export async function previewPlanChange(
   deps: PlanChangeDeps,
   organisationId: string,
-  next: ChannelPlanChoice,
+  choice: PlanChoice,
 ): Promise<PlanChangePreviewView> {
-  assertChannelCount(next.channels);
+  const next = assertPlanChoice(choice);
   const { plan } = await changeablePlan(deps, organisationId);
   const timing = timingFor(plan, next);
-  const price = await channelPrice(deps.gateway, next.interval);
+  const price = await planPrice(deps.gateway, next);
   const base = {
     timing,
-    current: { channels: plan.channels, interval: plan.interval },
+    current: { plan: plan.plan, interval: plan.interval },
     next,
-    nextPricePence: price.unitAmountPence * next.channels,
+    nextPricePence: price.unitAmountPence,
     currency: price.currency,
   };
   if (timing === 'none')
@@ -183,7 +192,7 @@ export async function previewPlanChange(
     subscriptionId: plan.subscriptionId,
     itemId: plan.itemId,
     priceId: price.id,
-    quantity: next.channels,
+    quantity: 1,
     prorationDate,
   });
   return {
@@ -203,22 +212,22 @@ export async function changePlan(
   input: {
     organisationId: string;
     userId: string;
-    next: ChannelPlanChoice;
+    next: PlanChoice;
     /** From the preview the customer confirmed. */
     prorationDate?: number | null;
   },
 ): Promise<PlanChangeOutcome> {
-  const { organisationId, userId, next } = input;
-  assertChannelCount(next.channels);
+  const { organisationId, userId } = input;
+  const next = assertPlanChoice(input.next);
   const { plan } = await changeablePlan(deps, organisationId);
   const timing = timingFor(plan, next);
   if (timing === 'none') throw new ConflictError('That is already your plan', { reason: 'same' });
-  const price = await channelPrice(deps.gateway, next.interval);
+  const price = await planPrice(deps.gateway, next);
   const change = {
     subscriptionId: plan.subscriptionId,
     itemId: plan.itemId,
     priceId: price.id,
-    quantity: next.channels,
+    quantity: 1,
   };
   let outcome: PlanChangeOutcome;
   if (timing === 'period_end') {
@@ -256,8 +265,8 @@ export async function changePlan(
     action: AuditAction.BillingSubscriptionChanged,
     resource: { type: 'subscription', id: plan.subscriptionId },
     metadata: {
-      change: 'channel_plan',
-      from: { channels: plan.channels, interval: plan.interval },
+      change: 'plan',
+      from: { plan: plan.plan, interval: plan.interval },
       to: next,
       timing,
       status: outcome.status,

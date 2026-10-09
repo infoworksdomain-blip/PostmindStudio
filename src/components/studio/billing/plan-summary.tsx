@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { useFormat, type Tone } from '@/lib/client/format';
 import { Section, StateBadge } from '../primitives';
 import type { QuotaMeterView, UsageResponse } from '../usage-meter';
+import { PLAN_NAMES } from '@/lib/studio/billing/plans';
 import type { BillingResponse } from './types';
 
-// BACKLOG 25.12 — the top of Your plan: what you have (channels and how often you pay), its state,
+// BACKLOG 25.12 — the top of Your plan: what you have (the plan and how often you pay), its state,
 // the price, the date that matters next, and what is left to use this period, as one scannable
 // panel. A zero allowance reads "0 of 8" — it is never hidden.
 
@@ -97,7 +98,7 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 /** Price, videos left this period and pack videos left. */
 function PlanFacts({ billing, usage }: { billing: Billing; usage?: UsageResponse['usage'] }) {
   const t = useTranslations('billing.yourPlan.summary');
-  const tPlan = useTranslations('channelPlan');
+  const tPlan = useTranslations('planPicker');
   const f = useFormat();
   const plan = billing.plan;
   const meter = usage?.videos.short;
@@ -145,10 +146,13 @@ export function PlanSummary({
     <Section title={tYour('title')} variant="panel">
       <div className="grid gap-5 text-sm">
         <div className="flex flex-wrap items-center gap-3">
-          <p className="font-display text-2xl leading-tight md:text-3xl">
+          <p
+            data-testid="plan-headline"
+            className="font-display text-2xl leading-tight md:text-3xl"
+          >
             {status === 'none' || !plan
               ? t('noPlan')
-              : tYour('headline', { count: plan.channels, period: plan.interval })}
+              : tYour('headline', { plan: PLAN_NAMES[plan.id], period: plan.interval })}
           </p>
           <StateBadge label={t(`status.${status}`)} tone={STATUS_TONE[status]} />
         </div>
@@ -163,8 +167,8 @@ export function PlanSummary({
             <p>
               {tYour('pending', {
                 date: f.date(scheduled.effectiveAt, { dateStyle: 'long' }),
-                count: scheduled.channels,
-                period: scheduled.interval ?? plan?.interval ?? 'month',
+                plan: PLAN_NAMES[scheduled.plan],
+                period: scheduled.interval,
               })}
             </p>
             {billing.canManage && (

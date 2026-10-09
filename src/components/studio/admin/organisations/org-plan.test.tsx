@@ -47,7 +47,7 @@ const row: AdminOrgRow = {
   access: 'full',
   source: 'trial',
   trial: { state: 'running', endsAt: '2026-10-13T00:00:00Z' },
-  channelPlan: { channels: 3, interval: 'month', source: 'stripe' },
+  studioPlan: { id: 'growth', interval: 'month', source: 'stripe' },
   subscriptionStatus: 'trialing',
   costThisMonthPence: 1_499,
 };
@@ -162,7 +162,7 @@ function routes(extra: MockRoute[] = []): MockRoute[] {
           access: 'full',
           source: 'trial',
           trial: row.trial,
-          channelPlan: row.channelPlan,
+          studioPlan: row.studioPlan,
           graceUntil: null,
           trialStartedAt: '2026-09-29T00:00:00Z',
           everPaidAt: null,
@@ -192,10 +192,8 @@ describe('Organisations tab: plan, trial and caps (20.27)', { timeout: 45_000 },
     expect(listRow).toHaveTextContent('Until 13 Oct 2026');
     expect(listRow).toHaveTextContent('£14.99');
     expect(listRow).toHaveTextContent(ORG);
-    // 21.5: the channel plan sits beside the tier.
-    expect(within(listRow).getByTestId('org-channel-plan')).toHaveTextContent(
-      '3 channels · monthly',
-    );
+    // 26.1: the plan (Starter / Growth / Pro) sits beside the tier.
+    expect(within(listRow).getByTestId('org-studio-plan')).toHaveTextContent('Growth · monthly');
 
     await user.click(screen.getByRole('button', { name: 'Open Operator Ltd' }));
     expect(await screen.findByRole('heading', { name: 'Plan, access and trial' })).toBeVisible();
@@ -269,16 +267,16 @@ describe('Organisations tab: plan, trial and caps (20.27)', { timeout: 45_000 },
     });
   });
 
-  it('21.5: the organisation page sets channels and a yearly interval', async () => {
+  it('26.1: the organisation page sets a plan and a yearly interval', async () => {
     const yearly: AdminEntitlementsResponse['entitlements'] = {
       ...ended,
       effective: {
         ...trialing.effective,
         source: 'admin',
-        channelPlan: { channels: 2, interval: 'year', source: 'admin' },
+        plan: { id: 'starter', interval: 'year', source: 'admin' },
       },
       admin: {
-        channels: 2,
+        plan: 'starter',
         interval: 'year',
         reason: 'Annual deal',
         setByUserId: 'staff-1',
@@ -295,22 +293,23 @@ describe('Organisations tab: plan, trial and caps (20.27)', { timeout: 45_000 },
     renderWithSWR(<OrganisationsTab />);
     await user.click(await screen.findByRole('button', { name: 'Open Operator Ltd' }));
     const form = await screen.findByRole('form', { name: 'Set an override' });
-    expect(screen.getByText('No channel plan')).toBeVisible();
-    await user.selectOptions(within(form).getByLabelText('Channels'), '2');
+    expect(screen.getByText('No plan', { selector: 'dd span' })).toBeVisible();
+    await user.selectOptions(within(form).getByLabelText('Plan'), 'starter');
     await user.selectOptions(within(form).getByLabelText('Billing interval'), 'year');
     await user.type(within(form).getByLabelText('Reason (required)'), 'Annual deal');
     await user.click(within(form).getByRole('button', { name: 'Save override' }));
     await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
     expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(api.calls.find((c) => c.method === 'PUT')?.body).toEqual({
-      channels: 2,
+      plan: 'starter',
       interval: 'year',
       expiresAt: null,
       reason: 'Annual deal',
     });
-    expect(await screen.findByTestId('channel-plan')).toHaveTextContent(
-      '2 channels · yearly (set by staff)',
+    expect(await screen.findByTestId('studio-plan')).toHaveTextContent(
+      'Starter · yearly (set by staff)',
     );
+    expect(screen.getByText('Plan: Starter')).toBeVisible();
   });
 
   it('removing an override that pauses a trial warns that the trial caps come back', async () => {

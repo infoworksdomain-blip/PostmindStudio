@@ -196,8 +196,8 @@
       "moreFrom": "Ab {date} sind weitere Videos enthalten.",
       "planExceededTitle": "{period, select, week {Sie haben die Videos dieser Woche aufgebraucht} other {Sie haben die Videos dieses Monats aufgebraucht}}",
       "planWarningTitle": "{period, select, week {Sie haben das Videolimit dieser Woche fast erreicht} other {Sie haben das Videolimit dieses Monats fast erreicht}}",
-      "planBlockedBody": "Neue Videos sind bis {date} pausiert. Fügen Sie einen Kanal hinzu oder kaufen Sie ein Videopaket, um weiter zu erstellen.",
-      "planResetBody": "Ab {date} sind weitere Videos enthalten. Fügen Sie einen Kanal hinzu oder kaufen Sie ein Videopaket, um mehr zu erhalten.",
+      "planBlockedBody": "Neue Videos sind bis {date} pausiert. Wechseln Sie zu einem höheren Tarif oder kaufen Sie ein Videopaket, um weiterzumachen.",
+      "planResetBody": "Ab {date} sind weitere Videos enthalten. Für mehr wechseln Sie zu einem höheren Tarif oder kaufen ein Videopaket.",
       "quickPostsNote": "Karussells, Diashows, Textwände und Hook-und-Demo-Videos zählen als ¼ Video."
     },
     "pageTitle": {
@@ -314,7 +314,7 @@
       "forbidden": "Dazu fehlt Ihnen die Berechtigung.",
       "feature_disabled": "Diese Funktion ist für Ihre Organisation nicht aktiviert.",
       "plan_tier": "Diese Funktion ist nicht in Ihrem Tarif enthalten.",
-      "quota_exceeded": "Sie haben die Videos Ihres Tarifs vorerst aufgebraucht. Fügen Sie einen Kanal hinzu oder kaufen Sie ein Videopaket, um weiter zu erstellen.",
+      "quota_exceeded": "Sie haben die Videos Ihres Tarifs vorerst aufgebraucht. Wechseln Sie zu einem höheren Tarif oder kaufen Sie ein Videopaket, um weiterzumachen.",
       "not_found": "Das konnten wir nicht finden. Möglicherweise wurde es gelöscht.",
       "conflict": "Das wurde geändert, während Sie daran gearbeitet haben. Aktualisieren Sie die Seite und versuchen Sie es erneut.",
       "validation_error": "Einige Angaben sind ungültig. Bitte prüfen Sie sie und versuchen Sie es erneut.",
@@ -339,7 +339,6 @@
       "auto_publish_account_required": "Wählen Sie ein verbundenes Konto zum Posten aus, oder deaktivieren Sie die automatische Veröffentlichung und den Termin.",
       "auto_publish_account_unavailable": "Ein gewähltes Konto ist nicht mehr verbunden. Verbinden Sie es erneut oder wählen Sie ein anderes Konto.",
       "queue_unavailable": "Das Veröffentlichen ist vorübergehend nicht verfügbar. Es wurde nichts gepostet oder gespeichert; versuchen Sie es gleich noch einmal.",
-      "channel_limit": "Ihr Tarif enthält keinen Kanal für diese Plattform. Fügen Sie unter Ihr Tarif einen Kanal hinzu, um hier zu veröffentlichen.",
       "no_demo_video": "Lade zuerst ein Demovideo deines Produkts oder deiner App hoch."
     }
   },
@@ -550,7 +549,7 @@
     },
     "videoAllowanceUsed": {
       "title": "{period, select, week {Die Videos dieser Woche} other {Die Videos dieses Monats}} sind aufgebraucht",
-      "body": "{used, number} von {limit, number} Videos {period, select, week {diese Woche} other {diesen Monat}} erstellt. Zu Beginn {period, select, week {der nächsten Woche} other {des nächsten Monats}} sind weitere enthalten.{blocked, select, yes { Um vorher weitere zu erstellen, fügen Sie einen Kanal hinzu oder kaufen Sie ein Videopaket.} other {}}"
+      "body": "{used, number} von {limit, number} Videos {period, select, week {diese Woche} other {diesen Monat}} erstellt. Zu Beginn {period, select, week {der nächsten Woche} other {des nächsten Monats}} sind weitere enthalten.{blocked, select, yes { Um vorher weitere zu erstellen, wechseln Sie zu einem höheren Tarif oder kaufen Sie ein Videopaket.} other {}}"
     },
     "costPlain": {
       "projectAlert": {
@@ -2732,10 +2731,6 @@
     },
     "notConfigured": "{platform} ist noch nicht verfügbar: Die {platform}-App von Studio muss noch eingerichtet werden. Wende dich an deine Administration.",
     "readOnly": "Nur Inhaber und Administratoren können Konten verbinden oder trennen.",
-    "channelLimit": {
-      "body": "{count, plural, one {Ihr Tarif umfasst # Kanal,} other {Ihr Tarif umfasst # Kanäle,}} daher {blockedCount, plural, one {ist {blocked} verbunden, veröffentlicht aber nicht.} other {sind {blocked} verbunden, veröffentlichen aber nicht.}}",
-      "action": "Kanal hinzufügen"
-    },
     "tiktokPostMode": {
       "legend": "Wie dieses Konto auf TikTok postet",
       "drafts": "An TikTok-Entwürfe senden",
@@ -4608,15 +4603,17 @@
     },
     "pricing": {
       "eyebrow": "Preise",
-      "title": "Ein einfacher Preis pro Kanal",
-      "per": "pro Kanal und Monat",
-      "body": "Jeder Kanal enthält {videos} kurze HD-Videos pro Monat oder bis zu {quick} schnelle Beiträge: Karussells, Diashows und Textvideos zählen als ¼ Video.",
+      "title": "Drei einfache Tarife",
+      "body": "Jeder Tarif veröffentlicht auf TikTok, Instagram, YouTube, Facebook, LinkedIn und X. Schnelle Posts wie Karussells, Diashows und Textvideos zählen als ¼ Video.",
       "points": {
         "billing": "Wöchentlich, monatlich oder jährlich zahlen",
         "vat": "Preise zzgl. MwSt.",
         "cancel": "Jederzeit kündbar"
       },
-      "cta": "Preise ansehen"
+      "cta": "Preise ansehen",
+      "perMonth": "pro Monat, zzgl. MwSt.",
+      "plansAria": "Tarife",
+      "packs": "Mehr nötig? Videopakete: {small, number} HD-Videos für {smallPrice} oder {large, number} für {largePrice}, mit jedem Tarif."
     },
     "closing": {
       "eyebrow": "Bereit, wenn Sie es sind",
@@ -4641,11 +4638,11 @@
     },
     "hero": {
       "eyebrow": "Preise",
-      "title": "Ein einfacher Tarif: Sie zahlen pro Kanal",
-      "description": "Wählen Sie, auf wie vielen sozialen Plattformen Sie veröffentlichen und wie oft Sie zahlen. Jeder Kanal enthält 8 kurze HD-Videos pro Monat oder bis zu 32 schnelle Beiträge."
+      "title": "Drei Tarife. Alle Plattformen.",
+      "description": "Wählen Sie Starter, Growth oder Pro und wie oft Sie zahlen. Jeder Tarif veröffentlicht auf TikTok, Instagram, YouTube, Facebook, LinkedIn und X."
     },
     "plan": {
-      "title": "Stellen Sie Ihren Tarif zusammen"
+      "title": "Wählen Sie Ihren Tarif"
     },
     "unavailable": "Die Preise können gerade nicht angezeigt werden. Bitte versuchen Sie es in Kürze erneut.",
     "trialNote": "Testen Sie {days, plural, one {# Tag} other {# Tage}} kostenlos mit {videos} Videos. Karte erforderlich; kündigen Sie jederzeit vor Ende des Testzeitraums, und Sie zahlen nichts.",
@@ -4656,18 +4653,17 @@
     "included": {
       "title": "In jedem Tarif enthalten",
       "items": {
-        "videos": "8 kurze Videos pro Kanal und Monat, für Sie erstellt aus einem kurzen Briefing",
         "hd": "HD-Video, Untertitel und Musik",
         "platforms": "Veröffentlichung auf TikTok, Instagram, YouTube Shorts, Facebook, LinkedIn und X",
         "scheduling": "Ein Content-Kalender und automatische Planung",
         "brand": "Ihr Brand Kit in jedem Video",
         "library": "Referenz-Videobibliothek für Ideen",
-        "quickPosts": "Oder bis zu 32 schnelle Beiträge pro Kanal und Monat: Karussells, Diashows und Textvideos zählen als ¼ Video"
+        "quickPosts": "Schnelle Posts zählen als ¼ Video: Karussells, Diashows, Textwand- und Hook-+-Demo-Videos"
       }
     },
     "packs": {
       "title": "Mehr Videos nötig?",
-      "description": "Kaufen Sie jederzeit ein einmaliges HD-Videopaket. Paketvideos funktionieren für jeden Kanal, werden nach den Videos Ihres Tarifs genutzt und sind 3 Monate gültig."
+      "description": "Kaufen Sie jederzeit ein einmaliges HD-Videopaket, mit jedem Tarif. Paketvideos werden nach den Videos Ihres Tarifs verbraucht und gelten 3 Monate."
     },
     "topUps": {
       "short": "{quantity, plural, one {# HD-Video} other {# HD-Videos}}",
@@ -4676,25 +4672,21 @@
     "faq": {
       "title": "Fragen",
       "items": {
-        "channel": {
-          "q": "Was ist ein Kanal?",
-          "a": "Ein Kanal ist eine soziale Plattform, auf der Sie veröffentlichen, zum Beispiel TikTok oder Instagram. Sie zahlen für 1 bis 6 Kanäle. Sie können weitere Konten verbinden, aber nur die bezahlten Kanäle veröffentlichen."
-        },
         "period": {
           "q": "Wöchentlich, monatlich oder jährlich?",
-          "a": "Monatlich kostet {monthly} pro Kanal. Wöchentlich kostet {weekly} pro Kanal und Woche, was über einen Monat teurer ist. Jährlich kostet {yearly} pro Kanal, im Voraus bezahlt: 2 Monate gratis. Bei wöchentlichen Tarifen sind die Videos jede Woche enthalten, bei monatlichen und jährlichen Tarifen jeden Monat."
+          "a": "{plan} kostet {monthly} pro Monat. Wöchentlich kostet {weekly} pro Woche, was über einen Monat teurer ist. Jährlich kostet {yearly}, im Voraus bezahlt: 2 Monate gratis. Jeder Tarif funktioniert gleich. Bei wöchentlicher Zahlung sind die Videos jede Woche enthalten, bei monatlicher und jährlicher Zahlung jeden Kalendermonat."
         },
         "change": {
           "q": "Kann ich meinen Tarif später ändern?",
-          "a": "Ja, unter Ihr Tarif. Wenn Sie Kanäle hinzufügen oder zu einem längeren Zeitraum wechseln, gilt das sofort; Sie zahlen nur die Differenz für den Rest des Zeitraums. Wenn Sie Kanäle entfernen oder zu einem kürzeren Zeitraum wechseln, gilt das zum Ende des bezahlten Zeitraums."
+          "a": "Ja, unter „Ihr Tarif“. Ein Wechsel zu einem höheren Tarif oder zu einem längeren Zeitraum im selben Tarif gilt sofort; Sie zahlen nur die Differenz für den Rest des Zeitraums. Ein Wechsel zu einem niedrigeren Tarif oder einem kürzeren Zeitraum gilt am Ende des bezahlten Zeitraums."
         },
         "limit": {
           "q": "Was passiert, wenn ich meine Videos aufgebraucht habe?",
-          "a": "Neue Videos werden pausiert, bis zu Beginn der nächsten Woche bzw. des nächsten Monats weitere enthalten sind. Fügen Sie einen Kanal hinzu oder kaufen Sie ein Videopaket, um sofort weiterzumachen."
+          "a": "Neue Videos pausieren, bis zu Beginn der nächsten Woche oder des nächsten Monats weitere enthalten sind. Wechseln Sie zu einem höheren Tarif oder kaufen Sie ein Videopaket, um sofort weiterzumachen."
         },
         "packs": {
           "q": "Wie funktionieren Videopakete?",
-          "a": "Ein Paket mit 5 oder 15 HD-Videos ist ein einmaliger Kauf. Paketvideos funktionieren für jeden Kanal, werden nach den Videos Ihres Tarifs genutzt und sind 3 Monate gültig."
+          "a": "Ein Paket mit 5 oder 15 HD-Videos ist ein einmaliger Kauf, mit jedem Tarif. Paketvideos werden nach den Videos Ihres Tarifs verbraucht und gelten 3 Monate."
         },
         "vat": {
           "q": "Sind die Preise inklusive MwSt.?",
@@ -4706,7 +4698,11 @@
         },
         "quickPosts": {
           "q": "Zählen Karussells und Diashows als ganzes Video?",
-          "a": "Nein. Karussells, Diashows, Textwände und Hook-und-Demo-Videos sind schnelle Beiträge und zählen als ¼ Video. Die 8 Videos eines Kanals pro Monat reichen also für bis zu 32 schnelle Beiträge. Ein KI-Video zählt als 1 Video, ein UGC-Darsteller-Video als 2. Videos aus Videopaketen werden genauso gezählt."
+          "a": "Nein. Karussells, Diashows, Textwand- und Hook-+-Demo-Videos sind schnelle Posts und zählen als ¼ Video, sodass die {videos, number} Videos pro Monat von {plan} bis zu {quick, number} schnelle Posts sein können. Ein KI-Video zählt als 1 Video, ein UGC-Darsteller-Video als 2. Videos aus Videopaketen werden genauso gezählt."
+        },
+        "platforms": {
+          "q": "Auf welchen Plattformen kann ich veröffentlichen?",
+          "a": "Auf allen sechs, mit jedem Tarif: TikTok, Instagram, YouTube, Facebook, LinkedIn und X. Verbinden Sie Ihre Konten, und Studio veröffentlicht auf jedem davon."
         }
       }
     }
@@ -5129,7 +5125,7 @@
     "header": {
       "eyebrow": "Einstellungen",
       "title": "Ihr Tarif",
-      "description": "Ihre Kanäle, Videos, Videopakete, Zahlungsdaten und Rechnungen."
+      "description": "Ihr Tarif, Videos, Videopakete, Zahlungsdaten und Rechnungen."
     },
     "loading": "Abrechnung wird geladen",
     "notEnabled": {
@@ -5182,7 +5178,7 @@
     },
     "credits": {
       "title": "Videopakete",
-      "description": "Einmalige HD-Videopakete für jeden Kanal. Paketvideos werden nach den Videos Ihres Tarifs genutzt und sind 3 Monate gültig.",
+      "description": "Einmalige HD-Videopakete für jeden Tarif. Paketvideos werden nach den Videos Ihres Tarifs verbraucht und gelten 3 Monate.",
       "buy": "Kaufen",
       "buyAria": "{pack} für {amount} kaufen",
       "noPacks": "Wählen Sie zuerst einen Tarif, um Videopakete zu kaufen.",
@@ -5212,7 +5208,7 @@
     },
     "picker": {
       "title": "Wählen Sie Ihren Tarif",
-      "description": "Wählen Sie, wie viele Kanäle Sie möchten und wie oft Sie zahlen. Sie zahlen sicher über Stripe; alle Preise zzgl. MwSt.",
+      "description": "Wählen Sie einen Tarif und wie oft Sie zahlen. Sie zahlen sicher über Stripe; Preise zzgl. MwSt.",
       "trial": "Kostenlos testen",
       "redirecting": "Sicherer Bezahlvorgang wird geöffnet…",
       "subscribe": "Weiter zur Zahlung",
@@ -5296,11 +5292,10 @@
           "endTrial": "Testphase jetzt beenden",
           "endTrialHelp": "Das Kontingent der Testphase und ihre Kostenobergrenzen von {daily} pro Tag / {total} insgesamt entfallen dauerhaft, auch wenn dieser Override abläuft oder entfernt wird; es gelten die Obergrenzen des Plans (und ein etwaiger Kostenobergrenzen-Override). Stripe wird nicht geändert: Die Testphase dort endet und wird zu ihrem eigenen Datum abgerechnet.",
           "trialNote": "Jeder gespeicherte Override pausiert die Obergrenzen der Testphase, solange er aktiv ist. Wählen Sie „Testphase jetzt beenden“, um sie dauerhaft aufzuheben.",
-          "channelPlan": "Kanaltarif",
-          "channelPlanHelp": "Die Kanäle (1 bis 6 Social-Media-Plattformen) bestimmen das Videokontingent, die Kostenobergrenzen und wie viele Plattformen verbunden werden können; das Intervall bestimmt, wie oft das Kontingent freigegeben wird. „Aktuellen Wert beibehalten“ verwendet die Werte des Stripe-Abonnements. Bei Enterprise nicht verwendet.",
-          "channels": "Kanäle",
-          "channelsOption": "{count, plural, one {# Kanal} other {# Kanäle}}",
-          "interval": "Abrechnungsintervall"
+          "interval": "Abrechnungsintervall",
+          "studioPlan": "Tarif überschreiben",
+          "studioPlanHelp": "Der Tarif legt das Videokontingent, Nutzerplätze, Unternehmen und Kostenobergrenzen fest; das Intervall legt fest, wie oft das Kontingent freigegeben wird. „Aktuell beibehalten“ nutzt die Werte des Stripe-Abonnements. Nicht bei Enterprise.",
+          "plan": "Tarif"
         },
         "clear": {
           "title": "Override entfernen",
@@ -5333,18 +5328,18 @@
           "accessReadOnly": "„Nur lesen“ sperrt jede Änderung in dieser Organisation außer Abrechnung, Kontoeinstellungen und Exporten.",
           "endTrial": "Das Beenden der Testphase lässt sich nicht rückgängig machen: Ihre Obergrenzen gelten für diese Organisation nie wieder."
         },
-        "channelPlan": "Kanaltarif",
-        "noChannelPlan": "Kein Kanaltarif",
-        "channelPlanValue": "{count, plural, one {# Kanal} other {# Kanäle}} · {interval, select, week {wöchentlich} month {monatlich} year {jährlich} other {{interval}}}",
-        "channelPlanSource": "{source, select, admin {(vom Team festgelegt)} other {(aus Stripe)}}",
         "intervalValues": {
           "week": "Wöchentlich",
           "month": "Monatlich",
           "year": "Jährlich"
         },
-        "overrideChannels": "Kanäle: {count, plural, one {# Kanal} other {# Kanäle}}",
         "overrideInterval": "Abrechnung {interval, select, week {wöchentlich} month {monatlich} year {jährlich} other {{interval}}}",
-        "subscriptionChannelLine": "{tier} · {count, plural, one {# Kanal} other {# Kanäle}} · {interval} · endet am {date}"
+        "studioPlan": "Tarif",
+        "noStudioPlan": "Kein Tarif",
+        "planValue": "{plan} · {interval, select, week {wöchentlich} month {monatlich} year {jährlich} other {{interval}}}",
+        "overridePlan": "Tarif: {plan}",
+        "subscriptionPlanLine": "{plan} · {interval} · endet am {date}",
+        "planSource": "{source, select, admin {(vom Team festgelegt)} other {(aus Stripe)}}"
       },
       "subscriptions": {
         "title": "Abonnements",
@@ -5353,8 +5348,6 @@
         "mrr": "Monatlich wiederkehrender Umsatz",
         "mrrHelp": "Aktive und überfällige Abonnements; Jahrestarife durch 12 geteilt; zzgl. MwSt.",
         "total": "{count, plural, =0 {Keine Abonnements} one {# Abonnement} other {# Abonnements}}",
-        "byTier": "Nach Stufe",
-        "byTierAria": "Abonnements nach Stufe",
         "tierLine": "{count} · {mrr}",
         "byStatus": "Nach Status",
         "byStatusAria": "Abonnements nach Status",
@@ -5363,24 +5356,26 @@
         "caption": "Abonnements",
         "columns": {
           "organisation": "Organisation",
-          "tier": "Stufe",
           "interval": "Abrechnung",
           "mrr": "MRR",
           "periodEnd": "Zeitraum endet",
-          "status": "Status"
+          "status": "Status",
+          "plan": "Tarif"
         },
         "cancelling": "Wird gekündigt",
         "unknownOrg": "Unbekannte Organisation",
         "unknownTier": "Unbekannt",
-        "empty": "Keine passenden Abonnements."
+        "empty": "Keine passenden Abonnements.",
+        "byPlan": "Nach Tarif",
+        "byPlanAria": "Abonnements nach Tarif"
       }
     },
     "yourPlan": {
       "summary": {
         "title": "Ihr Tarif",
-        "headline": "{count, plural, one {# Kanal} other {# Kanäle}}, {period, select, week {wöchentlich} month {monatlich} other {jährlich}}",
+        "headline": "{plan}, {period, select, week {wöchentlich} month {monatlich} other {jährlich}}",
         "legacy": "Aus Ihrem vorherigen Tarif übernommen.",
-        "pending": "Ab {date}: {count, plural, one {# Kanal} other {# Kanäle}}, {period, select, week {wöchentlich} month {monatlich} other {jährlich}}.",
+        "pending": "Ab {date}: {plan}, {period, select, week {wöchentlich} month {monatlich} other {jährlich}}.",
         "keepCurrent": "Aktuellen Tarif behalten",
         "paymentPending": "Ihre letzte Änderung wartet auf die Zahlung. Aktualisieren Sie Ihre Zahlungsmethode, damit sie wirksam wird.",
         "price": "Preis",
@@ -5396,30 +5391,20 @@
         "packsLeft": "{count, plural, =0 {Keine Paketvideos mehr übrig} one {# Paketvideo übrig} other {# Paketvideos übrig}}",
         "left": "{left} übrig"
       },
-      "channels": {
-        "title": "Ihre Kanäle",
-        "description": "{count, plural, one {Ihr Tarif veröffentlicht auf # Kanal.} other {Ihr Tarif veröffentlicht auf # Kanälen.}}",
-        "noneConnected": "Noch keine Kanäle verbunden.",
-        "connect": "Konten verbinden",
-        "publishing": "Veröffentlichung auf: {list}.",
-        "blocked": "{count, plural, one {{list} ist verbunden, veröffentlicht aber nicht: In Ihrem Tarif ist kein Kanal mehr frei.} other {{list} sind verbunden, veröffentlichen aber nicht: In Ihrem Tarif sind keine Kanäle mehr frei.}}",
-        "addChannel": "Kanal hinzufügen",
-        "spare": "{count, plural, one {Sie können noch # Kanal verbinden.} other {Sie können noch # Kanäle verbinden.}}"
-      },
       "change": {
         "title": "Tarif ändern",
-        "description": "Fügen Sie Kanäle hinzu oder entfernen Sie welche, oder ändern Sie, wie oft Sie zahlen. Bevor sich etwas ändert, sehen Sie den neuen Preis und ab wann er gilt.",
+        "description": "Wechseln Sie den Tarif oder ändern Sie, wie oft Sie zahlen. Sie sehen den neuen Preis und ab wann er gilt, bevor sich etwas ändert.",
         "previewing": "Neuer Preis wird berechnet …",
         "previewFailed": "Der neue Preis konnte nicht berechnet werden. Versuchen Sie es gleich noch einmal.",
         "appliesNow": "Neuer Preis: {price}. Gilt sofort: Sie zahlen heute {due} für den Rest dieses Zeitraums.",
         "appliesLater": "Neuer Preis: {price}. Gilt ab {date}. Jetzt ist nichts zu zahlen.",
-        "nowRule": "Mehr Kanäle und längere Zeiträume gelten sofort, und Sie zahlen nur die Differenz.",
-        "laterRule": "Weniger Kanäle und kürzere Zeiträume gelten zum Ende des bezahlten Zeitraums, sodass Sie bis dahin behalten, wofür Sie bezahlt haben.",
+        "nowRule": "Ein höherer Tarif oder ein längerer Zeitraum im selben Tarif gilt sofort, und Sie zahlen nur die Differenz.",
+        "laterRule": "Ein niedrigerer Tarif oder ein kürzerer Zeitraum im selben Tarif gilt erst am Ende des bezahlten Zeitraums, damit Sie bis dahin behalten, wofür Sie bezahlt haben.",
         "review": "Änderung prüfen",
         "reset": "Neu beginnen",
         "confirmTitle": "Neuen Tarif bestätigen",
-        "confirmFrom": "Aktuell: {channels, plural, one {# Kanal} other {# Kanäle}}, {period, select, week {wöchentlich} month {monatlich} other {jährlich}}",
-        "confirmTo": "Neu: {channels, plural, one {# Kanal} other {# Kanäle}}, {period, select, week {wöchentlich} month {monatlich} other {jährlich}}",
+        "confirmFrom": "Jetzt: {plan}, {period, select, week {wöchentlich} month {monatlich} other {jährlich}}",
+        "confirmTo": "Neu: {plan}, {period, select, week {wöchentlich} month {monatlich} other {jährlich}}",
         "cancel": "Zurück",
         "confirm": "Änderung bestätigen",
         "confirmPay": "{amount} zahlen und ändern",
@@ -5458,7 +5443,7 @@
     },
     "quota": {
       "title": "Sie haben die Videos Ihres Tarifs vorerst aufgebraucht",
-      "body": "Fügen Sie einen Kanal hinzu, um mehr Videos pro Woche oder Monat zu erhalten, oder kaufen Sie ein Videopaket, um noch heute weiterzumachen.",
+      "body": "Wechseln Sie zu einem höheren Tarif für mehr Videos pro Woche oder Monat, oder kaufen Sie ein Videopaket, um noch heute weiterzumachen.",
       "quickPosts": "Schnelle Beiträge reichen weiter: Karussells, Diashows, Textwände und Hook-und-Demo-Videos zählen als ¼ Video."
     },
     "planRequired": {
@@ -5473,10 +5458,10 @@
       "choosePlan": "Tarif wählen",
       "updatePayment": "Zahlungsmethode aktualisieren",
       "notNow": "Nicht jetzt",
-      "addChannel": "Kanal hinzufügen",
       "buyPack": "Videopaket kaufen",
       "viewPlan": "Tarif ansehen",
-      "manageMembers": "Mitglieder verwalten"
+      "manageMembers": "Mitglieder verwalten",
+      "upgradePlan": "Tarif upgraden"
     },
     "askOwner": "Nur Inhaber der Organisation können Tarif oder Abrechnung ändern. Bitten Sie einen Inhaber darum.",
     "lock": {
@@ -5486,10 +5471,6 @@
     "seatLimit": {
       "title": "Alle Plätze Ihres Tarifs sind belegt",
       "body": "In Ihrem Tarif ist kein Platz für eine weitere Person frei. Entfernen Sie zuerst jemanden oder wenden Sie sich an den Support."
-    },
-    "channelLimit": {
-      "title": "Fügen Sie einen Kanal hinzu, um hier zu veröffentlichen",
-      "body": "{count, plural, one {Ihr Tarif umfasst # Kanal} other {Ihr Tarif umfasst # Kanäle}}: {list}. Fügen Sie einen Kanal hinzu, um auch auf {platform} zu veröffentlichen."
     }
   },
   "email": {
@@ -5607,7 +5588,7 @@
       "topupReceipt": {
         "subject": "Ihr Videopaket ist bereit: {packName}",
         "heading": "Videopaket hinzugefügt",
-        "body": "Vielen Dank. Ihr Paket {packName} wurde hinzugefügt. Nutzen Sie es innerhalb von 3 Monaten für jeden beliebigen Kanal. Stripe sendet Ihnen die Quittung separat.",
+        "body": "Vielen Dank. Ihr Paket {packName} wurde hinzugefügt. Nutzen Sie es innerhalb von 3 Monaten, mit jedem Tarif. Stripe sendet Ihnen die Quittung separat.",
         "cta": "Ihr Tarif öffnen"
       },
       "accountDeletionScheduled": {
@@ -5684,8 +5665,7 @@
       "pagesAria": "Seiten der Organisationen",
       "pageInfo": "{from}–{to} von {total}",
       "previous": "Zurück",
-      "next": "Weiter",
-      "channelPlan": "{count, plural, one {# Kanal} other {# Kanäle}} · {interval, select, week {wöchentlich} month {monatlich} year {jährlich} other {{interval}}}"
+      "next": "Weiter"
     },
     "detail": {
       "back": "Alle Organisationen",
@@ -6179,45 +6159,37 @@
       "close": "Schließen"
     }
   },
-  "channelPlan": {
+  "planPicker": {
+    "label": "Tarif",
     "interval": {
       "label": "Zahlungsintervall",
       "week": "Wöchentlich",
       "month": "Monatlich",
-      "year": "Jährlich"
+      "year": "Jährlich",
+      "yearlyHint": "Jährlich zahlen und 2 Monate gratis erhalten."
     },
-    "channels": {
-      "label": "Kanäle",
-      "fewer": "Kanal entfernen",
-      "more": "Kanal hinzufügen",
-      "value": "{count, plural, one {# Kanal} other {# Kanäle}}",
-      "hint": "Ein Kanal ist eine soziale Plattform, auf der Sie veröffentlichen: TikTok, Instagram, YouTube Shorts, Facebook, LinkedIn oder X."
-    },
+    "mostPopular": "Am beliebtesten",
     "total": {
       "week": "{amount} pro Woche",
       "month": "{amount} pro Monat",
       "year": "{amount} pro Jahr"
     },
-    "perChannel": {
-      "week": "{amount} pro Kanal und Woche",
-      "month": "{amount} pro Kanal und Monat",
-      "year": "{amount} pro Kanal und Jahr"
-    },
-    "included": {
-      "week": "{count, plural, one {# Video} other {# Videos}} pro Woche inklusive ({perChannel} pro Kanal)",
-      "month": "{count, plural, one {# Video} other {# Videos}} pro Monat inklusive ({perChannel} pro Kanal)",
-      "year": "{count, plural, one {# Video} other {# Videos}} pro Jahr inklusive ({perChannel} pro Kanal und Monat)"
-    },
-    "hd": "Kurze Videos in HD",
     "exclVat": "zzgl. MwSt.",
+    "videos": {
+      "week": "{count, plural, one {# HD-Video} other {# HD-Videos}} pro Woche",
+      "month": "{count, plural, one {# HD-Video} other {# HD-Videos}} pro Monat"
+    },
+    "quickPosts": "Oder bis zu {count, number} schnelle Beiträge: Karussells, Diashows und Textvideos zählen als ¼",
+    "businesses": "{count, plural, one {# Unternehmen} other {# Unternehmen}}",
+    "seats": "{count, plural, one {# Nutzerplatz} other {# Nutzerplätze}}",
+    "platforms": "Veröffentlicht auf allen Plattformen",
     "yearlySaving": "2 Monate gratis: Sie sparen {amount} pro Jahr",
     "weeklyNote": "Wöchentlich ist teurer als monatlich. Zahlen Sie monatlich oder jährlich, um zu sparen.",
     "priceUnavailable": "Preis nicht verfügbar",
     "packs": {
       "name": "{quantity, plural, one {# HD-Video} other {# HD-Videos}}",
-      "validity": "Innerhalb von {months, plural, one {# Monat} other {# Monaten}} für jeden Kanal nutzbar"
-    },
-    "quickPosts": "Oder bis zu {count, number} schnelle Beiträge: Karussells, Diashows und Textvideos zählen als ¼"
+      "validity": "Innerhalb von {months, plural, one {# Monat} other {# Monaten}} nutzbar, mit jedem Tarif"
+    }
   },
   "carousel": {
     "editor": {
@@ -6532,7 +6504,7 @@
         "summary": "Zusammenfassung"
       },
       "channelsTitle": "Wo soll gepostet werden?",
-      "channelsHint": "Wählen Sie die Netzwerke, in denen gepostet wird, im Rahmen der Kanäle Ihres Tarifs.",
+      "channelsHint": "Wählen Sie die Netzwerke, auf denen veröffentlicht wird. Jeder Tarif veröffentlicht auf allen Plattformen.",
       "noAccount": "{platform} ist nicht verbunden: Die Beiträge werden stattdessen zur Prüfung gespeichert.",
       "cadenceTitle": "Wie oft?",
       "mode": {
@@ -6577,7 +6549,7 @@
       "cancelConfirm": "Diese Automatisierung abbrechen? Noch nicht veröffentlichte Beiträge werden abgebrochen.",
       "pauseReason": {
         "owner": "Von Ihnen pausiert. Bereits erstellte Beiträge werden trotzdem veröffentlicht.",
-        "allowance": "Die Videos Ihres Tarifs sind aufgebraucht. Fügen Sie einen Kanal hinzu oder kaufen Sie ein Videopaket und setzen Sie dann fort.",
+        "allowance": "Die Videos Ihres Tarifs sind aufgebraucht. Wechseln Sie zu einem höheren Tarif oder kaufen Sie ein Videopaket, und setzen Sie dann fort.",
         "billing": "Pausiert, weil die Abrechnung Aufmerksamkeit braucht.",
         "owner_left": "Pausiert, weil die Person, die sie eingerichtet hat, die Organisation verlassen hat.",
         "plan_missing": "Pausiert: Der aktuelle Zeitraum wurde nicht gefunden.",

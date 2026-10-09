@@ -13,10 +13,10 @@ import {
 } from '../api/billing-state';
 import { subscribeViewerRole } from '../api/viewer-role';
 
-// The demo's plan switcher (21.5 per-channel plan): Trial, Active (3 channels monthly, 2 weekly,
-// 6 yearly), Allowance used up, Past due, Read-only, No plan, Enterprise and Cancelled. It drives the sample API's /me, /billing, /usage and request gate
+// The demo's plan switcher (26.1 plans): Trial, Active (Growth monthly, Starter weekly, Pro
+// yearly), Allowance used up, Past due, Read-only, No plan, Enterprise and Cancelled. It drives the sample API's /me, /billing, /usage and request gate
 // (demo/api/billing-state.ts), so the account banner, the billing page, the upgrade dialog and the
-// lock badges change as soon as it is switched. Default: 3 channels, monthly.
+// lock badges change as soon as it is switched. Default: Growth, monthly.
 
 export function useBillingState(): BillingStateId {
   return useSyncExternalStore(subscribeBillingState, getBillingState, getBillingState);
@@ -128,7 +128,7 @@ export function BillingStatesPanel() {
         <a className="underline underline-offset-4" href="#/connections">
           Connections
         </a>{' '}
-        (which platforms publish),{' '}
+        (every plan publishes everywhere),{' '}
         <a className="underline underline-offset-4" href="#/projects">
           any app screen
         </a>{' '}
@@ -137,7 +137,7 @@ export function BillingStatesPanel() {
           Business → Brand
         </a>{' '}
         (“Not in your plan” badges). The choice is kept like the language; “Reset demo” in the bar
-        puts it back to 3 channels, monthly.
+        puts it back to Growth, monthly.
       </p>
     </div>
   );

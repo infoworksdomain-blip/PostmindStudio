@@ -1,8 +1,7 @@
 import type { PrismaClient, Subscription } from '@prisma/client';
 import type { PlanTier } from '../providers/router';
 import { CATALOGUE_VERSION } from './catalogue';
-import { channelIntervalForLookupKey, type ChannelInterval } from './channel-plan';
-import { loadChannelUsage, type ChannelUsage } from './channels';
+import { planOfSubscription, type PlanId, type PlanInterval } from './plans';
 import { availableCredits } from './credits';
 import type { CustomLimits, TrialState } from './entitlements';
 import type { EntitlementLimits, EntitlementsReader } from './entitlements-reader';
@@ -11,10 +10,9 @@ import { trialEligible } from './service';
 import { governingSubscription } from './sync';
 import type { TenantAccess } from '../../tenant';
 
-// Phase 18 §3 / 21.5 "Your plan" — GET /api/studio/billing: plan and status, the subscription
-// (channels, interval, price, renewal, a change waiting for the end of the period), the
-// connected channels against the paid ones, usage against the plan limits (seats, businesses,
-// storage), video-pack credits. Video allowance used / included comes from GET /usage.
+// Phase 18 §3 / 26.1 "Your plan" — GET /api/studio/billing: plan and status, the subscription
+// (plan, interval, price, renewal, a change waiting for the end of the period), usage against the
+// plan limits (seats, businesses, storage), video-pack credits. Video allowance used / included comes from GET /usage.
 // 21.5: generation cost is never shown to customers, so the overview has no cost or budget
 // figures (staff see them in the Admin Centre).
 
@@ -26,17 +24,17 @@ export interface Meter {
 }
 
 export interface PlanView {
-  channels: number;
-  interval: ChannelInterval;
-  /** 'admin' = staff set the channels / interval (no Stripe change to make). */
+  id: PlanId;
+  interval: PlanInterval;
+  /** 'admin' = staff set the plan / interval (no Stripe change to make). */
   source: 'stripe' | 'admin';
-  /** A legacy tier subscription shown as channels (until the ops migration moves it). */
+  /** A legacy price (21.5 channels or an old tier) shown as its plan until the migration. */
   legacy: boolean;
   /** What the subscription bills per period, excl. VAT (null without a Stripe price). */
   pricePerPeriodPence: number | null;
   currency: string | null;
-  /** The change waiting for the end of the period (fewer channels or a shorter interval). */
-  pending: { channels: number; interval: ChannelInterval | null; effectiveAt: string } | null;
+  /** The change waiting for the end of the period (a lower plan or a shorter interval). */
+  pending: { plan: PlanId; interval: PlanInterval; effectiveAt: string } | null;
   /** An upgrade whose invoice is not paid yet (applies once it is). */
   paymentPending: boolean;
 }
@@ -62,10 +60,8 @@ export interface BillingOverview {
     cancelAtPeriodEnd: boolean;
     trialEnd: string | null;
   } | null;
-  /** 21.5: the per-channel plan (null: no plan, ENTERPRISE or a custom staff plan). */
+  /** 26.1: Starter / Growth / Pro (null: no plan, ENTERPRISE or a custom staff plan). */
   plan: PlanView | null;
-  /** 21.5: connected platforms against the paid channels (null without a channel plan). */
-  channels: ChannelUsage | null;
   hasBillingAccount: boolean;
   trialEligible: boolean;
   credits: { short: number; long: number };
@@ -86,14 +82,18 @@ type OverviewDb = Pick<
   | 'member'
   | 'business'
   | 'videoAsset'
-  | 'platformConnection'
 >;
 
 function pendingOf(sub: Subscription | null): PlanView['pending'] {
-  if (!sub?.pendingQuantity || !sub.pendingEffectiveAt) return null;
+  if (!sub?.pendingEffectiveAt) return null;
+  const next = planOfSubscription({
+    lookupKey: sub.pendingLookupKey,
+    quantity: sub.pendingQuantity,
+  });
+  if (!next) return null;
   return {
-    channels: sub.pendingQuantity,
-    interval: channelIntervalForLookupKey(sub.pendingLookupKey) ?? null,
+    plan: next.plan,
+    interval: next.interval,
     effectiveAt: sub.pendingEffectiveAt.toISOString(),
   };
 }
@@ -118,25 +118,22 @@ export async function billingOverview(
   const sub = governingSubscription(subs);
   const usedBytes = storage._sum.fileSizeBytes ?? BigInt(0);
   const limitGb = ent.limits.storageGb;
-  const channelPlan = ent.channelPlan;
-  const planChannels = channelPlan?.channels ?? (legacyPlan?.legacy ? legacyPlan.channels : null);
+  const entPlan = ent.plan;
+  const planId = entPlan?.id ?? (legacyPlan?.legacy ? legacyPlan.plan : null);
   const plan: PlanView | null =
-    planChannels === null
+    planId === null
       ? null
       : {
-          channels: planChannels,
-          interval: channelPlan?.interval ?? legacyPlan?.interval ?? 'month',
-          source: channelPlan?.source ?? 'stripe',
-          legacy: !channelPlan && Boolean(legacyPlan?.legacy),
+          id: planId,
+          interval: entPlan?.interval ?? legacyPlan?.interval ?? 'month',
+          source: entPlan?.source ?? 'stripe',
+          legacy: Boolean(legacyPlan?.legacy) && entPlan?.source !== 'admin',
           pricePerPeriodPence:
             sub?.unitAmountPence != null ? sub.unitAmountPence * sub.quantity : null,
           currency: sub?.currency ?? null,
           pending: pendingOf(sub),
           paymentPending: Boolean(sub?.pendingUpdate),
         };
-  const channels = channelPlan
-    ? await loadChannelUsage(deps.db, organisationId, channelPlan.channels)
-    : null;
   return {
     catalogueVersion: CATALOGUE_VERSION,
     entitlements: {
@@ -161,7 +158,6 @@ export async function billingOverview(
         }
       : null,
     plan,
-    channels,
     hasBillingAccount: Boolean(customer && !customer.deletedAt),
     trialEligible: eligible,
     credits,

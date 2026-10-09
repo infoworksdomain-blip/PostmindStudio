@@ -270,7 +270,7 @@ export async function processStripeEvent(deps: WebhookDeps, event: Stripe.Event)
       const result = await syncById(deps, id, event.type);
       if (result) {
         const row = await deps.db.subscription.findUnique({ where: { id: id ?? '' } });
-        const planName = planDisplayName(row?.productTier ?? row?.lookupKey);
+        const planName = planDisplayName(row?.lookupKey ?? row?.productTier, row?.quantity);
         if (row?.trialEnd && planName)
           await emailOwners(
             deps,

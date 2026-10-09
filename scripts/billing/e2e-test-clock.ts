@@ -106,14 +106,14 @@ async function main(): Promise<void> {
       invoice_settings: { default_payment_method: good.id },
     });
     const [price] = (
-      await stripe.prices.list({ lookup_keys: ['studio_channel_monthly'], active: true })
+      await stripe.prices.list({ lookup_keys: ['studio_growth_monthly'], active: true })
     ).data;
-    if (!price) throw new ConfigurationError('Run seed-stripe-test.ts first (no channel price)');
-    // 21.5: a per-channel subscription, 2 channels (quantity = channels).
+    if (!price) throw new ConfigurationError('Run seed-stripe-test.ts first (no plan price)');
+    // 26.1: a Growth plan subscription (quantity 1).
     const sub = await stripe.subscriptions.create({
       customer: customer.id,
-      items: [{ price: price.id, quantity: 2 }],
-      trial_period_days: 14,
+      items: [{ price: price.id, quantity: 1 }],
+      trial_period_days: 7,
       metadata: { organisationId: orgId },
     });
     await expectEntitlements(db, orgId, 'trial', {
@@ -122,7 +122,7 @@ async function main(): Promise<void> {
       status: 'trialing',
     });
 
-    await advance(stripe, clock.id, start + 14 * DAY + 3600);
+    await advance(stripe, clock.id, start + 7 * DAY + 3600);
     await expectEntitlements(db, orgId, 'active', {
       tier: 'STANDARD',
       access: 'full',

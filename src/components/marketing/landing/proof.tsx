@@ -2,18 +2,24 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { StatusPill } from '@/components/ui/status-pill';
 import { formatNumber } from '@/lib/client/format';
-import { QUARTERS_PER_VIDEO, QUICK_POST_QUARTERS } from '@/lib/studio/billing/allowance-units';
+import { REFERENCE_PRICES_PENCE, TOP_UP_PACKS } from '@/lib/studio/billing/catalogue';
 import {
-  MONTHLY_PRICE_PER_CHANNEL_PENCE,
-  VIDEOS_PER_CHANNEL_PER_PERIOD,
-} from '@/lib/studio/billing/channel-plan';
+  MOST_POPULAR_PLAN,
+  PLAN_IDS,
+  PLAN_NAMES,
+  planPricePence,
+  STUDIO_PLANS,
+} from '@/lib/studio/billing/plans';
+import { cn } from '@/lib/utils';
 import { Band, Container, Eyebrow, Lede, ProductShot, SectionTitle } from './primitives';
 
 // 25.5 §7–§10 — analytics (the real screen), brand kit and approvals (the image library screen),
-// the pricing teaser and the closing call to action. The teaser's numbers come from the channel
-// plan (channel-plan.ts: £29 per channel a month, 8 HD videos, quick posts count ¼); live amounts
-// are on /pricing, read from Stripe.
+// the pricing teaser and the closing call to action. The teaser's numbers come from the plans
+// (plans.ts: Starter, Growth, Pro a month with their HD videos; Growth is the most popular) and
+// the pack reference amounts (catalogue.ts), so they cannot drift from what Stripe is seeded with;
+// live amounts are on /pricing, read from Stripe.
 
 export function Insights() {
   const t = useTranslations('marketing.insights');
@@ -60,46 +66,42 @@ export function BrandAndApprovals() {
   );
 }
 
-const VIDEOS = VIDEOS_PER_CHANNEL_PER_PERIOD.month;
-/** Quick posts count ¼ of a video: 8 videos → up to 32 quick posts. */
-const QUICK_POSTS = (VIDEOS * QUARTERS_PER_VIDEO) / QUICK_POST_QUARTERS;
-
-/** "£29": whole pounds without pence, in the visitor's locale (GBP in every locale). */
-function usePlanPrice(): string {
+/** "£29" / "£9.50": whole pounds without pence, in the visitor's locale (GBP in every locale). */
+function usePounds(): (pence: number) => string {
   const locale = useLocale();
-  const whole = MONTHLY_PRICE_PER_CHANNEL_PENCE % 100 === 0;
-  return formatNumber(MONTHLY_PRICE_PER_CHANNEL_PENCE / 100, locale, {
-    style: 'currency',
-    currency: 'GBP',
-    minimumFractionDigits: whole ? 0 : 2,
-    maximumFractionDigits: whole ? 0 : 2,
-  });
+  return (pence) => {
+    const whole = pence % 100 === 0;
+    return formatNumber(pence / 100, locale, {
+      style: 'currency',
+      currency: 'GBP',
+      minimumFractionDigits: whole ? 0 : 2,
+      maximumFractionDigits: whole ? 0 : 2,
+    });
+  };
 }
+
+/** The pack sizes and reference amounts (catalogue.ts), smallest first. */
+const PACKS = TOP_UP_PACKS.map((pack) => ({
+  quantity: pack.quantity,
+  pence: REFERENCE_PRICES_PENCE[pack.lookupKey] ?? 0,
+}));
 
 export function PricingTeaser() {
   const t = useTranslations('marketing.pricing');
-  const price = usePlanPrice();
+  const tPlan = useTranslations('planPicker');
+  const pounds = usePounds();
+  const [small, large] = PACKS;
   return (
     <Band labelledBy="pricing-title" className="border-t border-border">
       <Container>
         <div
           data-reveal
-          className="grid gap-x-16 gap-y-10 rounded-[1.75rem] bg-surface-raised p-8 ring-1 ring-border md:p-14 lg:grid-cols-[1fr_1.2fr]"
+          className="grid gap-x-16 gap-y-10 rounded-[1.75rem] bg-surface-raised p-8 ring-1 ring-border md:p-14 lg:grid-cols-[1fr_1.4fr]"
         >
           <div>
             <Eyebrow rec>{t('eyebrow')}</Eyebrow>
             <SectionTitle id="pricing-title">{t('title')}</SectionTitle>
-            <p className="mt-8 flex flex-wrap items-baseline gap-x-3">
-              <span className="font-display text-[clamp(4rem,2.5rem+5vw,7rem)] leading-none tabular-nums">
-                {price}
-              </span>
-              <span className="text-lg text-muted-foreground">{t('per')}</span>
-            </p>
-          </div>
-          <div className="lg:pt-10">
-            <p className="text-lg text-pretty">
-              {t('body', { videos: VIDEOS, quick: QUICK_POSTS })}
-            </p>
+            <p className="mt-6 text-lg text-pretty">{t('body')}</p>
             <ul className="mt-6 grid gap-2 text-muted-foreground">
               {(['billing', 'vat', 'cancel'] as const).map((k) => (
                 <li key={k} className="flex items-center gap-2.5">
@@ -108,7 +110,55 @@ export function PricingTeaser() {
                 </li>
               ))}
             </ul>
-            <Button asChild size="lg" variant="outline" className="mt-8 h-12 px-6 text-base">
+          </div>
+          <div className="grid content-start gap-6">
+            <ul className="grid gap-3 sm:grid-cols-3" aria-label={t('plansAria')}>
+              {PLAN_IDS.map((id) => {
+                const popular = id === MOST_POPULAR_PLAN;
+                return (
+                  <li
+                    key={id}
+                    data-testid={`landing-plan-${id}`}
+                    className={cn(
+                      'grid content-start gap-2 rounded-panel bg-background p-5 ring-1',
+                      popular ? 'shadow-raised ring-2 ring-foreground/70' : 'ring-border',
+                    )}
+                  >
+                    <p className="flex min-h-6 flex-wrap items-center justify-between gap-2">
+                      <span className="font-display text-xl leading-none">{PLAN_NAMES[id]}</span>
+                      {popular && (
+                        <StatusPill tone="live" dot={false} size="sm">
+                          {tPlan('mostPopular')}
+                        </StatusPill>
+                      )}
+                    </p>
+                    <p className="font-display text-3xl leading-none tabular-nums">
+                      {pounds(planPricePence(id, 'month'))}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{t('perMonth')}</p>
+                    <p className="text-sm">
+                      {tPlan('videos.month', { count: STUDIO_PLANS[id].videosPerMonth })}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+            {small && large && (
+              <p className="text-muted-foreground">
+                {t('packs', {
+                  small: small.quantity,
+                  smallPrice: pounds(small.pence),
+                  large: large.quantity,
+                  largePrice: pounds(large.pence),
+                })}
+              </p>
+            )}
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="h-12 px-6 text-base sm:justify-self-start"
+            >
               <Link href="/pricing">
                 {t('cta')} <ArrowRight aria-hidden className="rtl:-scale-x-100" />
               </Link>

@@ -198,7 +198,7 @@ function BlitzDeckScreen() {
       if (result.downloadOnly.length) toast(t('toast.downloadOnly'));
       if (chosen === 'edit' && result.projectId) router.push(`/projects/${result.projectId}`);
     } catch (err) {
-      // 403 quota_exceeded / channel_limit also open the upgrade dialog (api.ts).
+      // 403 quota_exceeded also opens the upgrade dialog (api.ts).
       toast.error(errorText(err));
     } finally {
       setBusy(false);

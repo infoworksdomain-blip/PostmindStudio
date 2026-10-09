@@ -1,10 +1,10 @@
 // 15.D2 / decision P3 — plan usage sample handlers (GET /usage and the staff view
 // GET /admin/organisations/:id/usage), shaped like src/lib/studio/services/plan-quotas.ts.
-// 21.5: a per-channel plan reports `channelPlan: true` and the window its allowance counts in
-// (`period`: an ISO week for a weekly plan, else the calendar month). The demo organisation is on
-// 3 channels monthly at 19.5 of its 24 videos (81 %; 23.3: two carousels counted ¼ each).
+// 26.1: a Starter / Growth / Pro plan reports `studioPlan: true` and the window its allowance
+// counts in (`period`: an ISO week for a weekly plan, else the calendar month). The demo
+// organisation is on Growth monthly at 15.5 of its 20 videos (78 %; 23.3: two carousels counted ¼ each).
 import { videosToQuarters } from '@/lib/studio/billing/allowance-units';
-import { allowanceWindowFor } from '@/lib/studio/billing/channel-plan';
+import { allowanceWindowFor } from '@/lib/studio/billing/plans';
 import { allowancePeriod, currentPlan, currentTier, videoQuota } from '../billing-state';
 import { DemoHttpError, route } from '../registry';
 
@@ -45,8 +45,8 @@ function meter(used: number, limit: number | null, maxDurationSec: number | null
 interface Allowance {
   limits?: { short: number | null; long: number | null };
   period?: 'week' | 'month';
-  /** A per-channel plan: no long videos (max 0 s). */
-  channelPlan?: boolean;
+  /** A Starter / Growth / Pro plan: no long videos (max 0 s). */
+  studioPlan?: boolean;
 }
 
 function view(
@@ -63,7 +63,7 @@ function view(
   const q = {
     ...QUOTAS[tier],
     ...allowance.limits,
-    ...(allowance.channelPlan && { longMax: 0 }),
+    ...(allowance.studioPlan && { longMax: 0 }),
   };
   const videos = {
     short: meter(used.short, q.short, q.shortMax),
@@ -80,7 +80,7 @@ function view(
     mode: 'enforce',
     month: window.key,
     period,
-    ...(allowance.channelPlan && { channelPlan: true }),
+    ...(allowance.studioPlan && { studioPlan: true }),
     periodStart: window.start.toISOString(),
     resetsAt: window.end.toISOString(),
     thresholds: [80, 100],
@@ -105,8 +105,8 @@ function view(
 }
 
 // The demo organisation's allowance and use follow the demo bar's plan switcher
-// (../billing-state.ts): 3 channels at 19.5 of 24 by default (23.3: carousels count ¼), 1 channel at its limit, a weekly
-// plan per ISO week, a trial at 3 of 5.
+// (../billing-state.ts): Growth at 15.5 of 20 by default (23.3: carousels count ¼), Starter at its
+// limit, a weekly plan per ISO week, a trial at 1 of 2.
 route('GET', '/usage', ({ query }) => {
   const { short, long } = videoQuota();
   return {
@@ -118,7 +118,7 @@ route('GET', '/usage', ({ query }) => {
       {
         limits: { short: short.limit, long: long.limit },
         period: allowancePeriod(),
-        channelPlan: currentPlan() !== null,
+        studioPlan: currentPlan() !== null,
       },
     ),
   };

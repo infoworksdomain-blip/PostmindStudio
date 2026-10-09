@@ -20,73 +20,75 @@ function prices(overrides: Record<string, Partial<PriceState>> = {}): PriceState
   }));
 }
 
-describe('buildPricingView (21.5: per-channel prices from Stripe by lookup key)', () => {
-  it('shows the per-channel price of each interval, the videos, the saving, the trial and the packs', () => {
+describe('buildPricingView (26.1: three plans, prices from Stripe by lookup key)', () => {
+  it('shows each plan: prices per interval, videos, businesses, seats, saving; the trial and the packs', () => {
     const view = buildPricingView(prices(), now, {});
     expect(view.available).toBe(true);
-    expect(view.channels).toEqual({ min: 1, max: 6 });
-    expect(view.intervals).toEqual([
-      {
-        interval: 'week',
-        lookupKey: 'studio_channel_weekly',
-        unitAmountPence: 950,
-        videosPerChannel: 2,
-      },
-      {
-        interval: 'month',
-        lookupKey: 'studio_channel_monthly',
-        unitAmountPence: 2_900,
-        videosPerChannel: 8,
-      },
-      {
-        interval: 'year',
-        lookupKey: 'studio_channel_yearly',
-        unitAmountPence: 29_000,
-        videosPerChannel: 96,
-      },
+    expect(view.plans.map((p) => p.plan)).toEqual(['starter', 'growth', 'pro']);
+    expect(view.plans.map((p) => p.mostPopular)).toEqual([false, true, false]);
+    expect(
+      view.plans.map((p) => [
+        p.plan,
+        p.prices.week.unitAmountPence,
+        p.prices.month.unitAmountPence,
+        p.prices.year.unitAmountPence,
+        p.videosPerMonth,
+        p.videosPerWeek,
+        p.businesses,
+        p.seats,
+        p.yearlySavingPence,
+      ]),
+    ).toEqual([
+      ['starter', 950, 2_900, 29_000, 8, 2, 1, 1, 5_800],
+      ['growth', 2_250, 6_900, 69_000, 20, 5, 1, 3, 13_800],
+      ['pro', 4_850, 14_900, 149_000, 45, 11, 3, 10, 29_800],
     ]);
-    expect(view.yearlySavingPerChannelPence).toBe(2_900 * 12 - 29_000);
+    expect(view.plans[1]?.prices.week.lookupKey).toBe('studio_growth_weekly');
     expect(view.topUps.map((t) => [t.lookupKey, t.quantity, t.unitAmountPence])).toEqual([
-      ['studio_pack_hd5', 5, 1_500],
-      ['studio_pack_hd15', 15, 3_900],
+      ['studio_pack_hd5', 5, 1_700],
+      ['studio_pack_hd15', 15, 4_500],
     ]);
-    expect(view.trial).toEqual({ days: 14, videos: 5 });
+    expect(view.trial).toEqual({ days: 7, videos: 2 });
   });
 
-  it('never carries a cost or budget figure', () => {
+  it('never carries a cost, budget or per-video figure', () => {
     const json = JSON.stringify(buildPricingView(prices(), now, {}));
-    expect(json).not.toMatch(/cost|budget|cap/i);
+    expect(json).not.toMatch(/cost|budget|cap|perVideo/i);
   });
 
   it('a price changed in Stripe shows its new amount with no code change', () => {
     const view = buildPricingView(
-      prices({ studio_channel_monthly: { unitAmountPence: 3_100 } }),
+      prices({ studio_growth_monthly: { unitAmountPence: 7_100 } }),
       now,
       {},
     );
-    expect(view.intervals.find((i) => i.interval === 'month')?.unitAmountPence).toBe(3_100);
-    expect(view.yearlySavingPerChannelPence).toBe(3_100 * 12 - 29_000);
+    const growth = view.plans.find((p) => p.plan === 'growth');
+    expect(growth?.prices.month.unitAmountPence).toBe(7_100);
+    expect(growth?.yearlySavingPence).toBe(7_100 * 12 - 69_000);
   });
 
   it('never shows a non-GBP, inactive or missing price', () => {
     const view = buildPricingView(
       prices({
-        studio_channel_weekly: { currency: 'usd' },
-        studio_channel_yearly: { active: false },
+        studio_pro_weekly: { currency: 'usd' },
+        studio_pro_yearly: { active: false },
       }).filter((p) => p.lookupKey !== 'studio_pack_hd15'),
       now,
       {},
     );
-    expect(view.intervals.find((i) => i.interval === 'week')?.unitAmountPence).toBeNull();
-    expect(view.intervals.find((i) => i.interval === 'year')?.unitAmountPence).toBeNull();
-    expect(view.yearlySavingPerChannelPence).toBeNull();
+    const pro = view.plans.find((p) => p.plan === 'pro');
+    expect(pro?.prices.week.unitAmountPence).toBeNull();
+    expect(pro?.prices.year.unitAmountPence).toBeNull();
+    expect(pro?.yearlySavingPence).toBeNull();
     expect(view.topUps.find((t) => t.lookupKey === 'studio_pack_hd15')?.unitAmountPence).toBeNull();
   });
 
   it('Stripe unavailable → available=false and no amounts', () => {
     const view = buildPricingView(null, now, { STUDIO_TRIAL_DAYS: '0' });
     expect(view.available).toBe(false);
-    expect(view.intervals.every((i) => i.unitAmountPence === null)).toBe(true);
+    expect(
+      view.plans.every((p) => Object.values(p.prices).every((i) => i.unitAmountPence === null)),
+    ).toBe(true);
     expect(view.trial.days).toBe(0);
   });
 });
@@ -136,6 +138,6 @@ describe('createPricingSource (10-minute cache)', () => {
     const source = createPricingSource({ gateway: undefined, logger: { warn: vi.fn() }, env: {} });
     const view = await source.get();
     expect(view.available).toBe(false);
-    expect(view.intervals).toHaveLength(3);
+    expect(view.plans).toHaveLength(3);
   });
 });

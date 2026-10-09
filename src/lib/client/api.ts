@@ -168,8 +168,8 @@ export function errorMessage(err: unknown, target: ErrorLocale | null = activeCa
     // 21.5: a plan gate's server text names internal tiers; customers see the catalogue sentence.
     if (err.status === 403 && err.code === 'plan_tier')
       return codeMessage(errors, err.code) ?? err.message;
-    // 15.D2 / P3: quotas and the channel limit (21.5) carry their own message.
-    if (err.status === 403 && (err.code === 'quota_exceeded' || err.code === 'channel_limit'))
+    // 15.D2 / P3: quotas carry their own message.
+    if (err.status === 403 && err.code === 'quota_exceeded')
       return english ? err.message : (codeMessage(errors, err.code) ?? err.message);
     if (err.status === 403) return errors.forbidden;
     if (err.status === 429) return errors.rateLimited;

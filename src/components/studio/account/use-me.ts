@@ -26,12 +26,10 @@ export interface Me {
     tier: string;
     access: string;
     source: string;
-    /** 21.5: the per-channel plan. */
-    channels?: number;
+    /** 26.1: the plan, Starter / Growth / Pro (absent without one). */
+    studioPlan?: string;
     interval?: string;
   } | null;
-  /** 21.5: connected platforms past the paid channels (null without a channel plan). */
-  channels?: { paid: number; connected: string[]; blocked: string[] } | null;
   banner: AccountBanner | null;
   impersonating: boolean;
   identityMode: 'standalone' | 'core';

@@ -57,8 +57,12 @@ describe('errorMessage by locale', () => {
     expect(errorMessage(new ApiError(403, 'quota_exceeded', 'Your plan includes 8.'), enGB)).toBe(
       'Your plan includes 8.',
     );
+    expect(errorMessage(new ApiError(403, 'quota_exceeded', 'Your plan includes 8.'), fr)).toBe(
+      ALL_MESSAGES.fr.errors.codes.quota_exceeded,
+    );
+    // 26.1: every plan posts to every platform; channel_limit is no longer a known code.
     expect(errorMessage(new ApiError(403, 'channel_limit', 'Add a channel.'), fr)).toBe(
-      ALL_MESSAGES.fr.errors.codes.channel_limit,
+      ALL_MESSAGES.fr.errors.forbidden,
     );
     expect(errorMessage(err, fr)).toBe(ALL_MESSAGES.fr.errors.codes.plan_tier);
   });

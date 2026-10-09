@@ -360,62 +360,55 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
     features: [
       {
         title: 'Pricing page',
-        description: `One plan, paid per channel: 1–6 channels at ${PRICE_TEXT.channelMonthly} a month each (8 videos per channel), weekly or yearly (2 months free), HD video packs and FAQ.`,
+        description: `Three plans: Starter ${PRICE_TEXT.starterMonthly}, Growth ${PRICE_TEXT.growthMonthly} (most popular) and Pro ${PRICE_TEXT.proMonthly} a month, each posting to every platform; weekly or yearly (2 months free), HD video packs and FAQ.`,
         href: '#/pricing',
-        phase: '21.5',
+        phase: '26.1',
       },
       {
         title: 'Your plan',
         description:
-          'Channels and how often you pay, renewal, videos used this week or month, which platforms publish, video packs and invoices.',
+          'The plan and how often you pay, renewal, videos used this week or month, seats and businesses, video packs and invoices.',
         href: '#/settings/billing',
-        phase: '21.5',
+        phase: '26.1',
       },
       {
         title: 'Change or cancel the plan',
         description:
-          'More channels or a longer period apply now (pay the difference); fewer or shorter apply at the end of the period. Cancel at the end of the period, or keep the plan.',
+          'A higher plan or a longer period applies now (pay the difference); a lower plan or a shorter period applies at the end of the period. Cancel at the end of the period, or keep the plan.',
         href: withPlan('#/settings/billing#change', 'active_monthly'),
-        phase: '21.5',
+        phase: '26.1',
       },
       {
         title: 'Checkout (simulated here)',
         description:
-          'Choose channels or a video pack; the demo’s own clearly labelled checkout stands in for Stripe.',
+          'Choose a plan or a video pack; the demo’s own clearly labelled checkout stands in for Stripe.',
         href: withPlan('#/settings/billing', 'no_plan'),
         phase: '21.5',
       },
       {
-        title: '14-day trial',
+        title: '7-day trial',
         description:
-          'One trial per organisation, card required, with 5 videos; a banner counts down.',
+          'One trial per organisation, card required, with 2 HD videos; a banner counts down.',
         href: withPlan('#/projects', 'trial'),
         phase: '18.C',
       },
       {
         title: 'Upgrade dialog',
         description:
-          'Opens on plan_tier, quota_exceeded, channel_limit, plan_required and billing_required with the right next step (add a channel, buy a video pack, choose a plan, update payment).',
+          'Opens on plan_tier, quota_exceeded, plan_required and billing_required with the right next step (a bigger plan, buy a video pack, choose a plan, update payment).',
         href: withPlan(p(PROJECTS.meetTheBakers.id), 'allowance_used'),
-        phase: '21.5',
-      },
-      {
-        title: 'Channel limit',
-        description:
-          'Connect as many platforms as you like; only the paid channels (connected first) publish, the rest show “add a channel”.',
-        href: withPlan('#/connections', 'active_monthly'),
         phase: '21.5',
       },
       {
         title: '“Not in your plan” badges',
         description:
-          'Voice clone, TEMPLATE mode, image generation and BYOC are not part of the per-channel plan (Enterprise).',
+          'Voice clone, TEMPLATE mode, image generation and BYOC are not part of Starter, Growth or Pro (Enterprise).',
         href: withPlan('#/business', 'active_monthly'),
         phase: '21.5',
       },
       {
         title: 'HD video packs',
-        description: `One-off packs of 5 (${PRICE_TEXT.packHd5}) or 15 (${PRICE_TEXT.packHd15}) videos for any channel, used after the plan’s videos, valid 3 months.`,
+        description: `One-off packs of 5 (${PRICE_TEXT.packHd5}) or 15 (${PRICE_TEXT.packHd15}) videos on any plan, used after the plan’s videos, valid 3 months.`,
         href: withPlan('#/settings/billing#topups', 'allowance_used'),
         phase: '21.5',
       },

@@ -13,6 +13,7 @@ import {
   safeReturnPath,
   stripeLocale,
 } from '../../src/lib/studio/billing/service';
+import type { PlanId, PlanInterval } from '../../src/lib/studio/billing/plans';
 import { createFakeStripe, type FakeStripe } from '../helpers/fake-stripe';
 
 // Phase 18 §2.7 — Checkout parameters (Stripe Tax, tax ids, address, trial only once,
@@ -27,12 +28,12 @@ describe('checkout parameters (pure)', () => {
     locale: 'pt-PT',
   };
 
-  it('channels: quantity = channels, tax, tax ids, address, card always, metadata, trial', () => {
+  it('plan: quantity 1, tax, tax ids, address, card always, metadata, trial', () => {
     const params = checkoutParams({
-      request: { ...base, intent: { kind: 'channels', channels: 3, interval: 'month' } },
+      request: { ...base, intent: { kind: 'plan', plan: 'pro', interval: 'month' } },
       customer: 'cus_1',
       priceLookup: { priceId: 'price_std' },
-      trialPeriodDays: 14,
+      trialPeriodDays: 7,
       appUrl: 'https://studio.test',
     });
     expect(params).toMatchObject({
@@ -40,13 +41,13 @@ describe('checkout parameters (pure)', () => {
       customer: 'cus_1',
       client_reference_id: 'org-1',
       locale: 'pt',
-      line_items: [{ price: 'price_std', quantity: 3 }],
+      line_items: [{ price: 'price_std', quantity: 1 }],
       automatic_tax: { enabled: true },
       tax_id_collection: { enabled: true },
       billing_address_collection: 'required',
       customer_update: { address: 'auto', name: 'auto' },
       payment_method_collection: 'always',
-      subscription_data: { metadata: { organisationId: 'org-1' }, trial_period_days: 14 },
+      subscription_data: { metadata: { organisationId: 'org-1' }, trial_period_days: 7 },
       success_url: 'https://studio.test/settings/billing?checkout=success',
       cancel_url: 'https://studio.test/settings/billing?checkout=cancelled',
     });
@@ -54,7 +55,7 @@ describe('checkout parameters (pure)', () => {
 
   it('no trial_period_days when the org is not eligible', () => {
     const params = checkoutParams({
-      request: { ...base, intent: { kind: 'channels', channels: 1, interval: 'week' } },
+      request: { ...base, intent: { kind: 'plan', plan: 'starter', interval: 'week' } },
       customer: 'cus_1',
       priceLookup: { priceId: 'p' },
       trialPeriodDays: null,
@@ -115,11 +116,11 @@ describe.skipIf(!hasDb)('billing service (Stripe fake, real Postgres)', { timeou
       appUrl: 'https://studio.test',
       env: { STRIPE_PORTAL_CONFIGURATION_ID: 'bpc_123' },
     });
-  const subscribe = (channels = 2, interval: 'week' | 'month' | 'year' = 'month') =>
+  const subscribe = (plan: PlanId = 'growth', interval: PlanInterval = 'month') =>
     service().createCheckout({
       organisationId: org,
       userId: 'u1',
-      intent: { kind: 'channels', channels, interval },
+      intent: { kind: 'plan', plan, interval },
       locale: 'en-GB',
     });
   const lastCheckout = () => {
@@ -140,36 +141,44 @@ describe.skipIf(!hasDb)('billing service (Stripe fake, real Postgres)', { timeou
     await db.$disconnect();
   });
 
-  it('creates the customer once, offers the trial once, sells channels as the quantity, and audits', async () => {
-    const { url } = await subscribe(2);
+  it('creates the customer once, offers the 7-day trial once, sells the plan price (quantity 1), and audits', async () => {
+    const { url } = await subscribe('growth');
     expect(url).toMatch(/^https:\/\/checkout\.stripe\.test\//);
     const customer = await db.billingCustomer.findUnique({ where: { organisationId: org } });
     expect(customer?.stripeCustomerId).toBe(`cus_${org}`);
-    expect(lastCheckout().params.subscription_data?.trial_period_days).toBe(14);
+    expect(lastCheckout().params.subscription_data?.trial_period_days).toBe(7);
     expect(lastCheckout().params.line_items).toEqual([
-      { price: 'price_studio_channel_monthly', quantity: 2 },
+      { price: 'price_studio_growth_monthly', quantity: 1 },
     ]);
     expect(audits).toContainEqual(
-      expect.objectContaining({ action: 'billing.checkout_started', organisationId: org }),
+      expect.objectContaining({
+        action: 'billing.checkout_started',
+        organisationId: org,
+        metadata: expect.objectContaining({
+          lookupKey: 'studio_growth_monthly',
+          plan: 'growth',
+          interval: 'month',
+        }),
+      }),
     );
 
     // A double click (same nonce) reuses the same idempotency key → the same session.
     const firstKey = lastCheckout().key;
-    await subscribe(2);
+    await subscribe('growth');
     expect(lastCheckout().key).toBe(firstKey);
     expect(fake.calls.filter((c) => c.method === 'createCustomer')).toHaveLength(1);
 
     // After a completed checkout the nonce rotates: a deliberate new checkout is a new session.
     await rotateCheckoutNonce(db, org);
-    await subscribe(2);
+    await subscribe('growth');
     expect(lastCheckout().key).not.toBe(firstKey);
   });
 
-  it('the trial works on every period but not for an org that trialled or paid before', async () => {
-    await subscribe(1, 'week');
-    expect(lastCheckout().params.subscription_data?.trial_period_days).toBe(14);
+  it('the trial works on every plan and period but not for an org that trialled or paid before', async () => {
+    await subscribe('starter', 'week');
+    expect(lastCheckout().params.subscription_data?.trial_period_days).toBe(7);
     expect(lastCheckout().params.line_items).toEqual([
-      { price: 'price_studio_channel_weekly', quantity: 1 },
+      { price: 'price_studio_starter_weekly', quantity: 1 },
     ]);
     await db.orgEntitlement.create({
       data: {
@@ -180,13 +189,24 @@ describe.skipIf(!hasDb)('billing service (Stripe fake, real Postgres)', { timeou
         trialStartedAt: new Date('2026-01-01T00:00:00Z'),
       },
     });
-    await subscribe(6, 'year');
+    await subscribe('pro', 'year');
     expect(lastCheckout().params.subscription_data?.trial_period_days).toBeUndefined();
+    expect(lastCheckout().params.line_items).toEqual([
+      { price: 'price_studio_pro_yearly', quantity: 1 },
+    ]);
   });
 
-  it('refuses fewer than 1 or more than 6 channels', async () => {
-    await expect(subscribe(0)).rejects.toBeInstanceOf(ValidationError);
-    await expect(subscribe(7)).rejects.toBeInstanceOf(ValidationError);
+  it('refuses an unknown plan or interval', async () => {
+    await expect(subscribe('enterprise' as PlanId)).rejects.toBeInstanceOf(ValidationError);
+    await expect(subscribe('growth', 'quarter' as PlanInterval)).rejects.toBeInstanceOf(
+      ValidationError,
+    );
+    expect(fake.calls.some((c) => c.method === 'createCheckoutSession')).toBe(false);
+  });
+
+  it('a plan price missing in Stripe is not sold', async () => {
+    fake.prices = fake.prices.filter((p) => p.lookupKey !== 'studio_pro_weekly');
+    await expect(subscribe('pro', 'week')).rejects.toBeInstanceOf(NotFoundError);
   });
 
   it('refuses a second subscription (plan changes happen on Your plan)', async () => {

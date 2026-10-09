@@ -2,19 +2,24 @@ import { z } from 'zod';
 import { NotImplementedError } from '@/lib/errors';
 import { StudioCapability } from '@/lib/rbac';
 import { parseBody, withStudioRoute } from '@/lib/studio/api/route';
-import { MAX_CHANNELS, MIN_CHANNELS } from '@/lib/studio/billing/channel-plan';
+import {
+  PLAN_IDS,
+  PLAN_INTERVALS,
+  type PlanId,
+  type PlanInterval,
+} from '@/lib/studio/billing/plans';
 
 // Phase 18 §2.7 / 21.5 — POST /api/studio/billing/checkout → { url } of a Stripe Checkout session:
-//   { kind: 'channels', channels: 1–6, interval: week|month|year }  (per-channel plan; trial once)
+//   { kind: 'plan', plan: starter|growth|pro, interval: week|month|year }  (26.1; trial once)
 //   { kind: 'topup', lookupKey: studio_pack_hd5 | studio_pack_hd15 } (one-off HD video pack)
 // Owner only (studio:billing:manage). The browser is sent to the returned URL. An organisation
 // that already has a live subscription gets 409 and changes it on Your plan instead.
 const checkoutInput = z.discriminatedUnion('kind', [
   z
     .object({
-      kind: z.literal('channels'),
-      channels: z.number().int().min(MIN_CHANNELS).max(MAX_CHANNELS),
-      interval: z.enum(['week', 'month', 'year']),
+      kind: z.literal('plan'),
+      plan: z.enum(PLAN_IDS as [PlanId, ...PlanId[]]),
+      interval: z.enum(PLAN_INTERVALS as [PlanInterval, ...PlanInterval[]]),
       locale: z.string().trim().max(16).optional(),
     })
     .strict(),
@@ -40,8 +45,8 @@ export const POST = withStudioRoute(
       organisationId: tenant.organisationId,
       userId: tenant.userId,
       intent:
-        input.kind === 'channels'
-          ? { kind: 'channels', channels: input.channels, interval: input.interval }
+        input.kind === 'plan'
+          ? { kind: 'plan', plan: input.plan, interval: input.interval }
           : { kind: 'topup', lookupKey: input.lookupKey },
       locale: input.locale ?? 'en-GB',
     });

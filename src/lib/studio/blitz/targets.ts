@@ -1,13 +1,12 @@
 import type { PrismaClient } from '@prisma/client';
 import type { AutoPublishTarget } from '../automation/targets';
-import { channelPlanForOrganisation, loadChannelUsage } from '../billing/channels';
 import { PLATFORM_RULES } from '../platforms/rules';
 import type { Platform } from '../services/catalog';
 import { FORMATS, type FormatKey } from './formats';
 
 // 22.4 / 22.5 — where a kept card (or an automation slot) is posted: one connected account per
-// network, the destination that suits the format (feed for carousels, Reels / Shorts for videos),
-// inside the plan's channel limit (21.5: the first-connected N networks publish).
+// network, the destination that suits the format (feed for carousels, Reels / Shorts for videos).
+// 26.1: every plan posts to every platform (no channel limit).
 //
 // TikTok carousels are photo posts that pull the slide JPEGs from a URL on a domain verified for
 // the app (21.6, Photo Post docs read 2026-10-04: `url_ownership_unverified` otherwise). Until the
@@ -51,11 +50,9 @@ export interface AccountTargets {
   targets: AutoPublishTarget[];
   /** Networks connected but not posted to automatically (TikTok photo posts unverified). */
   downloadOnly: Platform[];
-  /** Networks connected past the plan's channel limit. */
-  overChannelLimit: string[];
 }
 
-type Db = Pick<PrismaClient, 'platformConnection' | 'orgEntitlement'>;
+type Db = Pick<PrismaClient, 'platformConnection'>;
 
 /**
  * The targets for `format` in this business. `only` limits them to some destinations (an
@@ -76,11 +73,7 @@ export async function accountTargets(
     orderBy: { connectedAt: 'asc' },
     select: { id: true, platform: true, businessId: true },
   });
-  const plan = await channelPlanForOrganisation(db, scope.organisationId, new Date(options.now));
-  const allowed = plan
-    ? new Set((await loadChannelUsage(db, scope.organisationId, plan.channels)).allowed)
-    : null;
-  const out: AccountTargets = { targets: [], downloadOnly: [], overChannelLimit: [] };
+  const out: AccountTargets = { targets: [], downloadOnly: [] };
   const seen = new Set<string>();
   // The business's own account first, then an organisation-wide one.
   const ordered = [...connections].sort(
@@ -92,10 +85,6 @@ export async function accountTargets(
     const destination = destinationFor(format, c.platform);
     if (!destination) continue;
     if (options.only && !options.only.includes(destination)) continue;
-    if (allowed && !allowed.has(c.platform)) {
-      out.overChannelLimit.push(c.platform);
-      continue;
-    }
     if (
       format === 'carousel' &&
       destination === 'tiktok' &&

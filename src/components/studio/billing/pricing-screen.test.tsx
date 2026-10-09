@@ -5,70 +5,76 @@ import { describe, expect, it } from 'vitest';
 import { PricingScreen, signUpHref } from './pricing-screen';
 import { pricingView, stripePrices } from './test-fixtures';
 
-// 21.5 /pricing: one per-channel plan. A channel stepper (1–6) and a weekly / monthly / yearly
-// switch show the total for the period, the videos included and the yearly saving; the packs and
-// the FAQ follow; "Start free trial" signs up and lands on Your plan with the same choice. No
-// tier cards, no cost or budget figures.
+// 26.1 /pricing: three plans, Starter, Growth (most popular) and Pro (last), each posting to every
+// platform. A weekly / monthly / yearly switch shows each plan's price for the period, its HD
+// videos, businesses and seats and the yearly saving; the packs and the FAQ follow; "Start free
+// trial" signs up and lands on Your plan with the same choice. No channels, no old tiers, no cost
+// or budget figures.
 
-describe('PricingScreen (21.5)', () => {
-  it('starts at 3 channels monthly and shows the total, the videos and the trial', async () => {
+describe('PricingScreen (26.1)', () => {
+  it('shows the three plans (Growth chosen and most popular), the trial and the CTA', () => {
     const { container } = render(<PricingScreen pricing={pricingView()} />);
     expect(
-      screen.getByRole('heading', { name: 'One simple plan: pay per channel' }),
+      screen.getByRole('heading', { level: 1, name: 'Three plans. Every platform.' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('3 channels')).toBeInTheDocument();
-    expect(screen.getByText('£87.00 a month')).toBeInTheDocument();
-    expect(screen.getByText(/£29\.00 per channel a month/)).toBeInTheDocument();
-    expect(screen.getByText('24 videos a month included (8 per channel)')).toBeInTheDocument();
-    expect(screen.getByText(/Try it free for 14 days with 5 videos/)).toBeInTheDocument();
+    const group = screen.getByRole('radiogroup', { name: 'Plan' });
+    const radios = within(group).getAllByRole('radio');
+    expect(radios.map((r) => r.getAttribute('data-testid'))).toEqual([
+      'plan-option-starter',
+      'plan-option-growth',
+      'plan-option-pro',
+    ]);
+    expect(screen.getByRole('radio', { name: 'Growth' })).toHaveAttribute('aria-checked', 'true');
+    expect(within(screen.getByTestId('plan-option-growth')).getByText('Most popular')).toBeTruthy();
+    expect(screen.getByText('£29.00 a month')).toBeInTheDocument();
+    expect(screen.getByText('£69.00 a month')).toBeInTheDocument();
+    expect(screen.getByText('£149.00 a month')).toBeInTheDocument();
+    expect(screen.getByText(/Try it free for 7 days with 2 videos/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Start free trial/ })).toHaveAttribute(
       'href',
-      signUpHref({ channels: 3, interval: 'month' }),
+      signUpHref({ plan: 'growth', interval: 'month' }),
     );
-    // No old tiers, no long videos, no costs.
-    expect(container.textContent).not.toMatch(/Basic|Plus|Enterprise|long video|budget|spend/i);
+    // No channels, old tiers, long videos or costs.
+    expect(container.textContent).not.toMatch(
+      /channel|Basic|Plus|Enterprise|long video|budget|spend/i,
+    );
   });
 
-  it('the stepper stays within 1–6 and the period switch changes the total and allowance', async () => {
+  it('the period switch and the plan choice change the prices and the sign-up link', async () => {
     const user = userEvent.setup();
     render(<PricingScreen pricing={pricingView()} />);
-    const more = screen.getByRole('button', { name: 'Add a channel' });
-    const fewer = screen.getByRole('button', { name: 'Remove a channel' });
-    for (let i = 0; i < 5; i += 1) await user.click(more);
-    expect(screen.getByText('6 channels')).toBeInTheDocument();
-    expect(more).toBeDisabled();
-    for (let i = 0; i < 6; i += 1) await user.click(fewer);
-    expect(screen.getByText('1 channel')).toBeInTheDocument();
-    expect(fewer).toBeDisabled();
-
     await user.click(screen.getByRole('radio', { name: 'Weekly' }));
     expect(screen.getByText('£9.50 a week')).toBeInTheDocument();
-    expect(screen.getByText('2 videos a week included (2 per channel)')).toBeInTheDocument();
+    expect(screen.getByText('2 HD videos a week')).toBeInTheDocument();
     expect(screen.getByText(/Weekly costs more than monthly/)).toBeInTheDocument();
 
     await user.click(screen.getByRole('radio', { name: 'Yearly' }));
-    expect(screen.getByText('£290.00 a year')).toBeInTheDocument();
-    expect(
-      screen.getByText('96 videos a year included (8 per channel each month)'),
-    ).toBeInTheDocument();
-    expect(screen.getByText('2 months free: you save £58.00 a year')).toBeInTheDocument();
+    expect(screen.getByText('£1,490.00 a year')).toBeInTheDocument();
+    expect(screen.getByText('2 months free: you save £298.00 a year')).toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: 'Pro' }));
     expect(screen.getByRole('link', { name: /Start free trial/ })).toHaveAttribute(
       'href',
-      '/sign-up?next=%2Fsettings%2Fbilling%3Fchannels%3D1%26interval%3Dyear',
+      '/sign-up?next=%2Fsettings%2Fbilling%3Fplan%3Dpro%26interval%3Dyear',
     );
   });
 
-  it('lists the HD video packs and answers the FAQ with live prices', () => {
+  it('lists the HD video packs and answers the FAQ with live prices and true facts', async () => {
+    const user = userEvent.setup();
     render(<PricingScreen pricing={pricingView()} />);
     const packs = screen.getByRole('region', { name: 'Need more videos?' });
     expect(within(packs).getByText('5 HD videos')).toBeInTheDocument();
-    expect(within(packs).getByText('£15.00')).toBeInTheDocument();
+    expect(within(packs).getByText('£17.00')).toBeInTheDocument();
     expect(within(packs).getByText('15 HD videos')).toBeInTheDocument();
-    expect(within(packs).getByText('£39.00')).toBeInTheDocument();
-    expect(within(packs).getAllByText('Use on any channel within 3 months')).toHaveLength(2);
+    expect(within(packs).getByText('£45.00')).toBeInTheDocument();
+    expect(within(packs).getAllByText('Use within 3 months, on any plan')).toHaveLength(2);
     expect(
-      screen.getByText(/Monthly is £29\.00 per channel\. Weekly is £9\.50 per channel a week/),
+      screen.getByText(/Starter is £29\.00 a month\. Weekly is £9\.50 a week/),
     ).toBeInTheDocument();
+    await user.click(screen.getByText('Which platforms can I post to?'));
+    expect(
+      screen.getByText(/All six, on every plan: TikTok, Instagram, YouTube, Facebook, LinkedIn/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('What is a channel?')).toBeNull();
   });
 
   it('shows "Price unavailable" rather than a made-up number when Stripe is unreachable', () => {
@@ -78,39 +84,37 @@ describe('PricingScreen (21.5)', () => {
   });
 
   it('a price changed in Stripe shows with no code change', () => {
-    render(
-      <PricingScreen pricing={pricingView(stripePrices({ studio_channel_monthly: 3_100 }))} />,
-    );
-    expect(screen.getByText('£93.00 a month')).toBeInTheDocument();
+    render(<PricingScreen pricing={pricingView(stripePrices({ studio_growth_monthly: 7_500 }))} />);
+    expect(screen.getByText('£75.00 a month')).toBeInTheDocument();
   });
 });
 
 describe('PricingScreen: quick posts count ¼ (23.3)', () => {
-  it('says each channel’s videos can be up to 4× as many quick posts, in the card and the FAQ', async () => {
+  it('says each plan’s videos can be up to 4× as many quick posts, in the cards and the FAQ', async () => {
     const user = userEvent.setup();
     render(<PricingScreen pricing={pricingView()} />);
+    // Starter 8, Growth 20, Pro 45 videos a month.
+    for (const quick of [32, 80, 180])
+      expect(
+        screen.getByText(
+          `Or up to ${quick} quick posts: carousels, slideshows and text videos count as ¼`,
+        ),
+      ).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Every channel includes 8 short HD videos a month, or up to 32 quick posts.',
-        { exact: false },
-      ),
-    ).toBeInTheDocument();
-    // The plan card: 3 channels monthly = 24 videos or 96 quick posts.
-    expect(
-      screen.getByText('Or up to 96 quick posts: carousels, slideshows and text videos count as ¼'),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        'Or up to 32 quick posts per channel a month: carousels, slideshows and text videos count as ¼ of a video',
+        'Quick posts count as ¼ of a video: carousels, slideshows, wall of text and hook + demo videos',
       ),
     ).toBeInTheDocument();
     await user.click(screen.getByText('Do carousels and slideshows count as a whole video?'));
     expect(
-      screen.getByText(/so a channel’s 8 videos a month can be up to 32 quick posts/),
+      screen.getByText(/so Starter’s 8 videos a month can be up to 32 quick posts/),
     ).toBeInTheDocument();
     await user.click(screen.getByRole('radio', { name: 'Weekly' }));
+    // Growth weekly: 5 videos = 20 quick posts.
     expect(
-      screen.getByText('Or up to 24 quick posts: carousels, slideshows and text videos count as ¼'),
+      within(screen.getByTestId('plan-option-growth')).getByText(
+        'Or up to 20 quick posts: carousels, slideshows and text videos count as ¼',
+      ),
     ).toBeInTheDocument();
   });
 });

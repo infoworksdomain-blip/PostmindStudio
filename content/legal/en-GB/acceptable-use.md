@@ -2,7 +2,7 @@
 
 # Acceptable Use Policy
 
-**Last updated: 4 October 2026**
+**Last updated: 9 October 2026**
 
 This policy sets out what you may not do with PostMind Studio (the **Service**), provided by Postmind AI Ltd. It forms part of our [Terms of Service](/legal/terms), and words with capitals have the meaning given there. It applies to the Customer and to every Authorised User, and to all Inputs, Outputs and publications.
 
@@ -82,7 +82,7 @@ You must not:
 
 7.3 access the Service by automated means other than through the features and interfaces we provide, or scrape, crawl or copy the Service, its reference library or other customers' content;
 
-7.4 get around, disable or interfere with seat limits, video allowances, Channel limits, rate limits, usage limits, trial restrictions, restricted-topic checks, AI providers' safety filters or other controls, including by creating several organisations or trials, or by sharing accounts;
+7.4 get around, disable or interfere with seat and business limits, video allowances, rate limits, usage limits, trial restrictions, restricted-topic checks, AI providers' safety filters or other controls, including by creating several organisations or trials, or by sharing accounts;
 
 7.5 overload the Service or act in a way that degrades it for others;
 

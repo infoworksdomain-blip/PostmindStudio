@@ -195,10 +195,7 @@ export async function recomputeEntitlements(
       access: derived.access,
       source: derived.source,
       status: derived.status,
-      ...(derived.channelPlan && {
-        channels: derived.channelPlan.channels,
-        interval: derived.channelPlan.interval,
-      }),
+      ...(derived.plan && { plan: derived.plan.plan, interval: derived.plan.interval }),
     },
     ...(trialing &&
       trialStartedAt && {
@@ -233,14 +230,13 @@ export async function recomputeEntitlements(
     update: row,
   });
   invalidateEntitlements(organisationId);
-  const channelsChanged =
-    before?.channelPlan?.channels !== effective.channelPlan?.channels ||
-    before?.channelPlan?.interval !== effective.channelPlan?.interval;
+  const planChanged =
+    before?.plan?.id !== effective.plan?.id || before?.plan?.interval !== effective.plan?.interval;
   if (
     !before ||
     before.tier !== effective.tier ||
     before.access !== effective.access ||
-    channelsChanged
+    planChanged
   ) {
     deps.audit({
       actorUserId: STRIPE_ACTOR,
@@ -254,16 +250,16 @@ export async function recomputeEntitlements(
           ? {
               tier: before.tier,
               access: before.access,
-              channels: before.channelPlan?.channels ?? null,
-              interval: before.channelPlan?.interval ?? null,
+              plan: before.plan?.id ?? null,
+              interval: before.plan?.interval ?? null,
             }
           : null,
         to: {
           tier: effective.tier,
           access: effective.access,
           source: effective.source,
-          channels: effective.channelPlan?.channels ?? null,
-          interval: effective.channelPlan?.interval ?? null,
+          plan: effective.plan?.id ?? null,
+          interval: effective.plan?.interval ?? null,
         },
       },
     });

@@ -7,10 +7,10 @@ import { BillingScreen } from './billing-screen';
 import { billing, noPlan, pricingView, usage } from './test-fixtures';
 import type { BillingResponse, InvoicesResponse } from './types';
 
-// 21.5 "Your plan" (/settings/billing): channels, period, price, renewal, videos used against the
-// allowance and pack videos left; change channels / period with a preview (upgrade now with the
-// prorated amount, downgrade at period end); packs; cancel and resume; connected channels; the
-// Stripe portal only for payment details and invoices; no cost figures anywhere.
+// 26.1 "Your plan" (/settings/billing): the plan (Starter / Growth / Pro), period, price, renewal,
+// videos used against the allowance and pack videos left; change the plan / period with a preview
+// (upgrade now with the prorated amount, downgrade at period end); packs; cancel and resume; the
+// Stripe portal only for payment details and invoices; no cost figures and no channels anywhere.
 
 const nav = vi.hoisted(() => ({ search: '', navigateTo: vi.fn() }));
 vi.mock('next/navigation', () => ({
@@ -26,7 +26,7 @@ const invoices: InvoicesResponse = {
       id: 'in_1',
       number: 'PM-0001',
       status: 'paid',
-      amountDuePence: 8_700,
+      amountDuePence: 6_900,
       currency: 'gbp',
       createdAt: '2026-09-01T10:00:00.000Z',
       hostedInvoiceUrl: 'https://invoice.stripe.test/i/in_1',
@@ -53,8 +53,8 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-describe('Your plan (21.5)', () => {
-  it('shows channels, period, price, renewal, videos, packs, channels and invoices; no costs', async () => {
+describe('Your plan (26.1)', () => {
+  it('shows the plan, period, price, renewal, videos, packs and invoices; no costs', async () => {
     const api = mockBilling(base, [
       {
         match: '/billing/portal',
@@ -65,24 +65,25 @@ describe('Your plan (21.5)', () => {
     const user = userEvent.setup();
     const { container } = renderWithSWR(<BillingScreen />);
     expect(await screen.findByRole('heading', { name: 'Your plan', level: 1 })).toBeInTheDocument();
-    expect(screen.getByText('3 channels, monthly')).toBeInTheDocument();
+    expect(screen.getByTestId('plan-headline')).toHaveTextContent('Growth, monthly');
     expect(screen.getByText('Active')).toBeInTheDocument();
-    expect(screen.getAllByText(/£87\.00 a month/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/£69\.00 a month/).length).toBeGreaterThan(0);
     expect(screen.getByText('Renews on 29 October 2026.')).toBeInTheDocument();
     expect(await screen.findByRole('meter', { name: 'Used this month' })).toHaveAttribute(
       'aria-valuenow',
       '5',
     );
     expect(screen.getAllByText('7 pack videos left').length).toBeGreaterThan(0);
-    expect(screen.getByText('Publishing to: TikTok, Instagram.')).toBeInTheDocument();
-    expect(screen.getByText('You can connect 1 more channel.')).toBeInTheDocument();
     expect(screen.getByRole('meter', { name: 'Seats' })).toHaveAttribute('aria-valuenow', '2');
+    // 26.1: every plan posts to every platform: no channel section, count or limit.
+    expect(screen.queryByText('Your channels')).toBeNull();
+    expect(container.textContent).not.toMatch(/channel/i);
     // 21.5: no generation cost, spend or budget for customers.
     expect(container.textContent).not.toMatch(/spend|budget|cap\b/i);
     expect(screen.queryByText(/Basic|Plus|Standard/)).toBeNull();
 
     const table = await screen.findByRole('table', { name: 'Invoices' });
-    expect(within(table).getByRole('row', { name: /PM-0001/ })).toHaveTextContent('£87.00');
+    expect(within(table).getByRole('row', { name: /PM-0001/ })).toHaveTextContent('£69.00');
 
     // The portal is only for payment details and invoices.
     await user.click(screen.getByRole('button', { name: 'Open billing portal' }));
@@ -102,12 +103,12 @@ describe('Your plan (21.5)', () => {
           ok: true,
           preview: {
             timing: 'now',
-            current: { channels: 3, interval: 'month' },
-            next: { channels: 4, interval: 'month' },
-            nextPricePence: 11_600,
+            current: { plan: 'growth', interval: 'month' },
+            next: { plan: 'pro', interval: 'month' },
+            nextPricePence: 14_900,
             currency: 'gbp',
             effectiveAt: '2026-09-29T12:00:00.000Z',
-            dueNowPence: 1_160,
+            dueNowPence: 8_000,
             prorationDate: 1_790_000_000,
           },
         },
@@ -121,25 +122,31 @@ describe('Your plan (21.5)', () => {
     const user = userEvent.setup();
     renderWithSWR(<BillingScreen />);
     expect(await screen.findByText('Change your plan')).toBeInTheDocument();
-    await user.click((await screen.findAllByRole('button', { name: 'Add a channel' }))[0]!);
+    // The change picker starts on the current plan.
+    expect(await screen.findByRole('radio', { name: 'Growth' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await user.click(screen.getByRole('radio', { name: 'Pro' }));
     expect(
       await screen.findByText(
-        'New price: £116.00 a month. Applies now: you pay £11.60 today for the rest of this period.',
+        'New price: £149.00 a month. Applies now: you pay £80.00 today for the rest of this period.',
         {},
         { timeout: 5_000 },
       ),
     ).toBeInTheDocument();
     expect(
-      api.calls.some((c) => c.url.includes('/billing/plan/preview?channels=4&interval=month')),
+      api.calls.some((c) => c.url.includes('/billing/plan/preview?plan=pro&interval=month')),
     ).toBe(true);
+    expect(screen.getByText(/A higher plan, or a longer period/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Review change' }));
     const dialog = await screen.findByRole('dialog', { name: 'Confirm your new plan' });
-    expect(within(dialog).getByText('Now: 3 channels, monthly')).toBeInTheDocument();
-    expect(within(dialog).getByText('New: 4 channels, monthly')).toBeInTheDocument();
-    await user.click(within(dialog).getByRole('button', { name: 'Pay £11.60 and change' }));
+    expect(within(dialog).getByText('Now: Growth, monthly')).toBeInTheDocument();
+    expect(within(dialog).getByText('New: Pro, monthly')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Pay £80.00 and change' }));
     await waitFor(() =>
       expect(api.calls.find((c) => /\/billing\/plan$/.test(c.url))?.body).toEqual({
-        channels: 4,
+        plan: 'pro',
         interval: 'month',
         prorationDate: 1_790_000_000,
       }),
@@ -150,16 +157,16 @@ describe('Your plan (21.5)', () => {
   });
 
   it('downgrade: applies at the end of the period with nothing to pay now', async () => {
-    mockBilling(base, [
+    const api = mockBilling(base, [
       {
         match: '/billing/plan/preview',
         body: {
           ok: true,
           preview: {
             timing: 'period_end',
-            current: { channels: 3, interval: 'month' },
-            next: { channels: 3, interval: 'week' },
-            nextPricePence: 2_850,
+            current: { plan: 'growth', interval: 'month' },
+            next: { plan: 'starter', interval: 'week' },
+            nextPricePence: 950,
             currency: 'gbp',
             effectiveAt: '2026-10-29T12:00:00.000Z',
             dueNowPence: null,
@@ -170,15 +177,19 @@ describe('Your plan (21.5)', () => {
     ]);
     const user = userEvent.setup();
     renderWithSWR(<BillingScreen />);
-    const radios = await screen.findAllByRole('radio', { name: 'Weekly' });
-    await user.click(radios[radios.length - 1]!);
+    await user.click(await screen.findByRole('radio', { name: 'Weekly' }));
+    await user.click(screen.getByRole('radio', { name: 'Starter' }));
     expect(
       await screen.findByText(
-        'New price: £28.50 a week. Applies on 29 October 2026. Nothing to pay now.',
+        'New price: £9.50 a week. Applies on 29 October 2026. Nothing to pay now.',
         {},
         { timeout: 5_000 },
       ),
     ).toBeInTheDocument();
+    expect(
+      api.calls.some((c) => c.url.includes('/billing/plan/preview?plan=starter&interval=week')),
+    ).toBe(true);
+    expect(screen.getByText(/A lower plan, or a shorter period/)).toBeInTheDocument();
     expect(screen.getAllByText(/Weekly costs more than monthly/).length).toBeGreaterThan(0);
   });
 
@@ -187,16 +198,14 @@ describe('Your plan (21.5)', () => {
       billing({
         plan: {
           ...base.plan!,
-          pending: { channels: 1, interval: 'month', effectiveAt: '2026-10-29T12:00:00.000Z' },
+          pending: { plan: 'starter', interval: 'month', effectiveAt: '2026-10-29T12:00:00.000Z' },
         },
       }),
       [{ match: '/billing/plan/scheduled', method: 'DELETE', body: { ok: true, cancelled: true } }],
     );
     const user = userEvent.setup();
     renderWithSWR(<BillingScreen />);
-    expect(
-      await screen.findByText('From 29 October 2026: 1 channel, monthly.'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('From 29 October 2026: Starter, monthly.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Keep my current plan' }));
     await waitFor(() =>
       expect(api.calls.some((c) => c.url.endsWith('/billing/plan/scheduled'))).toBe(true),
@@ -214,9 +223,10 @@ describe('Your plan (21.5)', () => {
     const user = userEvent.setup();
     renderWithSWR(<BillingScreen />);
     expect(
-      await screen.findByRole('button', { name: 'Buy 5 HD videos for £15.00' }),
+      await screen.findByRole('button', { name: 'Buy 5 HD videos for £17.00' }),
     ).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Buy 15 HD videos for £39.00' }));
+    expect(screen.getAllByText('Use within 3 months, on any plan').length).toBe(2);
+    await user.click(screen.getByRole('button', { name: 'Buy 15 HD videos for £45.00' }));
     await waitFor(() =>
       expect(nav.navigateTo).toHaveBeenCalledWith('https://checkout.stripe.test/c'),
     );
@@ -262,25 +272,8 @@ describe('Your plan (21.5)', () => {
     );
   });
 
-  it('says which connected channels do not publish and links to add a channel', async () => {
-    mockBilling(
-      billing({
-        channels: {
-          paid: 1,
-          connected: ['tiktok', 'youtube'],
-          allowed: ['tiktok'],
-          blocked: ['youtube'],
-        },
-      }),
-    );
-    renderWithSWR(<BillingScreen />);
-    expect(
-      await screen.findByText(/is connected but doesn’t publish: your plan has no channel left/),
-    ).toBeInTheDocument();
-  });
-
-  it('an organisation without a plan chooses channels and period, then Checkout (trial once)', async () => {
-    nav.search = 'channels=2&interval=year';
+  it('an organisation without a plan chooses a plan and period, then Checkout (trial once)', async () => {
+    nav.search = 'plan=starter&interval=year';
     const api = mockBilling(noPlan(), [
       {
         match: '/billing/checkout',
@@ -292,18 +285,23 @@ describe('Your plan (21.5)', () => {
     renderWithSWR(<BillingScreen />);
     expect(await screen.findByText(/doesn’t have a plan yet/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Open billing portal' })).toBeNull();
-    // Prefilled from /pricing: 2 channels, yearly.
-    expect(await screen.findByText('£580.00 a year')).toBeInTheDocument();
-    expect(screen.getByText('2 months free: you save £116.00 a year')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Add a channel' }));
-    expect(await screen.findByText('£870.00 a year')).toBeInTheDocument();
+    // Prefilled from /pricing: Starter, yearly.
+    expect(await screen.findByRole('radio', { name: 'Starter' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    expect(screen.getByRole('radio', { name: 'Yearly' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByText('£290.00 a year')).toBeInTheDocument();
+    expect(screen.getByText('2 months free: you save £58.00 a year')).toBeInTheDocument();
+    expect(screen.getByText(/Your first 7 days are free, with 2 videos/)).toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: 'Pro' }));
     await user.click(screen.getByRole('button', { name: 'Start free trial' }));
     await waitFor(() =>
       expect(nav.navigateTo).toHaveBeenCalledWith('https://checkout.stripe.test/s'),
     );
     expect(api.calls.find((c) => c.url.endsWith('/billing/checkout'))?.body).toEqual({
-      kind: 'channels',
-      channels: 3,
+      kind: 'plan',
+      plan: 'pro',
       interval: 'year',
       locale: 'en-GB',
     });

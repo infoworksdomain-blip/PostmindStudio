@@ -10,7 +10,8 @@ import { ErrorState, Section, Stat } from '../../primitives';
 import { PlanOverrideSection } from '../billing/entitlements-panel';
 import { CostCapsSection, PolicySection } from '../organisation-panel';
 import { StatusBadge } from './status-badge';
-import type { AdminOrgChannelPlan, AdminOrgDetail, AdminOrgTrial } from './types';
+import { PLAN_NAMES } from '@/lib/studio/billing/plans';
+import type { AdminOrgDetail, AdminOrgStudioPlan, AdminOrgTrial } from './types';
 
 // Phase 18 §3 admin → Organisations → one organisation (split out of organisations-tab.tsx in
 // 25.13): its members and subscriptions, then (20.27) its plan: effective entitlements, the
@@ -32,13 +33,13 @@ export function TrialLabel({ trial }: { trial: AdminOrgTrial | null }) {
   return <span className="text-muted-foreground">{t(trial.state)}</span>;
 }
 
-/** 21.5: "3 channels · monthly" for an organisation on a channel plan, nothing otherwise. */
-export function ChannelPlanLabel({ plan }: { plan: AdminOrgChannelPlan | null | undefined }) {
-  const t = useTranslations('adminOrgs.list');
+/** 26.1: "Growth · monthly" for an organisation on a plan, nothing otherwise. */
+export function StudioPlanLabel({ plan }: { plan: AdminOrgStudioPlan | null | undefined }) {
+  const t = useTranslations('billing.admin.entitlements');
   if (!plan) return null;
   return (
-    <span className="block text-xs text-muted-foreground" data-testid="org-channel-plan">
-      {t('channelPlan', { count: plan.channels, interval: plan.interval })}
+    <span className="block text-xs text-muted-foreground" data-testid="org-studio-plan">
+      {t('planValue', { plan: PLAN_NAMES[plan.id], interval: plan.interval })}
     </span>
   );
 }
@@ -79,7 +80,7 @@ export function OrganisationDetail({ id, onBack }: { id: string; onBack: () => v
                   data.entitlement ? (
                     <>
                       {t(`sources.${sourceKey(data.entitlement.source)}`)}
-                      <ChannelPlanLabel plan={data.entitlement.channelPlan} />
+                      <StudioPlanLabel plan={data.entitlement.studioPlan} />
                     </>
                   ) : undefined
                 }

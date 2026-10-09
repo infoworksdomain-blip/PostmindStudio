@@ -14,10 +14,11 @@ import {
   resumePlan,
   type PlanChangeDeps,
 } from '../../src/lib/studio/billing/plan-change';
+import type { PlanId, PlanInterval } from '../../src/lib/studio/billing/plans';
 import { syncSubscription } from '../../src/lib/studio/billing/sync';
 import { createFakeStripe, type FakeStripe } from '../helpers/fake-stripe';
 
-// 21.5 Your plan on real Postgres with a scripted Stripe: previews, upgrades now with proration
+// 21.5 / 26.1 Your plan (Starter / Growth / Pro) on real Postgres with a scripted Stripe: previews, upgrades now with proration
 // (the previewed proration time reaches Stripe), downgrades at the end of the period (a schedule,
 // stored as the pending change), one pending change at a time, trials change at once, a declined
 // upgrade changes nothing, cancel / resume, and the overview the page reads.
@@ -46,9 +47,9 @@ describe.skipIf(!hasDb)('plan changes (Stripe fake, real Postgres)', { timeout: 
   const entitlements = () => createEntitlementsReader({ db, ttlMs: 0, now: () => NOW });
 
   async function subscribe(
-    quantity: number,
-    lookupKey = 'studio_channel_monthly',
+    lookupKey = 'studio_growth_monthly',
     status = 'active',
+    quantity = 1,
   ): Promise<void> {
     await db.billingCustomer.create({
       data: { organisationId: org, stripeCustomerId: `cus_${org}`, idempotencyNonce: 'n' },
@@ -83,49 +84,62 @@ describe.skipIf(!hasDb)('plan changes (Stripe fake, real Postgres)', { timeout: 
     await db.$disconnect();
   });
 
-  it('upgrade: preview shows the prorated amount due now; the change sends that proration time', async () => {
-    await subscribe(2);
-    fake.previewAmountPence = 1_160;
-    const preview = await previewPlanChange(deps(), org, { channels: 3, interval: 'month' });
+  it('upgrade to a higher plan: preview shows the prorated amount due now; the change sends that proration time', async () => {
+    await subscribe('studio_starter_monthly');
+    fake.previewAmountPence = 3_870;
+    const preview = await previewPlanChange(deps(), org, { plan: 'growth', interval: 'month' });
     expect(preview).toMatchObject({
       timing: 'now',
-      current: { channels: 2, interval: 'month' },
-      next: { channels: 3, interval: 'month' },
-      nextPricePence: 8_700,
-      dueNowPence: 1_160,
+      current: { plan: 'starter', interval: 'month' },
+      next: { plan: 'growth', interval: 'month' },
+      nextPricePence: 6_900,
+      dueNowPence: 3_870,
       prorationDate: Math.floor(NOW / 1000),
     });
     expect(calls('previewPlanChange')[0]?.args[0]).toMatchObject({
       customerId: `cus_${org}`,
       subscriptionId: subId,
       itemId: `si_${subId}`,
-      priceId: 'price_studio_channel_monthly',
-      quantity: 3,
+      priceId: 'price_studio_growth_monthly',
+      quantity: 1,
     });
 
     const outcome = await changePlan(deps(), {
       ...who(),
-      next: { channels: 3, interval: 'month' },
+      next: { plan: 'growth', interval: 'month' },
       prorationDate: preview.prorationDate,
     });
     expect(outcome).toEqual({ status: 'applied', timing: 'now' });
     expect(calls('changePlanNow')[0]?.args[0]).toMatchObject({
-      quantity: 3,
+      priceId: 'price_studio_growth_monthly',
+      quantity: 1,
       prorationDate: Math.floor(NOW / 1000),
     });
     const ent = await entitlements().forOrganisation(org);
-    expect(ent.channelPlan).toEqual({ channels: 3, interval: 'month', source: 'stripe' });
+    expect(ent.plan).toEqual({ id: 'growth', interval: 'month', source: 'stripe' });
+    expect(ent.limits).toMatchObject({ seats: 3, businesses: 1 });
     expect(audits).toContainEqual(
       expect.objectContaining({
         action: 'billing.subscription_changed',
-        metadata: expect.objectContaining({ change: 'channel_plan', timing: 'now' }),
+        metadata: expect.objectContaining({
+          change: 'plan',
+          from: { plan: 'starter', interval: 'month' },
+          to: { plan: 'growth', interval: 'month' },
+          timing: 'now',
+        }),
       }),
     );
   });
 
-  it('downgrade: applies at the end of the period (a schedule), shown as the pending change', async () => {
-    await subscribe(3);
-    const preview = await previewPlanChange(deps(), org, { channels: 1, interval: 'month' });
+  it('a higher plan on a shorter interval still applies now', async () => {
+    await subscribe('studio_growth_yearly');
+    const preview = await previewPlanChange(deps(), org, { plan: 'pro', interval: 'week' });
+    expect(preview).toMatchObject({ timing: 'now', nextPricePence: 4_850 });
+  });
+
+  it('downgrade to a lower plan: applies at the end of the period (a schedule), shown as the pending change', async () => {
+    await subscribe('studio_pro_monthly');
+    const preview = await previewPlanChange(deps(), org, { plan: 'starter', interval: 'month' });
     expect(preview).toMatchObject({
       timing: 'period_end',
       effectiveAt: PERIOD_END.toISOString(),
@@ -135,24 +149,29 @@ describe.skipIf(!hasDb)('plan changes (Stripe fake, real Postgres)', { timeout: 
     expect(calls('previewPlanChange')).toHaveLength(0);
     const outcome = await changePlan(deps(), {
       ...who(),
-      next: { channels: 1, interval: 'month' },
+      next: { plan: 'starter', interval: 'month' },
     });
     expect(outcome).toEqual({
       status: 'scheduled',
       timing: 'period_end',
       effectiveAt: PERIOD_END.toISOString(),
     });
-    // Still 3 channels until the period ends.
-    expect((await entitlements().forOrganisation(org)).channelPlan?.channels).toBe(3);
+    expect(calls('schedulePlanChange')[0]?.args[0]).toMatchObject({
+      priceId: 'price_studio_starter_monthly',
+      quantity: 1,
+      interval: 'month',
+    });
+    // Still Pro until the period ends.
+    expect((await entitlements().forOrganisation(org)).plan?.id).toBe('pro');
     const overview = await billingOverview(
       { db, entitlements: entitlements(), now: () => NOW },
       org,
     );
     expect(overview.plan).toMatchObject({
-      channels: 3,
+      id: 'pro',
       interval: 'month',
-      pricePerPeriodPence: 8_700,
-      pending: { channels: 1, interval: 'month', effectiveAt: PERIOD_END.toISOString() },
+      pricePerPeriodPence: 14_900,
+      pending: { plan: 'starter', interval: 'month', effectiveAt: PERIOD_END.toISOString() },
     });
 
     // Keep the current plan: the schedule is released and nothing is pending.
@@ -163,47 +182,49 @@ describe.skipIf(!hasDb)('plan changes (Stripe fake, real Postgres)', { timeout: 
     await expect(cancelScheduledChange(deps(), who())).rejects.toBeInstanceOf(ConflictError);
   });
 
-  it('a longer period applies now, a shorter one at period end; an upgrade drops a scheduled change', async () => {
-    await subscribe(2);
-    expect((await previewPlanChange(deps(), org, { channels: 2, interval: 'year' })).timing).toBe(
-      'now',
-    );
-    expect((await previewPlanChange(deps(), org, { channels: 2, interval: 'week' })).timing).toBe(
-      'period_end',
-    );
-    await changePlan(deps(), { ...who(), next: { channels: 2, interval: 'week' } });
+  it('same plan: a longer period applies now, a shorter one at period end; an upgrade drops a scheduled change', async () => {
+    await subscribe('studio_growth_monthly');
+    const year = await previewPlanChange(deps(), org, { plan: 'growth', interval: 'year' });
+    expect(year.timing).toBe('now');
+    const week = await previewPlanChange(deps(), org, { plan: 'growth', interval: 'week' });
+    expect(week.timing).toBe('period_end');
+    await changePlan(deps(), { ...who(), next: { plan: 'growth', interval: 'week' } });
     expect(calls('schedulePlanChange')[0]?.args[0]).toMatchObject({
       interval: 'week',
-      priceId: 'price_studio_channel_weekly',
+      priceId: 'price_studio_growth_weekly',
       organisationId: org,
     });
-    await changePlan(deps(), { ...who(), next: { channels: 4, interval: 'month' } });
+    await changePlan(deps(), { ...who(), next: { plan: 'pro', interval: 'month' } });
     expect(calls('releaseSchedule')).toHaveLength(1);
     const ent = await entitlements().forOrganisation(org);
-    expect(ent.channelPlan?.channels).toBe(4);
+    expect(ent.plan?.id).toBe('pro');
     await expect(
-      changePlan(deps(), { ...who(), next: { channels: 4, interval: 'month' } }),
+      changePlan(deps(), { ...who(), next: { plan: 'pro', interval: 'month' } }),
     ).rejects.toBeInstanceOf(ConflictError);
   });
 
   it('a trial changes at once with no proration (nothing is charged until it ends)', async () => {
-    await subscribe(3, 'studio_channel_monthly', 'trialing');
-    const preview = await previewPlanChange(deps(), org, { channels: 1, interval: 'month' });
+    await subscribe('studio_pro_monthly', 'trialing');
+    const preview = await previewPlanChange(deps(), org, { plan: 'starter', interval: 'month' });
     expect(preview).toMatchObject({ timing: 'now', dueNowPence: 0, prorationDate: null });
-    await changePlan(deps(), { ...who(), next: { channels: 1, interval: 'month' } });
-    expect(calls('changePlanNow')[0]?.args[0]).toMatchObject({ prorationDate: null, quantity: 1 });
+    await changePlan(deps(), { ...who(), next: { plan: 'starter', interval: 'month' } });
+    expect(calls('changePlanNow')[0]?.args[0]).toMatchObject({
+      prorationDate: null,
+      quantity: 1,
+      priceId: 'price_studio_starter_monthly',
+    });
     expect(calls('schedulePlanChange')).toHaveLength(0);
   });
 
   it('a declined upgrade changes nothing and says payment is needed', async () => {
-    await subscribe(1);
+    await subscribe('studio_starter_monthly');
     fake.declineNextChange = true;
     const outcome = await changePlan(deps(), {
       ...who(),
-      next: { channels: 2, interval: 'month' },
+      next: { plan: 'growth', interval: 'month' },
     });
     expect(outcome).toEqual({ status: 'payment_required', timing: 'now' });
-    expect((await entitlements().forOrganisation(org)).channelPlan?.channels).toBe(1);
+    expect((await entitlements().forOrganisation(org)).plan?.id).toBe('starter');
     const overview = await billingOverview(
       { db, entitlements: entitlements(), now: () => NOW },
       org,
@@ -212,42 +233,73 @@ describe.skipIf(!hasDb)('plan changes (Stripe fake, real Postgres)', { timeout: 
   });
 
   it('cancel at period end (dropping a scheduled change), resume, and the guards', async () => {
-    await subscribe(3);
-    await changePlan(deps(), { ...who(), next: { channels: 2, interval: 'month' } });
+    await subscribe('studio_pro_monthly');
+    await changePlan(deps(), { ...who(), next: { plan: 'growth', interval: 'month' } });
     expect(await cancelPlan(deps(), who())).toEqual({ endsAt: PERIOD_END.toISOString() });
     expect(calls('releaseSchedule')).toHaveLength(1);
     expect(calls('setCancelAtPeriodEnd')[0]?.args.slice(0, 2)).toEqual([subId, true]);
     // Changing the plan while it is set to end is refused: resume first.
     await expect(
-      changePlan(deps(), { ...who(), next: { channels: 4, interval: 'month' } }),
+      changePlan(deps(), { ...who(), next: { plan: 'pro', interval: 'year' } }),
     ).rejects.toBeInstanceOf(ConflictError);
     await resumePlan(deps(), who());
     expect(calls('setCancelAtPeriodEnd')[1]?.args.slice(0, 2)).toEqual([subId, false]);
     await expect(resumePlan(deps(), who())).rejects.toBeInstanceOf(ConflictError);
   });
 
-  it('refuses without a plan, while payment is overdue, and outside 1–6 channels', async () => {
+  it('refuses without a plan, while payment is overdue, and an unknown plan or interval', async () => {
     await expect(
-      previewPlanChange(deps(), org, { channels: 2, interval: 'month' }),
+      previewPlanChange(deps(), org, { plan: 'growth', interval: 'month' }),
     ).rejects.toBeInstanceOf(NotFoundError);
-    await subscribe(2, 'studio_channel_monthly', 'past_due');
+    await subscribe('studio_growth_monthly', 'past_due');
     await expect(
-      changePlan(deps(), { ...who(), next: { channels: 3, interval: 'month' } }),
+      changePlan(deps(), { ...who(), next: { plan: 'pro', interval: 'month' } }),
     ).rejects.toBeInstanceOf(ConflictError);
     await expect(
-      previewPlanChange(deps(), org, { channels: 7, interval: 'month' }),
+      previewPlanChange(deps(), org, { plan: 'enterprise' as PlanId, interval: 'month' }),
+    ).rejects.toBeInstanceOf(ValidationError);
+    await expect(
+      changePlan(deps(), { ...who(), next: { plan: 'pro', interval: 'day' as PlanInterval } }),
     ).rejects.toBeInstanceOf(ValidationError);
   });
 
-  it('a legacy tier subscription is shown and changed as channels (Standard = 3)', async () => {
-    await subscribe(1, 'studio_standard_monthly');
-    const preview = await previewPlanChange(deps(), org, { channels: 4, interval: 'month' });
-    expect(preview).toMatchObject({ timing: 'now', current: { channels: 3, interval: 'month' } });
+  it('a legacy 21.5 channel subscription is shown as its plan (3 channels = Growth) and moves to quantity 1', async () => {
+    await subscribe('studio_channel_monthly', 'active', 3);
+    const ent = await entitlements().forOrganisation(org);
+    expect(ent.plan).toEqual({ id: 'growth', interval: 'month', source: 'stripe' });
     const overview = await billingOverview(
       { db, entitlements: entitlements(), now: () => NOW },
       org,
     );
-    expect(overview.plan).toMatchObject({ channels: 3, legacy: true });
+    expect(overview.plan).toMatchObject({ id: 'growth', legacy: true, pricePerPeriodPence: 8_700 });
+    const preview = await previewPlanChange(deps(), org, { plan: 'pro', interval: 'month' });
+    expect(preview).toMatchObject({
+      timing: 'now',
+      current: { plan: 'growth', interval: 'month' },
+    });
+    await changePlan(deps(), { ...who(), next: { plan: 'pro', interval: 'month' } });
+    expect(calls('changePlanNow')[0]?.args[0]).toMatchObject({
+      priceId: 'price_studio_pro_monthly',
+      quantity: 1,
+    });
+    // Choosing the plan the subscription is now on: that is already the plan.
+    await expect(
+      changePlan(deps(), { ...who(), next: { plan: 'pro', interval: 'month' } }),
+    ).rejects.toBeInstanceOf(ConflictError);
+  });
+
+  it('a legacy tier subscription is shown and changed as its plan (Standard = Growth)', async () => {
+    await subscribe('studio_standard_monthly');
+    const preview = await previewPlanChange(deps(), org, { plan: 'pro', interval: 'month' });
+    expect(preview).toMatchObject({
+      timing: 'now',
+      current: { plan: 'growth', interval: 'month' },
+    });
+    const overview = await billingOverview(
+      { db, entitlements: entitlements(), now: () => NOW },
+      org,
+    );
+    expect(overview.plan).toMatchObject({ id: 'growth', legacy: true });
     expect(JSON.stringify(overview)).not.toMatch(/costPence|capPence|spent/);
   });
 });
