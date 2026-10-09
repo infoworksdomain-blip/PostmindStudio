@@ -58,6 +58,12 @@ const hardNavigateShim = {
         ? { path: join(root, 'demo', 'shims', 'marketing-media-src.ts') }
         : undefined,
     );
+    // 26.2: the brand logo and icon are inlined the same way instead of /brand/….
+    b.onResolve({ filter: /^\.\/brand-src$/ }, (args) =>
+      args.importer.replaceAll('\\', '/').includes('src/components/marketing/')
+        ? { path: join(root, 'demo', 'shims', 'brand-src.ts') }
+        : undefined,
+    );
     // The email previews (#/tour/email/*) render the real templates; their catalogue reads the
     // template list from lib/email/auth-mailer.ts, whose server-only sender lazily imports the API
     // context (Prisma, BullMQ). Left as an import() that never runs in the demo.
@@ -81,7 +87,7 @@ async function js() {
     target: ['es2020'],
     jsx: 'automatic',
     // Phase 18: the legal pages render content/legal/en-GB/*.md (text) in the demo.
-    loader: { '.md': 'text', '.webp': 'dataurl' },
+    loader: { '.md': 'text', '.webp': 'dataurl', '.png': 'dataurl' },
     tsconfig: join(root, 'tsconfig.json'),
     alias: {
       'next/link': join(root, 'demo', 'shims', 'next-link.tsx'),

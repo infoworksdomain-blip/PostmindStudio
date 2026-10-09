@@ -1763,7 +1763,8 @@
       },
       "emptyFiltered": {
         "title": "Niente da mostrare",
-        "body": "Nessun progetto corrisponde a questo filtro."
+        "body": "Nessun progetto corrisponde a questo filtro.",
+        "clear": "Mostra tutti i progetti"
       },
       "noFormats": "Nessun formato",
       "rowMeta": "{platforms} — aggiornato {updated}",
@@ -1820,7 +1821,8 @@
       },
       "emptyFiltered": {
         "title": "Niente da mostrare",
-        "body": "Nessuna pubblicazione corrisponde a questi filtri."
+        "body": "Nessuna pubblicazione corrisponde a questi filtri.",
+        "clear": "Mostra tutte le pubblicazioni"
       },
       "columns": {
         "video": "Video",
@@ -6806,6 +6808,19 @@
       "added": "Aggiunto",
       "download": "Scarica",
       "openProject": "Apri progetto"
+    }
+  },
+  "seo": {
+    "signIn": "Accedi a PostMind Studio per creare, programmare e pubblicare video brevi e post per la tua attività.",
+    "signUp": "Inizia la prova gratuita di PostMind Studio: trasforma un solo brief in video brevi e post per TikTok, Instagram, YouTube, Facebook, LinkedIn e X.",
+    "forgotPassword": "Hai dimenticato la password di PostMind Studio? Inserisci il tuo indirizzo email e ti invieremo un link sicuro per sceglierne una nuova.",
+    "legal": {
+      "terms": "I termini di utilizzo di PostMind Studio: il tuo account, l’abbonamento e la fatturazione, i contenuti che crei e pubblichi e come può cambiare il servizio.",
+      "privacy": "Come PostMind Studio raccoglie, usa, conserva e protegge i dati personali, con chi li condividiamo e quali diritti hai su di essi.",
+      "cookies": "Quali cookie imposta PostMind Studio, a cosa serve ciascuno, quanto dura e come gestirli.",
+      "acceptableUse": "Cosa puoi e non puoi creare o pubblicare con PostMind Studio e cosa succede quando un contenuto viola le regole.",
+      "dpa": "L’Accordo sul Trattamento dei Dati per i clienti business: come PostMind Studio tratta i dati personali per tuo conto e le garanzie che applichiamo.",
+      "subprocessors": "I servizi di terze parti che PostMind Studio usa per trattare i dati dei clienti, cosa fa ciascuno e dove vengono trattati i dati."
     }
   }
 }

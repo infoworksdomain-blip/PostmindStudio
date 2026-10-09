@@ -43,7 +43,7 @@ export function BlitzCardView({
         <div className={cn('size-full', !portrait && 'aspect-[4/5] h-auto max-h-full')}>
           <CardMedia card={card} active={active} />
         </div>
-        <span className="absolute start-3 top-3 rounded-full bg-background/85 px-2.5 py-1 text-[11px] font-medium text-foreground shadow-sm backdrop-blur">
+        <span className="absolute start-3 top-3 rounded-full bg-background/85 px-2.5 py-1 text-[0.6875rem] font-medium text-foreground shadow-sm backdrop-blur">
           {card.tier === 'premade' ? t('tier.premade') : t('tier.preview')}
         </span>
       </div>
@@ -51,13 +51,13 @@ export function BlitzCardView({
         <div className="flex flex-wrap items-center gap-1.5">
           <FormatChip card={card} />
           {card.angle && (
-            <span className="inline-flex max-w-full items-center truncate rounded-full bg-surface-raised px-2 py-0.5 text-[11px] font-medium text-foreground-secondary">
+            <span className="inline-flex max-w-full items-center truncate rounded-full bg-surface-raised px-2 py-0.5 text-[0.6875rem] font-medium text-foreground-secondary">
               {card.angle.title}
             </span>
           )}
           {card.mentionBusiness && (
             <span
-              className="inline-flex items-center gap-1 text-[11px] text-muted-foreground"
+              className="inline-flex items-center gap-1 text-[0.6875rem] text-muted-foreground"
               title={t('mentionsBusiness')}
             >
               <Store className="size-3" aria-hidden />
@@ -73,7 +73,7 @@ export function BlitzCardView({
             {card.whyItWorks}
           </span>
         </p>
-        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-[0.6875rem] text-muted-foreground">
           <span>
             {card.allowanceUnits < 1
               ? t('allowanceQuick')
@@ -85,7 +85,7 @@ export function BlitzCardView({
               size="xs"
               onPointerDown={(e) => e.stopPropagation()}
               onClick={onShowRemix}
-              className="text-[11px] lg:hidden"
+              className="text-[0.6875rem] lg:hidden"
             >
               <Repeat2 aria-hidden />
               {t('remix.show')}
@@ -102,7 +102,7 @@ export function RemixSource({ card }: { card: BlitzCard }) {
   if (!card.remix) return null;
   return (
     <figure className="w-full max-w-[14rem] space-y-2">
-      <figcaption className="flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+      <figcaption className="flex items-center gap-1.5 text-[0.6875rem] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
         <Repeat2 className="size-3.5" aria-hidden />
         {t('remix.title')}
       </figcaption>
@@ -115,12 +115,12 @@ export function RemixSource({ card }: { card: BlitzCard }) {
             className="size-full object-cover"
           />
         )}
-        <span className="absolute end-2 bottom-2 rounded bg-scrim px-1.5 py-0.5 text-[10px] text-white">
+        <span className="absolute end-2 bottom-2 rounded bg-scrim px-1.5 py-0.5 text-[0.625rem] text-white">
           {t('remix.seconds', { seconds: Math.round(card.remix.durationSec) })}
         </span>
       </div>
       <p className="line-clamp-2 text-xs text-muted-foreground">{card.remix.title}</p>
-      <p className="text-[11px] text-muted-foreground">{t('remix.note')}</p>
+      <p className="text-[0.6875rem] text-muted-foreground">{t('remix.note')}</p>
     </figure>
   );
 }

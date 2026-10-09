@@ -1763,7 +1763,8 @@
       },
       "emptyFiltered": {
         "title": "No hay nada aquí",
-        "body": "Ningún proyecto coincide con este filtro."
+        "body": "Ningún proyecto coincide con este filtro.",
+        "clear": "Ver todos los proyectos"
       },
       "noFormats": "Sin formatos",
       "rowMeta": "{platforms} — actualizado {updated}",
@@ -1820,7 +1821,8 @@
       },
       "emptyFiltered": {
         "title": "No hay nada aquí",
-        "body": "Ninguna publicación coincide con estos filtros."
+        "body": "Ninguna publicación coincide con estos filtros.",
+        "clear": "Ver todas las publicaciones"
       },
       "columns": {
         "video": "Vídeo",
@@ -6806,6 +6808,19 @@
       "added": "Añadido",
       "download": "Descargar",
       "openProject": "Abrir proyecto"
+    }
+  },
+  "seo": {
+    "signIn": "Inicia sesión en PostMind Studio para crear, programar y publicar vídeos cortos y publicaciones para tu negocio.",
+    "signUp": "Empieza tu prueba gratuita de PostMind Studio: convierte un solo briefing en vídeos cortos y publicaciones para TikTok, Instagram, YouTube, Facebook, LinkedIn y X.",
+    "forgotPassword": "¿Has olvidado tu contraseña de PostMind Studio? Introduce tu correo electrónico y te enviaremos un enlace seguro para elegir una nueva.",
+    "legal": {
+      "terms": "Las condiciones de uso de PostMind Studio: tu cuenta, suscripción y facturación, el contenido que creas y publicas, y cómo puede cambiar el servicio.",
+      "privacy": "Cómo PostMind Studio recopila, usa, almacena y protege los datos personales, con quién los compartimos y qué derechos tienes sobre ellos.",
+      "cookies": "Qué cookies usa PostMind Studio, para qué sirve cada una, cuánto dura y cómo controlarlas.",
+      "acceptableUse": "Qué puedes y qué no puedes crear o publicar con PostMind Studio, y qué ocurre cuando un contenido incumple las normas.",
+      "dpa": "El Acuerdo de Tratamiento de Datos para clientes empresariales: cómo PostMind Studio trata datos personales en tu nombre y qué garantías aplicamos.",
+      "subprocessors": "Los servicios de terceros que PostMind Studio usa para tratar datos de clientes, qué hace cada uno y dónde se tratan los datos."
     }
   }
 }

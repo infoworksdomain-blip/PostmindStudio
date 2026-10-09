@@ -20,6 +20,15 @@ vi.mock('../account/use-show-costs', () => ({ useShowCosts: () => false }));
 afterEach(() => vi.unstubAllGlobals());
 
 describe('AutomationWizard', () => {
+  it('shows a skeleton of the wizard while it loads, not a spinner (26.2)', () => {
+    vi.stubGlobal('fetch', () => new Promise(() => undefined));
+    const { container } = renderScreen(<AutomationWizard />);
+    expect(screen.getByRole('status', { name: 'Loading automations…' })).toHaveAttribute(
+      'aria-busy',
+    );
+    expect(container.querySelector('.animate-spin')).toBeNull();
+  });
+
   it('walks the steps, shows the summary without costs, creates and starts', async () => {
     const api = mockFetch((req) => {
       const path = req.url.pathname;

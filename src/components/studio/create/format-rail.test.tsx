@@ -43,6 +43,14 @@ describe('FormatRail (25.7)', () => {
       expect(screen.getByRole('radio', { name })).toHaveAttribute('aria-checked', 'false');
   });
 
+  it('uses the same radius as the other selectable tiles on Create (26.2)', () => {
+    render(<FormatRail value="SLIDESHOW" onChange={vi.fn()} />);
+    for (const tile of screen.getAllByRole('radio')) {
+      expect(tile).toHaveClass('rounded-lg');
+      expect(tile).not.toHaveClass('rounded-xl');
+    }
+  });
+
   it('has one tab stop (the chosen format) and selects with the arrow keys', async () => {
     const onChange = vi.fn();
     render(<Controlled onChange={onChange} />);

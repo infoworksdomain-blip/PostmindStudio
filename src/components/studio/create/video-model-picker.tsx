@@ -3,6 +3,7 @@
 import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { Check, ChevronDown, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { nextEnabled, rovingDelta } from '@/components/ui/roving';
 import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
@@ -91,22 +92,24 @@ export function VideoModelPicker(props: VideoModelPickerProps) {
         <h2 id={labelId} className="text-xs font-medium text-muted-foreground">
           {t('legend')}
         </h2>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="xs"
           aria-expanded={open}
           aria-controls={listId}
           onClick={() => setOpen((v) => !v)}
-          className="inline-flex items-center gap-1 rounded-md text-xs font-medium text-foreground-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           {open ? t('hide') : t('change')}
           <ChevronDown
             aria-hidden
+            data-icon="inline-end"
             className={cn(
-              'size-3.5 transition-transform duration-(--duration-fast)',
+              'transition-transform duration-(--duration-fast) motion-reduce:transition-none',
               open && 'rotate-180',
             )}
           />
-        </button>
+        </Button>
       </div>
       <p id={hintId} className="-mt-1 text-xs text-muted-foreground">
         {t(`hint.${source === 'UGC' ? 'UGC' : source === 'HOOK_DEMO' ? 'HOOK_DEMO' : 'BRIEF'}`)}

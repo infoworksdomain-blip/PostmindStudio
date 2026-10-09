@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Film, PanelLeftClose, PanelLeftOpen, Plus } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, Plus } from 'lucide-react';
+import { BrandIcon, BrandLogo } from '@/components/marketing/brand-mark';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { directionOf } from '@/lib/i18n/locales';
@@ -41,24 +42,14 @@ export function useSidebarCollapsed(): [boolean, (next: boolean) => void] {
   return [collapsed, update];
 }
 
-/** compact: the mark only (the name stays for screen readers). */
+/** compact: the icon only (collapsed sidebar, phone header); its alt keeps the name. */
 export function Wordmark({ compact = false }: { compact?: boolean }) {
   return (
     <Link
       href="/home"
-      className="flex min-w-0 items-center gap-2 rounded-control focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      className="flex min-w-0 items-center rounded-control focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
     >
-      <span className="grid size-7 shrink-0 place-items-center rounded-control bg-foreground text-background">
-        <Film aria-hidden className="size-4" strokeWidth={2} />
-      </span>
-      <span
-        className={cn(
-          'text-[0.95rem] leading-none font-semibold tracking-tight whitespace-nowrap',
-          compact && 'sr-only',
-        )}
-      >
-        PostMind <span className="text-muted-foreground">Studio</span>
-      </span>
+      {compact ? <BrandIcon eager /> : <BrandLogo eager className="h-9" />}
     </Link>
   );
 }

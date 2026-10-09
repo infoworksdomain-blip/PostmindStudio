@@ -1763,7 +1763,8 @@
       },
       "emptyFiltered": {
         "title": "Nothing here",
-        "body": "No projects match this filter."
+        "body": "No projects match this filter.",
+        "clear": "Show all projects"
       },
       "noFormats": "No formats",
       "rowMeta": "{platforms} — updated {updated}",
@@ -1820,7 +1821,8 @@
       },
       "emptyFiltered": {
         "title": "Nothing here",
-        "body": "No publications match these filters."
+        "body": "No publications match these filters.",
+        "clear": "Show all publications"
       },
       "columns": {
         "video": "Video",
@@ -6806,6 +6808,19 @@
       "added": "Added",
       "download": "Download",
       "openProject": "Open project"
+    }
+  },
+  "seo": {
+    "signIn": "Sign in to PostMind Studio to create, schedule and publish short videos and posts for your business.",
+    "signUp": "Start a free PostMind Studio trial: turn one brief into short videos and posts for TikTok, Instagram, YouTube, Facebook, LinkedIn and X.",
+    "forgotPassword": "Forgotten your PostMind Studio password? Enter your email address and we’ll send you a secure link to choose a new one.",
+    "legal": {
+      "terms": "The terms for using PostMind Studio: your account, subscription and billing, the content you create and publish, and how the service can change.",
+      "privacy": "How PostMind Studio collects, uses, stores and protects personal data, who we share it with, and the rights you have over it.",
+      "cookies": "Which cookies PostMind Studio sets, what each one is for, how long it lasts and how to control them.",
+      "acceptableUse": "What you may and may not create or publish with PostMind Studio, and what happens when content breaks the rules.",
+      "dpa": "The Data Processing Agreement for business customers: how PostMind Studio processes personal data on your behalf and the safeguards we apply.",
+      "subprocessors": "The third-party services PostMind Studio uses to process customer data, what each one does and where the data is handled."
     }
   }
 }

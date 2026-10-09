@@ -40,7 +40,7 @@ function StepChain({ workflow }: { workflow: ApprovalWorkflow }) {
           <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-raised px-2.5 py-1 text-xs">
             <span
               aria-hidden
-              className="inline-flex size-4 items-center justify-center rounded-full bg-background text-[10px] font-medium text-muted-foreground tabular"
+              className="inline-flex size-4 items-center justify-center rounded-full bg-background text-[0.625rem] font-medium text-muted-foreground tabular"
             >
               {f.number(index + 1)}
             </span>
@@ -76,7 +76,8 @@ function WorkflowCard({
     <li className="flex flex-col gap-3 py-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="font-medium">{workflow.name}</h3>
+          {/* 26.2: h2 under the page h1 (was h3, a skipped level); styled as before. */}
+          <h2 className="min-w-0 font-medium break-words">{workflow.name}</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {describeAppliesTo(workflow.appliesTo, businessNames)}
           </p>

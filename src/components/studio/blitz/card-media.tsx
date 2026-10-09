@@ -159,7 +159,7 @@ function PreviewMedia({ card }: { card: BlitzCard }) {
         {card.hook}
       </p>
       <div className="absolute inset-x-4 bottom-4 rounded-xl bg-scrim p-3 text-white backdrop-blur-sm">
-        <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.14em] uppercase">
+        <p className="mb-1.5 flex items-center gap-1.5 text-[0.6875rem] font-semibold tracking-[0.14em] uppercase">
           <ListOrdered className="size-3" aria-hidden />
           {t('beats')}
         </p>

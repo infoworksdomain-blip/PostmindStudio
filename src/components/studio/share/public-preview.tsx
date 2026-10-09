@@ -5,6 +5,7 @@ import { Loader2, Send } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { ApiError, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
@@ -144,8 +145,16 @@ export function PublicPreview({
     );
   if (!data)
     return (
-      <main className="flex min-h-[50vh] items-center justify-center" aria-label={t('loading')}>
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      // 26.2: a skeleton of the page (title, intro, the variant grid), not a lone spinner.
+      <main className="mx-auto max-w-5xl px-4 py-10" aria-label={t('loading')} aria-busy>
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="mt-3 h-10 w-2/3" />
+        <Skeleton className="mt-3 h-4 w-1/2" />
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <Skeleton className="aspect-[9/16] w-full rounded-lg" />
+          <Skeleton className="aspect-[9/16] w-full rounded-lg max-sm:hidden" />
+          <Skeleton className="aspect-[9/16] w-full rounded-lg max-lg:hidden" />
+        </div>
       </main>
     );
 

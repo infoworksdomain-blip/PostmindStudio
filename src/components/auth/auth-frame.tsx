@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { BrandLogo } from '@/components/marketing/brand-mark';
 import { LanguageSwitcher } from '@/components/studio/i18n/language-switcher';
 import { imgProps, STUDIO_CLIPS, type StudioClip } from '@/lib/marketing/media';
 import { marketingSrc } from '@/lib/marketing/media-src';
@@ -13,16 +14,15 @@ import { cn } from '@/lib/utils';
 // The interface language switcher sits in the top corner: these screens have no header, and a
 // visitor must be able to read them in their own language before they have an account.
 
-/** "PostMind Studio" with the vermilion record dot, the product's one accent. */
+/** The PostMind Studio logo (26.2 artwork), linking to the home page. */
 export function AuthWordmark() {
   const t = useTranslations('auth.shell');
   return (
     <Link
       href="/"
-      className="inline-flex items-center gap-2 rounded-control text-[0.95rem] leading-none font-semibold tracking-tight focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+      className="inline-flex items-center rounded-control focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
     >
-      <span aria-hidden className="size-2.5 rounded-full bg-primary" />
-      {t('brand')}
+      <BrandLogo eager className="h-9" label={t('brand')} />
     </Link>
   );
 }

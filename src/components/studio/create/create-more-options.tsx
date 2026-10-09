@@ -3,6 +3,7 @@
 import { useId, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { Button } from '@/components/ui/button';
 import type { BrandKit } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import type { ProjectTemplate } from '../automation/automation';
@@ -78,22 +79,25 @@ export function MoreOptions(props: MoreOptionsProps) {
   const isCarousel = state.source === 'CAROUSEL';
   return (
     <div className="@container grid gap-4">
-      <button
+      {/* 26.2: the Button primitive (ghost, sm), like the planner's "More options" toggle. */}
+      <Button
         type="button"
+        variant="ghost"
+        size="sm"
+        className="justify-self-start"
         aria-expanded={open}
         aria-controls="create-options"
         onClick={props.onToggle}
-        className="inline-flex items-center gap-1.5 justify-self-start rounded-md text-sm font-medium text-foreground-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
         <ChevronDown
           aria-hidden
           className={cn(
-            'size-4 transition-transform duration-(--duration-fast)',
+            'transition-transform duration-(--duration-fast) motion-reduce:transition-none',
             open && 'rotate-180',
           )}
         />
         {t('moreOptions')}
-      </button>
+      </Button>
       {open && (
         <div id="create-options" className="grid gap-5">
           <Group title={t('groups.format')}>

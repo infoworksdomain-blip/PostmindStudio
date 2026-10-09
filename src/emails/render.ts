@@ -166,6 +166,7 @@ function layoutFor(locale: Locale, messages: Messages, input: RenderInput): Emai
     dir: directionOf(locale),
     subject: content.subject,
     brand: t('email.layout.brand'),
+    logoUrl: absolute(input.appUrl, '/brand/logo-light.png'),
     greeting: name ? t('email.layout.greeting', { name }) : t('email.layout.greetingAnonymous'),
     heading: content.heading,
     body: content.body,

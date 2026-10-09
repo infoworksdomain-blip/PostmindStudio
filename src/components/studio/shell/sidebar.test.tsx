@@ -60,6 +60,14 @@ describe('Sidebar', () => {
     expect(screen.queryByRole('link', { name: 'Create a new post' })).toBeNull();
   });
 
+  it('shows the brand lockup linking to Home when expanded', async () => {
+    mockFetch([{ match: '/onboarding', body: onboarding(false) }]);
+    renderWithSWR(withLocale('en-GB', <Harness />));
+    const link = await screen.findByRole('link', { name: 'PostMind Studio' });
+    expect(link).toHaveAttribute('href', '/home');
+    expect(link.querySelector('img[data-brand-logo="light"]')).not.toBeNull();
+  });
+
   it('folds into an icon rail and remembers it', async () => {
     mockFetch([{ match: '/onboarding', body: onboarding(false) }]);
     const user = userEvent.setup();
@@ -68,6 +76,12 @@ describe('Sidebar', () => {
     expect(window.localStorage.getItem(SIDEBAR_STORAGE_KEY)).toBe('1');
     // Names stay for screen readers in the rail.
     expect(screen.getByRole('link', { name: 'Calendar' })).toBeInTheDocument();
+    // 26.2: the rail shows the brand icon alone, still named.
+    expect(screen.getByRole('link', { name: 'PostMind Studio' })).toHaveAttribute('href', '/home');
+    expect(screen.getByRole('img', { name: 'PostMind Studio' })).toHaveAttribute(
+      'src',
+      '/brand/icon-64.png',
+    );
     unmount();
 
     renderWithSWR(withLocale('en-GB', <Harness />));

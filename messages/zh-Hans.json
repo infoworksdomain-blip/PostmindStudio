@@ -1763,7 +1763,8 @@
       },
       "emptyFiltered": {
         "title": "这里没有内容",
-        "body": "没有符合此筛选条件的项目。"
+        "body": "没有符合此筛选条件的项目。",
+        "clear": "显示全部项目"
       },
       "noFormats": "无格式",
       "rowMeta": "{platforms} — 更新于 {updated}",
@@ -1820,7 +1821,8 @@
       },
       "emptyFiltered": {
         "title": "这里没有内容",
-        "body": "没有符合这些筛选条件的发布。"
+        "body": "没有符合这些筛选条件的发布。",
+        "clear": "显示全部发布"
       },
       "columns": {
         "video": "视频",
@@ -6806,6 +6808,19 @@
       "added": "添加时间",
       "download": "下载",
       "openProject": "打开项目"
+    }
+  },
+  "seo": {
+    "signIn": "登录 PostMind Studio，为您的企业创建、排期并发布短视频和帖子。",
+    "signUp": "开始 PostMind Studio 免费试用：用一份简报为 TikTok、Instagram、YouTube、Facebook、LinkedIn 和 X 生成短视频和帖子。",
+    "forgotPassword": "忘记了 PostMind Studio 密码？输入您的邮箱地址，我们会发送一个安全链接，供您设置新密码。",
+    "legal": {
+      "terms": "PostMind Studio 的使用条款：您的账户、订阅与计费、您创建和发布的内容，以及服务可能如何变更。",
+      "privacy": "PostMind Studio 如何收集、使用、存储和保护个人数据，我们会与谁共享，以及您对这些数据享有的权利。",
+      "cookies": "PostMind Studio 设置了哪些 Cookie、各自的用途和保留时长，以及您如何管理它们。",
+      "acceptableUse": "您可以和不可以使用 PostMind Studio 创建或发布哪些内容，以及内容违反规则时会怎样处理。",
+      "dpa": "面向企业客户的数据处理协议：PostMind Studio 如何代表您处理个人数据，以及我们采取的保障措施。",
+      "subprocessors": "PostMind Studio 用于处理客户数据的第三方服务、各自的职责以及数据的处理地点。"
     }
   }
 }
