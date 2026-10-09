@@ -56,7 +56,7 @@ describe('entitlementQuota (pure)', () => {
   it('trial allowance replaces the tier allowance', () => {
     const trial = trialStateFor(new Date(NOW), null);
     expect(entitlementQuota(base, { ...NO_PLAN_ENTITLEMENTS, trial })).toMatchObject({
-      shortVideos: 5,
+      shortVideos: 2, // 26.1: the trial is 2 HD videos (was 5)
       longVideos: 0,
       longMaxSec: 180,
     });
