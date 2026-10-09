@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { BRAND_SRC } from './brand-src';
 
 // 26.2 — the PostMind Studio artwork (public/brand/, built from assets/brand/ by
 // scripts/brand/build-brand-assets.mjs). BrandLogo is the lockup (film-strip play icon, "PostMind",
@@ -20,11 +21,12 @@ function LogoPicture({
   eager: boolean;
   className: string;
 }) {
+  const src = variant === 'light' ? BRAND_SRC.logoLight : BRAND_SRC.logoDark;
   return (
     <picture className={className}>
-      <source type="image/webp" srcSet={`/brand/logo-${variant}.webp`} />
+      <source type="image/webp" srcSet={src.webp} />
       <img
-        src={`/brand/logo-${variant}.png`}
+        src={src.png}
         alt=""
         width={LOGO.width}
         height={LOGO.height}
@@ -75,7 +77,7 @@ export function BrandIcon({
   return (
     // eslint-disable-next-line @next/next/no-img-element -- a 3 KB static PNG; no optimiser needed
     <img
-      src="/brand/icon-64.png"
+      src={BRAND_SRC.icon}
       alt={label ?? ''}
       aria-hidden={label ? undefined : true}
       width={28}
