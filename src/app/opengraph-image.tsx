@@ -5,8 +5,10 @@ import { STUDIO_CLIPS } from '@/lib/marketing/media';
 
 // 25.5 — the link-preview image for every public page (Open Graph and X cards), 1200×630: the
 // Daylight canvas, the PostMind mark, the headline and a real Studio poster frame in a phone.
-// Type: the renderer's bundled Noto Sans (Geist ships only as WOFF2 and the variable TTFs in
-// public/fonts are not readable by the image renderer). Rendered at build time from public/.
+// 26.2: set in Geist, the site's typeface: static 400 and 600 instances in public/fonts/og (the
+// renderer reads TTF only and draws a variable font's default; scripts/fonts/geist-og-instances.mjs
+// builds them from the @fontsource-variable/geist WOFF2). Rendered at build time from public/.
+// src/app/twitter-image.tsx serves the same image for X cards.
 
 export const alt = 'PostMind Studio: create, plan and publish short videos from one brief';
 export const size = { width: 1200, height: 630 };
@@ -16,6 +18,11 @@ const INK = '#1a1d22';
 const INK_2 = '#5c6370';
 const CANVAS = '#f7f8fa';
 const SIGNAL = '#e2552f';
+const FAMILY = 'Geist';
+
+async function geist(file: string): Promise<Buffer> {
+  return readFile(join(process.cwd(), 'public', 'fonts', 'og', file));
+}
 
 export default async function OpengraphImage() {
   const root = process.cwd();
@@ -23,6 +30,10 @@ export default async function OpengraphImage() {
     join(root, 'public', 'marketing', STUDIO_CLIPS.seedanceBread.poster.fallback.path),
   );
   const posterSrc = `data:image/jpeg;base64,${poster.toString('base64')}`;
+  const [regular, semiBold] = await Promise.all([
+    geist('Geist-Regular.ttf'),
+    geist('Geist-SemiBold.ttf'),
+  ]);
 
   return new ImageResponse(
     <div
@@ -32,6 +43,7 @@ export default async function OpengraphImage() {
         display: 'flex',
         background: CANVAS,
         color: INK,
+        fontFamily: FAMILY,
         padding: '64px 72px',
       }}
     >
@@ -50,7 +62,7 @@ export default async function OpengraphImage() {
           >
             <div style={{ width: 18, height: 18, borderRadius: 9, background: SIGNAL }} />
           </div>
-          <div style={{ fontSize: 30, letterSpacing: -0.5, display: 'flex' }}>
+          <div style={{ fontSize: 30, fontWeight: 600, letterSpacing: '-0.02em', display: 'flex' }}>
             PostMind&nbsp;<span style={{ color: INK_2 }}>Studio</span>
           </div>
         </div>
@@ -58,8 +70,9 @@ export default async function OpengraphImage() {
           style={{
             marginTop: 'auto',
             fontSize: 68,
+            fontWeight: 600,
             lineHeight: 1.04,
-            letterSpacing: -2.5,
+            letterSpacing: '-0.035em',
             display: 'flex',
             flexWrap: 'wrap',
           }}
@@ -90,6 +103,12 @@ export default async function OpengraphImage() {
         />
       </div>
     </div>,
-    size,
+    {
+      ...size,
+      fonts: [
+        { name: FAMILY, data: regular, weight: 400, style: 'normal' },
+        { name: FAMILY, data: semiBold, weight: 600, style: 'normal' },
+      ],
+    },
   );
 }

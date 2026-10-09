@@ -6835,5 +6835,18 @@
       "download": "Herunterladen",
       "openProject": "Projekt öffnen"
     }
+  },
+  "seo": {
+    "signIn": "Melden Sie sich bei PostMind Studio an, um kurze Videos und Beiträge für Ihr Unternehmen zu erstellen, zu planen und zu veröffentlichen.",
+    "signUp": "Starten Sie Ihre kostenlose Testversion von PostMind Studio: Aus einem Briefing werden kurze Videos und Beiträge für TikTok, Instagram, YouTube, Facebook, LinkedIn und X.",
+    "forgotPassword": "Passwort für PostMind Studio vergessen? Geben Sie Ihre E-Mail-Adresse ein, und wir senden Ihnen einen sicheren Link, um ein neues festzulegen.",
+    "legal": {
+      "terms": "Die Bedingungen für die Nutzung von PostMind Studio: Ihr Konto, Abonnement und Abrechnung, die Inhalte, die Sie erstellen und veröffentlichen, und wie sich der Dienst ändern kann.",
+      "privacy": "Wie PostMind Studio personenbezogene Daten erhebt, nutzt, speichert und schützt, an wen wir sie weitergeben und welche Rechte Sie daran haben.",
+      "cookies": "Welche Cookies PostMind Studio setzt, wofür jedes einzelne dient, wie lange es gespeichert bleibt und wie Sie sie steuern.",
+      "acceptableUse": "Was Sie mit PostMind Studio erstellen oder veröffentlichen dürfen und was nicht, und was passiert, wenn Inhalte gegen die Regeln verstoßen.",
+      "dpa": "Die Vereinbarung zur Datenverarbeitung für Geschäftskunden: wie PostMind Studio personenbezogene Daten in Ihrem Auftrag verarbeitet und welche Schutzmaßnahmen gelten.",
+      "subprocessors": "Die Drittanbieter, die PostMind Studio zur Verarbeitung von Kundendaten einsetzt, was jeder davon tut und wo die Daten verarbeitet werden."
+    }
   }
 }

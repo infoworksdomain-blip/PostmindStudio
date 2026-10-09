@@ -12,14 +12,29 @@ export function siteOrigin(env: Record<string, string | undefined> = process.env
   }
 }
 
-/** Public, indexable paths: the marketing pages and the six legal documents. */
+// 26.2: when each public page's content last changed meaningfully (the sitemap's <lastmod>). Bump
+// the date when a page's copy changes; legal documents also carry their own "last updated" line.
+const LAST_MODIFIED: Record<string, string> = {
+  '/': '2026-10-09',
+  '/pricing': '2026-10-09',
+  '/sign-in': '2026-10-07',
+  '/sign-up': '2026-10-07',
+};
+const LEGAL_LAST_MODIFIED = '2026-10-04';
+
+/** Public, indexable paths: the marketing pages, sign-in/up and the six legal documents. */
 export function publicPaths(): string[] {
-  return ['/', '/pricing', ...LEGAL_DOCS.map((doc) => `/legal/${doc}`)];
+  return [...Object.keys(LAST_MODIFIED), ...LEGAL_DOCS.map((doc) => `/legal/${doc}`)];
 }
 
-/** Paths crawlers must stay out of: the API, the signed-in app, shared review links, Meta callbacks. */
+export function lastModified(path: string): string {
+  return LAST_MODIFIED[path] ?? LEGAL_LAST_MODIFIED;
+}
+
+/**
+ * Paths crawlers must stay out of: the API, the signed-in app, shared review links, Meta
+ * callbacks. robots.txt rules are prefix matches, so "/projects" also covers "/projects/…".
+ */
 export function disallowedPaths(): string[] {
-  return ['/api/', ...PROTECTED_PAGE_PREFIXES.map((p) => `${p}/`), '/p/', '/meta/'].concat(
-    PROTECTED_PAGE_PREFIXES.map((p) => p),
-  );
+  return ['/api/', ...PROTECTED_PAGE_PREFIXES, '/p/', '/meta/'];
 }

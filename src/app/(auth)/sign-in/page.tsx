@@ -1,11 +1,22 @@
 import type { Metadata } from 'next';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { SignInForm } from '@/components/auth/sign-in-form';
 import { authPageOptions, nextParam, param, type SearchParams } from '@/lib/auth/page-options';
+import { publicPageMetadata } from '@/lib/seo/page-metadata';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations('auth.signIn');
-  return { title: t('title') };
+  const [t, seo, meta] = await Promise.all([
+    getTranslations('auth.signIn'),
+    getTranslations('seo'),
+    getTranslations('marketing.meta'),
+  ]);
+  return publicPageMetadata({
+    path: '/sign-in',
+    title: t('title'),
+    description: seo('signIn'),
+    locale: await getLocale(),
+    imageAlt: meta('ogAlt'),
+  });
 }
 
 export default async function SignInPage({ searchParams }: { searchParams: SearchParams }) {

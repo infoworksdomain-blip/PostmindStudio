@@ -6835,5 +6835,18 @@
       "download": "Transferir",
       "openProject": "Abrir projeto"
     }
+  },
+  "seo": {
+    "signIn": "Inicie sessão no PostMind Studio para criar, agendar e publicar vídeos curtos e publicações para o seu negócio.",
+    "signUp": "Inicie o seu período de avaliação gratuito do PostMind Studio: transforme um único briefing em vídeos curtos e publicações para TikTok, Instagram, YouTube, Facebook, LinkedIn e X.",
+    "forgotPassword": "Esqueceu-se da palavra-passe do PostMind Studio? Indique o seu e-mail e enviaremos uma ligação segura para escolher uma nova.",
+    "legal": {
+      "terms": "Os termos de utilização do PostMind Studio: a sua conta, subscrição e faturação, o conteúdo que cria e publica e como o serviço pode mudar.",
+      "privacy": "Como o PostMind Studio recolhe, utiliza, armazena e protege dados pessoais, com quem os partilhamos e que direitos tem sobre eles.",
+      "cookies": "Que cookies o PostMind Studio utiliza, para que serve cada um, quanto tempo duram e como os controlar.",
+      "acceptableUse": "O que pode ou não criar e publicar com o PostMind Studio e o que acontece quando um conteúdo viola as regras.",
+      "dpa": "O Acordo de Processamento de Dados para clientes empresariais: como o PostMind Studio trata dados pessoais em seu nome e as salvaguardas que aplicamos.",
+      "subprocessors": "Os serviços de terceiros que o PostMind Studio utiliza para tratar dados de clientes, o que cada um faz e onde os dados são tratados."
+    }
   }
 }
