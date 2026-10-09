@@ -6,7 +6,7 @@ import type { AuditEntry } from '../../audit';
 import { AuditAction } from '../../audit-sink';
 import { ConflictError, NotFoundError, ValidationError } from '../../errors';
 import { PLAN_CATALOGUE, sellableTopUpPack } from './catalogue';
-import { assertChannelCount, CHANNEL_LOOKUP_KEYS, CHANNEL_PLAN_TIER } from './channel-plan';
+import { assertPlanChoice, PLAN_TIER, planLookupKey } from './plans';
 import type { BillingInvoice, BillingService, CheckoutRequest } from './contracts';
 import { trialDays } from './entitlements';
 import type { StripeGateway } from './gateway';
@@ -136,13 +136,11 @@ export function checkoutParams(input: {
   appUrl: string;
 }): Stripe.Checkout.SessionCreateParams {
   const { request } = input;
-  // 21.5: the subscription's one item has quantity = channels; a pack is bought once.
-  const quantity = request.intent.kind === 'channels' ? request.intent.channels : 1;
   const common = {
     customer: input.customer,
     client_reference_id: request.organisationId,
     locale: stripeLocale(request.locale),
-    line_items: [{ price: input.priceLookup.priceId, quantity }],
+    line_items: [{ price: input.priceLookup.priceId, quantity: 1 }],
     automatic_tax: { enabled: true },
     tax_id_collection: { enabled: true },
     billing_address_collection: 'required' as const,
@@ -190,10 +188,9 @@ export function createBillingService(deps: BillingServiceDeps): BillingService {
       let lookupKey: string;
       let intentLabel: string;
       let trialPeriodDays: number | null = null;
-      if (request.intent.kind === 'channels') {
-        assertChannelCount(request.intent.channels);
-        const key = CHANNEL_LOOKUP_KEYS[request.intent.interval];
-        if (!key) throw new ValidationError('That billing period cannot be bought online');
+      if (request.intent.kind === 'plan') {
+        const choice = assertPlanChoice(request.intent);
+        const key = planLookupKey(choice.plan, choice.interval);
         const current = governingSubscription(
           await deps.db.subscription.findMany({
             where: { organisationId: request.organisationId },
@@ -206,8 +203,8 @@ export function createBillingService(deps: BillingServiceDeps): BillingService {
           );
         }
         lookupKey = key;
-        intentLabel = `sub_${key}_${request.intent.channels}`;
-        const planTrial = PLAN_CATALOGUE[CHANNEL_PLAN_TIER].trialDays > 0;
+        intentLabel = `sub_${key}`;
+        const planTrial = PLAN_CATALOGUE[PLAN_TIER].trialDays > 0;
         const days = trialDays(deps.env);
         if (planTrial && days > 0 && (await trialEligible(deps.db, request.organisationId)))
           trialPeriodDays = days;
@@ -243,7 +240,10 @@ export function createBillingService(deps: BillingServiceDeps): BillingService {
         metadata: {
           lookupKey,
           trialPeriodDays,
-          ...(request.intent.kind === 'channels' && { channels: request.intent.channels }),
+          ...(request.intent.kind === 'plan' && {
+            plan: request.intent.plan,
+            interval: request.intent.interval,
+          }),
         },
       });
       return { url: session.url };

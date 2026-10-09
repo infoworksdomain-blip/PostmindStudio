@@ -48,8 +48,8 @@ function schedule(
 }
 
 describe('pendingChangeOf (the next phase of an attached schedule)', () => {
-  const monthly = { id: 'price_m', lookup_key: 'studio_channel_monthly' } as Stripe.Price;
-  const weekly = { id: 'price_w', lookup_key: 'studio_channel_weekly' } as Stripe.Price;
+  const monthly = { id: 'price_m', lookup_key: 'studio_growth_monthly' } as Stripe.Price;
+  const weekly = { id: 'price_w', lookup_key: 'studio_growth_weekly' } as Stripe.Price;
 
   it('reads the quantity, price and lookup key starting when the current phase ends', () => {
     const s = schedule([
@@ -59,7 +59,7 @@ describe('pendingChangeOf (the next phase of an attached schedule)', () => {
     expect(pendingChangeOf(s, now)).toEqual({
       quantity: 2,
       priceId: 'price_w',
-      lookupKey: 'studio_channel_weekly',
+      lookupKey: 'studio_growth_weekly',
       effectiveAt: new Date('2026-11-01T00:00:00Z'),
     });
   });
@@ -106,11 +106,11 @@ describe('toSubscriptionState (21.5 fields)', () => {
             current_period_end: sec('2026-10-13T00:00:00Z'),
             price: {
               id: 'price_w',
-              lookup_key: 'studio_channel_weekly',
+              lookup_key: 'studio_growth_weekly',
               unit_amount: 950,
               currency: 'gbp',
               recurring: { interval: 'week' },
-              product: 'studio_channel',
+              product: 'studio_plan_growth',
             },
           },
         ],
@@ -120,7 +120,7 @@ describe('toSubscriptionState (21.5 fields)', () => {
       itemId: 'si_1',
       interval: 'week',
       quantity: 4,
-      lookupKey: 'studio_channel_weekly',
+      lookupKey: 'studio_growth_weekly',
       scheduleId: 'sub_sched_1',
       pendingChange: { quantity: 2, effectiveAt: new Date('2026-10-13T00:00:00Z') },
       hasPendingUpdate: true,

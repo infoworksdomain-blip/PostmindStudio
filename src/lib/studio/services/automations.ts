@@ -10,7 +10,6 @@ import {
   validateTargets,
   type AutoPublishTarget,
 } from '../automation/targets';
-import { channelPlanForOrganisation } from '../billing/channels';
 import type { EntitlementsReader } from '../billing/entitlements-reader';
 import { allocateFormats, allowanceQuartersFor, keepCheapestFirst } from '../blitz/allocate';
 import { availableFormats, FORMATS, platformsFor, type FormatKey } from '../blitz/formats';
@@ -32,7 +31,6 @@ import {
 } from '../content-plans/slots';
 import { weeklySlots } from '../content-plans/weekly-slots';
 import { DEFAULT_LANGUAGE, languageInput } from '../languages';
-import { PLATFORM_RULES } from '../platforms/rules';
 import type { PlanTier } from '../providers/router';
 import { jobIds, type JobQueue } from '../queue/enqueue';
 import { isUgcLanguage } from '../ugc/style';
@@ -155,25 +153,6 @@ export async function findAutomation(
 
 // ------------------------------------------------------------------ create / edit
 
-/** 21.5: an automation posts to at most as many networks as the plan has channels. */
-async function assertChannels(
-  db: PrismaClient,
-  organisationId: string,
-  platforms: readonly string[],
-  now: number,
-) {
-  const plan = await channelPlanForOrganisation(db, organisationId, new Date(now));
-  if (!plan) return;
-  const networks = new Set(
-    platforms.map((p) => PLATFORM_RULES[p as keyof typeof PLATFORM_RULES].connectionPlatform),
-  );
-  if (networks.size > plan.channels)
-    throw new ValidationError(
-      `Your plan includes ${plan.channels} ${plan.channels === 1 ? 'channel' : 'channels'}; choose at most that many networks`,
-      { code: 'channel_limit', channels: plan.channels, networks: [...networks] },
-    );
-}
-
 function defaultName(input: Pick<CreateAutomationInput, 'duration' | 'cadence'>): string {
   const cadence =
     input.cadence.mode === 'per_day'
@@ -203,7 +182,6 @@ export async function createAutomation(
       `A business can have at most ${MAX_AUTOMATIONS_PER_BUSINESS} automations at once`,
       { code: 'too_many_automations' },
     );
-  await assertChannels(deps.db, tenant.organisationId, input.platforms, deps.now());
   assertMayConfigureTargets(tenant, input.targets);
   await validateTargets(deps.db, tenant.organisationId, input.targets, input.platforms);
   return deps.db.automation.create({
@@ -236,7 +214,6 @@ export async function updateAutomation(
   if (automation.status !== 'DRAFT')
     throw new ConflictError('Only a draft automation can be changed; pause it and start a new one');
   const platforms = input.platforms ?? automation.platforms;
-  if (input.platforms) await assertChannels(deps.db, tenant.organisationId, platforms, deps.now());
   if (input.targets) {
     assertMayConfigureTargets(tenant, input.targets);
     await validateTargets(deps.db, tenant.organisationId, input.targets, platforms);
@@ -519,7 +496,6 @@ export async function startAutomation(
     throw new ConflictError(`The automation is ${automation.status}`, {
       status: automation.status,
     });
-  await assertChannels(deps.db, tenant.organisationId, automation.platforms, deps.now());
   const mix = await getMix(deps.db, {
     organisationId: automation.organisationId,
     businessId: automation.businessId,

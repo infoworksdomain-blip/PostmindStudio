@@ -15,7 +15,12 @@ describe('billing email params', () => {
   });
 
   it('turns a tier or lookup key into the plan name; the channel plan is the product name', () => {
-    expect(planDisplayName('studio_channel_monthly')).toBe('PostMind Studio');
+    expect(planDisplayName('studio_growth_monthly')).toBe('Growth');
+    expect(planDisplayName('studio_pro_weekly')).toBe('Pro');
+    // A 21.5 channel price is named by the plan its quantity maps to.
+    expect(planDisplayName('studio_channel_monthly')).toBe('Starter');
+    expect(planDisplayName('studio_channel_monthly', 3)).toBe('Growth');
+    expect(planDisplayName('studio_channel_yearly', 6)).toBe('Pro');
     expect(planDisplayName('STANDARD')).toBe('PostMind Studio');
     expect(planDisplayName('studio_plus_yearly')).toBe('Plus');
     expect(planDisplayName(null)).toBeNull();

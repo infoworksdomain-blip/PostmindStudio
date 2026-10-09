@@ -4,7 +4,7 @@ import { createStripeClient } from '../../src/lib/studio/billing/stripe-client';
 import { portalConfigurationParams } from '../../src/lib/studio/billing/stripe-setup';
 
 // Phase 18 §2.7 / 21.5 — create (or update) the Stripe Customer Portal configuration Studio uses:
-// payment methods, invoices, billing details and tax ids ONLY. Changing channels or the billing
+// payment methods, invoices, billing details and tax ids ONLY. Changing the plan or the billing
 // interval, cancelling and resuming happen on Studio's "Your plan" page (/settings/billing), so
 // the portal's subscription update and cancel features are turned off.
 //

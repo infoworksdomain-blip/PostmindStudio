@@ -1,8 +1,8 @@
 // BACKLOG 23.3 (operator decision 2026-10-06, "cheap posts count ¼"): a carousel, a slideshow, a
 // wall-of-text video and a hook + demo video each count as ONE QUARTER of a video against the
 // plan allowance and against HD video packs; an AI video still counts as 1 and a UGC actor video
-// as 2 (ugc/allowance.ts). So the per-channel plan's 8 HD videos a channel a month give up to 32
-// quick posts (weekly 2 videos → 8 quick posts a week; yearly 96 a year → 32 quick posts a month).
+// as 2 (ugc/allowance.ts). So Starter's 8 HD videos a month give up to 32 quick posts (Growth 20 →
+// 80, Pro 45 → 180; weekly 2 / 5 / 11 videos → 8 / 20 / 44 quick posts a week; yearly per month).
 // These posts cost us 3–41p each (measured on production), so a month of 3 posts a day must fit.
 //
 // DECISION (representation): everything that adds up or stores allowance counts in QUARTERS of a
