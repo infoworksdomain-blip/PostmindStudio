@@ -12,7 +12,7 @@ import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { EmptyState, ErrorState, Section } from '../../primitives';
 import { OrganisationPanel } from '../organisation-panel';
-import { ChannelPlanLabel, OrganisationDetail, TrialLabel } from './organisation-detail';
+import { OrganisationDetail, StudioPlanLabel, TrialLabel } from './organisation-detail';
 import { StatusBadge } from './status-badge';
 import type { AdminOrgRow, AdminOrgsResponse } from './types';
 
@@ -90,7 +90,7 @@ function OrganisationsTable({
       cell: (o) => (
         <>
           {o.tier ?? '–'}
-          <ChannelPlanLabel plan={o.channelPlan} />
+          <StudioPlanLabel plan={o.studioPlan} />
         </>
       ),
     },

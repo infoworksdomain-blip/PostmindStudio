@@ -18,7 +18,7 @@ import {
   allowanceWindowFor,
   isoWeekWindow,
   isWeekWindowKey,
-} from '../billing/channel-plan';
+} from '../billing/plans';
 import { consumeCredit } from '../billing/credits';
 import type { Entitlements, EntitlementsReader } from '../billing/entitlements-reader';
 import { withQuotaLock } from '../billing/quota-lock';
@@ -82,8 +82,8 @@ export interface TierQuota {
   /** Longest long video; null = unlimited. */
   longMaxSec: number | null;
   platforms: PlatformRule;
-  /** 21.5: the allowance is a per-channel plan's (messages say "your plan", not a tier). */
-  channelPlan?: boolean;
+  /** 26.1: the allowance is a Starter / Growth / Pro plan's (messages say "your plan"). */
+  studioPlan?: boolean;
   /** 21.5: the window the allowance counts in (default month). */
   period?: 'week' | 'month';
 }
@@ -132,26 +132,26 @@ export function entitlementQuota(base: TierQuota, entitlements?: Entitlements): 
       ...base,
       shortVideos: entitlements.trial.shortVideos,
       longVideos: entitlements.trial.longVideos,
-      ...(entitlements.channelPlan && { longMaxSec: 0 }),
+      ...(entitlements.plan && { longMaxSec: 0 }),
     };
   }
-  // 21.5: a per-channel plan includes 8 videos per channel a month (2 a week weekly; yearly 8 a
-  // calendar month) and no long videos; staff custom limits still win below.
-  const plan = entitlements.channelPlan;
-  const withChannels: TierQuota = plan
+  // 26.1: a plan includes its HD videos a month (a week on weekly; yearly per calendar month) and
+  // no long videos; staff custom limits still win below.
+  const plan = entitlements.plan;
+  const withPlan: TierQuota = plan
     ? {
         ...base,
-        shortVideos: allowancePerWindow(plan.channels, plan.interval),
+        shortVideos: allowancePerWindow(plan.id, plan.interval),
         longVideos: 0,
         longMaxSec: 0,
-        channelPlan: true,
+        studioPlan: true,
         period: ALLOWANCE_WINDOW[plan.interval],
       }
     : base;
   const custom = entitlements.custom;
-  if (!custom) return withChannels;
+  if (!custom) return withPlan;
   return {
-    ...withChannels,
+    ...withPlan,
     ...(custom.shortVideos !== undefined && { shortVideos: custom.shortVideos }),
     ...(custom.longVideos !== undefined && { longVideos: custom.longVideos }),
     ...(custom.longMaxSec !== undefined && { longMaxSec: custom.longMaxSec }),
@@ -159,11 +159,11 @@ export function entitlementQuota(base: TierQuota, entitlements?: Entitlements): 
 }
 
 /**
- * 21.5: the window the allowance is counted in: an ISO week for a weekly channel plan, the
+ * 21.5 / 26.1: the window the allowance is counted in: an ISO week for a weekly plan, the
  * calendar month (UTC) for everything else (monthly, yearly — 8 a month — trials, tiers).
  */
 export function allowanceWindow(entitlements: Entitlements | undefined, now: number): MonthWindow {
-  const plan = entitlements?.channelPlan;
+  const plan = entitlements?.plan;
   const kind = plan && !entitlements?.trial ? ALLOWANCE_WINDOW[plan.interval] : 'month';
   return allowanceWindowFor(kind, now);
 }
@@ -394,15 +394,15 @@ function nextTier(tier: PlanTier): PlanTier | undefined {
   return TIER_ORDER[TIER_ORDER.indexOf(tier) + 1];
 }
 
-function upgradeHint(tier: PlanTier, quota?: Pick<TierQuota, 'channelPlan'>): string {
-  if (quota?.channelPlan) return ' Add a channel or buy a video pack for more.';
+function upgradeHint(tier: PlanTier, quota?: Pick<TierQuota, 'studioPlan'>): string {
+  if (quota?.studioPlan) return ' Upgrade your plan or buy a video pack for more.';
   const next = nextTier(tier);
   return next ? ` Upgrade to ${tierLabel(next)} for more.` : '';
 }
 
-/** "Your plan" for a per-channel plan (21.5: no tier names for customers), else "The X plan". */
-function planText(quota: Pick<TierQuota, 'channelPlan'>, tier: PlanTier): string {
-  return quota.channelPlan ? 'Your plan' : `The ${tierLabel(tier)} plan`;
+/** "Your plan" for a Starter / Growth / Pro plan (no tier names for customers), else "The X plan". */
+function planText(quota: Pick<TierQuota, 'studioPlan'>, tier: PlanTier): string {
+  return quota.studioPlan ? 'Your plan' : `The ${tierLabel(tier)} plan`;
 }
 
 /**
@@ -665,7 +665,7 @@ function raise(
   tier: PlanTier,
   violations: QuotaViolation[],
   context: Record<string, unknown>,
-  quota?: Pick<TierQuota, 'channelPlan'>,
+  quota?: Pick<TierQuota, 'studioPlan'>,
 ): void {
   if (violations.length === 0) return;
   if (mode === 'warn') {
@@ -679,7 +679,7 @@ function raise(
       mode,
       violations,
       ...context,
-      ...(quota?.channelPlan && { channelPlan: true }),
+      ...(quota?.studioPlan && { studioPlan: true }),
     },
   );
 }
@@ -704,12 +704,12 @@ export interface UsageView {
   organisationId: string;
   planTier: PlanTier;
   mode: QuotaMode;
-  /** The allowance window's key: 'YYYY-MM', or 'YYYY-Www' for a weekly channel plan (21.5). */
+  /** The allowance window's key: 'YYYY-MM', or 'YYYY-Www' for a weekly plan (21.5). */
   month: string;
-  /** 21.5: the allowance window (a weekly channel plan counts per ISO week). */
+  /** 21.5: the allowance window (a weekly plan counts per ISO week). */
   period: 'week' | 'month';
-  /** 21.5: the allowance is a per-channel plan's. */
-  channelPlan?: boolean;
+  /** 26.1: the allowance is a Starter / Growth / Pro plan's. */
+  studioPlan?: boolean;
   periodStart: string;
   resetsAt: string;
   thresholds: readonly number[];
@@ -794,7 +794,7 @@ export async function usageView(
     mode: quotaMode(env, entitlements ? 'enforce' : 'warn'),
     month: month.key,
     period: quota.period ?? 'month',
-    ...(quota.channelPlan && { channelPlan: true }),
+    ...(quota.studioPlan && { studioPlan: true }),
     periodStart: month.start.toISOString(),
     resetsAt: month.end.toISOString(),
     thresholds: QUOTA_THRESHOLDS,
@@ -807,11 +807,11 @@ export async function usageView(
 }
 
 /**
- * 21.5: the allowance notice for a per-channel plan: no tier names, the week or month, and the
- * two ways to keep going (add a channel, buy a video pack). Localised through
+ * 21.5 / 26.1: the allowance notice for a plan: no tier names, the week or month, and the two
+ * ways to keep going (upgrade the plan, buy a video pack). Localised through
  * notifications.videoAllowanceNearing / videoAllowanceUsed.
  */
-export function channelAllowanceNotice(
+export function planAllowanceNotice(
   view: Pick<UsageView, 'period' | 'resetsAt'>,
   m: Pick<QuotaMeter, 'used' | 'limit'>,
   threshold: number,
@@ -832,7 +832,7 @@ export function channelAllowanceNotice(
   return {
     title: `All of this ${period}'s videos used`,
     body: `${m.used} of ${limit} videos made this ${period}. More are included from ${resets}.${
-      blocked ? ' To make more before then, add a channel or buy a video pack.' : ''
+      blocked ? ' To make more before then, upgrade your plan or buy a video pack.' : ''
     }`,
     message: {
       key: 'videoAllowanceUsed',
@@ -863,7 +863,7 @@ export async function notifyQuotaThresholds(
     now: () => number;
     env?: Env;
     notifier?: Notifier;
-    /** 21.5: the organisation's entitlements (the channel plan's allowance and window). */
+    /** The organisation's entitlements (the plan's allowance and window). */
     entitlements?: EntitlementsReader;
   },
   tenant: Pick<TenantContext, 'organisationId' | 'organisation'>,
@@ -880,8 +880,8 @@ export async function notifyQuotaThresholds(
         await notifySafely(deps, {
           organisationId: tenant.organisationId,
           kind: 'plan_quota',
-          ...(view.channelPlan
-            ? channelAllowanceNotice(view, m, threshold, blocked)
+          ...(view.studioPlan
+            ? planAllowanceNotice(view, m, threshold, blocked)
             : {
                 title:
                   threshold >= 100

@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { useFormat } from '@/lib/client/format';
@@ -8,13 +7,12 @@ import { cn } from '@/lib/utils';
 import { MeterRow, meterFillClass, type UsageResponse } from '../usage-meter';
 import { Section } from '../primitives';
 import { allowanceLeft } from './plan-summary';
-import { channelList } from './channel-labels';
-import { usePackName } from './channel-picker';
+import { usePackName } from './plan-picker';
 import type { CheckoutIntent } from './use-billing-actions';
 import type { BillingResponse, PricingView } from './types';
 
-// Phase 18 §3 / 21.5 Your plan (/settings/billing) — videos used against the allowance, the
-// connected channels, seats / businesses / storage, the HD video packs and the Stripe invoices.
+// Phase 18 §3 / 26.1 Your plan (/settings/billing) — videos used against the allowance, seats /
+// businesses / storage, the HD video packs and the Stripe invoices.
 // No generation cost is shown to customers.
 
 type Billing = BillingResponse['billing'];
@@ -103,42 +101,6 @@ export function AllowanceSection({
   );
 }
 
-/** 21.5: the connected platforms against the paid channels. */
-export function ChannelsSection({ billing }: { billing: Billing }) {
-  const t = useTranslations('billing.yourPlan.channels');
-  const usage = billing.channels;
-  if (!usage) return null;
-  return (
-    <Section title={t('title')} description={t('description', { count: usage.paid })}>
-      <div className="grid gap-2 text-sm">
-        {usage.connected.length === 0 ? (
-          <p className="text-muted-foreground">
-            {t('noneConnected')}{' '}
-            <Link className="font-medium underline underline-offset-4" href="/connections">
-              {t('connect')}
-            </Link>
-          </p>
-        ) : (
-          <p>{t('publishing', { list: channelList(usage.allowed) })}</p>
-        )}
-        {usage.blocked.length > 0 && (
-          <p role="alert" className="rounded-field bg-warning-soft p-3 text-warning-foreground">
-            {t('blocked', { list: channelList(usage.blocked), count: usage.blocked.length })}{' '}
-            <a className="font-medium underline underline-offset-4" href="#change">
-              {t('addChannel')}
-            </a>
-          </p>
-        )}
-        {usage.connected.length > 0 && usage.connected.length < usage.paid && (
-          <p className="text-muted-foreground">
-            {t('spare', { count: usage.paid - usage.connected.length })}
-          </p>
-        )}
-      </div>
-    </Section>
-  );
-}
-
 /** Seats, businesses and storage (no cost or budget figures for customers, 21.5). */
 export function UsageSection({ billing }: { billing: Billing }) {
   const t = useTranslations('billing.usage');
@@ -165,7 +127,7 @@ export function UsageSection({ billing }: { billing: Billing }) {
   );
 }
 
-/** 21.5: one-off HD video packs, any channel, valid 3 months. */
+/** 21.5: one-off HD video packs, any plan, valid 3 months. */
 export function TopUpsSection({
   billing,
   pricing,
@@ -178,7 +140,7 @@ export function TopUpsSection({
   onBuy: (intent: CheckoutIntent, pendingKey: string) => void;
 }) {
   const t = useTranslations('billing.credits');
-  const tp = useTranslations('channelPlan');
+  const tp = useTranslations('planPicker');
   const f = useFormat();
   const name = usePackName();
   // Packs need a plan to spend them on; none without one.

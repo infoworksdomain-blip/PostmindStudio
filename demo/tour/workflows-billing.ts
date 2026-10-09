@@ -2,10 +2,10 @@ import { PROJECTS } from '../api/ids';
 import { PRICE_TEXT } from './price-text';
 import { projectHref as p, withPlan, type Workflow } from './workflow-types';
 
-// Phase 18 / 21.5 workflows: sign-up to the first video, subscribing, using up the videos (video
-// packs, adding a channel, the channel limit), changing the plan (upgrade now, downgrade at the end
-// of the period), a failed payment, and cancelling. One plan, paid per channel: £29 per channel a
-// month with 8 videos per channel. The payment steps use the demo's own "Demo checkout
+// Phase 18 / 26.1 workflows: sign-up to the first video, subscribing, using up the videos (video
+// packs, a bigger plan), changing the plan (upgrade now, downgrade at the end of the period), a
+// failed payment, and cancelling. Three plans, Starter / Growth / Pro, each posting to every
+// platform (plans.ts). The payment steps use the demo's own "Demo checkout
 // (simulated)" page (no card details, one "Complete demo payment" button); `withPlan` links set
 // the billing state.
 
@@ -16,7 +16,7 @@ export const BILLING_WORKFLOWS: Workflow[] = [
     id: 'signup-first-video',
     title: 'Sign up to the first video',
     outcome:
-      'A visitor finds Studio, picks how many channels to pay for, signs up, sets up the bakery and starts the free trial to generate.',
+      'A visitor finds Studio, picks a plan, signs up, sets up the bakery and starts the free trial to generate.',
     area: 'billing',
     scene: 'storefront',
     caption: 'Leeds Sourdough, est. 2019',
@@ -27,13 +27,13 @@ export const BILLING_WORKFLOWS: Workflow[] = [
         cta: 'Homepage',
       },
       {
-        text: `One plan, paid per channel: choose 3 channels and Monthly (${PRICE_TEXT.channelMonthly} per channel, 24 videos a month included), then press “Start free trial”.`,
+        text: `Three plans, each posting to every platform: choose Growth (most popular) and Monthly (${PRICE_TEXT.growthMonthly} a month, 20 HD videos, 3 seats), then press “Start free trial”.`,
         href: '#/pricing',
         cta: 'Pricing',
       },
       {
         text: 'Sign up as Amara Okafor, amara@leedssourdough.example, with a long password: watch the strength meter, then “Create account”.',
-        href: '#/sign-up?next=%2Fsettings%2Fbilling%3Fchannels%3D3%26interval%3Dmonth',
+        href: '#/sign-up?next=%2Fsettings%2Fbilling%3Fplan%3Dgrowth%26interval%3Dmonth',
         cta: 'Sign up',
       },
       {
@@ -57,8 +57,8 @@ export const BILLING_WORKFLOWS: Workflow[] = [
         cta: 'Generate (no plan)',
       },
       {
-        text: 'On Your plan choose 3 channels, Monthly, and press “Start free trial” (14 days with 5 videos, £0 today), then “Complete demo payment” on the simulated checkout: the banner counts down 14 days and Generate works.',
-        href: withPlan('#/settings/billing?channels=3&interval=month', 'no_plan'),
+        text: 'On Your plan choose Growth, Monthly, and press “Start free trial” (7 days with 2 HD videos, £0 today), then “Complete demo payment” on the simulated checkout: the banner counts down 7 days and Generate works.',
+        href: withPlan('#/settings/billing?plan=growth&interval=month', 'no_plan'),
         cta: 'Start the trial',
       },
     ],
@@ -67,33 +67,33 @@ export const BILLING_WORKFLOWS: Workflow[] = [
     id: 'start-subscription',
     title: 'Start a subscription',
     outcome:
-      'A returning organisation (its trial already used) picks 6 channels, billed yearly, and pays once upfront.',
+      'A returning organisation (its trial already used) picks Pro, billed yearly, and pays once upfront.',
     area: 'billing',
     scene: 'coffee',
-    caption: '6 channels, yearly',
+    caption: 'Pro, yearly',
     steps: [
       {
-        text: `Pricing: switch to Yearly (${PRICE_TEXT.channelYearly} per channel, paid upfront: 2 months free) and Weekly (${PRICE_TEXT.channelWeekly} per channel a week, dearer over a month). The video packs and the questions are below.`,
+        text: `Pricing: switch to Yearly (Growth ${PRICE_TEXT.growthYearly}, Pro ${PRICE_TEXT.proYearly}, paid upfront: 2 months free) and Weekly (Growth ${PRICE_TEXT.growthWeekly} a week, dearer over a month). The video packs and the questions are below.`,
         href: '#/pricing',
         cta: 'Pricing',
       },
       {
-        text: 'Your plan after an earlier plan ended shows the plan picker. Choose 6 channels and Yearly, then “Continue to payment”.',
+        text: 'Your plan after an earlier plan ended shows the plan picker. Choose Pro and Yearly, then “Continue to payment”.',
         href: withPlan('#/settings/billing', 'cancelled'),
         cta: 'Plan picker',
       },
       {
-        text: 'The clearly labelled “Demo checkout (simulated)” page: 6 channels, the yearly price, 576 videos a year included, no card fields. Press “Complete demo payment”.',
-        href: '#/demo-checkout?kind=channels&channels=6&interval=year',
+        text: 'The clearly labelled “Demo checkout (simulated)” page: Pro, the yearly price, 45 HD videos a month, 3 businesses and 10 seats, no card fields. Press “Complete demo payment”.',
+        href: '#/demo-checkout?kind=plan&plan=pro&interval=year',
         cta: 'Demo checkout',
       },
       {
-        text: 'Back on Your plan: 6 channels, yearly, the renewal date, and 48 videos this month (8 per channel, released each month).',
+        text: 'Back on Your plan: Pro, yearly, the renewal date, and 45 videos this month (released each month).',
         href: '#/settings/billing',
         cta: 'Active plan',
       },
       {
-        text: 'Your channels: all six connected platforms publish, so nothing shows “add a channel”.',
+        text: 'Connections: all six connected platforms publish, as on every plan.',
         href: '#/connections',
         cta: 'Every platform publishes',
       },
@@ -106,20 +106,20 @@ export const BILLING_WORKFLOWS: Workflow[] = [
   },
   {
     id: 'limit-upgrade',
-    title: 'Use up the videos, buy a pack, add a channel',
+    title: 'Use up the videos, buy a pack, move up a plan',
     outcome:
-      'A 1-channel organisation runs out of videos, buys an HD video pack, then adds a channel; with 3 channels the fourth platform asks for another.',
+      'A Starter organisation runs out of videos, buys an HD video pack, then moves up to Growth.',
     area: 'billing',
     scene: 'market',
     caption: '8 of 8 used',
     steps: [
       {
-        text: 'On 1 channel all 8 videos this month are made: the usage banner says so.',
+        text: 'On Starter all 8 videos this month are made: the usage banner says so.',
         href: withPlan('#/projects', 'allowance_used'),
-        cta: '1 channel, all used',
+        cta: 'Starter, all used',
       },
       {
-        text: 'Press Generate on the draft: 403 quota_exceeded opens the dialog with “Add a channel” or “Buy a video pack”.',
+        text: 'Press Generate on the draft: 403 quota_exceeded opens the dialog with “Upgrade your plan” or “Buy a video pack”.',
         href: draft,
         cta: 'Generate',
       },
@@ -129,19 +129,14 @@ export const BILLING_WORKFLOWS: Workflow[] = [
         cta: 'Buy a video pack',
       },
       {
-        text: 'Your plan now shows 5 pack videos left: they work on any channel, are used after the plan’s videos and last 3 months. Generate again: it runs on a pack video (4 left).',
+        text: 'Your plan now shows 5 pack videos left: they work on any plan, are used after the plan’s videos and last 3 months. Generate again: it runs on a pack video (4 left).',
         href: draft,
         cta: 'Generate on a pack video',
       },
       {
-        text: 'Change your plan: add a channel (2 channels). More channels apply now: the preview shows the new monthly price and the amount due today for the rest of the period. Confirm.',
+        text: 'Change your plan: choose Growth. A higher plan applies now: the preview shows the new monthly price and the amount due today for the rest of the period. Confirm: 20 videos a month and 3 seats.',
         href: '#/settings/billing#change',
-        cta: 'Add a channel',
-      },
-      {
-        text: 'On 3 channels, six platforms are connected but only the first three (TikTok, Instagram, YouTube) publish. Connections and Your plan say Facebook, X and LinkedIn need another channel.',
-        href: withPlan('#/connections', 'active_monthly'),
-        cta: 'Channel limit',
+        cta: 'Move up to Growth',
       },
       {
         text: 'Business → Brand: voice profiles carry a “Not in your plan” badge (an Enterprise feature, arranged with sales). Adding a voice answers 403 plan_tier.',
@@ -152,25 +147,25 @@ export const BILLING_WORKFLOWS: Workflow[] = [
   },
   {
     id: 'change-plan',
-    title: 'Change channels and how often you pay',
+    title: 'Change the plan and how often you pay',
     outcome:
-      'The owner adds channels (applies now, pays the difference), removes some (applies at the end of the period), keeps the current plan, and moves to yearly.',
+      'The owner moves up to Pro (applies now, pays the difference), down to Starter (applies at the end of the period), keeps the current plan, and moves to yearly.',
     area: 'billing',
     scene: 'kitchen',
-    caption: '3 channels, monthly',
+    caption: 'Growth, monthly',
     steps: [
       {
-        text: 'Your plan: 3 channels, monthly, 19.5 of 24 videos used this month (carousels, slideshows and text videos count ¼), renewal date. Under “Change your plan” add two channels (5): the preview says it applies now and what is due today.',
+        text: 'Your plan: Growth, monthly, 15.5 of 20 videos used this month (carousels, slideshows and text videos count ¼), renewal date. Under “Change your plan” choose Pro: the preview says it applies now and what is due today.',
         href: withPlan('#/settings/billing#change', 'active_monthly'),
         cta: 'Upgrade preview',
       },
       {
-        text: '“Review change”, then “Pay … and change”: the plan is 5 channels at once and 40 videos a month are included.',
+        text: '“Review change”, then “Pay … and change”: the plan is Pro at once, with 45 videos a month, 3 businesses and 10 seats.',
         href: '#/settings/billing#change',
         cta: 'Upgrade now',
       },
       {
-        text: 'Now remove channels down to 2: the preview says it applies at the end of the period, nothing to pay now. Confirm: Your plan shows “From <date>: 2 channels, monthly”.',
+        text: 'Now choose Starter: the preview says it applies at the end of the period, nothing to pay now. Confirm: Your plan shows “From <date>: Starter, monthly”.',
         href: '#/settings/billing#change',
         cta: 'Downgrade later',
       },
@@ -180,7 +175,7 @@ export const BILLING_WORKFLOWS: Workflow[] = [
         cta: 'Keep my plan',
       },
       {
-        text: 'On a weekly plan (2 channels, 4 videos a week, counted Monday to Sunday) switch to Yearly: a longer period applies now and the new yearly period starts today.',
+        text: 'On a weekly plan (Starter, 2 videos a week, counted Monday to Sunday) switch to Yearly: a longer period applies now and the new yearly period starts today.',
         href: withPlan('#/settings/billing#change', 'active_weekly'),
         cta: 'Weekly to yearly',
       },

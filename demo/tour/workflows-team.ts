@@ -62,11 +62,6 @@ export const TEAM_WORKFLOWS: Workflow[] = [
         cta: 'Connections',
       },
       {
-        text: 'Channels: the plan pays for 3, so the platforms connected first (TikTok, Instagram, YouTube) publish; Facebook, X and LinkedIn stay connected but show “add a channel”. Publishing to one of them opens “Add a channel to publish here”.',
-        href: '#/connections',
-        cta: 'Channel limit',
-      },
-      {
         text: 'Connect TikTok (or YouTube, LinkedIn): the demo’s OAuth round trip comes straight back with the “connected” notice.',
         href: '#/connections',
         cta: 'Connect TikTok',

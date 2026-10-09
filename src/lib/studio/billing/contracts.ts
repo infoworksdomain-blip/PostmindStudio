@@ -1,4 +1,4 @@
-import type { ChannelInterval, ChannelPlanChoice } from './channel-plan';
+import type { PlanChoice } from './plans';
 import type { PlanChangeOutcome, PlanChangePreviewView } from './plan-change';
 
 // Phase 18 §2.7 — the billing service Track C builds and Track E's screens call. Route handlers
@@ -7,10 +7,8 @@ import type { PlanChangeOutcome, PlanChangePreviewView } from './plan-change';
 export interface CheckoutRequest {
   organisationId: string;
   userId: string;
-  /** 21.5: a per-channel subscription (1–6 channels + interval) or a one-off HD video pack. */
-  intent:
-    | { kind: 'channels'; channels: number; interval: ChannelInterval }
-    | { kind: 'topup'; lookupKey: string };
+  /** 26.1: a plan subscription (Starter / Growth / Pro + interval) or a one-off HD video pack. */
+  intent: ({ kind: 'plan' } & PlanChoice) | { kind: 'topup'; lookupKey: string };
   locale: string;
 }
 
@@ -33,16 +31,13 @@ export interface BillingService {
   listInvoices(organisationId: string, limit: number): Promise<BillingInvoice[]>;
   /** Cancel immediately (account / organisation deletion, §5.11). No-op without a subscription. */
   cancelForDeletion(organisationId: string): Promise<void>;
-  /** 21.5 Your plan: what a channel / interval change costs and when it applies. */
-  previewPlanChange(
-    organisationId: string,
-    next: ChannelPlanChoice,
-  ): Promise<PlanChangePreviewView>;
+  /** Your plan: what a plan / interval change costs and when it applies. */
+  previewPlanChange(organisationId: string, next: PlanChoice): Promise<PlanChangePreviewView>;
   /** 21.5: apply it (upgrade now with proration, downgrade at the end of the period). */
   changePlan(input: {
     organisationId: string;
     userId: string;
-    next: ChannelPlanChoice;
+    next: PlanChoice;
     prorationDate?: number | null;
   }): Promise<PlanChangeOutcome>;
   /** 21.5: cancel at the end of the period. */

@@ -1,16 +1,15 @@
-// The demo organisation's billing state (Phase 18 §P.3, Phase 21.5 per-channel plan), switchable
-// from the demo bar and by a `?demoPlan=<state>` query on any tour link. It drives GET /me (plan,
-// channels + banner), GET /billing ("Your plan"), GET /usage (the allowance and the tier the lock
-// badges read), the members seat limit, the Your-plan changes (preview, change, cancel, resume,
-// keep the current plan) and a request gate that answers like the real API: 402 plan_required /
-// billing_required (access gate), 403 plan_tier (feature gates), 403 quota_exceeded (the plan's
-// video allowance, video-pack credits first) and 403 channel_limit (publishing to a platform past
-// the paid channels). The choice is kept in a cookie, like the demo's language; purchases made in
-// the simulated checkout move the state on, as Stripe's webhooks would.
+// The demo organisation's billing state (Phase 18 §P.3, Phase 26.1 tiered plans), switchable
+// from the demo bar and by a `?demoPlan=<state>` query on any tour link. It drives GET /me (plan
+// and banner), GET /billing ("Your plan"), GET /usage (the allowance and the tier the lock badges
+// read), the members seat limit, the Your-plan changes (preview, change, cancel, resume, keep the
+// current plan) and a request gate that answers like the real API: 402 plan_required /
+// billing_required (access gate), 403 plan_tier (feature gates) and 403 quota_exceeded (the plan's
+// video allowance, video-pack credits first). The choice is kept in a cookie, like the demo's
+// language; purchases made in the simulated checkout move the state on, as Stripe's webhooks would.
 //
-// 21.5: customers buy ONE plan, £29 per channel a month with 8 videos per channel (weekly: 2 per
-// channel a week; yearly: 96 a year released as 8 a month). Every channel subscription is the
-// internal tier STANDARD. Generation cost is never part of a customer-facing answer here.
+// 26.1: customers buy one of three plans, Starter / Growth / Pro (plans.ts), weekly, monthly or
+// yearly. Every plan posts to all six platforms (no channel limit) and is the internal tier
+// STANDARD. Generation cost is never part of a customer-facing answer here.
 // 23.3: carousels, slideshows, wall of text and hook + demo use ¼ of a video (allowance and packs).
 import { quartersToVideos, VIDEO_QUARTERS } from '@/lib/studio/billing/allowance-units';
 import {
@@ -25,20 +24,17 @@ import {
 } from '@/lib/studio/billing/catalogue';
 import {
   ALLOWANCE_WINDOW,
-  CHANNEL_LOOKUP_KEYS,
+  STUDIO_PLANS,
   allowancePerWindow,
-  channelCostCapsPence,
-  isChannelInterval,
-  isValidChannelCount,
+  isPlanId,
+  isPlanInterval,
   planChangeTiming,
-  type ChannelInterval,
-  type ChannelPlanChoice,
-} from '@/lib/studio/billing/channel-plan';
-import {
-  channelUsage,
-  type ChannelUsage,
-  type ConnectionFact,
-} from '@/lib/studio/billing/channels';
+  planCostCapsPence,
+  planLookupKey,
+  type PlanChoice,
+  type PlanId,
+  type PlanInterval,
+} from '@/lib/studio/billing/plans';
 import type {
   BillingResponse,
   PlanChangeOutcome,
@@ -75,41 +71,46 @@ const DAY = 86_400_000;
 
 interface StateInfo {
   label: string;
-  /** The internal tier (staff views, lock badges): STANDARD for every channel plan. */
+  /** The internal tier (staff views, lock badges): STANDARD for every plan. */
   tier: PlanTier;
   access: DemoAccess;
   source: 'stripe' | 'trial' | 'admin' | 'none';
   /** Stripe subscription status, or null for no subscription. */
   status: string | null;
-  /** The per-channel plan (null: no plan, or a staff-set Enterprise plan). */
-  plan: ChannelPlanChoice | null;
+  /** The plan and interval (null: no plan, or a staff-set Enterprise plan). */
+  plan: PlanChoice | null;
   /** Sample videos already made in the current allowance window. */
   used: number;
   note: string;
 }
 
-const THREE_MONTHLY: ChannelPlanChoice = { channels: 3, interval: 'month' };
+const GROWTH_MONTHLY: PlanChoice = { plan: 'growth', interval: 'month' };
+
+/** The trial length the demo pricing shows (STUDIO_TRIAL_DAYS 7, test-fixtures.ts). */
+export const DEMO_TRIAL_DAYS = 7;
+/** Days left on the sample trial when the state is switched to. */
+const SAMPLE_TRIAL_DAYS_LEFT = 4;
 
 export const BILLING_STATE_INFO: Record<BillingStateId, StateInfo> = {
   trial: {
-    label: 'Trial (3 channels)',
+    label: 'Trial (Growth)',
     tier: 'STANDARD',
     access: 'full',
     source: 'trial',
     status: 'trialing',
-    plan: THREE_MONTHLY,
-    used: 3,
-    note: '14-day trial, 9 days left: 3 of the 5 trial videos made, trial banner.',
+    plan: GROWTH_MONTHLY,
+    used: 1,
+    note: '7-day trial, 4 days left: 1 of the 2 trial videos made, trial banner.',
   },
   active_monthly: {
-    label: 'Active: 3 channels, monthly',
+    label: 'Active: Growth, monthly',
     tier: 'STANDARD',
     access: 'full',
     source: 'stripe',
     status: 'active',
-    plan: THREE_MONTHLY,
-    used: 19.5,
-    note: 'The default: 19.5 of 24 videos this month (two carousels counted ¼ each). Six platforms connected, the first three publish.',
+    plan: GROWTH_MONTHLY,
+    used: 15.5,
+    note: 'The default: 15.5 of 20 videos this month (two carousels counted ¼ each), 3 seats; every connected platform publishes.',
   },
   allowance_used: {
     label: 'Allowance used up',
@@ -117,29 +118,29 @@ export const BILLING_STATE_INFO: Record<BillingStateId, StateInfo> = {
     access: 'full',
     source: 'stripe',
     status: 'active',
-    plan: { channels: 1, interval: 'month' },
+    plan: { plan: 'starter', interval: 'month' },
     used: 8,
-    note: '1 channel, all 8 videos this month made: generating offers a video pack or a channel.',
+    note: 'Starter, all 8 videos this month made: generating offers a video pack or a bigger plan.',
   },
   active_weekly: {
-    label: 'Active: 2 channels, weekly',
+    label: 'Active: Starter, weekly',
     tier: 'STANDARD',
     access: 'full',
     source: 'stripe',
     status: 'active',
-    plan: { channels: 2, interval: 'week' },
+    plan: { plan: 'starter', interval: 'week' },
     used: 1,
-    note: '4 videos a week (2 per channel), 1 made this week; the allowance resets on Monday.',
+    note: '2 videos a week, 1 made this week; the allowance resets on Monday.',
   },
   active_yearly: {
-    label: 'Active: 6 channels, yearly',
+    label: 'Active: Pro, yearly',
     tier: 'STANDARD',
     access: 'full',
     source: 'stripe',
     status: 'active',
-    plan: { channels: 6, interval: 'year' },
+    plan: { plan: 'pro', interval: 'year' },
     used: 20,
-    note: 'Paid upfront: 48 videos released each month (8 per channel); every platform publishes.',
+    note: 'Paid upfront: 45 videos released each month, 3 businesses and 10 seats.',
   },
   past_due: {
     label: 'Past due (grace)',
@@ -147,8 +148,8 @@ export const BILLING_STATE_INFO: Record<BillingStateId, StateInfo> = {
     access: 'full',
     source: 'stripe',
     status: 'past_due',
-    plan: THREE_MONTHLY,
-    used: 20,
+    plan: GROWTH_MONTHLY,
+    used: 16,
     note: 'A payment failed: full access for 4 more days, with a banner and the grace date.',
   },
   read_only: {
@@ -157,8 +158,8 @@ export const BILLING_STATE_INFO: Record<BillingStateId, StateInfo> = {
     access: 'read_only',
     source: 'stripe',
     status: 'unpaid',
-    plan: THREE_MONTHLY,
-    used: 20,
+    plan: GROWTH_MONTHLY,
+    used: 16,
     note: 'Grace ended: changes answer 402 billing_required; export and downloads still work.',
   },
   no_plan: {
@@ -183,7 +184,7 @@ export const BILLING_STATE_INFO: Record<BillingStateId, StateInfo> = {
   },
   cancelled: {
     label: 'Cancelled (read-only)',
-    // An ended subscription has no channel plan (entitlements.ts: canceled → BASIC, source none).
+    // An ended subscription has no plan (entitlements.ts: canceled → BASIC, source none).
     tier: 'BASIC',
     access: 'read_only',
     source: 'none',
@@ -217,9 +218,9 @@ function writeCookie(id: BillingStateId): void {
 
 let current: BillingStateId = readCookie() ?? DEFAULT_BILLING_STATE;
 /** A plan chosen in the demo checkout or changed on Your plan (else the state's own plan). */
-let planOverride: ChannelPlanChoice | null = null;
+let planOverride: PlanChoice | null = null;
 /** A downgrade waiting for the end of the period (Your plan shows it with "Keep my plan"). */
-let pending: { channels: number; interval: ChannelInterval; effectiveAt: string } | null = null;
+let pending: { plan: PlanId; interval: PlanInterval; effectiveAt: string } | null = null;
 let cancelAtPeriodEnd = false;
 /** An interval upgrade starts a new billing period today (Stripe resets the anchor). */
 let periodStartedAt: number | null = null;
@@ -272,7 +273,7 @@ export function setBillingState(id: BillingStateId): void {
   periodStartedAt = null;
   freshSubscription = false;
   generatedShort = 0;
-  trialDaysLeft = 9;
+  trialDaysLeft = SAMPLE_TRIAL_DAYS_LEFT;
   writeCookie(id);
   if (changed) emit();
 }
@@ -284,25 +285,12 @@ export function currentTier(): PlanTier {
   return info().tier;
 }
 
-/** The per-channel plan in force (channels and interval), or null. */
-export function currentPlan(): ChannelPlanChoice | null {
+/** The plan in force (plan and interval), or null. */
+export function currentPlan(): PlanChoice | null {
   return planOverride ?? info().plan;
 }
 
-// ------------------------------------------------------------------ connections & prices
-
-let connectionLookup: () => ConnectionFact[] = () => [];
-
-/** p18-billing.ts supplies the connected platforms (it can import the connections handler). */
-export function setConnectionLookup(lookup: () => ConnectionFact[]): void {
-  connectionLookup = lookup;
-}
-
-/** Connected platforms against the paid channels (null without a channel plan). */
-export function channelsInUse(): ChannelUsage | null {
-  const plan = currentPlan();
-  return plan ? channelUsage(connectionLookup(), plan.channels) : null;
-}
+// ------------------------------------------------------------------ prices
 
 let priceLookup: (lookupKey: string) => number = () => 0;
 
@@ -311,9 +299,9 @@ export function setPriceLookup(lookup: (lookupKey: string) => number): void {
   priceLookup = lookup;
 }
 
-/** The per-channel price of an interval, in pence (excl. VAT). */
-export function unitPrice(interval: ChannelInterval): number {
-  return priceLookup(CHANNEL_LOOKUP_KEYS[interval]);
+/** What a plan costs per billing period, in pence (excl. VAT). */
+export function planPrice(choice: PlanChoice): number {
+  return priceLookup(planLookupKey(choice.plan, choice.interval));
 }
 
 // ------------------------------------------------------------------ derived views
@@ -324,21 +312,24 @@ const ENTERPRISE_LIMITS = { seats: 40, businesses: 25, storageGb: 2_000 } as con
 
 export function limits(): { seats: number | null; businesses: number | null; storageGb: number } {
   if (current === 'enterprise') return { ...ENTERPRISE_LIMITS };
-  const plan = PLAN_CATALOGUE[info().tier];
-  return { seats: plan.seats, businesses: plan.businesses, storageGb: plan.storageGb ?? 0 };
+  const tier = PLAN_CATALOGUE[info().tier];
+  // 26.1: seats and businesses come from the plan (entitlements.ts limitsFor), storage the tier.
+  const plan = currentPlan();
+  const own = plan ? STUDIO_PLANS[plan.plan] : tier;
+  return { seats: own.seats, businesses: own.businesses, storageGb: tier.storageGb ?? 0 };
 }
 
 export function graceUntil(): string | null {
   return current === 'past_due' ? at(4) : null;
 }
 
-/** 9 days left when switched to; a trial just started in the demo checkout has all 14. */
-let trialDaysLeft = 9;
+/** 4 days left when switched to; a trial just started in the demo checkout has all 7. */
+let trialDaysLeft = SAMPLE_TRIAL_DAYS_LEFT;
 const trialEnd = () => at(trialDaysLeft - 1 / 24);
 
-const PERIOD_DAYS: Readonly<Record<ChannelInterval, number>> = { week: 7, month: 30, year: 365 };
+const PERIOD_DAYS: Readonly<Record<PlanInterval, number>> = { week: 7, month: 30, year: 365 };
 /** Days left in the current paid period when a state is switched to. */
-const DAYS_LEFT: Readonly<Record<ChannelInterval, number>> = { week: 4, month: 18, year: 200 };
+const DAYS_LEFT: Readonly<Record<PlanInterval, number>> = { week: 4, month: 18, year: 200 };
 
 /** When the current billing period ends (ms). */
 function periodEndMs(): number {
@@ -386,7 +377,7 @@ export function videoQuota(): {
       long: { used: 0, limit: basic.longVideosPerMonth },
     };
   }
-  const limit = allowancePerWindow(plan.channels, plan.interval);
+  const limit = allowancePerWindow(plan.plan, plan.interval);
   // Long videos are not part of the plan (allowance 0, hidden in the customer UI).
   return {
     short: { used: Math.min(info().used, limit) + generatedShort, limit },
@@ -406,7 +397,7 @@ export function internalCostThisMonth(): { capPence: number | null; spentPence: 
       : current === 'enterprise'
         ? PLAN_CATALOGUE.ENTERPRISE.monthlyCostCapPence
         : plan
-          ? channelCostCapsPence(plan.channels, plan.interval).monthlyPence
+          ? planCostCapsPence(plan.plan, plan.interval).monthlyPence
           : 0;
   const spentPence = current === 'no_plan' ? 0 : current === 'trial' ? 640 : 4_500;
   return { capPence, spentPence };
@@ -418,9 +409,9 @@ function subscription(): BillingResponse['billing']['subscription'] {
   const plan = currentPlan();
   return {
     status,
-    lookupKey: plan ? CHANNEL_LOOKUP_KEYS[plan.interval] : null,
+    lookupKey: plan ? planLookupKey(plan.plan, plan.interval) : null,
     interval: plan?.interval ?? 'month',
-    quantity: plan?.channels ?? 1,
+    quantity: 1,
     currentPeriodEnd: new Date(periodEndMs()).toISOString(),
     cancelAtPeriodEnd: (status === 'active' || status === 'trialing') && cancelAtPeriodEnd,
     trialEnd: current === 'trial' ? trialEnd() : null,
@@ -431,11 +422,11 @@ function planView(): PlanView | null {
   const plan = currentPlan();
   if (!plan) return null;
   return {
-    channels: plan.channels,
+    id: plan.plan,
     interval: plan.interval,
     source: 'stripe',
     legacy: false,
-    pricePerPeriodPence: unitPrice(plan.interval) * plan.channels,
+    pricePerPeriodPence: planPrice(plan),
     currency: 'gbp',
     pending,
     paymentPending: false,
@@ -461,7 +452,7 @@ export function billingOverview(seatsUsed: number): BillingResponse['billing'] {
       trial:
         current === 'trial'
           ? {
-              startedAt: at(-5),
+              startedAt: at(trialDaysLeft - DEMO_TRIAL_DAYS),
               endsAt: trialEnd(),
               shortVideos: TRIAL.shortVideos,
               longVideos: TRIAL.longVideos,
@@ -473,7 +464,6 @@ export function billingOverview(seatsUsed: number): BillingResponse['billing'] {
     },
     subscription: subscription(),
     plan: planView(),
-    channels: channelsInUse(),
     hasBillingAccount: current !== 'no_plan',
     trialEligible: current === 'no_plan',
     credits: { ...credits },
@@ -491,10 +481,9 @@ export function billingOverview(seatsUsed: number): BillingResponse['billing'] {
   };
 }
 
-/** GET /me: the plan line (with channels), the connected-vs-paid channels and the banner. */
+/** GET /me: the plan line (Starter / Growth / Pro and the interval) and the banner. */
 export function meBilling(): {
-  plan: { tier: string; access: string; source: string; channels?: number; interval?: string };
-  channels: { paid: number; connected: string[]; blocked: string[] } | null;
+  plan: { tier: string; access: string; source: string; studioPlan?: string; interval?: string };
   banner:
     | { kind: 'trial'; endsAt: string }
     | { kind: 'past_due'; graceUntil: string | null }
@@ -504,7 +493,6 @@ export function meBilling(): {
 } {
   const { tier, access, source } = info();
   const plan = currentPlan();
-  const usage = channelsInUse();
   const banner =
     current === 'trial'
       ? { kind: 'trial' as const, endsAt: trialEnd() }
@@ -520,11 +508,8 @@ export function meBilling(): {
       tier,
       access,
       source,
-      ...(plan && { channels: plan.channels, interval: plan.interval }),
+      ...(plan && { studioPlan: plan.plan, interval: plan.interval }),
     },
-    channels: usage
-      ? { paid: usage.paid, connected: usage.connected, blocked: usage.blocked }
-      : null,
     banner,
   };
 }
@@ -535,14 +520,9 @@ export function meBilling(): {
  */
 export function invoices(): Array<Record<string, unknown>> {
   if (current === 'no_plan') return [];
-  // A cancelled organisation's invoices are from the 3-channel plan it had.
-  const plan = currentPlan() ?? (current === 'cancelled' ? THREE_MONTHLY : null);
-  const price =
-    current === 'enterprise'
-      ? ENTERPRISE_LIST_PRICE_PENCE
-      : plan
-        ? unitPrice(plan.interval) * plan.channels
-        : 0;
+  // A cancelled organisation's invoices are from the Growth plan it had.
+  const plan = currentPlan() ?? (current === 'cancelled' ? GROWTH_MONTHLY : null);
+  const price = current === 'enterprise' ? ENTERPRISE_LIST_PRICE_PENCE : plan ? planPrice(plan) : 0;
   const amount = freshSubscription && current === 'trial' ? 0 : price;
   const failing = current === 'past_due' || current === 'read_only';
   const step = PERIOD_DAYS[plan?.interval ?? 'month'];
@@ -558,7 +538,7 @@ export function invoices(): Array<Record<string, unknown>> {
   }));
 }
 
-// ------------------------------------------------------------------ Your plan (21.5)
+// ------------------------------------------------------------------ Your plan (26.1)
 
 const CHANGEABLE = new Set(['active', 'trialing']);
 
@@ -566,7 +546,7 @@ function conflict(message: string, details: Record<string, unknown>): DemoHttpEr
   return new DemoHttpError(409, 'conflict', message, details);
 }
 
-function changeablePlan(): ChannelPlanChoice {
+function changeablePlan(): PlanChoice {
   const plan = currentPlan();
   if (!plan)
     throw new DemoHttpError(
@@ -585,21 +565,21 @@ function changeablePlan(): ChannelPlanChoice {
   return plan;
 }
 
-function timingFor(plan: ChannelPlanChoice, next: ChannelPlanChoice) {
+function timingFor(plan: PlanChoice, next: PlanChoice) {
   const timing = planChangeTiming(plan, next);
   // A trial is charged nothing until it ends: every change applies at once.
   return timing === 'period_end' && current === 'trial' ? 'now' : timing;
 }
 
 /** GET /billing/plan/preview: the new price, when it applies and what is due now. */
-export function previewPlanChange(next: ChannelPlanChoice): PlanChangePreviewView {
+export function previewPlanChange(next: PlanChoice): PlanChangePreviewView {
   const plan = changeablePlan();
   const timing = timingFor(plan, next);
   const base = {
     timing,
     current: { ...plan },
     next,
-    nextPricePence: unitPrice(next.interval) * next.channels,
+    nextPricePence: planPrice(next),
     currency: 'gbp',
   };
   if (timing === 'none')
@@ -616,7 +596,7 @@ export function previewPlanChange(next: ChannelPlanChoice): PlanChangePreviewVie
     return { ...base, effectiveAt: now, dueNowPence: 0, prorationDate: null };
   // Stripe-like proration: the unused part of the current period is credited.
   const left = periodRemaining();
-  const currentPrice = unitPrice(plan.interval) * plan.channels;
+  const currentPrice = planPrice(plan);
   const dueNowPence =
     next.interval === plan.interval
       ? Math.round(left * (base.nextPricePence - currentPrice))
@@ -630,13 +610,13 @@ export function previewPlanChange(next: ChannelPlanChoice): PlanChangePreviewVie
 }
 
 /** POST /billing/plan: upgrades now (prorated), downgrades at the end of the period. */
-export function changePlan(next: ChannelPlanChoice): PlanChangeOutcome {
+export function changePlan(next: PlanChoice): PlanChangeOutcome {
   const plan = changeablePlan();
   const timing = timingFor(plan, next);
   if (timing === 'none') throw conflict('That is already your plan', { reason: 'same' });
   if (timing === 'period_end') {
     const effectiveAt = new Date(periodEndMs()).toISOString();
-    pending = { channels: next.channels, interval: next.interval, effectiveAt };
+    pending = { plan: next.plan, interval: next.interval, effectiveAt };
     emit();
     return { status: 'scheduled', timing, effectiveAt };
   }
@@ -680,15 +660,15 @@ export function isCancelling(): boolean {
 // ------------------------------------------------------------------ simulated checkout & portal
 
 export type DemoCheckoutIntent =
-  | { kind: 'channels'; channels: number; interval: ChannelInterval }
+  | { kind: 'plan'; plan: PlanId; interval: PlanInterval }
   | { kind: 'topup'; lookupKey: string }
   | { kind: 'portal' };
 
 /** The hash URL POST /billing/checkout and /billing/portal answer (never Stripe). */
 export function checkoutHref(intent: DemoCheckoutIntent): string {
   const q = new URLSearchParams({ kind: intent.kind });
-  if (intent.kind === 'channels') {
-    q.set('channels', String(intent.channels));
+  if (intent.kind === 'plan') {
+    q.set('plan', intent.plan);
     q.set('interval', intent.interval);
   }
   if (intent.kind === 'topup') q.set('lookupKey', intent.lookupKey);
@@ -702,16 +682,15 @@ export function parseCheckoutIntent(search: URLSearchParams): DemoCheckoutIntent
     const lookupKey = search.get('lookupKey') ?? '';
     return TOP_UP_PACKS.some((p) => p.lookupKey === lookupKey) ? { kind, lookupKey } : null;
   }
-  if (kind === 'channels') {
-    const channels = Number(search.get('channels'));
+  if (kind === 'plan') {
+    const plan = search.get('plan');
     const interval = search.get('interval');
-    if (isValidChannelCount(channels) && isChannelInterval(interval))
-      return { kind, channels, interval };
+    if (isPlanId(plan) && isPlanInterval(interval)) return { kind, plan, interval };
   }
   return null;
 }
 
-/** Whether completing a channel plan checkout starts the one-per-organisation trial. */
+/** Whether completing a plan checkout starts the one-per-organisation trial. */
 export function startsTrial(): boolean {
   return current === 'no_plan';
 }
@@ -724,11 +703,11 @@ export function completeCheckout(intent: DemoCheckoutIntent): 'checkout' | 'topu
     emit();
     return 'topup';
   }
-  if (intent.kind === 'channels') {
+  if (intent.kind === 'plan') {
     const trial = startsTrial();
     setBillingState(trial ? 'trial' : 'active_monthly');
-    planOverride = { channels: intent.channels, interval: intent.interval };
-    if (trial) trialDaysLeft = 14;
+    planOverride = { plan: intent.plan, interval: intent.interval };
+    if (trial) trialDaysLeft = DEMO_TRIAL_DAYS;
     freshSubscription = true;
     emit();
   }
@@ -789,8 +768,8 @@ function quotaGate(method: string, path: string): void {
     throw new DemoHttpError(
       403,
       'quota_exceeded',
-      `Your plan includes ${short.limit} videos a ${period} and ${short.used} have been generated. Add a channel or buy a video pack for more.`,
-      { resource: 'short_videos', used: short.used, limit: short.limit, channelPlan: true },
+      `Your plan includes ${short.limit} videos a ${period} and ${short.used} have been generated. Upgrade your plan or buy a video pack for more.`,
+      { resource: 'short_videos', used: short.used, limit: short.limit, studioPlan: true },
     );
   }
   generatedShort += videos;
@@ -802,31 +781,6 @@ let projectQuarters: (projectId: string) => number = () => VIDEO_QUARTERS;
 
 export function setProjectQuartersLookup(lookup: (projectId: string) => number): void {
   projectQuarters = lookup;
-}
-
-let connectionPlatform: (connectionId: string) => string | null = () => null;
-
-/** p18-billing.ts supplies connection id → platform (publishing past the paid channels). */
-export function setConnectionPlatformLookup(lookup: (connectionId: string) => string | null): void {
-  connectionPlatform = lookup;
-}
-
-function channelGate(method: string, path: string, body: unknown): void {
-  if (method !== 'POST' || path !== '/publications') return;
-  const usage = channelsInUse();
-  const connectionId = obj(body).connectionId;
-  if (!usage || typeof connectionId !== 'string') return;
-  const platform = connectionPlatform(connectionId);
-  if (!platform || usage.allowed.includes(platform)) return;
-  const n = usage.paid;
-  throw new DemoHttpError(
-    403,
-    'channel_limit',
-    `Your plan includes ${n} ${n === 1 ? 'channel' : 'channels'} (${
-      usage.allowed.join(', ') || 'none connected yet'
-    }). Add a channel to publish to ${platform}.`,
-    { channels: n, platform, allowedPlatforms: usage.allowed },
-  );
 }
 
 setRequestGate(({ method, path, body }) => {
@@ -849,5 +803,4 @@ setRequestGate(({ method, path, body }) => {
   }
   featureGate(method, path, body);
   quotaGate(method, path);
-  channelGate(method, path, body);
 });

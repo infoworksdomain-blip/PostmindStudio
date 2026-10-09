@@ -58,7 +58,7 @@ describe.skipIf(!hasDb)('billing lifecycle (scripted test clock)', { timeout: 90
         hostedInvoiceUrl: `https://invoice.stripe.test/${id}`,
       });
 
-    // Day 0: checkout completes with a 14-day STANDARD trial.
+    // Day 0: checkout completes with a 7-day trial on Growth (STANDARD features, 2 HD videos).
     fake.sessions.set(`cs_${org}`, {
       id: `cs_${org}`,
       mode: 'subscription',
@@ -74,8 +74,8 @@ describe.skipIf(!hasDb)('billing lifecycle (scripted test clock)', { timeout: 90
       id: sub,
       customerId: customer,
       status: 'trialing',
-      lookupKey: 'studio_standard_monthly',
-      trialEnd: new Date(start + 14 * DAY),
+      lookupKey: 'studio_growth_monthly',
+      trialEnd: new Date(start + 7 * DAY),
     });
     await deliver('checkout.session.completed', { id: `cs_${org}` });
     expect(await state()).toEqual({
@@ -84,15 +84,15 @@ describe.skipIf(!hasDb)('billing lifecycle (scripted test clock)', { timeout: 90
       generate: true,
       billing: true,
     });
-    expect((await reader.forOrganisation(org)).trial?.shortVideos).toBe(5);
+    expect((await reader.forOrganisation(org)).trial?.shortVideos).toBe(2);
 
-    // Day 14: trial converts, first invoice paid.
-    clock = start + 14 * DAY;
+    // Day 7: trial converts, first invoice paid.
+    clock = start + 7 * DAY;
     fake.setSubscription({
       id: sub,
       customerId: customer,
       status: 'active',
-      lookupKey: 'studio_standard_monthly',
+      lookupKey: 'studio_growth_monthly',
     });
     invoice('in_1', 'paid');
     await deliver('customer.subscription.updated', { id: sub });
@@ -105,13 +105,13 @@ describe.skipIf(!hasDb)('billing lifecycle (scripted test clock)', { timeout: 90
     });
     expect((await reader.forOrganisation(org)).trial).toBeUndefined();
 
-    // Day 44: renewal fails → past_due, 7 days of grace with full access.
-    clock = start + 44 * DAY;
+    // Day 37: renewal fails → past_due, 7 days of grace with full access.
+    clock = start + 37 * DAY;
     fake.setSubscription({
       id: sub,
       customerId: customer,
       status: 'past_due',
-      lookupKey: 'studio_standard_monthly',
+      lookupKey: 'studio_growth_monthly',
     });
     invoice('in_2', 'open');
     await deliver('invoice.payment_failed', { id: 'in_2' });
@@ -134,7 +134,7 @@ describe.skipIf(!hasDb)('billing lifecycle (scripted test clock)', { timeout: 90
       id: sub,
       customerId: customer,
       status: 'unpaid',
-      lookupKey: 'studio_standard_monthly',
+      lookupKey: 'studio_growth_monthly',
     });
     await reconcileSubscriptions(deps);
     expect(await state()).toMatchObject({ access: 'read_only', generate: false });
@@ -145,7 +145,7 @@ describe.skipIf(!hasDb)('billing lifecycle (scripted test clock)', { timeout: 90
       id: sub,
       customerId: customer,
       status: 'active',
-      lookupKey: 'studio_standard_monthly',
+      lookupKey: 'studio_growth_monthly',
     });
     invoice('in_2', 'paid');
     await deliver('invoice.paid', { id: 'in_2' });
@@ -156,16 +156,21 @@ describe.skipIf(!hasDb)('billing lifecycle (scripted test clock)', { timeout: 90
       billing: true,
     });
 
-    // Day 70: upgrade to PLUS through the portal (applied on customer.subscription.updated).
+    // Day 70: upgrade to Pro on Your plan (applied on customer.subscription.updated).
     clock = start + 70 * DAY;
     fake.setSubscription({
       id: sub,
       customerId: customer,
       status: 'active',
-      lookupKey: 'studio_plus_monthly',
+      lookupKey: 'studio_pro_monthly',
     });
     await deliver('customer.subscription.updated', { id: sub });
-    expect((await state()).tier).toBe('PLUS');
+    expect((await state()).tier).toBe('STANDARD');
+    expect((await reader.forOrganisation(org)).plan).toEqual({
+      id: 'pro',
+      interval: 'month',
+      source: 'stripe',
+    });
 
     // Cancelled at period end → after a paid period, read-only (export and downloads stay).
     clock = start + 100 * DAY;

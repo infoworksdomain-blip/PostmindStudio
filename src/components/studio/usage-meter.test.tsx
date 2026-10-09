@@ -80,25 +80,25 @@ describe('UsagePanel (admin)', () => {
 });
 
 describe('23.3 quick posts count as a quarter of a video', () => {
-  it('shows a channel plan’s quarter videos and says what counts as ¼', async () => {
+  it('shows a plan’s quarter videos and says what counts as ¼ (26.1 plans)', async () => {
     mockFetch([
       {
         match: '/usage',
         body: {
           ok: true,
           usage: usage(0, {
-            channelPlan: true,
+            studioPlan: true,
             period: 'month',
             mode: 'enforce',
             status: 'warning',
             videos: {
               short: {
                 used: 19.5,
-                limit: 24,
-                percent: 81,
+                limit: 20,
+                percent: 98,
                 maxDurationSec: 30,
                 usedQuarters: 78,
-                limitQuarters: 96,
+                limitQuarters: 80,
               },
               long: { used: 0, limit: 0, percent: 0, maxDurationSec: 0 },
             },
@@ -107,7 +107,7 @@ describe('23.3 quick posts count as a quarter of a video', () => {
       },
     ]);
     renderWithSWR(<UsageBanner />);
-    expect(await screen.findByText('19.5 of 24')).toBeInTheDocument();
+    expect(await screen.findByText('19.5 of 20')).toBeInTheDocument();
     expect(
       screen.getByText(
         'Carousels, slideshows, wall of text and hook + demo videos count as ¼ of a video.',

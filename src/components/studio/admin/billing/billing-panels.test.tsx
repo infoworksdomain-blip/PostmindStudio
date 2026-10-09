@@ -34,6 +34,7 @@ const view: AdminEntitlementsResponse['entitlements'] = {
       status: 'active',
       tier: 'PLUS',
       interval: 'month',
+      plan: null,
       quantity: 1,
       currentPeriodEnd: '2026-10-20T00:00:00.000Z',
       cancelAtPeriodEnd: false,
@@ -60,7 +61,7 @@ describe('EntitlementsPanel', () => {
     await openOrg();
     expect(screen.getByText('Stripe')).toBeInTheDocument();
     expect(screen.getByText('No staff override.')).toBeInTheDocument();
-    expect(screen.getByText(/Plus · 1 channel · Monthly · ends 20 Oct 2026/)).toBeInTheDocument();
+    expect(screen.getByText(/Plus · Monthly · ends 20 Oct 2026/)).toBeInTheDocument();
   });
 
   it('blocks an ENTERPRISE save below the minimum price, then PUTs the right body', async () => {
@@ -105,25 +106,25 @@ describe('EntitlementsPanel', () => {
     });
   });
 
-  it('21.5: sets a channel plan (channels + interval) and shows it as set by staff', async () => {
-    const onChannels: AdminEntitlementsResponse['entitlements'] = {
+  it('26.1: sets a plan (Starter / Growth / Pro + interval) and shows it as set by staff', async () => {
+    const onGrowth: AdminEntitlementsResponse['entitlements'] = {
       ...view,
       effective: {
         ...view.effective,
         tier: 'STANDARD',
-        channelPlan: { channels: 3, interval: 'month', source: 'stripe' },
+        plan: { id: 'growth', interval: 'month', source: 'stripe' },
       },
-      subscriptions: [{ ...view.subscriptions[0]!, tier: 'STANDARD', quantity: 3 }],
+      subscriptions: [{ ...view.subscriptions[0]!, tier: 'STANDARD', plan: 'growth' }],
     };
     const staffSet: AdminEntitlementsResponse['entitlements'] = {
-      ...onChannels,
+      ...onGrowth,
       effective: {
-        ...onChannels.effective,
+        ...onGrowth.effective,
         source: 'admin',
-        channelPlan: { channels: 4, interval: 'week', source: 'admin' },
+        plan: { id: 'pro', interval: 'week', source: 'admin' },
       },
       admin: {
-        channels: 4,
+        plan: 'pro',
         interval: 'week',
         reason: 'Agency pilot',
         setByUserId: 'staff_1',
@@ -134,43 +135,45 @@ describe('EntitlementsPanel', () => {
     };
     const api = mockFetch([
       { match: PATH, method: 'PUT', body: { ok: true, entitlements: staffSet } },
-      { match: PATH, body: { ok: true, entitlements: onChannels } },
+      { match: PATH, body: { ok: true, entitlements: onGrowth } },
     ]);
     const user = await openOrg();
-    expect(screen.getByTestId('channel-plan')).toHaveTextContent(
-      '3 channels · monthly (from Stripe)',
-    );
-    expect(
-      screen.getByText(/Standard · 3 channels · Monthly · ends 20 Oct 2026/),
-    ).toBeInTheDocument();
+    expect(screen.getByTestId('studio-plan')).toHaveTextContent('Growth · monthly (from Stripe)');
+    expect(screen.getByText(/Growth · Monthly · ends 20 Oct 2026/)).toBeInTheDocument();
+    // The plan select offers the three plans, cheapest first.
+    const select = screen.getByLabelText('Plan') as HTMLSelectElement;
+    expect([...select.options].map((o) => o.text)).toEqual([
+      'Keep current',
+      'Starter',
+      'Growth',
+      'Pro',
+    ]);
 
-    await user.selectOptions(screen.getByLabelText('Channels'), '4');
+    await user.selectOptions(select, 'pro');
     await user.selectOptions(screen.getByLabelText('Billing interval'), 'week');
     await user.type(screen.getByLabelText('Reason (required)'), 'Agency pilot');
     await user.click(screen.getByRole('button', { name: 'Save override' }));
     await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
     expect(api.calls.find((c) => c.method === 'PUT')?.body).toEqual({
-      channels: 4,
+      plan: 'pro',
       interval: 'week',
       expiresAt: null,
       reason: 'Agency pilot',
     });
     await waitFor(() =>
-      expect(screen.getByTestId('channel-plan')).toHaveTextContent(
-        '4 channels · weekly (set by staff)',
-      ),
+      expect(screen.getByTestId('studio-plan')).toHaveTextContent('Pro · weekly (set by staff)'),
     );
-    expect(screen.getByText('Channels: 4 channels')).toBeInTheDocument();
+    expect(screen.getByText('Plan: Pro')).toBeInTheDocument();
     expect(screen.getByText('Billed weekly')).toBeInTheDocument();
   });
 
-  it('21.5: an Enterprise override hides the channel plan fields and sends none', async () => {
+  it('26.1: an Enterprise override hides the plan fields and sends none', async () => {
     mockFetch([{ match: PATH, body: { ok: true, entitlements: view } }]);
     const user = await openOrg();
-    expect(screen.getByText('No channel plan')).toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText('Channels'), '2');
+    expect(screen.getByText('No plan')).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText('Plan'), 'starter');
     await user.selectOptions(screen.getByLabelText('Tier'), 'ENTERPRISE');
-    expect(screen.queryByLabelText('Channels')).toBeNull();
+    expect(screen.queryByLabelText('Plan')).toBeNull();
     expect(screen.queryByLabelText('Billing interval')).toBeNull();
   });
 
@@ -216,6 +219,11 @@ const subs: AdminSubscriptionsResponse = {
       PLUS: { count: 2, mrrPence: 63_983 },
       ENTERPRISE: { count: 0, mrrPence: 0 },
     },
+    byPlan: {
+      starter: { count: 1, mrrPence: 2_900 },
+      growth: { count: 2, mrrPence: 13_800 },
+      pro: { count: 2, mrrPence: 60_083 },
+    },
     total: 5,
   },
   subscriptions: [
@@ -224,7 +232,8 @@ const subs: AdminSubscriptionsResponse = {
       organisationId: 'org_1',
       organisationName: 'Acme Coffee',
       status: 'past_due',
-      tier: 'PLUS',
+      tier: 'STANDARD',
+      plan: 'pro',
       interval: 'year',
       mrrPence: 29_083,
       currentPeriodEnd: '2027-01-01T00:00:00.000Z',
@@ -235,17 +244,25 @@ const subs: AdminSubscriptionsResponse = {
 };
 
 describe('SubscriptionsPanel', () => {
-  it('shows MRR, counts by tier and status, and the list; filters by status', async () => {
+  it('shows MRR, counts by plan and status, and the list with each plan; filters by status', async () => {
     const api = mockFetch([{ match: '/admin/billing/subscriptions', body: { ok: true, ...subs } }]);
     const user = userEvent.setup();
     renderWithSWR(<SubscriptionsPanel />);
     expect(await screen.findByText('£767.83')).toBeInTheDocument();
     expect(screen.getByText('5 subscriptions')).toBeInTheDocument();
-    const byTier = screen.getByRole('list', { name: 'Subscriptions by tier' });
-    expect(within(byTier).getByText('Plus').closest('li')).toHaveTextContent('2 · £639.83');
+    expect(screen.queryByRole('list', { name: 'Subscriptions by tier' })).toBeNull();
+    const byPlan = screen.getByRole('list', { name: 'Subscriptions by plan' });
+    expect(
+      within(byPlan)
+        .getAllByRole('listitem')
+        .map((li) => li.firstChild?.textContent),
+    ).toEqual(['Starter', 'Growth', 'Pro']);
+    expect(within(byPlan).getByText('Pro').closest('li')).toHaveTextContent('2 · £600.83');
     const byStatus = screen.getByRole('list', { name: 'Subscriptions by status' });
     expect(within(byStatus).getByText('Past due').closest('li')).toHaveTextContent('1');
     const row = screen.getByRole('row', { name: /Acme Coffee/ });
+    expect(row).toHaveTextContent('Pro');
+    expect(row).not.toHaveTextContent('Standard');
     expect(row).toHaveTextContent('Yearly');
     expect(row).toHaveTextContent('£290.83');
     expect(row).toHaveTextContent('Cancelling');

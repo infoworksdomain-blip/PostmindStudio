@@ -18,18 +18,21 @@ import { ADMIN_ORGS, graceFor, syncDemoOrg, type AdminOrg } from './p18-admin';
 import { referencePrice } from './p18-billing';
 import { ago, DAY } from './projects-store';
 import {
-  channelPlanOf,
   endedTrials,
   overrideActive,
   overrides,
   planSummary,
+  studioPlanOf,
   trialView,
 } from './admin-plan-state';
 import {
-  channelIntervalForLookupKey,
-  isChannelInterval,
-  isValidChannelCount,
-} from '@/lib/studio/billing/channel-plan';
+  PLAN_IDS,
+  STUDIO_PLANS,
+  isPlanId,
+  isPlanInterval,
+  planChoiceForLookupKey,
+  type PlanId,
+} from '@/lib/studio/billing/plans';
 
 const obj = (v: unknown): Record<string, unknown> =>
   v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
@@ -52,13 +55,15 @@ function view(org: AdminOrg) {
   const own = overrideActive(org.id);
   const tier: PlanTier = own?.tier ?? (isTier(org.tier) ? org.tier : 'BASIC');
   const access = own?.access ?? (org.access as 'full' | 'read_only' | 'none' | null) ?? 'none';
-  const plan = PLAN_CATALOGUE[tier];
+  const studioPlan = studioPlanOf(org);
+  // 26.1: seats and businesses come from the plan when there is one (entitlements.ts limitsFor).
+  const catalogue = PLAN_CATALOGUE[tier];
+  const plan = studioPlan ? STUDIO_PLANS[studioPlan.id] : catalogue;
   const custom = own?.limits;
   const pick = (key: 'seats' | 'businesses' | 'storageGb', fallback: number | null) =>
     custom && key in custom ? (custom[key] ?? null) : fallback;
   const demoState = org.id === DEMO_ORG_ID ? BILLING_STATE_INFO[getBillingState()] : null;
   const source = own ? 'admin' : (demoState?.source ?? planSummary(org).source);
-  const channelPlan = channelPlanOf(org);
   return {
     organisationId: org.id,
     effective: {
@@ -69,11 +74,11 @@ function view(org: AdminOrg) {
       limits: {
         seats: pick('seats', plan.seats),
         businesses: pick('businesses', plan.businesses),
-        storageGb: pick('storageGb', plan.storageGb),
+        storageGb: pick('storageGb', catalogue.storageGb),
       },
       ...(custom && { custom }),
       ...(org.subscriptionStatus && { subscriptionStatus: org.subscriptionStatus }),
-      ...(channelPlan && { channelPlan }),
+      ...(studioPlan && { plan: studioPlan }),
     },
     stored: org.tier
       ? {
@@ -99,8 +104,9 @@ function view(org: AdminOrg) {
             id: `sub_${org.slug}`,
             status: org.subscriptionStatus,
             tier: org.lookupKey ? (planForLookupKey(org.lookupKey)?.tier ?? null) : tier,
-            interval: channelIntervalForLookupKey(org.lookupKey) ?? 'month',
-            quantity: org.channels ?? 1,
+            interval: planChoiceForLookupKey(org.lookupKey)?.interval ?? 'month',
+            plan: planChoiceForLookupKey(org.lookupKey)?.plan ?? null,
+            quantity: 1,
             currentPeriodEnd: future(20),
             cancelAtPeriodEnd: false,
           },
@@ -119,9 +125,8 @@ route('PUT', '/admin/organisations/:id/entitlements', ({ params, body }) => {
   const reason = String(input.reason ?? '').trim();
   if (reason.length < 3) throw bad('reason: Too small');
   if (input.tier !== undefined && !isTier(input.tier)) throw bad('tier: Invalid option');
-  if (input.channels !== undefined && !isValidChannelCount(input.channels))
-    throw bad('channels: Choose between 1 and 6 channels');
-  if (input.interval !== undefined && !isChannelInterval(input.interval))
+  if (input.plan !== undefined && !isPlanId(input.plan)) throw bad('plan: Invalid option');
+  if (input.interval !== undefined && !isPlanInterval(input.interval))
     throw bad('interval: Invalid option');
   const access = input.access;
   if (access !== undefined && access !== 'full' && access !== 'read_only' && access !== 'none')
@@ -136,7 +141,7 @@ route('PUT', '/admin/organisations/:id/entitlements', ({ params, body }) => {
     input.tier === undefined &&
     access === undefined &&
     input.limits === undefined &&
-    input.channels === undefined &&
+    input.plan === undefined &&
     input.interval === undefined &&
     price === null &&
     typeof input.expiresAt !== 'string';
@@ -164,8 +169,8 @@ route('PUT', '/admin/organisations/:id/entitlements', ({ params, body }) => {
   }
   overrides.set(org.id, {
     ...(input.tier !== undefined && { tier }),
-    ...(isValidChannelCount(input.channels) && { channels: input.channels }),
-    ...(isChannelInterval(input.interval) && { interval: input.interval }),
+    ...(isPlanId(input.plan) && { plan: input.plan }),
+    ...(isPlanInterval(input.interval) && { interval: input.interval }),
     ...(access !== undefined && { access }),
     ...(input.limits !== undefined && { limits: obj(input.limits) as Record<string, number> }),
     monthlyPricePence: tier === 'ENTERPRISE' ? price : null,
@@ -199,12 +204,11 @@ route('GET', '/admin/billing/subscriptions', ({ query }) => {
     const plan = o.lookupKey ? planForLookupKey(o.lookupKey) : undefined;
     const tier: PlanTier | null = own?.tier ?? plan?.tier ?? (isTier(o.tier) ? o.tier : null);
     const interval = plan?.interval ?? 'month';
-    // 21.5: a channel price is per channel (quantity = channels).
     const amount =
       tier === 'ENTERPRISE'
         ? (own?.monthlyPricePence ?? ENTERPRISE_LIST_PRICE_PENCE)
         : o.lookupKey
-          ? referencePrice(o.lookupKey) * (o.channels ?? 1)
+          ? referencePrice(o.lookupKey)
           : 0;
     const mrrPence = MRR_STATUSES.has(o.subscriptionStatus ?? '')
       ? interval === 'year'
@@ -219,6 +223,7 @@ route('GET', '/admin/billing/subscriptions', ({ query }) => {
       organisationName: o.name,
       status: o.subscriptionStatus as string,
       tier,
+      plan: planChoiceForLookupKey(o.lookupKey)?.plan ?? null,
       interval,
       mrrPence,
       currentPeriodEnd: future(20),
@@ -233,8 +238,15 @@ route('GET', '/admin/billing/subscriptions', ({ query }) => {
     PLUS: { count: 0, mrrPence: 0 },
     ENTERPRISE: { count: 0, mrrPence: 0 },
   };
+  const byPlan = Object.fromEntries(
+    PLAN_IDS.map((id) => [id, { count: 0, mrrPence: 0 }]),
+  ) as Record<PlanId, { count: number; mrrPence: number }>;
   for (const r of rows) {
     byStatus[r.status] = (byStatus[r.status] ?? 0) + 1;
+    if (r.plan && (MRR_STATUSES.has(r.status) || r.status === 'trialing')) {
+      byPlan[r.plan].count += 1;
+      byPlan[r.plan].mrrPence += r.mrrPence;
+    }
     if (r.tier) {
       byTier[r.tier].count += 1;
       byTier[r.tier].mrrPence += r.mrrPence;
@@ -247,6 +259,7 @@ route('GET', '/admin/billing/subscriptions', ({ query }) => {
       currency: 'gbp',
       byStatus,
       byTier,
+      byPlan,
       total: rows.length,
     },
     subscriptions: shown,

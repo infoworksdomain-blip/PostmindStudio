@@ -6,7 +6,7 @@ import type { NotificationInput, Notifier } from '../notifications/notifier';
 import type { Entitlements } from '../billing/entitlements-reader';
 import {
   allowanceWindow,
-  channelAllowanceNotice,
+  planAllowanceNotice,
   checkGenerateQuota,
   checkPublishQuota,
   DEFAULT_TIER_QUOTAS,
@@ -371,38 +371,42 @@ describe('usage view and threshold alerts', () => {
   });
 });
 
-describe('21.5 per-channel allowance (8 a channel a month; weekly 2 a week; yearly 8 a month)', () => {
-  const channelEnt = (channels: number, interval: 'week' | 'month' | 'year'): Entitlements => ({
+describe('26.1 plan allowance (Starter 8 / Growth 20 / Pro 45 a month; 2 / 5 / 11 a week)', () => {
+  type PlanId = 'starter' | 'growth' | 'pro';
+  const planEnt = (id: PlanId, interval: 'week' | 'month' | 'year'): Entitlements => ({
     tier: 'STANDARD',
     access: 'full',
     source: 'stripe',
-    limits: { seats: 5, businesses: 3, storageGb: 100 },
-    channelPlan: { channels, interval, source: 'stripe' },
+    limits: { seats: 3, businesses: 1, storageGb: 100 },
+    plan: { id, interval, source: 'stripe' },
   });
   const base = tierQuota('STANDARD', {});
 
-  it('the allowance is channels × the per-window videos, with no long videos', () => {
-    expect(entitlementQuota(base, channelEnt(3, 'month'))).toMatchObject({
-      shortVideos: 24,
+  it("the allowance is the plan's videos per window, with no long videos", () => {
+    expect(entitlementQuota(base, planEnt('growth', 'month'))).toMatchObject({
+      shortVideos: 20,
       longVideos: 0,
       longMaxSec: 0,
-      channelPlan: true,
+      studioPlan: true,
       period: 'month',
     });
-    expect(entitlementQuota(base, channelEnt(3, 'year'))).toMatchObject({
-      shortVideos: 24,
+    expect(entitlementQuota(base, planEnt('pro', 'year'))).toMatchObject({
+      shortVideos: 45,
       period: 'month',
     });
-    expect(entitlementQuota(base, channelEnt(3, 'week'))).toMatchObject({
-      shortVideos: 6,
+    expect(entitlementQuota(base, planEnt('pro', 'week'))).toMatchObject({
+      shortVideos: 11,
       period: 'week',
     });
+    expect(entitlementQuota(base, planEnt('starter', 'month')).shortVideos).toBe(8);
+    expect(entitlementQuota(base, planEnt('starter', 'week')).shortVideos).toBe(2);
+    expect(entitlementQuota(base, planEnt('growth', 'week')).shortVideos).toBe(5);
   });
 
   it('a Create default video (every platform, Short) counts as short and is allowed', () => {
     // Regression: YouTube Shorts defaulted to 45 s, over the 30 s short limit, so the video
-    // counted as long and a per-channel plan (no long videos) refused it (long_not_included).
-    const quota = entitlementQuota(base, channelEnt(3, 'month'));
+    // counted as long and a plan with no long videos refused it (long_not_included).
+    const quota = entitlementQuota(base, planEnt('growth', 'month'));
     const project = {
       sourceType: 'BRIEF',
       targetFormats: buildFormats(
@@ -434,19 +438,19 @@ describe('21.5 per-channel allowance (8 a channel a month; weekly 2 a week; year
 
   it('staff custom limits still win; a trial keeps its own allowance', () => {
     expect(
-      entitlementQuota(base, { ...channelEnt(2, 'month'), custom: { shortVideos: 50 } })
+      entitlementQuota(base, { ...planEnt('growth', 'month'), custom: { shortVideos: 50 } })
         .shortVideos,
     ).toBe(50);
     const trial = {
       startedAt: '2026-09-20T00:00:00Z',
       endsAt: '2026-10-04T00:00:00Z',
-      shortVideos: 5,
+      shortVideos: 2,
       longVideos: 0,
       dailyCostCapPence: 1_000,
       totalCostCapPence: 1_500,
     };
-    expect(entitlementQuota(base, { ...channelEnt(6, 'month'), trial })).toMatchObject({
-      shortVideos: 5,
+    expect(entitlementQuota(base, { ...planEnt('pro', 'month'), trial })).toMatchObject({
+      shortVideos: 2,
       longVideos: 0,
       longMaxSec: 0,
     });
@@ -454,17 +458,17 @@ describe('21.5 per-channel allowance (8 a channel a month; weekly 2 a week; year
 
   it('weekly plans count per ISO week; everything else per calendar month', () => {
     // Monday 28 September 2026 is the start of W40.
-    expect(allowanceWindow(channelEnt(1, 'week'), SEPT)).toEqual({
+    expect(allowanceWindow(planEnt('starter', 'week'), SEPT)).toEqual({
       key: '2026-W40',
       start: new Date('2026-09-28T00:00:00Z'),
       end: new Date('2026-10-05T00:00:00Z'),
     });
-    expect(allowanceWindow(channelEnt(1, 'year'), SEPT).key).toBe('2026-09');
+    expect(allowanceWindow(planEnt('pro', 'year'), SEPT).key).toBe('2026-09');
     expect(allowanceWindow(undefined, SEPT).key).toBe('2026-09');
   });
 
-  it('a long video is not part of the channel plan', () => {
-    const quota = entitlementQuota(base, channelEnt(1, 'month'));
+  it('a long video is not part of any plan', () => {
+    const quota = entitlementQuota(base, planEnt('starter', 'month'));
     expect(videoLimitViolations(row('l', 120, null) as never, quota, 'STANDARD')).toEqual([
       expect.objectContaining({
         code: 'long_not_included',
@@ -483,12 +487,12 @@ describe('21.5 per-channel allowance (8 a channel a month; weekly 2 a week; year
       'org-1',
       'STANDARD',
       undefined,
-      channelEnt(1, 'week'),
+      planEnt('starter', 'week'),
     );
     expect(view).toMatchObject({
       month: '2026-W40',
       period: 'week',
-      channelPlan: true,
+      studioPlan: true,
       resetsAt: '2026-10-05T00:00:00.000Z',
       videos: { short: { used: 1, limit: 2 } },
     });
@@ -496,7 +500,7 @@ describe('21.5 per-channel allowance (8 a channel a month; weekly 2 a week; year
       project: row('c', 20, null) as never,
       alreadyCounted: false,
       usage: { short: 8, long: 0 }, // quarters: 2 videos
-      quota: entitlementQuota(base, channelEnt(1, 'week')),
+      quota: entitlementQuota(base, planEnt('starter', 'week')),
       tier: 'STANDARD',
     });
     expect(violations[0]?.message).toBe(
@@ -504,7 +508,7 @@ describe('21.5 per-channel allowance (8 a channel a month; weekly 2 a week; year
     );
   });
 
-  it('enforce answers quota_exceeded with "add a channel or buy a video pack"', async () => {
+  it('enforce answers quota_exceeded with "upgrade your plan or buy a video pack"', async () => {
     const rows = Array.from({ length: 8 }, (_, i) => row(`p${i}`, 20, '2026-09-05T00:00:00Z'));
     const target = row('new', 20, null);
     const db: Record<string, unknown> = fakeDb([...rows, target], {
@@ -514,7 +518,7 @@ describe('21.5 per-channel allowance (8 a channel a month; weekly 2 a week; year
     });
     db.$transaction = async (fn: (tx: unknown) => unknown) => fn(db);
     const reader = {
-      forOrganisation: async () => channelEnt(1, 'month'),
+      forOrganisation: async () => planEnt('starter', 'month'),
       invalidate: () => undefined,
     };
     const err = await checkGenerateQuota(
@@ -523,36 +527,36 @@ describe('21.5 per-channel allowance (8 a channel a month; weekly 2 a week; year
       'new',
     ).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(QuotaExceededError);
-    expect((err as Error).message).toMatch(/Add a channel or buy a video pack for more\.$/);
-    expect((err as QuotaExceededError).details).toMatchObject({ channelPlan: true });
+    expect((err as Error).message).toMatch(/Upgrade your plan or buy a video pack for more\.$/);
+    expect((err as QuotaExceededError).details).toMatchObject({ studioPlan: true });
   });
 
   it('allowance notices name the week or month and the ways to keep going', () => {
     const view = { period: 'week' as const, resetsAt: '2026-10-05T00:00:00.000Z' };
-    expect(channelAllowanceNotice(view, { used: 5, limit: 6 }, 80, false)).toMatchObject({
+    expect(planAllowanceNotice(view, { used: 5, limit: 6 }, 80, false)).toMatchObject({
       title: "80% of this week's videos used",
       message: {
         key: 'videoAllowanceNearing',
         params: { threshold: 80, used: 5, limit: 6, period: 'week' },
       },
     });
-    expect(channelAllowanceNotice(view, { used: 6, limit: 6 }, 100, true)).toMatchObject({
+    expect(planAllowanceNotice(view, { used: 6, limit: 6 }, 100, true)).toMatchObject({
       title: "All of this week's videos used",
       message: { key: 'videoAllowanceUsed', params: { blocked: 'yes', period: 'week' } },
     });
-    expect(channelAllowanceNotice(view, { used: 6, limit: 6 }, 100, true).body).toMatch(
-      /add a channel or buy a video pack/,
+    expect(planAllowanceNotice(view, { used: 6, limit: 6 }, 100, true).body).toMatch(
+      /upgrade your plan or buy a video pack/,
     );
   });
 });
 
 describe('23.3 quick posts count as a quarter of a video', () => {
-  const channelMonth: Entitlements = {
+  const starterMonth: Entitlements = {
     tier: 'STANDARD',
     access: 'full',
     source: 'stripe',
-    limits: { seats: 5, businesses: 3, storageGb: 100 },
-    channelPlan: { channels: 1, interval: 'month', source: 'stripe' },
+    limits: { seats: 1, businesses: 1, storageGb: 100 },
+    plan: { id: 'starter', interval: 'month', source: 'stripe' },
   };
   const quick = (id: string, sourceType: string) =>
     row(id, 20, '2026-09-05T00:00:00Z', { sourceType });
@@ -571,7 +575,7 @@ describe('23.3 quick posts count as a quarter of a video', () => {
       'org-1',
       'STANDARD',
       undefined,
-      channelMonth,
+      starterMonth,
     );
     // 4 + 5 × 1 = 9 quarters = 2.25 videos of 8 (32 quarters).
     expect(view.videos.short).toMatchObject({
@@ -584,18 +588,18 @@ describe('23.3 quick posts count as a quarter of a video', () => {
     expect(view.status).toBe('ok');
   });
 
-  it('fits 32 quick posts in a channel month and then says the allowance is used', async () => {
+  it('fits 32 quick posts in a Starter month and then says the allowance is used', async () => {
     const rows = Array.from({ length: 32 }, (_, i) => quick(`c${i}`, 'CAROUSEL'));
     const view = await usageView(
       { db: fakeDb(rows) as never, now: () => SEPT, env: {} },
       'org-1',
       'STANDARD',
       undefined,
-      channelMonth,
+      starterMonth,
     );
     expect(view.videos.short).toMatchObject({ used: 8, limit: 8, percent: 100 });
     expect(view.status).toBe('exceeded');
-    const notice = channelAllowanceNotice(view, view.videos.short, 100, true);
+    const notice = planAllowanceNotice(view, view.videos.short, 100, true);
     expect(notice.body).toMatch(/^8 of 8 videos made this month/);
   });
 

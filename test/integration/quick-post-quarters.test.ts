@@ -16,7 +16,7 @@ import type {
   Entitlements,
   EntitlementsReader,
 } from '../../src/lib/studio/billing/entitlements-reader';
-import type { ChannelInterval } from '../../src/lib/studio/billing/channel-plan';
+import type { PlanId, PlanInterval } from '../../src/lib/studio/billing/plans';
 import {
   checkGenerateQuota,
   quotaSlotOf,
@@ -43,13 +43,13 @@ describe.skipIf(!hasDb)(
     const logger = pino({ level: 'silent' });
     let org: string;
 
-    const channelPlan = (channels: number, interval: ChannelInterval): EntitlementsReader => {
+    const onPlan = (id: PlanId, interval: PlanInterval): EntitlementsReader => {
       const value: Entitlements = {
         tier: 'STANDARD',
         access: 'full',
         source: 'stripe',
-        limits: { seats: 5, businesses: 3, storageGb: 100 },
-        channelPlan: { channels, interval, source: 'stripe' },
+        limits: { seats: 3, businesses: 1, storageGb: 100 },
+        plan: { id, interval, source: 'stripe' },
       };
       return { forOrganisation: vi.fn(async () => value), invalidate: vi.fn() };
     };
@@ -116,7 +116,7 @@ describe.skipIf(!hasDb)(
       await db.$disconnect();
     });
 
-    it('a monthly channel fits 32 quick posts; the usage view shows quarter videos', async () => {
+    it('a monthly Starter plan fits 32 quick posts; the usage view shows quarter videos', async () => {
       await many(10, 'CAROUSEL');
       await many(10, 'SLIDESHOW');
       await many(6, 'WALL_OF_TEXT');
@@ -124,10 +124,10 @@ describe.skipIf(!hasDb)(
       // 31 quarters used: one quick post still fits, an AI video does not.
       const video = await project('BRIEF');
       await expect(
-        checkGenerateQuota(deps(channelPlan(1, 'month')), tenant(), video.id),
+        checkGenerateQuota(deps(onPlan('starter', 'month')), tenant(), video.id),
       ).rejects.toBeInstanceOf(QuotaExceededError);
       const carousel = await project('CAROUSEL');
-      const ok = await checkGenerateQuota(deps(channelPlan(1, 'month')), tenant(), carousel.id);
+      const ok = await checkGenerateQuota(deps(onPlan('starter', 'month')), tenant(), carousel.id);
       expect(ok.violations).toEqual([]);
       expect(ok.reservation).toMatchObject({ fresh: true, month: MONTH });
       const view = await usageView(
@@ -135,7 +135,7 @@ describe.skipIf(!hasDb)(
         org,
         'STANDARD',
         undefined,
-        await channelPlan(1, 'month').forOrganisation(org),
+        await onPlan('starter', 'month').forOrganisation(org),
       );
       expect(view.videos.short).toMatchObject({
         used: 8,
@@ -147,7 +147,7 @@ describe.skipIf(!hasDb)(
       // The 33rd quick post is refused.
       const extra = await project('SLIDESHOW');
       await expect(
-        checkGenerateQuota(deps(channelPlan(1, 'month')), tenant(), extra.id),
+        checkGenerateQuota(deps(onPlan('starter', 'month')), tenant(), extra.id),
       ).rejects.toBeInstanceOf(QuotaExceededError);
     });
 
@@ -160,35 +160,36 @@ describe.skipIf(!hasDb)(
         org,
         'STANDARD',
         undefined,
-        await channelPlan(2, 'month').forOrganisation(org),
+        await onPlan('growth', 'month').forOrganisation(org),
       );
       expect(view.videos.short).toMatchObject({ usedQuarters: 15, used: 3.75 });
-      expect(view.videos.short.limit).toBe(16);
+      expect(view.videos.short.limit).toBe(20);
+      expect(view.videos.short.limitQuarters).toBe(80);
     });
 
-    it('a weekly channel counts 8 quick posts per ISO week (last week does not count)', async () => {
+    it('a weekly Starter plan counts 8 quick posts per ISO week (last week does not count)', async () => {
       // Sunday 27 September is in W39: not counted.
       await many(8, 'CAROUSEL', new Date('2026-09-27T09:00:00Z'));
       await many(7, 'CAROUSEL', new Date('2026-09-29T09:00:00Z'));
       const eighth = await project('SLIDESHOW');
-      const ok = await checkGenerateQuota(deps(channelPlan(1, 'week')), tenant(), eighth.id);
+      const ok = await checkGenerateQuota(deps(onPlan('starter', 'week')), tenant(), eighth.id);
       expect(ok.reservation?.month).toBe('2026-W40');
       const ninth = await project('SLIDESHOW');
       await expect(
-        checkGenerateQuota(deps(channelPlan(1, 'week')), tenant(), ninth.id),
+        checkGenerateQuota(deps(onPlan('starter', 'week')), tenant(), ninth.id),
       ).rejects.toBeInstanceOf(QuotaExceededError);
     });
 
-    it('a yearly channel releases 8 videos (32 quick posts) each calendar month', async () => {
+    it('a yearly Starter plan releases 8 videos (32 quick posts) each calendar month', async () => {
       await many(32, 'CAROUSEL', new Date('2026-08-20T09:00:00Z')); // August: not counted
       await many(31, 'CAROUSEL');
       const last = await project('CAROUSEL');
       expect(
-        (await checkGenerateQuota(deps(channelPlan(1, 'year')), tenant(), last.id)).violations,
+        (await checkGenerateQuota(deps(onPlan('starter', 'year')), tenant(), last.id)).violations,
       ).toEqual([]);
       const over = await project('CAROUSEL');
       await expect(
-        checkGenerateQuota(deps(channelPlan(1, 'year')), tenant(), over.id),
+        checkGenerateQuota(deps(onPlan('starter', 'year')), tenant(), over.id),
       ).rejects.toBeInstanceOf(QuotaExceededError);
     });
 
@@ -198,7 +199,11 @@ describe.skipIf(!hasDb)(
       expect(await availableCreditQuarters(db, org, new Date(NOW))).toEqual({ short: 20, long: 0 });
 
       const carousel = await project('CAROUSEL');
-      const quick = await checkGenerateQuota(deps(channelPlan(1, 'month')), tenant(), carousel.id);
+      const quick = await checkGenerateQuota(
+        deps(onPlan('starter', 'month')),
+        tenant(),
+        carousel.id,
+      );
       expect(quick.reservation?.creditUseId).toEqual(expect.any(String));
       expect(await availableCredits(db, org, new Date(NOW))).toEqual({ short: 4.75, long: 0 });
       const use = await db.usageCreditUse.findUniqueOrThrow({
@@ -207,7 +212,7 @@ describe.skipIf(!hasDb)(
       expect(use.quarters).toBe(1);
 
       const video = await project('BRIEF');
-      const full = await checkGenerateQuota(deps(channelPlan(1, 'month')), tenant(), video.id);
+      const full = await checkGenerateQuota(deps(onPlan('starter', 'month')), tenant(), video.id);
       expect(await availableCreditQuarters(db, org, new Date(NOW))).toEqual({ short: 15, long: 0 });
 
       // The video's run never started: its slot and exactly 4 quarters come back.

@@ -47,9 +47,7 @@ function conn(
   return { organisationId: DEMO_ORG_ID, connectedByUserId: DEMO_USER_ID, ...c };
 }
 
-// 21.5: the connection dates set the channel order (the platforms connected first publish):
-// TikTok, Instagram and YouTube are inside the default 3-channel plan; Facebook, X and LinkedIn
-// show "add a channel" until the plan has more channels.
+// 26.1: every plan publishes to every connected platform (no channel limit).
 const rows: DemoConnection[] = [
   conn({
     id: CONNECTIONS.tiktok.id,

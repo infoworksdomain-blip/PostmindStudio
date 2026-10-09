@@ -2,12 +2,18 @@ import { z } from 'zod';
 import type { TenantAccess } from '../../tenant';
 import type { PlanTier } from '../providers/router';
 import { PLAN_CATALOGUE, planForLookupKey, TIER_ORDER, TRIAL } from './catalogue';
-import { channelIntervalForLookupKey, type ChannelInterval } from './channel-plan';
+import {
+  planForChannelCount,
+  planOfSubscription,
+  STUDIO_PLANS,
+  type PlanChoice,
+  type PlanId,
+} from './plans';
 import type {
-  ChannelPlanEntitlement,
   EntitlementLimits,
   Entitlements,
   EntitlementSource,
+  PlanEntitlement,
 } from './entitlements-reader';
 
 // Phase 18 §P.3 — the ONE place Stripe state becomes Studio state. `entitlementsFromSubscription`
@@ -27,7 +33,7 @@ import type {
 //     allowed), none when it never paid.
 
 export const DEFAULT_GRACE_DAYS = 7;
-export const DEFAULT_TRIAL_DAYS = 14;
+export const DEFAULT_TRIAL_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 type Env = Record<string, string | undefined>;
@@ -44,7 +50,7 @@ export function graceDays(env: Env = process.env): number {
   return days(env, 'STUDIO_BILLING_GRACE_DAYS', DEFAULT_GRACE_DAYS, 30);
 }
 
-/** STUDIO_TRIAL_DAYS (0–30, default 14; 0 = no trial). */
+/** STUDIO_TRIAL_DAYS (0–30, default 7; 0 = no trial). */
 export function trialDays(env: Env = process.env): number {
   return days(env, 'STUDIO_TRIAL_DAYS', DEFAULT_TRIAL_DAYS, 30);
 }
@@ -58,14 +64,8 @@ export interface SubscriptionFacts {
   lookupKey: string | null;
   productTier: string | null;
   trialEnd: Date | null;
-  /** 21.5: the subscription item's quantity = the number of paid channels. */
+  /** The item quantity (1 on a plan price; the channels on a legacy 21.5 channel price). */
   quantity?: number | null;
-}
-
-/** 21.5: what a per-channel subscription pays for. */
-export interface ChannelPlanFacts {
-  channels: number;
-  interval: ChannelInterval;
 }
 
 export interface DerivedEntitlement {
@@ -76,19 +76,16 @@ export interface DerivedEntitlement {
   status: string | null;
   /** past_due: the end of the grace period (full access until then). */
   graceUntil: Date | null;
-  /** 21.5: channels and interval of a per-channel subscription (null for legacy tier prices). */
-  channelPlan: ChannelPlanFacts | null;
+  /** 26.1: the plan and interval (a legacy channel price mapped by quantity; null otherwise). */
+  plan: PlanChoice | null;
 }
 
-/** 21.5: the channel plan a subscription pays for: its quantity on a channel price. */
-export function channelPlanOfSubscription(
+/** 26.1: the plan a subscription pays for (a 21.5 channel price is mapped by its quantity). */
+export function planChoiceOfSubscription(
   facts: Pick<SubscriptionFacts, 'lookupKey' | 'quantity'>,
-): ChannelPlanFacts | null {
-  const interval = channelIntervalForLookupKey(facts.lookupKey);
-  if (!interval) return null;
-  const quantity = facts.quantity ?? 1;
-  const channels = Number.isInteger(quantity) && quantity >= 1 ? quantity : 1;
-  return { channels, interval };
+): PlanChoice | null {
+  const found = planOfSubscription(facts);
+  return found ? { plan: found.plan, interval: found.interval } : null;
 }
 
 function asTier(value: string | null | undefined): PlanTier | undefined {
@@ -120,13 +117,13 @@ export function entitlementsFromSubscription(input: {
       source: 'none',
       status: null,
       graceUntil: null,
-      channelPlan: null,
+      plan: null,
     };
   const tier = tierOfSubscription(sub) ?? 'BASIC';
   const base = {
     status: sub.status,
     graceUntil: null,
-    channelPlan: channelPlanOfSubscription(sub),
+    plan: planChoiceOfSubscription(sub),
   };
   switch (sub.status) {
     case 'trialing':
@@ -150,11 +147,11 @@ export function entitlementsFromSubscription(input: {
       return { ...base, tier, access: lapsed, source: 'stripe' };
     case 'canceled':
     case 'incomplete_expired':
-      return { ...base, tier: 'BASIC', access: lapsed, source: 'none', channelPlan: null };
+      return { ...base, tier: 'BASIC', access: lapsed, source: 'none', plan: null };
     case 'incomplete':
-      return { ...base, tier: 'BASIC', access: 'none', source: 'none', channelPlan: null };
+      return { ...base, tier: 'BASIC', access: 'none', source: 'none', plan: null };
     default:
-      return { ...base, tier: 'BASIC', access: 'none', source: 'none', channelPlan: null };
+      return { ...base, tier: 'BASIC', access: 'none', source: 'none', plan: null };
   }
 }
 
@@ -181,12 +178,16 @@ export const customLimitsSchema = z
 export type CustomLimits = z.infer<typeof customLimitsSchema>;
 
 const intervalSchema = z.enum(['week', 'month', 'year']);
+const planIdSchema = z.enum(['starter', 'growth', 'pro']);
+/** 21.5 rows stored a channel count; read as a plan by planForChannelCount. */
 const channelsSchema = z.number().int().min(1).max(1_000);
 
 export const adminOverrideSchema = z.object({
   tier: tierSchema.optional(),
   access: accessSchema.optional(),
-  /** 21.5: staff set the channel count and interval (allowance, caps, channel limit). */
+  /** 26.1: staff set the plan and interval (allowance, caps, seats and businesses). */
+  plan: planIdSchema.optional(),
+  /** 21.5 overrides stored a channel count instead of a plan (read as a plan; never written). */
   channels: channelsSchema.optional(),
   interval: intervalSchema.optional(),
   expiresAt: z.string().nullable().optional(),
@@ -220,7 +221,9 @@ export const overridesSchema = z.object({
       access: accessSchema,
       source: z.enum(['stripe', 'trial', 'none']),
       status: z.string().nullable(),
-      /** 21.5: the subscription's quantity and interval on a channel price. */
+      /** 26.1: the subscription's plan and interval. */
+      plan: planIdSchema.optional(),
+      /** 21.5 rows: the quantity on a channel price (read as a plan; no longer written). */
       channels: channelsSchema.optional(),
       interval: intervalSchema.optional(),
     })
@@ -254,7 +257,7 @@ export function parseOverrides(raw: unknown): EntitlementOverrides {
   return parsed.success ? parsed.data : {};
 }
 
-/** The trial allowance and caps (§P.1): 5 short, 1 long, £10 a day, £15 in total. */
+/** The trial allowance and caps: 2 HD videos (26.1), no long video, £10 a day, £15 in total. */
 export function trialStateFor(startedAt: Date, endsAt: Date | null): TrialState {
   return {
     startedAt: startedAt.toISOString(),
@@ -283,12 +286,18 @@ export function adminOverrideActive(admin: AdminOverride | undefined, now: Date)
   return Number.isNaN(at) ? false : now.getTime() < at;
 }
 
-function limitsFor(tier: PlanTier, custom: CustomLimits | undefined): EntitlementLimits {
-  const plan = PLAN_CATALOGUE[tier];
+/** Seats and businesses come from the 26.1 plan when there is one, else the tier; custom wins. */
+function limitsFor(
+  tier: PlanTier,
+  studioPlan: PlanId | undefined,
+  custom: CustomLimits | undefined,
+): EntitlementLimits {
+  const catalogue = PLAN_CATALOGUE[tier];
+  const plan = studioPlan ? STUDIO_PLANS[studioPlan] : catalogue;
   return {
     seats: custom?.seats !== undefined ? custom.seats : plan.seats,
     businesses: custom?.businesses !== undefined ? custom.businesses : plan.businesses,
-    storageGb: custom?.storageGb !== undefined ? custom.storageGb : plan.storageGb,
+    storageGb: custom?.storageGb !== undefined ? custom.storageGb : catalogue.storageGb,
   };
 }
 
@@ -325,34 +334,42 @@ export function resolveStoredEntitlements(row: StoredEntitlement, now: Date): En
   const custom = adminActive || tier === 'ENTERPRISE' ? overrides.limits : undefined;
   // An active staff override (source admin) or a trial staff ended (20.27) has no trial caps.
   const trial = source === 'trial' && !overrides.trial?.endedAt ? overrides.trial : undefined;
-  const channelPlan = resolveChannelPlan(derived, adminActive ? overrides.admin : undefined, tier);
+  const plan = resolvePlan(derived, adminActive ? overrides.admin : undefined, tier);
   return {
     tier,
     access,
     source,
     ...(row.graceUntil && derived.status === 'past_due' && { graceUntil: row.graceUntil }),
-    limits: limitsFor(tier, custom),
+    limits: limitsFor(tier, plan?.id, custom),
     ...(custom && { custom }),
     ...(trial && { trial }),
     ...(derived.status && { subscriptionStatus: derived.status }),
-    ...(channelPlan && { channelPlan }),
+    ...(plan && { plan }),
   };
 }
 
+/** A stored plan id, or a 21.5 channel count read as a plan. */
+function storedPlan(stored: { plan?: PlanId; channels?: number } | undefined): PlanId | undefined {
+  if (!stored) return undefined;
+  if (stored.plan) return stored.plan;
+  return stored.channels !== undefined ? planForChannelCount(stored.channels) : undefined;
+}
+
 /**
- * 21.5: the channel plan in force: a staff override's channels / interval win over the Stripe
- * subscription's (an override may set only one of them; the other comes from Stripe, interval
- * defaulting to month). ENTERPRISE has no channel plan (custom limits instead).
+ * 26.1: the plan in force: a staff override's plan / interval win over the Stripe subscription's
+ * (an override may set only one of them; the other comes from Stripe, interval defaulting to
+ * month). ENTERPRISE has no plan (custom limits instead).
  */
-function resolveChannelPlan(
-  derived: { channels?: number; interval?: ChannelInterval },
+function resolvePlan(
+  derived: { plan?: PlanId; channels?: number; interval?: PlanChoice['interval'] },
   admin: AdminOverride | undefined,
   tier: PlanTier,
-): ChannelPlanEntitlement | undefined {
+): PlanEntitlement | undefined {
   if (tier === 'ENTERPRISE') return undefined;
-  const channels = admin?.channels ?? derived.channels;
-  if (channels === undefined) return undefined;
+  const adminPlan = storedPlan(admin);
+  const id = adminPlan ?? storedPlan(derived);
+  if (id === undefined) return undefined;
   const interval = admin?.interval ?? derived.interval ?? 'month';
-  const fromAdmin = admin?.channels !== undefined || admin?.interval !== undefined;
-  return { channels, interval, source: fromAdmin ? 'admin' : 'stripe' };
+  const fromAdmin = adminPlan !== undefined || admin?.interval !== undefined;
+  return { id, interval, source: fromAdmin ? 'admin' : 'stripe' };
 }

@@ -3,9 +3,9 @@ import type { PriceState } from '@/lib/studio/billing/gateway';
 import { buildPricingView } from '@/lib/studio/billing/pricing';
 import type { BillingResponse, PricingView } from './types';
 
-// Test fixtures for the billing screens: Stripe prices as prices.list returns them (the 21.5
-// per-channel reference amounts and the HD packs), turned into the PricingView the API serves by
-// the real buildPricingView.
+// Test fixtures for the billing screens: Stripe prices as prices.list returns them (the 26.1 plan
+// reference amounts and the HD packs), turned into the PricingView the API serves by the real
+// buildPricingView.
 
 export const NOW = new Date('2026-09-29T12:00:00.000Z');
 
@@ -24,56 +24,50 @@ export function stripePrices(overrides: Record<string, number> = {}): PriceState
 }
 
 export function pricingView(prices: PriceState[] | null = stripePrices()): PricingView {
-  return buildPricingView(prices, NOW, { STUDIO_TRIAL_DAYS: '14' });
+  return buildPricingView(prices, NOW, { STUDIO_TRIAL_DAYS: '7' });
 }
 
 type Billing = BillingResponse['billing'];
 
-/** An owner's organisation on 3 channels, monthly, with two platforms connected. */
+/** An owner's organisation on Growth, monthly. */
 export function billing(patch: Partial<Billing> = {}): Billing {
   return {
-    catalogueVersion: '2026-10-04',
+    catalogueVersion: '2026-10-09',
     entitlements: {
       tier: 'STANDARD',
       access: 'full',
       source: 'stripe',
       graceUntil: null,
-      limits: { seats: 5, businesses: 3, storageGb: 100 },
+      limits: { seats: 3, businesses: 1, storageGb: 100 },
       custom: null,
       trial: null,
       subscriptionStatus: 'active',
     },
     subscription: {
       status: 'active',
-      lookupKey: 'studio_channel_monthly',
+      lookupKey: 'studio_growth_monthly',
       interval: 'month',
-      quantity: 3,
+      quantity: 1,
       currentPeriodEnd: '2026-10-29T12:00:00.000Z',
       cancelAtPeriodEnd: false,
       trialEnd: null,
     },
     plan: {
-      channels: 3,
+      id: 'growth',
       interval: 'month',
       source: 'stripe',
       legacy: false,
-      pricePerPeriodPence: 8_700,
+      pricePerPeriodPence: 6_900,
       currency: 'gbp',
       pending: null,
       paymentPending: false,
-    },
-    channels: {
-      paid: 3,
-      connected: ['tiktok', 'instagram'],
-      allowed: ['tiktok', 'instagram'],
-      blocked: [],
     },
     hasBillingAccount: true,
     trialEligible: false,
     credits: { short: 7, long: 0 },
     usage: {
-      seats: { used: 2, limit: 5 },
-      businesses: { used: 1, limit: 3 },
+      seats: { used: 2, limit: 3 },
+      businesses: { used: 1, limit: 1 },
       storage: { usedBytes: String(12 * 1024 ** 3), limitGb: 100, percent: 12 },
     },
     canManage: true,
@@ -93,7 +87,6 @@ export function noPlan(patch: Partial<Billing> = {}): Billing {
     },
     subscription: null,
     plan: null,
-    channels: null,
     hasBillingAccount: false,
     trialEligible: true,
     credits: { short: 0, long: 0 },
@@ -101,8 +94,8 @@ export function noPlan(patch: Partial<Billing> = {}): Billing {
   });
 }
 
-/** GET /usage for a channel plan (videos this month). */
-export function usage(used = 5, limit = 24, period: 'week' | 'month' = 'month') {
+/** GET /usage for a plan (Growth: 20 videos this month). */
+export function usage(used = 5, limit = 20, period: 'week' | 'month' = 'month') {
   return {
     usage: {
       organisationId: 'org-1',
@@ -110,7 +103,7 @@ export function usage(used = 5, limit = 24, period: 'week' | 'month' = 'month') 
       mode: 'enforce' as const,
       month: '2026-09',
       period,
-      channelPlan: true,
+      studioPlan: true,
       periodStart: '2026-09-01T00:00:00.000Z',
       resetsAt: '2026-10-01T00:00:00.000Z',
       thresholds: [80, 100],

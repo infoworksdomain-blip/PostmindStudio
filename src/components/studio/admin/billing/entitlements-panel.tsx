@@ -14,8 +14,8 @@ import { ClearOverride, OverrideForm } from './override-form';
 
 // Phase 18 §P.3 / §P.4 — staff entitlement overrides for one organisation
 // (GET|PUT|DELETE /admin/organisations/:id/entitlements): the effective plan, the trial, the
-// stored row, the current override, subscriptions; a form to set tier, access, the channel plan
-// (21.5: channels 1–6 and weekly / monthly / yearly, not for ENTERPRISE), custom limits, the
+// stored row, the current override, subscriptions; a form to set tier, access, the plan
+// (26.1: Starter / Growth / Pro and weekly / monthly / yearly, not for ENTERPRISE), custom limits, the
 // ENTERPRISE agreed monthly price (checked live against the minimum for the organisation's
 // monthly cost cap, and blocked here before the server's 422), an optional expiry, "End the trial
 // now" (20.27) and a required reason; and removing the override (reason required). Access

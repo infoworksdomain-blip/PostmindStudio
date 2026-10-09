@@ -7,8 +7,8 @@ import { mockFetch, renderWithSWR, type MockRoute } from '../library/test-helper
 import { billing, pricingView } from './test-fixtures';
 import { UpgradeDialogHost } from './upgrade-dialog';
 
-// Phase 18 §3 / 21.5 — api() emits plan / billing / channel blocks on the upgrade bus; the host
-// opens the dialog. No tier names (one per-channel plan).
+// Phase 18 §3 / 26.1 — api() emits plan / billing blocks on the upgrade bus; the host
+// opens the dialog. No internal tier names (plans are Starter / Growth / Pro).
 
 const nav = vi.hoisted(() => ({ navigateTo: vi.fn() }));
 vi.mock('./navigate', () => ({ navigateTo: nav.navigateTo }));
@@ -58,26 +58,11 @@ describe('UpgradeDialogHost', () => {
     expect(screen.getByRole('link', { name: 'See the plan' })).toHaveAttribute('href', '/pricing');
   });
 
-  it('channel_limit names the paid channels and links to add a channel (21.5)', async () => {
-    mockFetch(
-      routes(billing(), [
-        gated(403, 'channel_limit', {
-          channels: 2,
-          platform: 'youtube',
-          allowedPlatforms: ['tiktok', 'instagram'],
-        }),
-      ]),
-    );
+  it('26.1: every plan posts to every platform, so channel_limit never opens the dialog', async () => {
+    mockFetch(routes(billing(), [gated(403, 'channel_limit', { platform: 'youtube' })]));
     renderWithSWR(<UpgradeDialogHost />);
     await block();
-    const dialog = await screen.findByRole('dialog', { name: 'Add a channel to publish here' });
-    expect(dialog).toHaveTextContent(
-      /Your plan includes 2 channels: TikTok, Instagram\. Add a channel to publish to .+ too\./,
-    );
-    expect(screen.getByRole('link', { name: 'Add a channel' })).toHaveAttribute(
-      'href',
-      '/settings/billing#change',
-    );
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('a seat limit is not a monthly limit: seat wording, members, no video pack', async () => {
@@ -97,18 +82,22 @@ describe('UpgradeDialogHost', () => {
     );
   });
 
-  it('quota_exceeded offers a video pack or another channel', async () => {
+  it('quota_exceeded offers a video pack or a higher plan', async () => {
     mockFetch(routes(billing(), [gated(403, 'quota_exceeded')]));
     renderWithSWR(<UpgradeDialogHost />);
     await block();
-    expect(
-      await screen.findByRole('dialog', { name: 'You’ve used your plan’s videos for now' }),
-    ).toBeInTheDocument();
+    const dialog = await screen.findByRole('dialog', {
+      name: 'You’ve used your plan’s videos for now',
+    });
+    expect(dialog).toHaveTextContent(
+      'Upgrade your plan for more videos each week or month, or buy a video pack to keep going today.',
+    );
+    expect(dialog).not.toHaveTextContent(/channel/i);
     expect(screen.getByRole('link', { name: 'Buy a video pack' })).toHaveAttribute(
       'href',
       '/settings/billing#topups',
     );
-    expect(screen.getByRole('link', { name: 'Add a channel' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Upgrade your plan' })).toHaveAttribute(
       'href',
       '/settings/billing#change',
     );

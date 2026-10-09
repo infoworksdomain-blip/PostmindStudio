@@ -3,18 +3,15 @@
 // follow src/lib/studio/billing/admin.ts (AdminTrialView) and services/admin-directory.ts
 // (planSummary). Kept in its own module so neither handler file imports the other.
 import { TRIAL } from '@/lib/studio/billing/catalogue';
-import {
-  channelIntervalForLookupKey,
-  type ChannelInterval,
-} from '@/lib/studio/billing/channel-plan';
+import { planChoiceForLookupKey, type PlanId, type PlanInterval } from '@/lib/studio/billing/plans';
 import type { PlanTier } from '@/components/studio/billing/types';
 import { ago, DAY } from './projects-store';
 
 export interface DemoOverride {
   tier?: PlanTier;
-  /** 21.5: staff give channels and an interval (allowance, caps, channel limit). */
-  channels?: number;
-  interval?: ChannelInterval;
+  /** 26.1: staff give a plan and an interval (allowance, caps, seats, businesses). */
+  plan?: PlanId;
+  interval?: PlanInterval;
   access?: 'full' | 'read_only' | 'none';
   limits?: Record<string, number | null>;
   monthlyPricePence?: number | null;
@@ -31,9 +28,8 @@ export interface PlanOrg {
   access: string | null;
   subscriptionStatus: string | null;
   costThisMonthPence: number;
-  /** 21.5: the channel price's lookup key and its quantity (channels). */
+  /** 26.1: the plan price's lookup key (studio_<plan>_<interval>). */
   lookupKey?: string | null;
-  channels?: number | null;
 }
 
 export const overrides = new Map<string, DemoOverride>();
@@ -41,7 +37,7 @@ export const overrides = new Map<string, DemoOverride>();
 export const endedTrials = new Map<string, { endedAt: string; endedByUserId: string }>();
 
 const TRIAL_STARTED_DAYS_AGO = 5;
-const TRIAL_DAYS = 14;
+const TRIAL_DAYS = 7;
 const TRIAL_SPENT_SAMPLE_PENCE = 1_496;
 
 const isTier = (v: unknown): v is PlanTier =>
@@ -76,28 +72,28 @@ export function trialView(org: PlanOrg) {
   };
 }
 
-/** The channel plan in force: a staff override's, else the subscription's (null without one). */
-export function channelPlanOf(org: PlanOrg) {
+/** The plan in force: a staff override's, else the subscription's (null without one). */
+export function studioPlanOf(org: PlanOrg) {
   const own = overrideActive(org.id);
-  if (own?.channels !== undefined)
+  const paid = planChoiceForLookupKey(org.lookupKey);
+  if (own?.plan !== undefined)
     return {
-      channels: own.channels,
-      interval: own.interval ?? channelIntervalForLookupKey(org.lookupKey) ?? 'month',
+      id: own.plan,
+      interval: own.interval ?? paid?.interval ?? 'month',
       source: 'admin' as const,
     };
-  const interval = channelIntervalForLookupKey(org.lookupKey);
   const lapsed = org.subscriptionStatus === 'canceled' || org.subscriptionStatus === null;
-  return interval && org.channels && !lapsed
-    ? { channels: org.channels, interval, source: 'stripe' as const }
+  return paid && !lapsed
+    ? { id: paid.plan, interval: paid.interval, source: 'stripe' as const }
     : null;
 }
 
-/** Plan, access, source, trial and channel plan as the list and detail show them (planSummary). */
+/** Plan, access, source, trial and Starter / Growth / Pro plan as the list and detail show them (planSummary). */
 export function planSummary(org: PlanOrg) {
   const own = overrideActive(org.id);
   const trial = trialView(org);
   return {
-    channelPlan: channelPlanOf(org),
+    studioPlan: studioPlanOf(org),
     tier: own?.tier ?? (isTier(org.tier) ? org.tier : null),
     access: own?.access ?? org.access,
     source: own

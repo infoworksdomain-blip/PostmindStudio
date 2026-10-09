@@ -53,9 +53,13 @@ test('a new visitor goes from the landing page to their first project', async ({
   // Landing: the value proposition, then pricing.
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('from one brief');
+  // 26.1: the teaser shows the three plans, Growth highlighted, Pro last.
+  await expect(page.getByRole('heading', { name: 'Three simple plans' })).toBeVisible();
+  await expect(page.getByTestId('landing-plan-growth')).toContainText('Most popular');
   await page.getByRole('link', { name: 'See pricing' }).first().click();
   await expect(page).toHaveURL(/\/pricing$/);
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Three plans. Every platform.');
+  await expect(page.getByRole('radiogroup', { name: 'Plan' }).getByRole('radio')).toHaveCount(3);
 
   // Sign-up (Track A), from the landing page's call to action.
   await page.goto('/');

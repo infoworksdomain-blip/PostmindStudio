@@ -29,7 +29,7 @@ export function useSignedIn(): boolean {
   return useSyncExternalStore(subscribeSession, isSignedIn, isSignedIn);
 }
 
-/** Back to the start: the signed-out landing page, 3 channels monthly, fresh sample data (reloads). */
+/** Back to the start: the signed-out landing page, Growth monthly, fresh sample data (reloads). */
 function resetDemo(): void {
   setBillingState(DEFAULT_BILLING_STATE);
   setSignedIn(false);
@@ -118,7 +118,7 @@ export function DemoBar() {
         <button
           type="button"
           onClick={resetDemo}
-          title="Reset demo: the signed-out landing page, 3 channels monthly, fresh sample data"
+          title="Reset demo: the signed-out landing page, Growth monthly, fresh sample data"
           className="inline-flex items-center gap-1 rounded px-2 py-1 text-background/75 transition-colors hover:bg-background/10 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
         >
           <RotateCcw aria-hidden className="size-3" /> Reset demo

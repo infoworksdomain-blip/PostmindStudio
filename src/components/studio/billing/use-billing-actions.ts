@@ -5,19 +5,17 @@ import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { api, ApiError, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
 import { navigateTo } from './navigate';
-import type { ChannelInterval, PlanChangeOutcome } from './types';
+import type { PlanChangeOutcome, PlanChoice } from './types';
 
 // Phase 18 §2.7 / 21.5 — what the billing screens ask the server to do:
-//   - Checkout (leaves for Stripe): a new per-channel subscription or a one-off video pack;
+//   - Checkout (leaves for Stripe): a new plan subscription or a one-off video pack;
 //   - the Customer Portal (leaves for Stripe): payment method and invoices only;
-//   - Your plan (stays in Studio): change channels / interval, cancel, resume, keep the current
+//   - Your plan (stays in Studio): change the plan / interval, cancel, resume, keep the current
 //     plan instead of a scheduled change. Each sends an Idempotency-Key, so a double click is one
 //     change.
 // Owner only (studio:billing:manage); the screens hide the buttons for everyone else.
 
-export type CheckoutIntent =
-  | { kind: 'channels'; channels: number; interval: ChannelInterval }
-  | { kind: 'topup'; lookupKey: string };
+export type CheckoutIntent = ({ kind: 'plan' } & PlanChoice) | { kind: 'topup'; lookupKey: string };
 
 export function useBillingActions(
   options: { onConflict?: () => void; onChanged?: () => void } = {},
@@ -85,13 +83,13 @@ export function useBillingActions(
   );
 
   const changePlan = useCallback(
-    (next: { channels: number; interval: ChannelInterval }, prorationDate: number | null) =>
+    (next: PlanChoice, prorationDate: number | null) =>
       run(
         'change',
         () =>
           api<{ outcome: PlanChangeOutcome }>('/billing/plan', {
             method: 'POST',
-            body: { ...next, prorationDate },
+            body: { plan: next.plan, interval: next.interval, prorationDate },
             idempotencyKey: newIdempotencyKey(),
           }),
         ({ outcome }) => {

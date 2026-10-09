@@ -196,8 +196,8 @@
       "moreFrom": "Altri video sono inclusi dal {date}.",
       "planExceededTitle": "{period, select, week {Hai usato i video di questa settimana} other {Hai usato i video di questo mese}}",
       "planWarningTitle": "{period, select, week {Sei vicino al limite di video di questa settimana} other {Sei vicino al limite di video di questo mese}}",
-      "planBlockedBody": "I nuovi video sono in pausa fino al {date}. Aggiungi un canale o acquista un pacchetto video per continuare a creare.",
-      "planResetBody": "Altri video sono inclusi dal {date}. Aggiungi un canale o acquista un pacchetto video per averne di più.",
+      "planBlockedBody": "I nuovi video sono in pausa fino al {date}. Passa a un piano superiore o acquista un pacchetto video per continuare a creare.",
+      "planResetBody": "Altri video sono inclusi dal {date}. Passa a un piano superiore o acquista un pacchetto video per averne di più.",
       "quickPostsNote": "Caroselli, slideshow, muri di testo e video con gancio e demo contano come ¼ di video."
     },
     "pageTitle": {
@@ -314,7 +314,7 @@
       "forbidden": "Non hai l’autorizzazione per farlo.",
       "feature_disabled": "Questa funzione non è attiva per la tua organizzazione.",
       "plan_tier": "Questa funzione non è inclusa nel tuo piano.",
-      "quota_exceeded": "Per ora hai usato i video del tuo piano. Aggiungi un canale o acquista un pacchetto video per continuare a creare.",
+      "quota_exceeded": "Per ora hai usato i video del tuo piano. Passa a un piano superiore o acquista un pacchetto video per continuare a creare.",
       "not_found": "Non riusciamo a trovarlo. Potrebbe essere stato eliminato.",
       "conflict": "È stato modificato mentre ci lavoravi. Aggiorna e riprova.",
       "validation_error": "Alcuni dati non sono validi. Controllali e riprova.",
@@ -339,7 +339,6 @@
       "auto_publish_account_required": "Scegli un account collegato su cui pubblicare, oppure disattiva la pubblicazione automatica e la programmazione.",
       "auto_publish_account_unavailable": "Un account scelto non è più collegato. Ricollegalo o scegli un altro account.",
       "queue_unavailable": "La pubblicazione non è temporaneamente disponibile. Non è stato pubblicato né salvato nulla; riprova tra un attimo.",
-      "channel_limit": "Il tuo piano non include un canale per questa piattaforma. Aggiungi un canale in Il tuo piano per pubblicare qui.",
       "no_demo_video": "Carica prima un video dimostrativo del tuo prodotto o della tua app."
     }
   },
@@ -550,7 +549,7 @@
     },
     "videoAllowanceUsed": {
       "title": "{period, select, week {I video di questa settimana} other {I video di questo mese}} sono esauriti",
-      "body": "{used, number} video su {limit, number} creati {period, select, week {questa settimana} other {questo mese}}. Altri sono inclusi all’inizio {period, select, week {della prossima settimana} other {del prossimo mese}}.{blocked, select, yes { Per crearne altri prima di allora, aggiungi un canale o acquista un pacchetto video.} other {}}"
+      "body": "{used, number} video su {limit, number} creati {period, select, week {questa settimana} other {questo mese}}. Altri sono inclusi all’inizio {period, select, week {della prossima settimana} other {del prossimo mese}}.{blocked, select, yes { Per crearne altri prima, passa a un piano superiore o acquista un pacchetto video.} other {}}"
     },
     "costPlain": {
       "projectAlert": {
@@ -2734,10 +2733,6 @@
     },
     "notConfigured": "{platform} non è ancora disponibile: l’app {platform} di Studio deve ancora essere configurata. Rivolgiti al tuo amministratore.",
     "readOnly": "Solo i proprietari e gli amministratori possono collegare o scollegare gli account.",
-    "channelLimit": {
-      "body": "{count, plural, one {Il tuo piano include # canale,} many {Il tuo piano include # canali,} other {Il tuo piano include # canali,}} quindi {blockedCount, plural, one {{blocked} è collegato ma non pubblicherà.} many {{blocked} sono collegati ma non pubblicheranno.} other {{blocked} sono collegati ma non pubblicheranno.}}",
-      "action": "Aggiungi un canale"
-    },
     "tiktokPostMode": {
       "legend": "Come questo account pubblica su TikTok",
       "drafts": "Invia alle bozze di TikTok",
@@ -4610,15 +4605,17 @@
     },
     "pricing": {
       "eyebrow": "Prezzi",
-      "title": "Un prezzo semplice per canale",
-      "per": "per canale al mese",
-      "body": "Ogni canale include {videos} video HD brevi al mese, oppure fino a {quick} post rapidi: caroselli, slideshow e video di testo contano come ¼ di video.",
+      "title": "Tre piani semplici",
+      "body": "Ogni piano pubblica su TikTok, Instagram, YouTube, Facebook, LinkedIn e X. I post rapidi come caroselli, slideshow e video di testo contano come ¼ di video.",
       "points": {
         "billing": "Paga ogni settimana, mese o anno",
         "vat": "Prezzi IVA esclusa",
         "cancel": "Annulli quando vuoi"
       },
-      "cta": "Vedi i prezzi"
+      "cta": "Vedi i prezzi",
+      "perMonth": "al mese, IVA esclusa",
+      "plansAria": "Piani",
+      "packs": "Ti serve di più? Pacchetti video: {small, number} video HD a {smallPrice} o {large, number} a {largePrice}, con qualsiasi piano."
     },
     "closing": {
       "eyebrow": "Pronto quando lo sei tu",
@@ -4643,11 +4640,11 @@
     },
     "hero": {
       "eyebrow": "Prezzi",
-      "title": "Un piano semplice: paghi per canale",
-      "description": "Scegli su quante piattaforme social pubblichi e ogni quanto pagare. Ogni canale include 8 video brevi in HD al mese, oppure fino a 32 post rapidi."
+      "title": "Tre piani. Tutte le piattaforme.",
+      "description": "Scegli Starter, Growth o Pro e ogni quanto pagare. Ogni piano pubblica su TikTok, Instagram, YouTube, Facebook, LinkedIn e X."
     },
     "plan": {
-      "title": "Crea il tuo piano"
+      "title": "Scegli il tuo piano"
     },
     "unavailable": "Al momento non possiamo mostrare i prezzi. Riprova tra poco.",
     "trialNote": "Provalo gratis per {days, plural, one {# giorno} many {# giorni} other {# giorni}} con {videos} video. Carta richiesta; annulla quando vuoi prima della fine della prova e non paghi nulla.",
@@ -4658,18 +4655,17 @@
     "included": {
       "title": "Ogni piano include",
       "items": {
-        "videos": "8 video brevi per canale ogni mese, creati per te a partire da un breve brief",
         "hd": "Video HD, sottotitoli e musica",
         "platforms": "Pubblicazione su TikTok, Instagram, YouTube Shorts, Facebook, LinkedIn e X",
         "scheduling": "Un calendario dei contenuti e la programmazione automatica",
         "brand": "Il tuo brand kit su ogni video",
         "library": "Libreria di video di riferimento per trovare idee",
-        "quickPosts": "Oppure fino a 32 post rapidi per canale al mese: caroselli, slideshow e video di testo contano come ¼ di video"
+        "quickPosts": "I post rapidi contano come ¼ di video: caroselli, slideshow, muri di testo e video hook + demo"
       }
     },
     "packs": {
       "title": "Ti servono più video?",
-      "description": "Acquista in qualsiasi momento un pacchetto una tantum di video HD. I video dei pacchetti funzionano su qualsiasi canale, si usano dopo quelli del tuo piano e durano 3 mesi."
+      "description": "Acquista un pacchetto di video HD una tantum in qualsiasi momento, con qualsiasi piano. I video dei pacchetti si usano dopo quelli del piano e durano 3 mesi."
     },
     "topUps": {
       "short": "{quantity, plural, one {# video HD} many {# video HD} other {# video HD}}",
@@ -4678,25 +4674,21 @@
     "faq": {
       "title": "Domande",
       "items": {
-        "channel": {
-          "q": "Che cos’è un canale?",
-          "a": "Un canale è una piattaforma social su cui pubblichi, come TikTok o Instagram. Puoi pagare da 1 a 6 canali. Puoi collegare più account, ma pubblicano solo i canali che paghi."
-        },
         "period": {
           "q": "Settimanale, mensile o annuale?",
-          "a": "Il mensile costa {monthly} per canale. Il settimanale costa {weekly} per canale a settimana, quindi costa di più nell’arco di un mese. L’annuale costa {yearly} per canale, pagato in anticipo: 2 mesi gratis. I video sono inclusi ogni settimana nei piani settimanali e ogni mese nei piani mensili e annuali."
+          "a": "{plan} costa {monthly} al mese. Il settimanale costa {weekly} a settimana, che su un mese costa di più. L’annuale costa {yearly}, pagato in anticipo: 2 mesi gratis. Ogni piano funziona allo stesso modo. I video sono inclusi ogni settimana con il pagamento settimanale e ogni mese solare con i pagamenti mensile e annuale."
         },
         "change": {
           "q": "Posso modificare il mio piano in seguito?",
-          "a": "Sì, in Il tuo piano. Aggiungere canali o passare a un periodo più lungo si applica subito; paghi solo la differenza per il resto del periodo. Rimuovere canali o passare a un periodo più breve si applica alla fine del periodo già pagato."
+          "a": "Sì, in Il tuo piano. Passare a un piano superiore, o a un periodo più lungo sullo stesso piano, si applica subito; paghi solo la differenza per il resto del periodo. Passare a un piano inferiore, o a un periodo più breve, si applica alla fine del periodo pagato."
         },
         "limit": {
           "q": "Cosa succede quando ho usato i miei video?",
-          "a": "I nuovi video vanno in pausa finché non ne vengono inclusi altri all’inizio della settimana o del mese successivo. Aggiungi un canale o acquista un pacchetto video per continuare subito."
+          "a": "I nuovi video si fermano finché non ne vengono inclusi altri all’inizio della settimana o del mese successivo. Passa a un piano superiore o acquista un pacchetto video per continuare subito."
         },
         "packs": {
           "q": "Come funzionano i pacchetti video?",
-          "a": "Un pacchetto da 5 o 15 video HD è un acquisto una tantum. I video dei pacchetti funzionano su qualsiasi canale, si usano dopo quelli del tuo piano e durano 3 mesi."
+          "a": "Un pacchetto da 5 o 15 video HD è un acquisto una tantum, con qualsiasi piano. I video dei pacchetti si usano dopo quelli del piano e durano 3 mesi."
         },
         "vat": {
           "q": "I prezzi includono l’IVA?",
@@ -4708,7 +4700,11 @@
         },
         "quickPosts": {
           "q": "Caroselli e slideshow contano come un video intero?",
-          "a": "No. Caroselli, slideshow, muri di testo e video con gancio e demo sono post rapidi e contano come ¼ di video, quindi gli 8 video al mese di un canale possono diventare fino a 32 post rapidi. Un video con IA conta come 1 video e un video con attore UGC come 2. I video dei pacchetti si contano allo stesso modo."
+          "a": "No. Caroselli, slideshow, muri di testo e video hook + demo sono post rapidi e contano come ¼ di video, quindi i {videos, number} video al mese di {plan} possono diventare fino a {quick, number} post rapidi. Un video IA conta come 1 video e un video con attore UGC come 2. I video dei pacchetti si contano allo stesso modo."
+        },
+        "platforms": {
+          "q": "Su quali piattaforme posso pubblicare?",
+          "a": "Su tutte e sei, con ogni piano: TikTok, Instagram, YouTube, Facebook, LinkedIn e X. Collega i tuoi account e Studio pubblica su ciascuno."
         }
       }
     }
@@ -5131,7 +5127,7 @@
     "header": {
       "eyebrow": "Impostazioni",
       "title": "Il tuo piano",
-      "description": "I tuoi canali, video, pacchetti video, dati di pagamento e fatture."
+      "description": "Il tuo piano, video, pacchetti video, dati di pagamento e fatture."
     },
     "loading": "Caricamento della fatturazione",
     "notEnabled": {
@@ -5184,7 +5180,7 @@
     },
     "credits": {
       "title": "Pacchetti video",
-      "description": "Pacchetti una tantum di video HD per qualsiasi canale. I video dei pacchetti si usano dopo quelli del tuo piano e durano 3 mesi.",
+      "description": "Pacchetti di video HD una tantum, per qualsiasi piano. I video dei pacchetti si usano dopo quelli del piano e durano 3 mesi.",
       "buy": "Acquista",
       "buyAria": "Acquista {pack} per {amount}",
       "noPacks": "Scegli prima un piano per acquistare pacchetti video.",
@@ -5214,7 +5210,7 @@
     },
     "picker": {
       "title": "Scegli il tuo piano",
-      "description": "Scegli quanti canali vuoi e ogni quanto pagare. Paghi in sicurezza con Stripe; i prezzi sono IVA esclusa.",
+      "description": "Scegli un piano e ogni quanto pagare. Paghi in sicurezza con Stripe; prezzi IVA esclusa.",
       "trial": "Inizia la prova gratuita",
       "redirecting": "Apertura del pagamento sicuro…",
       "subscribe": "Continua al pagamento",
@@ -5298,11 +5294,10 @@
           "endTrial": "Termina la prova ora",
           "endTrialHelp": "L’allowance della prova e i suoi limiti di costo di {daily} al giorno / {total} in totale cessano per sempre, anche quando questa deroga scade o viene rimossa; si applicano i limiti del piano (e qualsiasi deroga ai limiti di costo). Stripe non cambia: la sua prova termina, e viene addebitata, alla propria data.",
           "trialNote": "Qualsiasi deroga salvata sospende i limiti della prova finché è attiva. Seleziona «Termina la prova ora» per eliminarli per sempre.",
-          "channelPlan": "Piano per canali",
-          "channelPlanHelp": "I canali (da 1 a 6 piattaforme social) determinano l’allowance di video, i limiti di costo e quante piattaforme si possono collegare; l’intervallo determina ogni quanto viene rilasciata l’allowance. “Mantieni attuale” usa i valori dell’abbonamento Stripe. Non usato con Enterprise.",
-          "channels": "Canali",
-          "channelsOption": "{count, plural, one {# canale} many {# canali} other {# canali}}",
-          "interval": "Intervallo di fatturazione"
+          "interval": "Intervallo di fatturazione",
+          "studioPlan": "Sostituisci piano",
+          "studioPlanHelp": "Il piano fissa la quota di video, gli utenti, le attività e i limiti di costo; l’intervallo fissa ogni quanto si rilascia la quota. «Mantieni attuale» usa i valori dell’abbonamento Stripe. Non usato con Enterprise.",
+          "plan": "Piano"
         },
         "clear": {
           "title": "Rimuovi l’override",
@@ -5335,18 +5330,18 @@
           "accessReadOnly": "Sola lettura blocca ogni modifica in questa organizzazione tranne fatturazione, impostazioni dell’account ed esportazioni.",
           "endTrial": "La fine della prova non si può annullare: i suoi limiti non si applicheranno più a questa organizzazione."
         },
-        "channelPlan": "Piano per canali",
-        "noChannelPlan": "Nessun piano per canali",
-        "channelPlanValue": "{count, plural, one {# canale} many {# canali} other {# canali}} · {interval, select, week {settimanale} month {mensile} year {annuale} other {{interval}}}",
-        "channelPlanSource": "{source, select, admin {(impostato dallo staff)} other {(da Stripe)}}",
         "intervalValues": {
           "week": "Settimanale",
           "month": "Mensile",
           "year": "Annuale"
         },
-        "overrideChannels": "Canali: {count, plural, one {# canale} many {# canali} other {# canali}}",
         "overrideInterval": "Fatturazione {interval, select, week {settimanale} month {mensile} year {annuale} other {{interval}}}",
-        "subscriptionChannelLine": "{tier} · {count, plural, one {# canale} many {# canali} other {# canali}} · {interval} · termina il {date}"
+        "studioPlan": "Piano",
+        "noStudioPlan": "Nessun piano",
+        "planValue": "{plan} · {interval, select, week {settimanale} month {mensile} year {annuale} other {{interval}}}",
+        "overridePlan": "Piano: {plan}",
+        "subscriptionPlanLine": "{plan} · {interval} · termina il {date}",
+        "planSource": "{source, select, admin {(impostato dallo staff)} other {(da Stripe)}}"
       },
       "subscriptions": {
         "title": "Abbonamenti",
@@ -5355,8 +5350,6 @@
         "mrr": "Ricavi ricorrenti mensili",
         "mrrHelp": "Abbonamenti attivi e scaduti; piani annuali divisi per 12; IVA esclusa.",
         "total": "{count, plural, =0 {Nessun abbonamento} one {# abbonamento} other {# abbonamenti}}",
-        "byTier": "Per livello",
-        "byTierAria": "Abbonamenti per livello",
         "tierLine": "{count} · {mrr}",
         "byStatus": "Per stato",
         "byStatusAria": "Abbonamenti per stato",
@@ -5365,24 +5358,26 @@
         "caption": "Abbonamenti",
         "columns": {
           "organisation": "Organizzazione",
-          "tier": "Livello",
           "interval": "Fatturazione",
           "mrr": "MRR",
           "periodEnd": "Fine periodo",
-          "status": "Stato"
+          "status": "Stato",
+          "plan": "Piano"
         },
         "cancelling": "In annullamento",
         "unknownOrg": "Organizzazione sconosciuta",
         "unknownTier": "Sconosciuto",
-        "empty": "Nessun abbonamento corrispondente."
+        "empty": "Nessun abbonamento corrispondente.",
+        "byPlan": "Per piano",
+        "byPlanAria": "Abbonamenti per piano"
       }
     },
     "yourPlan": {
       "summary": {
         "title": "Il tuo piano",
-        "headline": "{count, plural, one {# canale} many {# canali} other {# canali}}, {period, select, week {settimanale} month {mensile} other {annuale}}",
+        "headline": "{plan}, {period, select, week {settimanale} month {mensile} other {annuale}}",
         "legacy": "Trasferito dal tuo piano precedente.",
-        "pending": "Dal {date}: {count, plural, one {# canale} many {# canali} other {# canali}}, {period, select, week {settimanale} month {mensile} other {annuale}}.",
+        "pending": "Dal {date}: {plan}, {period, select, week {settimanale} month {mensile} other {annuale}}.",
         "keepCurrent": "Mantieni il mio piano attuale",
         "paymentPending": "La tua ultima modifica è in attesa di pagamento. Aggiorna il metodo di pagamento per applicarla.",
         "price": "Prezzo",
@@ -5398,30 +5393,20 @@
         "packsLeft": "{count, plural, =0 {Nessun video del pacchetto rimasto} one {# video del pacchetto rimasto} many {# video del pacchetto rimasti} other {# video del pacchetto rimasti}}",
         "left": "Ne restano {left}"
       },
-      "channels": {
-        "title": "I tuoi canali",
-        "description": "{count, plural, one {Il tuo piano pubblica su # canale.} many {Il tuo piano pubblica su # canali.} other {Il tuo piano pubblica su # canali.}}",
-        "noneConnected": "Nessun canale ancora collegato.",
-        "connect": "Collega account",
-        "publishing": "Pubblicazione su: {list}.",
-        "blocked": "{count, plural, one {{list} è collegato ma non pubblica: il tuo piano non ha più canali disponibili.} many {{list} sono collegati ma non pubblicano: il tuo piano non ha più canali disponibili.} other {{list} sono collegati ma non pubblicano: il tuo piano non ha più canali disponibili.}}",
-        "addChannel": "Aggiungi un canale",
-        "spare": "{count, plural, one {Puoi collegare ancora # canale.} many {Puoi collegare ancora # canali.} other {Puoi collegare ancora # canali.}}"
-      },
       "change": {
         "title": "Modifica il tuo piano",
-        "description": "Aggiungi o rimuovi canali, oppure cambia ogni quanto paghi. Vedrai il nuovo prezzo e quando si applica prima che cambi qualcosa.",
+        "description": "Passa a un altro piano o cambia ogni quanto paghi. Vedrai il nuovo prezzo e quando si applica prima che cambi qualcosa.",
         "previewing": "Calcolo del nuovo prezzo…",
         "previewFailed": "Non siamo riusciti a calcolare il nuovo prezzo. Riprova tra un momento.",
         "appliesNow": "Nuovo prezzo: {price}. Si applica subito: oggi paghi {due} per il resto di questo periodo.",
         "appliesLater": "Nuovo prezzo: {price}. Si applica dal {date}. Niente da pagare ora.",
-        "nowRule": "Più canali e periodi più lunghi si applicano subito, e paghi solo la differenza.",
-        "laterRule": "Meno canali e periodi più brevi si applicano alla fine del periodo già pagato, così mantieni quello per cui hai pagato fino ad allora.",
+        "nowRule": "Un piano superiore, o un periodo più lungo sullo stesso piano, si applica subito e paghi solo la differenza.",
+        "laterRule": "Un piano inferiore, o un periodo più breve sullo stesso piano, si applica alla fine del periodo pagato, così mantieni ciò che hai pagato fino ad allora.",
         "review": "Rivedi la modifica",
         "reset": "Ricomincia",
         "confirmTitle": "Conferma il tuo nuovo piano",
-        "confirmFrom": "Attuale: {channels, plural, one {# canale} many {# canali} other {# canali}}, {period, select, week {settimanale} month {mensile} other {annuale}}",
-        "confirmTo": "Nuovo: {channels, plural, one {# canale} many {# canali} other {# canali}}, {period, select, week {settimanale} month {mensile} other {annuale}}",
+        "confirmFrom": "Ora: {plan}, {period, select, week {settimanale} month {mensile} other {annuale}}",
+        "confirmTo": "Nuovo: {plan}, {period, select, week {settimanale} month {mensile} other {annuale}}",
         "cancel": "Indietro",
         "confirm": "Conferma la modifica",
         "confirmPay": "Paga {amount} e modifica",
@@ -5460,7 +5445,7 @@
     },
     "quota": {
       "title": "Per ora hai usato i video del tuo piano",
-      "body": "Aggiungi un canale per avere più video ogni settimana o mese, oppure acquista un pacchetto video per continuare già oggi.",
+      "body": "Passa a un piano superiore per avere più video ogni settimana o mese, oppure acquista un pacchetto video per continuare già oggi.",
       "quickPosts": "I post rapidi rendono di più: caroselli, slideshow, muri di testo e video con gancio e demo contano come ¼ di video."
     },
     "planRequired": {
@@ -5475,10 +5460,10 @@
       "choosePlan": "Scegli un piano",
       "updatePayment": "Aggiorna metodo di pagamento",
       "notNow": "Non ora",
-      "addChannel": "Aggiungi un canale",
       "buyPack": "Acquista un pacchetto video",
       "viewPlan": "Vedi il piano",
-      "manageMembers": "Gestisci i membri"
+      "manageMembers": "Gestisci i membri",
+      "upgradePlan": "Passa a un piano superiore"
     },
     "askOwner": "Solo un proprietario dell’organizzazione può modificare il piano o la fatturazione. Chiedi a un proprietario di farlo.",
     "lock": {
@@ -5488,10 +5473,6 @@
     "seatLimit": {
       "title": "Tutti i posti del tuo piano sono occupati",
       "body": "Il tuo piano non ha posti liberi per un’altra persona. Prima rimuovi qualcuno oppure contatta l’assistenza."
-    },
-    "channelLimit": {
-      "title": "Aggiungi un canale per pubblicare qui",
-      "body": "{count, plural, one {Il tuo piano include # canale} many {Il tuo piano include # canali} other {Il tuo piano include # canali}}: {list}. Aggiungi un canale per pubblicare anche su {platform}."
     }
   },
   "email": {
@@ -5609,7 +5590,7 @@
       "topupReceipt": {
         "subject": "Il tuo pacchetto video è pronto: {packName}",
         "heading": "Pacchetto video aggiunto",
-        "body": "Grazie. Il tuo pacchetto {packName} è stato aggiunto. Usalo su qualsiasi canale entro 3 mesi. Stripe ti invierà la ricevuta separatamente.",
+        "body": "Grazie. Il tuo pacchetto {packName} è stato aggiunto. Usalo entro 3 mesi, con qualsiasi piano. Stripe invia la ricevuta separatamente.",
         "cta": "Apri Il tuo piano"
       },
       "accountDeletionScheduled": {
@@ -5686,8 +5667,7 @@
       "pagesAria": "Pagine delle organizzazioni",
       "pageInfo": "{from}–{to} di {total}",
       "previous": "Precedente",
-      "next": "Successiva",
-      "channelPlan": "{count, plural, one {# canale} many {# canali} other {# canali}} · {interval, select, week {settimanale} month {mensile} year {annuale} other {{interval}}}"
+      "next": "Successiva"
     },
     "detail": {
       "back": "Tutte le organizzazioni",
@@ -6181,45 +6161,37 @@
       "close": "Chiudi"
     }
   },
-  "channelPlan": {
+  "planPicker": {
+    "label": "Piano",
     "interval": {
       "label": "Ogni quanto paghi",
       "week": "Settimanale",
       "month": "Mensile",
-      "year": "Annuale"
+      "year": "Annuale",
+      "yearlyHint": "Paga annualmente e ottieni 2 mesi gratis."
     },
-    "channels": {
-      "label": "Canali",
-      "fewer": "Rimuovi un canale",
-      "more": "Aggiungi un canale",
-      "value": "{count, plural, one {# canale} many {# canali} other {# canali}}",
-      "hint": "Un canale è una piattaforma social su cui pubblichi: TikTok, Instagram, YouTube Shorts, Facebook, LinkedIn o X."
-    },
+    "mostPopular": "Il più scelto",
     "total": {
       "week": "{amount} a settimana",
       "month": "{amount} al mese",
       "year": "{amount} all’anno"
     },
-    "perChannel": {
-      "week": "{amount} per canale a settimana",
-      "month": "{amount} per canale al mese",
-      "year": "{amount} per canale all’anno"
-    },
-    "included": {
-      "week": "{count, plural, one {# video incluso} many {# video inclusi} other {# video inclusi}} a settimana ({perChannel} per canale)",
-      "month": "{count, plural, one {# video incluso} many {# video inclusi} other {# video inclusi}} al mese ({perChannel} per canale)",
-      "year": "{count, plural, one {# video incluso} many {# video inclusi} other {# video inclusi}} all’anno ({perChannel} per canale ogni mese)"
-    },
-    "hd": "Video brevi in HD",
     "exclVat": "IVA esclusa",
+    "videos": {
+      "week": "{count, plural, one {# video HD} many {# video HD} other {# video HD}} a settimana",
+      "month": "{count, plural, one {# video HD} many {# video HD} other {# video HD}} al mese"
+    },
+    "quickPosts": "Oppure fino a {count, number} post rapidi: caroselli, slideshow e video di testo contano come ¼",
+    "businesses": "{count, plural, one {# attività} many {# attività} other {# attività}}",
+    "seats": "{count, plural, one {# utente} many {# utenti} other {# utenti}}",
+    "platforms": "Pubblica su tutte le piattaforme",
     "yearlySaving": "2 mesi gratis: risparmi {amount} all’anno",
     "weeklyNote": "Il piano settimanale costa più di quello mensile. Paga mensilmente o annualmente per risparmiare.",
     "priceUnavailable": "Prezzo non disponibile",
     "packs": {
       "name": "{quantity, plural, one {# video HD} many {# video HD} other {# video HD}}",
-      "validity": "Da usare su qualsiasi canale entro {months, plural, one {# mese} many {# mesi} other {# mesi}}"
-    },
-    "quickPosts": "Oppure fino a {count, number} post rapidi: caroselli, slideshow e video di testo contano come ¼"
+      "validity": "Da usare entro {months, plural, one {# mese} many {# mesi} other {# mesi}}, con qualsiasi piano"
+    }
   },
   "carousel": {
     "editor": {
@@ -6534,7 +6506,7 @@
         "summary": "Riepilogo"
       },
       "channelsTitle": "Dove pubblicare?",
-      "channelsHint": "Scegli le reti su cui pubblica, entro i canali del tuo piano.",
+      "channelsHint": "Scegli le reti su cui pubblicare. Ogni piano pubblica su tutte le piattaforme.",
       "noAccount": "{platform} non è collegato: i suoi post vengono salvati per la revisione.",
       "cadenceTitle": "Con quale frequenza?",
       "mode": {
@@ -6579,7 +6551,7 @@
       "cancelConfirm": "Annullare questa automazione? I post non ancora pubblicati vengono annullati.",
       "pauseReason": {
         "owner": "Messa in pausa da te. I post già creati vengono pubblicati comunque.",
-        "allowance": "I video del tuo piano sono esauriti. Aggiungi un canale o acquista un pacchetto di video, poi riprendi.",
+        "allowance": "I video del tuo piano sono esauriti. Passa a un piano superiore o acquista un pacchetto video, poi riprendi.",
         "billing": "In pausa perché la fatturazione richiede attenzione.",
         "owner_left": "In pausa perché la persona che l’ha configurata ha lasciato l’organizzazione.",
         "plan_missing": "In pausa: non si trova il periodo in corso.",

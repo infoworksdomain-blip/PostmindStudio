@@ -85,14 +85,14 @@ export interface CapAdjustment {
   /** While trialing: these replace the daily and monthly caps. */
   trial?: { dailyPence: number; monthlyPence: number };
   /**
-   * 21.5: a per-channel plan's own caps (channel-plan.ts channelCostCapsPence: they scale with
-   * the channels). They replace the tier's default; a staff cost-cap override still wins.
+   * 26.1: a plan's own caps (plans.ts planCostCapsPence: they scale with the plan's videos).
+   * They replace the tier's default; a staff cost-cap override still wins.
    */
   plan?: { dailyPence: number; monthlyPence: number };
 }
 
 /**
- * The organisation's effective caps: trial > staff override (org_cost_caps) > channel plan >
+ * The organisation's effective caps: trial > staff override (org_cost_caps) > plan >
  * the tier's env / catalogue default. The monthly cap gets the top-up headroom on top (not a
  * trial's: the trial cap is the whole trial's budget).
  */

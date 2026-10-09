@@ -52,6 +52,8 @@ const PAIRS: Array<[string, string, number]> = [
   ['--foreground-secondary', '--background', TEXT],
   ['--foreground-secondary', '--card', TEXT],
   ['--foreground-secondary', '--surface-raised', TEXT],
+  // 26.1: the selected plan card (plan picker) writes its secondary lines on surface-active.
+  ['--foreground-secondary', '--surface-active', TEXT],
   ['--muted-foreground', '--background', TEXT],
   ['--muted-foreground', '--card', TEXT],
   ['--muted-foreground', '--muted', TEXT],

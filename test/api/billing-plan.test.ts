@@ -19,10 +19,11 @@ import { StudioCapability } from '../../src/lib/rbac';
 import { ALL_CAPABILITIES, call, installApi, tenant } from '../helpers/api-harness';
 import { createFakeStripe, type FakeStripe } from '../helpers/fake-stripe';
 
-// 21.5 Your plan routes on real Postgres with a scripted Stripe: preview, change (upgrade now /
-// downgrade at period end), cancel, resume, keep the current plan; owner only, validated, scoped
-// to the caller's organisation; the overview shows channels, never costs; and the channel limit
-// on POST /publications.
+// 21.5 / 26.1 Your plan routes on real Postgres with a scripted Stripe: preview, change (a higher
+// plan now / a lower plan at period end), cancel, resume, keep the current plan; owner only,
+// validated ({ plan, interval }; unknown plans, intervals and the old { channels } body are 400),
+// scoped to the caller's organisation; the overview shows the plan, never costs; and every plan
+// publishes to every platform (no channel limit on POST /publications).
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const BILLING_CAPS = [
@@ -31,7 +32,7 @@ const BILLING_CAPS = [
   StudioCapability.BillingManage,
 ];
 
-describe.skipIf(!hasDb)('Your plan API (21.5)', { timeout: 120_000 }, () => {
+describe.skipIf(!hasDb)('Your plan API (26.1)', { timeout: 120_000 }, () => {
   const db = hasDb ? new PrismaClient() : (undefined as unknown as PrismaClient);
   let org: string;
   let other: string;
@@ -59,14 +60,15 @@ describe.skipIf(!hasDb)('Your plan API (21.5)', { timeout: 120_000 }, () => {
     );
   }
 
-  async function subscribe(quantity: number) {
+  async function subscribe(lookupKey: string) {
     await db.billingCustomer.create({
       data: { organisationId: org, stripeCustomerId: `cus_${org}`, idempotencyNonce: 'n' },
     });
     const state = fake.setSubscription({
       id: `sub_${org}`,
       customerId: `cus_${org}`,
-      quantity,
+      lookupKey,
+      priceId: `price_${lookupKey}`,
       currentPeriodEnd: new Date(Date.now() + 10 * 86_400_000),
     });
     await syncSubscription(
@@ -104,33 +106,41 @@ describe.skipIf(!hasDb)('Your plan API (21.5)', { timeout: 120_000 }, () => {
   });
 
   it('preview: owner only, validated, shows the new price and what is due now', async () => {
-    await subscribe(2);
-    const path = '/api/studio/billing/plan/preview?channels=3&interval=month';
+    await subscribe('studio_growth_monthly');
+    const path = '/api/studio/billing/plan/preview?plan=pro&interval=month';
     expect((await call(previewRoute.GET, { token: 'member', path })).status).toBe(403);
-    expect(
-      (
-        await call(previewRoute.GET, {
-          token: 'owner',
-          path: '/api/studio/billing/plan/preview?channels=9&interval=month',
-        })
-      ).status,
-    ).toBe(400);
+    for (const bad of [
+      'plan=enterprise&interval=month',
+      'plan=pro&interval=quarter',
+      'plan=pro',
+      'channels=3&interval=month',
+    ])
+      expect(
+        (
+          await call(previewRoute.GET, {
+            token: 'owner',
+            path: `/api/studio/billing/plan/preview?${bad}`,
+          })
+        ).status,
+        bad,
+      ).toBe(400);
     const res = await call(previewRoute.GET, { token: 'owner', path });
     expect(res.status).toBe(200);
     expect(res.json.preview).toMatchObject({
       timing: 'now',
-      nextPricePence: 8_700,
+      nextPricePence: 14_900,
       dueNowPence: 1_234,
-      current: { channels: 2, interval: 'month' },
+      current: { plan: 'growth', interval: 'month' },
+      next: { plan: 'pro', interval: 'month' },
     });
     // Another organisation has no plan: it never sees ours.
     expect((await call(previewRoute.GET, { token: 'stranger', path })).status).toBe(404);
   });
 
-  it('change: upgrade now, downgrade at period end, keep the current plan', async () => {
-    await subscribe(2);
+  it('change: a higher plan now, a lower one at period end, keep the current plan', async () => {
+    await subscribe('studio_growth_monthly');
     const up = await post(planRoute, '/api/studio/billing/plan', {
-      channels: 4,
+      plan: 'pro',
       interval: 'month',
       prorationDate: Math.floor(Date.now() / 1000),
     });
@@ -138,14 +148,16 @@ describe.skipIf(!hasDb)('Your plan API (21.5)', { timeout: 120_000 }, () => {
     expect(up.json.outcome).toEqual({ status: 'applied', timing: 'now' });
 
     const down = await post(planRoute, '/api/studio/billing/plan', {
-      channels: 1,
+      plan: 'starter',
       interval: 'month',
     });
     expect(down.json.outcome).toMatchObject({ status: 'scheduled', timing: 'period_end' });
     const overview = await call(billingRoute.GET, { token: 'owner', path: '/api/studio/billing' });
     expect(overview.json.billing).toMatchObject({
-      plan: { channels: 4, interval: 'month', pending: { channels: 1 } },
+      plan: { id: 'pro', interval: 'month', pending: { plan: 'starter', interval: 'month' } },
+      usage: { seats: { limit: 10 }, businesses: { limit: 3 } },
     });
+    expect(overview.json.billing).not.toHaveProperty('channels');
     expect(JSON.stringify(overview.json)).not.toMatch(/spentPence|capPence|costPence/);
 
     const keep = await call(scheduledRoute.DELETE, {
@@ -160,19 +172,23 @@ describe.skipIf(!hasDb)('Your plan API (21.5)', { timeout: 120_000 }, () => {
       path: '/api/studio/billing/plan/scheduled',
     });
     expect(again.status).toBe(409);
-    expect(
-      (await post(planRoute, '/api/studio/billing/plan', { channels: 0, interval: 'month' }))
-        .status,
-    ).toBe(400);
-    expect(
-      (await post(planRoute, '/api/studio/billing/plan', { channels: 2, interval: 'day' })).status,
-    ).toBe(400);
+    for (const bad of [
+      { plan: 'enterprise', interval: 'month' },
+      { plan: 'pro', interval: 'day' },
+      { plan: 'pro' },
+      { channels: 2, interval: 'month' },
+      { plan: 'pro', interval: 'month', channels: 2 },
+    ])
+      expect(
+        (await post(planRoute, '/api/studio/billing/plan', bad)).status,
+        JSON.stringify(bad),
+      ).toBe(400);
     expect(
       (
         await post(
           planRoute,
           '/api/studio/billing/plan',
-          { channels: 2, interval: 'month' },
+          { plan: 'growth', interval: 'month' },
           'member',
         )
       ).status,
@@ -180,7 +196,7 @@ describe.skipIf(!hasDb)('Your plan API (21.5)', { timeout: 120_000 }, () => {
   });
 
   it('cancel and resume', async () => {
-    await subscribe(3);
+    await subscribe('studio_pro_yearly');
     const cancel = await post(cancelRoute, '/api/studio/billing/plan/cancel', {});
     expect(cancel.status).toBe(200);
     expect(cancel.json.endsAt).toEqual(expect.any(String));
@@ -193,8 +209,8 @@ describe.skipIf(!hasDb)('Your plan API (21.5)', { timeout: 120_000 }, () => {
     ).toBe(404);
   });
 
-  it('publishing past the paid channels answers channel_limit (an upgrade prompt)', async () => {
-    await subscribe(1);
+  it('every plan publishes to every platform: Starter posts to a second network (no channel limit)', async () => {
+    await subscribe('studio_starter_monthly');
     const base = {
       organisationId: org,
       connectedByUserId: 'owner',
@@ -265,12 +281,8 @@ describe.skipIf(!hasDb)('Your plan API (21.5)', { timeout: 120_000 }, () => {
         hashtags: ['a', 'b', 'c', 'd', 'e'],
       },
     });
-    expect(res.status).toBe(403);
-    expect(res.json.error).toBe('channel_limit');
-    expect(res.json.details).toMatchObject({
-      channels: 1,
-      platform: 'youtube',
-      allowedPlatforms: ['tiktok'],
-    });
+    expect(res.status).toBe(202);
+    expect(res.json.error).toBeUndefined();
+    expect(res.json.publication).toMatchObject({ platform: 'youtube_short' });
   });
 });

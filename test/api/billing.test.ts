@@ -128,24 +128,41 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
     ).toBe(403);
   });
 
-  it('GET /billing/plans: per-channel amounts come from Stripe by lookup key (21.5)', async () => {
+  it('GET /billing/plans: the three plans, amounts from Stripe by lookup key (26.1)', async () => {
     const res = await call(plansRoute.GET, { token: 'member', path: '/api/studio/billing/plans' });
     expect(res.status).toBe(200);
     const pricing = res.json.pricing as {
-      intervals: Array<{ interval: string; unitAmountPence: number }>;
+      plans: Array<{
+        plan: string;
+        mostPopular: boolean;
+        prices: Record<string, { unitAmountPence: number }>;
+      }>;
       topUps: Array<{ lookupKey: string; unitAmountPence: number }>;
+      trial: { days: number; videos: number };
     };
-    expect(pricing.intervals.map((i) => [i.interval, i.unitAmountPence])).toEqual([
-      ['week', 950],
-      ['month', 2_900],
-      ['year', 29_000],
+    expect(
+      pricing.plans.map((p) => [
+        p.plan,
+        p.mostPopular,
+        p.prices.week?.unitAmountPence,
+        p.prices.month?.unitAmountPence,
+        p.prices.year?.unitAmountPence,
+      ]),
+    ).toEqual([
+      ['starter', false, 950, 2_900, 29_000],
+      ['growth', true, 2_250, 6_900, 69_000],
+      ['pro', false, 4_850, 14_900, 149_000],
     ]);
-    expect(pricing.topUps.map((p) => p.lookupKey)).toEqual(['studio_pack_hd5', 'studio_pack_hd15']);
+    expect(pricing.topUps.map((p) => [p.lookupKey, p.unitAmountPence])).toEqual([
+      ['studio_pack_hd5', 1_700],
+      ['studio_pack_hd15', 4_500],
+    ]);
+    expect(pricing.trial).toEqual({ days: 7, videos: 2 });
     expect(JSON.stringify(pricing)).not.toMatch(/capHeadroom|costPence/);
   });
 
   it('checkout: owner only, validated, returns the Stripe URL; the trial is offered once', async () => {
-    const body = { kind: 'channels', channels: 3, interval: 'month' };
+    const body = { kind: 'plan', plan: 'growth', interval: 'month' };
     expect(
       (
         await call(checkoutRoute.POST, {
@@ -162,7 +179,28 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
           token: 'owner',
           method: 'POST',
           path: '/api/studio/billing/checkout',
-          body: { ...body, channels: 7 },
+          body: { ...body, plan: 'enterprise' },
+        })
+      ).status,
+    ).toBe(400);
+    // The 21.5 per-channel body is no longer accepted.
+    expect(
+      (
+        await call(checkoutRoute.POST, {
+          token: 'owner',
+          method: 'POST',
+          path: '/api/studio/billing/checkout',
+          body: { kind: 'channels', channels: 3, interval: 'month' },
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await call(checkoutRoute.POST, {
+          token: 'owner',
+          method: 'POST',
+          path: '/api/studio/billing/checkout',
+          body: { ...body, interval: 'quarter' },
         })
       ).status,
     ).toBe(400);
@@ -189,7 +227,7 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
       line_items: unknown;
     };
     expect(params.client_reference_id).toBe(org);
-    expect(params.line_items).toEqual([{ price: 'price_studio_channel_monthly', quantity: 3 }]);
+    expect(params.line_items).toEqual([{ price: 'price_studio_growth_monthly', quantity: 1 }]);
   });
 
   it('portal and invoices are scoped to the caller’s own organisation', async () => {
@@ -197,7 +235,7 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
       token: 'owner',
       method: 'POST',
       path: '/api/studio/billing/checkout',
-      body: { kind: 'channels', channels: 1, interval: 'year' },
+      body: { kind: 'plan', plan: 'starter', interval: 'year' },
     });
     const portal = await call(portalRoute.POST, {
       token: 'owner',
@@ -236,7 +274,7 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
       token: 'owner',
       method: 'POST',
       path: '/api/studio/billing/checkout',
-      body: { kind: 'channels', channels: 1, interval: 'month' },
+      body: { kind: 'plan', plan: 'starter', interval: 'month' },
     });
     expect(res.status).toBe(501);
   });

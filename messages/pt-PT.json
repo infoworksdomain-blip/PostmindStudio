@@ -196,8 +196,8 @@
       "moreFrom": "Tem mais vídeos incluídos a partir de {date}.",
       "planExceededTitle": "{period, select, week {Já usou os vídeos desta semana} other {Já usou os vídeos deste mês}}",
       "planWarningTitle": "{period, select, week {Está perto do limite de vídeos desta semana} other {Está perto do limite de vídeos deste mês}}",
-      "planBlockedBody": "Os novos vídeos estão em pausa até {date}. Adicione um canal ou compre um pacote de vídeos para continuar a criar.",
-      "planResetBody": "Tem mais vídeos incluídos a partir de {date}. Adicione um canal ou compre um pacote de vídeos para ter mais.",
+      "planBlockedBody": "Os novos vídeos estão em pausa até {date}. Faça upgrade do plano ou compre um pacote de vídeos para continuar a criar.",
+      "planResetBody": "São incluídos mais vídeos a partir de {date}. Faça upgrade do plano ou compre um pacote de vídeos para ter mais.",
       "quickPostsNote": "Carrosséis, apresentações, muros de texto e vídeos de gancho e demo contam como ¼ de vídeo."
     },
     "pageTitle": {
@@ -314,7 +314,7 @@
       "forbidden": "Não tem permissão para fazer isso.",
       "feature_disabled": "Esta funcionalidade não está ativada para a sua organização.",
       "plan_tier": "Esta funcionalidade não está incluída no seu plano.",
-      "quota_exceeded": "Já usou os vídeos do seu plano por agora. Adicione um canal ou compre um pacote de vídeos para continuar a criar.",
+      "quota_exceeded": "Usou os vídeos do seu plano por agora. Faça upgrade do plano ou compre um pacote de vídeos para continuar a criar.",
       "not_found": "Não foi possível encontrar este elemento. Pode ter sido eliminado.",
       "conflict": "Houve alterações enquanto trabalhava. Atualize a página e tente novamente.",
       "validation_error": "Alguns dados não são válidos. Verifique-os e tente novamente.",
@@ -339,7 +339,6 @@
       "auto_publish_account_required": "Escolha uma conta ligada onde publicar ou desative a publicação automática e o agendamento.",
       "auto_publish_account_unavailable": "Uma conta escolhida já não está ligada. Volte a ligá-la ou escolha outra conta.",
       "queue_unavailable": "A publicação está temporariamente indisponível. Nada foi publicado nem guardado; tente novamente dentro de momentos.",
-      "channel_limit": "O seu plano não inclui um canal para esta plataforma. Adicione um canal em O seu plano para publicar aqui.",
       "no_demo_video": "Carregue primeiro um vídeo de demonstração do seu produto ou da sua app."
     }
   },
@@ -550,7 +549,7 @@
     },
     "videoAllowanceUsed": {
       "title": "Os vídeos {period, select, week {desta semana} other {deste mês}} estão esgotados",
-      "body": "{used, number} de {limit, number} vídeos criados {period, select, week {esta semana} other {este mês}}. Terá mais incluídos no início {period, select, week {da próxima semana} other {do próximo mês}}.{blocked, select, yes { Para criar mais antes disso, adicione um canal ou compre um pacote de vídeos.} other {}}"
+      "body": "{used, number} de {limit, number} vídeos criados {period, select, week {esta semana} other {este mês}}. São incluídos mais no início {period, select, week {da próxima semana} other {do próximo mês}}.{blocked, select, yes { Para criar mais antes disso, faça upgrade do plano ou compre um pacote de vídeos.} other {}}"
     },
     "costPlain": {
       "projectAlert": {
@@ -2734,10 +2733,6 @@
     },
     "notConfigured": "O {platform} ainda não está disponível: a aplicação {platform} do Studio ainda precisa de ser configurada. Contacte o seu administrador.",
     "readOnly": "Só os proprietários e administradores podem ligar ou desligar contas.",
-    "channelLimit": {
-      "body": "{count, plural, one {O seu plano inclui # canal,} many {O seu plano inclui # canais,} other {O seu plano inclui # canais,}} por isso {blockedCount, plural, one {{blocked} está ligado, mas não vai publicar.} many {{blocked} estão ligados, mas não vão publicar.} other {{blocked} estão ligados, mas não vão publicar.}}",
-      "action": "Adicionar um canal"
-    },
     "tiktokPostMode": {
       "legend": "Como esta conta publica no TikTok",
       "drafts": "Enviar para rascunhos do TikTok",
@@ -4610,15 +4605,17 @@
     },
     "pricing": {
       "eyebrow": "Preços",
-      "title": "Um preço simples por canal",
-      "per": "por canal por mês",
-      "body": "Cada canal inclui {videos} vídeos curtos em HD por mês, ou até {quick} publicações rápidas: carrosséis, diaporamas e vídeos de texto contam como ¼ de vídeo.",
+      "title": "Três planos simples",
+      "body": "Todos os planos publicam no TikTok, Instagram, YouTube, Facebook, LinkedIn e X. As publicações rápidas, como carrosséis, apresentações e vídeos de texto, contam como ¼ de vídeo.",
       "points": {
         "billing": "Pague à semana, ao mês ou ao ano",
         "vat": "Preços sem IVA",
         "cancel": "Cancele quando quiser"
       },
-      "cta": "Ver preços"
+      "cta": "Ver preços",
+      "plansAria": "Planos",
+      "perMonth": "por mês, sem IVA",
+      "packs": "Precisa de mais? Pacotes de vídeos: {small, number} vídeos HD por {smallPrice} ou {large, number} por {largePrice}, com qualquer plano."
     },
     "closing": {
       "eyebrow": "Pronto quando estiver preparado",
@@ -4643,11 +4640,11 @@
     },
     "hero": {
       "eyebrow": "Preços",
-      "title": "Um plano simples: paga por canal",
-      "description": "Escolha em quantas plataformas sociais publica e com que frequência paga. Cada canal inclui 8 vídeos curtos em HD por mês, ou até 32 publicações rápidas."
+      "title": "Três planos. Todas as plataformas.",
+      "description": "Escolha Starter, Growth ou Pro e a frequência de pagamento. Todos os planos publicam no TikTok, Instagram, YouTube, Facebook, LinkedIn e X."
     },
     "plan": {
-      "title": "Crie o seu plano"
+      "title": "Escolha o seu plano"
     },
     "unavailable": "Não é possível mostrar os preços neste momento. Tente novamente daqui a pouco.",
     "trialNote": "Experimente grátis durante {days, plural, one {# dia} many {# dias} other {# dias}} com {videos} vídeos. É necessário cartão; cancele a qualquer momento antes do fim do período experimental e não paga nada.",
@@ -4658,18 +4655,17 @@
     "included": {
       "title": "Todos os planos incluem",
       "items": {
-        "videos": "8 vídeos curtos por canal todos os meses, criados para si a partir de um breve resumo",
         "hd": "Vídeo HD, legendas e música",
         "platforms": "Publicação no TikTok, Instagram, YouTube Shorts, Facebook, LinkedIn e X",
         "scheduling": "Um calendário de conteúdos e agendamento automático",
         "brand": "O kit da sua marca em todos os vídeos",
         "library": "Biblioteca de vídeos de referência para ter ideias",
-        "quickPosts": "Ou até 32 publicações rápidas por canal por mês: carrosséis, apresentações e vídeos de texto contam como ¼ de vídeo"
+        "quickPosts": "As publicações rápidas contam como ¼ de vídeo: carrosséis, apresentações, muros de texto e vídeos gancho + demo"
       }
     },
     "packs": {
       "title": "Precisa de mais vídeos?",
-      "description": "Compre um pacote avulso de vídeos HD a qualquer momento. Os vídeos de pacote funcionam em qualquer canal, são usados depois dos vídeos do seu plano e são válidos durante 3 meses."
+      "description": "Compre um pacote avulso de vídeos HD a qualquer momento, com qualquer plano. Os vídeos dos pacotes são usados depois dos vídeos do seu plano e são válidos durante 3 meses."
     },
     "topUps": {
       "short": "{quantity, plural, one {# vídeo HD} many {# vídeos HD} other {# vídeos HD}}",
@@ -4678,25 +4674,21 @@
     "faq": {
       "title": "Perguntas",
       "items": {
-        "channel": {
-          "q": "O que é um canal?",
-          "a": "Um canal é uma plataforma social onde publica, como o TikTok ou o Instagram. Pague por 1 a 6 canais. Pode ligar mais contas, mas só os canais que paga publicam."
-        },
         "period": {
           "q": "Semanal, mensal ou anual?",
-          "a": "O plano mensal custa {monthly} por canal. O semanal custa {weekly} por canal, por semana, o que fica mais caro ao fim de um mês. O anual custa {yearly} por canal, pago antecipadamente: 2 meses grátis. Os vídeos são incluídos todas as semanas nos planos semanais e todos os meses nos planos mensais e anuais."
+          "a": "O {plan} custa {monthly} por mês. O semanal custa {weekly} por semana, o que fica mais caro num mês. O anual custa {yearly}, pago antecipadamente: 2 meses grátis. Todos os planos funcionam da mesma forma. Os vídeos são incluídos todas as semanas no pagamento semanal e em cada mês do calendário nos pagamentos mensal e anual."
         },
         "change": {
           "q": "Posso alterar o meu plano mais tarde?",
-          "a": "Sim, em O seu plano. Adicionar canais ou passar para um período mais longo aplica-se de imediato; só paga a diferença pelo resto do período. Remover canais ou passar para um período mais curto aplica-se no fim do período que já pagou."
+          "a": "Sim, em O seu plano. Passar para um plano superior, ou para um período mais longo no mesmo plano, aplica-se de imediato; paga apenas a diferença pelo resto do período. Passar para um plano inferior, ou para um período mais curto, aplica-se no fim do período que já pagou."
         },
         "limit": {
           "q": "O que acontece quando usar os meus vídeos?",
-          "a": "Os novos vídeos ficam em pausa até serem incluídos mais no início da próxima semana ou do próximo mês. Adicione um canal ou compre um pacote de vídeos para continuar de imediato."
+          "a": "Os novos vídeos ficam em pausa até serem incluídos mais no início da próxima semana ou do próximo mês. Faça upgrade do plano ou compre um pacote de vídeos para continuar de imediato."
         },
         "packs": {
           "q": "Como funcionam os pacotes de vídeos?",
-          "a": "Um pacote de 5 ou 15 vídeos HD é uma compra avulsa. Os vídeos de pacote funcionam em qualquer canal, são usados depois dos vídeos do seu plano e são válidos durante 3 meses."
+          "a": "Um pacote de 5 ou 15 vídeos HD é uma compra avulsa, com qualquer plano. Os vídeos dos pacotes são usados depois dos vídeos do seu plano e são válidos durante 3 meses."
         },
         "vat": {
           "q": "Os preços incluem IVA?",
@@ -4708,7 +4700,11 @@
         },
         "quickPosts": {
           "q": "Os carrosséis e as apresentações contam como um vídeo inteiro?",
-          "a": "Não. Carrosséis, apresentações, muros de texto e vídeos de gancho e demo são publicações rápidas e contam como ¼ de vídeo, por isso os 8 vídeos por mês de um canal podem ser até 32 publicações rápidas. Um vídeo com IA conta como 1 vídeo e um vídeo com ator UGC como 2. Os vídeos dos pacotes contam da mesma forma."
+          "a": "Não. Carrosséis, apresentações, muros de texto e vídeos gancho + demo são publicações rápidas e contam como ¼ de vídeo, pelo que os {videos, number} vídeos por mês do {plan} podem ser até {quick, number} publicações rápidas. Um vídeo com IA conta como 1 vídeo e um vídeo com ator UGC como 2. Os vídeos dos pacotes são contados da mesma forma."
+        },
+        "platforms": {
+          "q": "Em que plataformas posso publicar?",
+          "a": "Em todas as seis, com qualquer plano: TikTok, Instagram, YouTube, Facebook, LinkedIn e X. Ligue as suas contas e o Studio publica em cada uma delas."
         }
       }
     }
@@ -5131,7 +5127,7 @@
     "header": {
       "eyebrow": "Definições",
       "title": "O seu plano",
-      "description": "Os seus canais, vídeos, pacotes de vídeos, dados de pagamento e faturas."
+      "description": "O seu plano, vídeos, pacotes de vídeos, dados de pagamento e faturas."
     },
     "loading": "A carregar a faturação",
     "notEnabled": {
@@ -5184,7 +5180,7 @@
     },
     "credits": {
       "title": "Pacotes de vídeos",
-      "description": "Pacotes avulsos de vídeos HD para qualquer canal. Os vídeos de pacote são usados depois dos vídeos do seu plano e são válidos durante 3 meses.",
+      "description": "Pacotes avulsos de vídeos HD para qualquer plano. Os vídeos dos pacotes são usados depois dos vídeos do seu plano e são válidos durante 3 meses.",
       "buy": "Comprar",
       "buyAria": "Comprar {pack} por {amount}",
       "noPacks": "Escolha primeiro um plano para comprar pacotes de vídeos.",
@@ -5214,7 +5210,7 @@
     },
     "picker": {
       "title": "Escolha o seu plano",
-      "description": "Escolha quantos canais quer e com que frequência paga. Paga em segurança com a Stripe; os preços não incluem IVA.",
+      "description": "Escolha um plano e a frequência de pagamento. Paga em segurança com o Stripe; preços sem IVA.",
       "trial": "Iniciar avaliação gratuita",
       "redirecting": "A abrir o pagamento seguro…",
       "subscribe": "Continuar para o pagamento",
@@ -5298,11 +5294,10 @@
           "endTrial": "Encerrar o teste agora",
           "endTrialHelp": "A franquia do teste e os seus limites de custo de {daily} por dia / {total} no total deixam de valer para sempre, mesmo depois de esta substituição expirar ou ser removida; aplicam-se os limites do plano (e qualquer substituição de limites de custo). A Stripe não é alterada: o teste dela termina, e é cobrado, na sua própria data.",
           "trialNote": "Qualquer substituição guardada pausa os limites do teste enquanto estiver ativa. Marque «Encerrar o teste agora» para os remover para sempre.",
-          "channelPlan": "Plano por canais",
-          "channelPlanHelp": "Os canais (de 1 a 6 plataformas sociais) definem a franquia de vídeos, os limites de custo e quantas plataformas podem ser ligadas; o intervalo define com que frequência a franquia é libertada. «Manter atual» usa os valores da subscrição da Stripe. Não é usado com Enterprise.",
-          "channels": "Canais",
-          "channelsOption": "{count, plural, one {# canal} many {# canais} other {# canais}}",
-          "interval": "Intervalo de faturação"
+          "interval": "Intervalo de faturação",
+          "plan": "Plano",
+          "studioPlan": "Substituir plano",
+          "studioPlanHelp": "O plano define a quota de vídeos, os utilizadores, os negócios e os limites de custo; o intervalo define a frequência com que a quota é libertada. «Manter atual» usa os valores da subscrição do Stripe. Não é usado com Enterprise."
         },
         "clear": {
           "title": "Remover a substituição",
@@ -5335,18 +5330,18 @@
           "accessReadOnly": "Só leitura bloqueia qualquer alteração nesta organização exceto faturação, definições da conta e exportações.",
           "endTrial": "Encerrar o teste não pode ser desfeito: os seus limites não voltarão a aplicar-se a esta organização."
         },
-        "channelPlan": "Plano por canais",
-        "noChannelPlan": "Sem plano por canais",
-        "channelPlanValue": "{count, plural, one {# canal} many {# canais} other {# canais}} · {interval, select, week {semanal} month {mensal} year {anual} other {{interval}}}",
-        "channelPlanSource": "{source, select, admin {(definido pela equipa)} other {(da Stripe)}}",
         "intervalValues": {
           "week": "Semanal",
           "month": "Mensal",
           "year": "Anual"
         },
-        "overrideChannels": "Canais: {count, plural, one {# canal} many {# canais} other {# canais}}",
         "overrideInterval": "Faturação {interval, select, week {semanal} month {mensal} year {anual} other {{interval}}}",
-        "subscriptionChannelLine": "{tier} · {count, plural, one {# canal} many {# canais} other {# canais}} · {interval} · termina a {date}"
+        "studioPlan": "Plano",
+        "noStudioPlan": "Sem plano",
+        "planValue": "{plan} · {interval, select, week {semanal} month {mensal} year {anual} other {{interval}}}",
+        "overridePlan": "Plano: {plan}",
+        "subscriptionPlanLine": "{plan} · {interval} · termina em {date}",
+        "planSource": "{source, select, admin {(definido pela equipa)} other {(da Stripe)}}"
       },
       "subscriptions": {
         "title": "Subscrições",
@@ -5355,8 +5350,6 @@
         "mrr": "Receita recorrente mensal",
         "mrrHelp": "Subscrições ativas e em atraso; planos anuais divididos por 12; sem IVA.",
         "total": "{count, plural, =0 {Sem subscrições} one {# subscrição} other {# subscrições}}",
-        "byTier": "Por nível",
-        "byTierAria": "Subscrições por nível",
         "tierLine": "{count} · {mrr}",
         "byStatus": "Por estado",
         "byStatusAria": "Subscrições por estado",
@@ -5365,24 +5358,26 @@
         "caption": "Subscrições",
         "columns": {
           "organisation": "Organização",
-          "tier": "Nível",
           "interval": "Faturação",
           "mrr": "MRR",
           "periodEnd": "Fim do período",
-          "status": "Estado"
+          "status": "Estado",
+          "plan": "Plano"
         },
         "cancelling": "A cancelar",
         "unknownOrg": "Organização desconhecida",
         "unknownTier": "Desconhecido",
-        "empty": "Nenhuma subscrição corresponde."
+        "empty": "Nenhuma subscrição corresponde.",
+        "byPlan": "Por plano",
+        "byPlanAria": "Subscrições por plano"
       }
     },
     "yourPlan": {
       "summary": {
         "title": "O seu plano",
-        "headline": "{count, plural, one {# canal} many {# canais} other {# canais}}, {period, select, week {semanal} month {mensal} other {anual}}",
+        "headline": "{plan}, {period, select, week {semanal} month {mensal} other {anual}}",
         "legacy": "Transferido do seu plano anterior.",
-        "pending": "A partir de {date}: {count, plural, one {# canal} many {# canais} other {# canais}}, {period, select, week {semanal} month {mensal} other {anual}}.",
+        "pending": "A partir de {date}: {plan}, {period, select, week {semanal} month {mensal} other {anual}}.",
         "keepCurrent": "Manter o meu plano atual",
         "paymentPending": "A sua última alteração aguarda pagamento. Atualize o método de pagamento para a aplicar.",
         "price": "Preço",
@@ -5398,30 +5393,20 @@
         "packsLeft": "{count, plural, =0 {Sem vídeos de pacote restantes} one {Resta # vídeo de pacote} many {Restam # vídeos de pacote} other {Restam # vídeos de pacote}}",
         "left": "Restam {left}"
       },
-      "channels": {
-        "title": "Os seus canais",
-        "description": "{count, plural, one {O seu plano publica em # canal.} many {O seu plano publica em # canais.} other {O seu plano publica em # canais.}}",
-        "noneConnected": "Ainda não há canais ligados.",
-        "connect": "Ligar contas",
-        "publishing": "A publicar em: {list}.",
-        "blocked": "{count, plural, one {{list} está ligado, mas não publica: o seu plano não tem nenhum canal disponível para ele.} many {{list} estão ligados, mas não publicam: o seu plano não tem canais disponíveis para eles.} other {{list} estão ligados, mas não publicam: o seu plano não tem canais disponíveis para eles.}}",
-        "addChannel": "Adicionar um canal",
-        "spare": "{count, plural, one {Pode ligar mais # canal.} many {Pode ligar mais # canais.} other {Pode ligar mais # canais.}}"
-      },
       "change": {
         "title": "Alterar o seu plano",
-        "description": "Adicione ou remova canais, ou mude a frequência de pagamento. Vê o novo preço e quando se aplica antes de qualquer alteração.",
+        "description": "Mude para outro plano ou altere a frequência de pagamento. Vê o novo preço e quando se aplica antes de qualquer alteração.",
         "previewing": "A calcular o novo preço…",
         "previewFailed": "Não foi possível calcular o novo preço. Tente novamente daqui a pouco.",
         "appliesNow": "Novo preço: {price}. Aplica-se já: paga {due} hoje pelo resto deste período.",
         "appliesLater": "Novo preço: {price}. Aplica-se a {date}. Não tem nada a pagar agora.",
-        "nowRule": "Mais canais e períodos mais longos aplicam-se de imediato, e só paga a diferença.",
-        "laterRule": "Menos canais e períodos mais curtos aplicam-se no fim do período que já pagou, por isso mantém o que pagou até lá.",
+        "nowRule": "Um plano superior, ou um período mais longo no mesmo plano, aplica-se de imediato, e paga apenas a diferença.",
+        "laterRule": "Um plano inferior, ou um período mais curto no mesmo plano, aplica-se no fim do período que já pagou, pelo que mantém o que pagou até lá.",
         "review": "Rever alteração",
         "reset": "Recomeçar",
         "confirmTitle": "Confirme o seu novo plano",
-        "confirmFrom": "Atual: {channels, plural, one {# canal} many {# canais} other {# canais}}, {period, select, week {semanal} month {mensal} other {anual}}",
-        "confirmTo": "Novo: {channels, plural, one {# canal} many {# canais} other {# canais}}, {period, select, week {semanal} month {mensal} other {anual}}",
+        "confirmFrom": "Agora: {plan}, {period, select, week {semanal} month {mensal} other {anual}}",
+        "confirmTo": "Novo: {plan}, {period, select, week {semanal} month {mensal} other {anual}}",
         "cancel": "Voltar",
         "confirm": "Confirmar alteração",
         "confirmPay": "Pagar {amount} e alterar",
@@ -5460,7 +5445,7 @@
     },
     "quota": {
       "title": "Já usou os vídeos do seu plano por agora",
-      "body": "Adicione um canal para ter mais vídeos por semana ou por mês, ou compre um pacote de vídeos para continuar hoje.",
+      "body": "Faça upgrade do plano para ter mais vídeos por semana ou por mês, ou compre um pacote de vídeos para continuar hoje.",
       "quickPosts": "As publicações rápidas rendem mais: carrosséis, apresentações, muros de texto e vídeos de gancho e demo contam como ¼ de vídeo."
     },
     "planRequired": {
@@ -5475,10 +5460,10 @@
       "choosePlan": "Escolher um plano",
       "updatePayment": "Atualizar método de pagamento",
       "notNow": "Agora não",
-      "addChannel": "Adicionar um canal",
       "buyPack": "Comprar um pacote de vídeos",
       "viewPlan": "Ver o plano",
-      "manageMembers": "Gerir membros"
+      "manageMembers": "Gerir membros",
+      "upgradePlan": "Fazer upgrade do plano"
     },
     "askOwner": "Só um proprietário da organização pode alterar o plano ou a faturação. Peça a um proprietário para o fazer.",
     "lock": {
@@ -5488,10 +5473,6 @@
     "seatLimit": {
       "title": "Todos os lugares do seu plano estão ocupados",
       "body": "O seu plano não tem lugar livre para mais uma pessoa. Remova primeiro alguém ou contacte o apoio."
-    },
-    "channelLimit": {
-      "title": "Adicione um canal para publicar aqui",
-      "body": "{count, plural, one {O seu plano inclui # canal} many {O seu plano inclui # canais} other {O seu plano inclui # canais}}: {list}. Adicione um canal para publicar também em {platform}."
     }
   },
   "email": {
@@ -5609,7 +5590,7 @@
       "topupReceipt": {
         "subject": "O seu pacote de vídeos está pronto: {packName}",
         "heading": "Pacote de vídeos adicionado",
-        "body": "Obrigado. O seu pacote {packName} foi adicionado. Use-o em qualquer canal no prazo de 3 meses. A Stripe envia o recibo em separado.",
+        "body": "Obrigado. O seu pacote {packName} foi adicionado. Use-o no prazo de 3 meses, com qualquer plano. O Stripe envia o recibo em separado.",
         "cta": "Abrir O seu plano"
       },
       "accountDeletionScheduled": {
@@ -5686,8 +5667,7 @@
       "pagesAria": "Páginas de organizações",
       "pageInfo": "{from}–{to} de {total}",
       "previous": "Anterior",
-      "next": "Seguinte",
-      "channelPlan": "{count, plural, one {# canal} many {# canais} other {# canais}} · {interval, select, week {semanal} month {mensal} year {anual} other {{interval}}}"
+      "next": "Seguinte"
     },
     "detail": {
       "back": "Todas as organizações",
@@ -6181,45 +6161,37 @@
       "close": "Fechar"
     }
   },
-  "channelPlan": {
+  "planPicker": {
+    "label": "Plano",
     "interval": {
       "label": "Frequência de pagamento",
       "week": "Semanal",
       "month": "Mensal",
-      "year": "Anual"
+      "year": "Anual",
+      "yearlyHint": "Pague anualmente e ganhe 2 meses grátis."
     },
-    "channels": {
-      "label": "Canais",
-      "fewer": "Remover um canal",
-      "more": "Adicionar um canal",
-      "value": "{count, plural, one {# canal} many {# canais} other {# canais}}",
-      "hint": "Um canal é uma plataforma social onde publica: TikTok, Instagram, YouTube Shorts, Facebook, LinkedIn ou X."
-    },
+    "mostPopular": "Mais escolhido",
     "total": {
       "week": "{amount} por semana",
       "month": "{amount} por mês",
       "year": "{amount} por ano"
     },
-    "perChannel": {
-      "week": "{amount} por canal, por semana",
-      "month": "{amount} por canal, por mês",
-      "year": "{amount} por canal, por ano"
-    },
-    "included": {
-      "week": "{count, plural, one {# vídeo incluído} many {# vídeos incluídos} other {# vídeos incluídos}} por semana ({perChannel} por canal)",
-      "month": "{count, plural, one {# vídeo incluído} many {# vídeos incluídos} other {# vídeos incluídos}} por mês ({perChannel} por canal)",
-      "year": "{count, plural, one {# vídeo incluído} many {# vídeos incluídos} other {# vídeos incluídos}} por ano ({perChannel} por canal, por mês)"
-    },
-    "hd": "Vídeos curtos em HD",
     "exclVat": "sem IVA",
+    "videos": {
+      "week": "{count, plural, one {# vídeo HD} many {# vídeos HD} other {# vídeos HD}} por semana",
+      "month": "{count, plural, one {# vídeo HD} many {# vídeos HD} other {# vídeos HD}} por mês"
+    },
+    "quickPosts": "Ou até {count, number} publicações rápidas: carrosséis, apresentações e vídeos de texto contam como ¼",
+    "businesses": "{count, plural, one {# negócio} many {# negócios} other {# negócios}}",
+    "seats": "{count, plural, one {# utilizador} many {# utilizadores} other {# utilizadores}}",
+    "platforms": "Publica em todas as plataformas",
     "yearlySaving": "2 meses grátis: poupa {amount} por ano",
     "weeklyNote": "O plano semanal custa mais do que o mensal. Pague ao mês ou ao ano para poupar.",
     "priceUnavailable": "Preço indisponível",
     "packs": {
       "name": "{quantity, plural, one {# vídeo HD} many {# vídeos HD} other {# vídeos HD}}",
-      "validity": "Use em qualquer canal no prazo de {months, plural, one {# mês} many {# meses} other {# meses}}"
-    },
-    "quickPosts": "Ou até {count, number} publicações rápidas: carrosséis, apresentações e vídeos de texto contam como ¼"
+      "validity": "Use no prazo de {months, plural, one {# mês} many {# meses} other {# meses}}, com qualquer plano"
+    }
   },
   "carousel": {
     "editor": {
@@ -6534,7 +6506,7 @@
         "summary": "Resumo"
       },
       "channelsTitle": "Onde publicar?",
-      "channelsHint": "Escolha as redes em que ela publica, dentro dos canais do seu plano.",
+      "channelsHint": "Escolha as redes onde publica. Todos os planos publicam em todas as plataformas.",
       "noAccount": "{platform} não está conectado: as publicações ficam guardadas para revisão.",
       "cadenceTitle": "Com que frequência?",
       "mode": {
@@ -6579,7 +6551,7 @@
       "cancelConfirm": "Cancelar esta automação? As publicações que ainda não saíram são canceladas.",
       "pauseReason": {
         "owner": "Pausada por você. As publicações já criadas saem mesmo assim.",
-        "allowance": "Os vídeos do seu plano acabaram. Adicione um canal ou compre um pacote de vídeos e depois retome.",
+        "allowance": "Os vídeos do seu plano esgotaram-se. Faça upgrade do plano ou compre um pacote de vídeos e depois retome.",
         "billing": "Pausada porque a faturação precisa de atenção.",
         "owner_left": "Pausada porque a pessoa que a configurou saiu da organização.",
         "plan_missing": "Pausada: o período atual não foi encontrado.",

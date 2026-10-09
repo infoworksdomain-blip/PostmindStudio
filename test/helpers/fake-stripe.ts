@@ -63,7 +63,7 @@ const nextId = (prefix: string) => `${prefix}_${Date.now().toString(36)}${(seq +
 export function subscriptionState(
   partial: Partial<SubscriptionState> & { id: string; customerId: string },
 ): SubscriptionState {
-  const lookupKey = partial.lookupKey === undefined ? 'studio_channel_monthly' : partial.lookupKey;
+  const lookupKey = partial.lookupKey === undefined ? 'studio_starter_monthly' : partial.lookupKey;
   return {
     status: 'active',
     lookupKey,

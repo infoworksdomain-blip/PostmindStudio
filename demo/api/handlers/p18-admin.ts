@@ -1,10 +1,7 @@
 // Phase 18 Track E sample handlers: the admin Organisations, Users and Subscriptions tabs and the
 // legal-readiness warning. Shapes match services/admin-directory.ts and lib/legal/readiness.ts.
 // Subscriptions are Track C's data (studio.subscriptions), shown read-only.
-import {
-  CHANNEL_LOOKUP_KEYS,
-  channelIntervalForLookupKey,
-} from '@/lib/studio/billing/channel-plan';
+import { planChoiceForLookupKey, planLookupKey } from '@/lib/studio/billing/plans';
 import { BILLING_STATE_INFO, currentPlan, getBillingState } from '../billing-state';
 import { DEMO_ORG_ID, DEMO_USER_ID, DEMO_USER_NAME } from '../ids';
 import { DemoHttpError, route } from '../registry';
@@ -29,9 +26,8 @@ interface Org {
   access: string | null;
   subscriptionStatus: string | null;
   costThisMonthPence: number;
+  /** 26.1: the plan price (studio_<plan>_<weekly|monthly|yearly>; quantity 1). */
   lookupKey: string | null;
-  /** 21.5: channels on a channel price (the subscription item's quantity). */
-  channels: number | null;
 }
 
 const ORGS: Org[] = [
@@ -47,8 +43,7 @@ const ORGS: Org[] = [
     access: 'full',
     subscriptionStatus: 'trialing',
     costThisMonthPence: 1840,
-    lookupKey: 'studio_channel_monthly',
-    channels: 3,
+    lookupKey: 'studio_growth_monthly',
   },
   {
     id: OTHER_ORGS.harrogate,
@@ -62,8 +57,7 @@ const ORGS: Org[] = [
     access: 'full',
     subscriptionStatus: 'active',
     costThisMonthPence: 6420,
-    lookupKey: 'studio_channel_yearly',
-    channels: 6,
+    lookupKey: 'studio_pro_yearly',
   },
   {
     id: OTHER_ORGS.bramley,
@@ -77,8 +71,7 @@ const ORGS: Org[] = [
     access: 'full',
     subscriptionStatus: 'past_due',
     costThisMonthPence: 910,
-    lookupKey: 'studio_channel_weekly',
-    channels: 1,
+    lookupKey: 'studio_starter_weekly',
   },
   {
     id: OTHER_ORGS.york,
@@ -92,8 +85,7 @@ const ORGS: Org[] = [
     access: 'read_only',
     subscriptionStatus: 'unpaid',
     costThisMonthPence: 0,
-    lookupKey: 'studio_channel_monthly',
-    channels: 1,
+    lookupKey: 'studio_starter_monthly',
   },
   {
     // 20.27: the operator's own organisation on a Stripe trial, stuck just under the £15 trial
@@ -109,8 +101,7 @@ const ORGS: Org[] = [
     access: 'full',
     subscriptionStatus: 'trialing',
     costThisMonthPence: 1_496,
-    lookupKey: 'studio_channel_monthly',
-    channels: 2,
+    lookupKey: 'studio_growth_monthly',
   },
   {
     id: OTHER_ORGS.kirkstall,
@@ -125,7 +116,6 @@ const ORGS: Org[] = [
     subscriptionStatus: null,
     costThisMonthPence: 0,
     lookupKey: null,
-    channels: null,
   },
 ];
 
@@ -142,8 +132,7 @@ export function syncDemoOrg(): void {
   row.access = info.access;
   row.subscriptionStatus = info.status;
   const plan = currentPlan();
-  row.lookupKey = plan ? CHANNEL_LOOKUP_KEYS[plan.interval] : null;
-  row.channels = plan?.channels ?? null;
+  row.lookupKey = plan ? planLookupKey(plan.plan, plan.interval) : null;
 }
 
 export const graceFor = (o: Org) => (o.subscriptionStatus === 'past_due' ? future(4) : null);
@@ -160,7 +149,7 @@ route('GET', '/admin/organisations', ({ query }) => {
     offset: 0,
     pageSize: 50,
     data: data.map((row) => {
-      const { lookupKey: _k, channels: _c, ...o } = row;
+      const { lookupKey: _k, ...o } = row;
       return { ...o, ...planSummary(row) };
     }),
   };
@@ -210,8 +199,8 @@ route('GET', '/admin/organisations/:id', ({ params }) => {
             organisationId: o.id,
             status: o.subscriptionStatus,
             lookupKey: o.lookupKey,
-            interval: channelIntervalForLookupKey(o.lookupKey) ?? 'month',
-            quantity: o.channels ?? 1,
+            interval: planChoiceForLookupKey(o.lookupKey)?.interval ?? 'month',
+            quantity: 1,
             currentPeriodEnd: future(20),
             cancelAtPeriodEnd: false,
             trialEnd: o.subscriptionStatus === 'trialing' ? future(9) : null,
@@ -240,8 +229,8 @@ route('GET', '/admin/subscriptions', ({ query }) => {
       organisationName: o.name,
       status: o.subscriptionStatus,
       lookupKey: o.lookupKey,
-      interval: channelIntervalForLookupKey(o.lookupKey) ?? 'month',
-      quantity: o.channels ?? 1,
+      interval: planChoiceForLookupKey(o.lookupKey)?.interval ?? 'month',
+      quantity: 1,
       currentPeriodEnd: future(20),
       cancelAtPeriodEnd: o.id === OTHER_ORGS.harrogate,
       trialEnd: o.subscriptionStatus === 'trialing' ? future(9) : null,

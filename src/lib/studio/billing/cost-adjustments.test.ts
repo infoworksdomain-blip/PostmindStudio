@@ -68,25 +68,32 @@ describe('capAdjustmentFor and the trial', () => {
   });
 });
 
-describe('21.5 channel plan caps (internal)', () => {
-  it('a channel plan carries caps that scale with its channels', async () => {
-    const { db, entitlements } = deps({
-      derived: {
-        tier: 'STANDARD',
-        access: 'full',
-        source: 'stripe',
-        status: 'active',
-        channels: 3,
-        interval: 'month',
-      },
-    });
+describe('26.1 plan caps (internal)', () => {
+  const derived = { tier: 'STANDARD', access: 'full', source: 'stripe', status: 'active' } as const;
+
+  it("a plan carries caps that scale with the plan's videos", async () => {
+    for (const [plan, caps] of [
+      ['starter', { dailyPence: 1_205, monthlyPence: 2_410 }],
+      ['growth', { dailyPence: 3_013, monthlyPence: 6_025 }],
+      ['pro', { dailyPence: 6_779, monthlyPence: 13_557 }],
+    ] as const) {
+      const { db, entitlements } = deps({ derived: { ...derived, plan, interval: 'month' } });
+      expect(await capAdjustmentFor(db, entitlements, ORG, at)).toEqual({
+        monthlyHeadroomPence: 0,
+        plan: caps,
+      });
+    }
+  });
+
+  it('a 21.5 row that stored 3 channels gets the Growth caps', async () => {
+    const { db, entitlements } = deps({ derived: { ...derived, channels: 3, interval: 'month' } });
     expect(await capAdjustmentFor(db, entitlements, ORG, at)).toEqual({
       monthlyHeadroomPence: 0,
-      plan: { dailyPence: 3_615, monthlyPence: 7_230 },
+      plan: { dailyPence: 3_013, monthlyPence: 6_025 },
     });
   });
 
-  it('effectiveOrgCaps: trial > staff cost-cap override > channel plan > tier default (+ pack headroom)', () => {
+  it('effectiveOrgCaps: trial > staff cost-cap override > plan > tier default (+ pack headroom)', () => {
     const tierCaps = { dailyPence: 1_500, monthlyPence: 7_300 };
     const plan = { dailyPence: 1_205, monthlyPence: 2_410 };
     expect(effectiveOrgCaps(tierCaps, null, null)).toEqual(tierCaps);

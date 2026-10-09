@@ -12,16 +12,16 @@ import { useFormat } from '@/lib/client/format';
 import { ErrorState, Section } from '../../primitives';
 import {
   isSubscriptionStatus,
-  PLAN_TIERS,
   type AdminSubscriptionsResponse,
   type AdminSubscriptionRow,
   type SubscriptionStatus,
 } from '../../billing/types';
-import { isChannelInterval } from './entitlements-summary';
+import { PLAN_IDS, PLAN_NAMES } from '@/lib/studio/billing/plans';
+import { isPlanInterval } from './entitlements-summary';
 
 // Phase 18 §P.4 — staff subscriptions list (GET /admin/billing/subscriptions?status=&limit=):
-// total MRR (active + past due, annual ÷ 12, weekly × 52 ÷ 12, ex-VAT), counts by tier and by status, a status
-// filter, and each subscription with its organisation, tier, interval, MRR, period end and
+// total MRR (active + past due, annual ÷ 12, weekly × 52 ÷ 12, ex-VAT), counts by plan (26.1) and by status, a status
+// filter, and each subscription with its organisation, plan, interval, MRR, period end and
 // whether it cancels at period end.
 
 /** Filterable statuses (the API's adminSubscriptionsQuery enum). */
@@ -47,7 +47,7 @@ export function SubscriptionsPanel() {
     limit: 100,
   });
   const statusLabel = (s: string) => (isSubscriptionStatus(s) ? tStatus(s) : s);
-  const intervalLabel = (i: string | null) => (isChannelInterval(i) ? tInterval(i) : (i ?? '—'));
+  const intervalLabel = (i: string | null) => (isPlanInterval(i) ? tInterval(i) : (i ?? '—'));
 
   const columns: DataTableColumn<AdminSubscriptionRow>[] = [
     {
@@ -65,9 +65,9 @@ export function SubscriptionsPanel() {
       ),
     },
     {
-      id: 'tier',
-      header: t('columns.tier'),
-      cell: (s) => (s.tier ? tTier(s.tier) : t('unknownTier')),
+      id: 'plan',
+      header: t('columns.plan'),
+      cell: (s) => (s.plan ? PLAN_NAMES[s.plan] : s.tier ? tTier(s.tier) : t('unknownTier')),
     },
     { id: 'interval', header: t('columns.interval'), cell: (s) => intervalLabel(s.interval) },
     {
@@ -117,13 +117,13 @@ export function SubscriptionsPanel() {
             <p className="text-xs text-muted-foreground">{t('total', { count: summary.total })}</p>
           </div>
           <div className="grid content-start gap-1">
-            <p className="text-muted-foreground">{t('byTier')}</p>
-            <ul aria-label={t('byTierAria')} className="grid gap-0.5">
-              {PLAN_TIERS.map((tier) => {
-                const row = summary.byTier[tier] ?? { count: 0, mrrPence: 0 };
+            <p className="text-muted-foreground">{t('byPlan')}</p>
+            <ul aria-label={t('byPlanAria')} className="grid gap-0.5">
+              {PLAN_IDS.map((plan) => {
+                const row = summary.byPlan[plan] ?? { count: 0, mrrPence: 0 };
                 return (
-                  <li key={tier} className="flex justify-between gap-3">
-                    <span>{tTier(tier)}</span>
+                  <li key={plan} className="flex justify-between gap-3">
+                    <span>{PLAN_NAMES[plan]}</span>
                     <span className="tabular-nums">
                       {t('tierLine', { count: row.count, mrr: f.pence(row.mrrPence) })}
                     </span>

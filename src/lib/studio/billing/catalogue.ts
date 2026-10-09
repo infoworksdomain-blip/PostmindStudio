@@ -1,13 +1,19 @@
 import type { PlanTier } from '../providers/router';
 import {
-  CHANNEL_INTERVALS,
-  CHANNEL_LOOKUP_KEYS,
-  CHANNEL_PLAN_TIER,
-  CHANNEL_PRICE_PENCE,
-  channelCostCapsPence,
-  channelIntervalForLookupKey,
-  type ChannelInterval,
-} from './channel-plan';
+  LEGACY_CHANNEL_LOOKUP_KEYS,
+  legacyChannelIntervalForLookupKey,
+  PLAN_IDS,
+  PLAN_INTERVALS,
+  PLAN_TIER,
+  planChoiceForLookupKey,
+  planCostCapsPence,
+  planLookupKey,
+  planLookupKeys,
+  planPricePence,
+  STUDIO_PLANS,
+  type PlanId,
+  type PlanInterval,
+} from './plans';
 
 // Phase 18 §P.1 / §P.3 — the plan catalogue: the single source of truth for what each tier
 // includes. Amounts (prices) live in Stripe and are read by lookup key; everything else lives
@@ -15,14 +21,14 @@ import {
 // DEFAULT_ORG_*_CAP_PENCE) plus the new limits; Track C points those modules at this object
 // (env overrides keep winning: env > catalogue).
 //
-// Phase 21.5 (2026-10-04): customers buy ONE plan, a per-channel subscription
-// (channel-plan.ts); every channel subscription is the internal tier STANDARD. The tiers below
-// stay as the INTERNAL feature matrix (gates, routing, quality) and for staff overrides and
-// ENTERPRISE; their own lookup keys (studio_<tier>_<interval>) are LEGACY: still mapped, so an
-// old test-mode subscription keeps working until scripts/billing/migrate-channel-plans.ts moves
-// it, but no longer sold. The packs for sale are the two HD video packs.
+// Phase 26.1 (2026-10-09): customers buy one of three plans, Starter / Growth / Pro (plans.ts);
+// every plan is the internal tier STANDARD. The tiers below stay as the INTERNAL feature matrix
+// (gates, routing, quality) and for staff overrides and ENTERPRISE; their own lookup keys
+// (studio_<basic|standard|plus>_<interval>) are LEGACY: still mapped, but no longer sold. The
+// 21.5 per-channel prices (studio_channel_<interval>) are legacy too: read as a plan by quantity
+// until scripts/billing/migrate-to-tiers.ts moves them. The packs for sale are the two HD packs.
 
-export const CATALOGUE_VERSION = '2026-10-04';
+export const CATALOGUE_VERSION = '2026-10-09';
 
 /** The legacy tier intervals (studio_<tier>_monthly / _yearly). */
 export type BillingInterval = 'month' | 'year';
@@ -139,7 +145,7 @@ export const PLAN_CATALOGUE: Readonly<Record<PlanTier, PlanDefinition>> = {
     businesses: 3,
     storageGb: 100,
     lookupKeys: { month: 'studio_standard_monthly', year: 'studio_standard_yearly' },
-    trialDays: 14,
+    trialDays: 7,
   },
   PLUS: {
     ...common,
@@ -204,28 +210,27 @@ export const PLAN_CATALOGUE: Readonly<Record<PlanTier, PlanDefinition>> = {
 };
 
 /**
- * §P.1 trial: STANDARD features, 5 videos, £10 a day and £15 in total (14 days, entitlements.ts).
- * 21.5: long videos are not part of the channel plan, so the trial has none either (was 1).
+ * §P.1 trial: STANDARD features, £10 a day and £15 in total (entitlements.ts). 26.1: 7 days and
+ * 2 HD videos (was 14 days and 5). Long videos are not part of any plan, so the trial has none.
  */
 export const TRIAL = Object.freeze({
   tier: 'STANDARD' as const,
-  shortVideos: 5,
+  shortVideos: 2,
   longVideos: 0,
   dailyCostCapPence: 1_000,
   totalCostCapPence: 1_500,
 });
 
 /**
- * 21.5 — the add-ons for sale: one-off HD video packs, usable on any channel, valid 3 months,
- * bought any time (Checkout mode=payment; usage_credits; used after the plan allowance, oldest
- * first). Headroom per credit: £2.50 (the cap rate; the STANDARD typical cost is ~£2.41). At that
- * worst case the 5 pack keeps ~11 % and the 15 pack is slightly negative (−1 %); see the runbook §5.
- * The pack PRICES are the operator's (2026-10-04).
+ * The add-ons for sale: one-off HD video packs, valid 3 months, bought any time on any plan
+ * (Checkout mode=payment; usage_credits; used after the plan allowance, oldest first). Headroom
+ * per credit: £2.50 (the cap rate; the STANDARD typical cost is ~£2.41). The pack PRICES are the
+ * operator's (26.1, 2026-10-09: 5 for £17, 15 for £45; the lookup keys carry no amount).
  */
 export const TOP_UP_PACKS: readonly TopUpPack[] = [
   {
     lookupKey: 'studio_pack_hd5',
-    tier: CHANNEL_PLAN_TIER,
+    tier: PLAN_TIER,
     kind: 'short',
     quantity: 5,
     capHeadroomPencePerCredit: 250,
@@ -233,7 +238,7 @@ export const TOP_UP_PACKS: readonly TopUpPack[] = [
   },
   {
     lookupKey: 'studio_pack_hd15',
-    tier: CHANNEL_PLAN_TIER,
+    tier: PLAN_TIER,
     kind: 'short',
     quantity: 15,
     capHeadroomPencePerCredit: 250,
@@ -289,18 +294,19 @@ export const LEGACY_TOP_UP_PACKS: readonly TopUpPack[] = [
 ];
 
 /**
- * Lookup key → tier and interval, for the subscription → entitlements mapping. The channel
- * prices (21.5) are STANDARD; the legacy studio_<tier>_<interval> keys map to their old tier.
+ * Lookup key → tier and interval, for the subscription → entitlements mapping. The plan prices
+ * (26.1) and the legacy per-channel prices (21.5) are STANDARD (`studioPlan`); the legacy
+ * studio_<tier>_<interval> keys map to their old tier.
  */
 export function planForLookupKey(
   lookupKey: string,
-): { tier: PlanTier; interval: ChannelInterval; channelPlan: boolean } | undefined {
-  const channelInterval = channelIntervalForLookupKey(lookupKey);
-  if (channelInterval)
-    return { tier: CHANNEL_PLAN_TIER, interval: channelInterval, channelPlan: true };
+): { tier: PlanTier; interval: PlanInterval; studioPlan: boolean } | undefined {
+  const interval =
+    planChoiceForLookupKey(lookupKey)?.interval ?? legacyChannelIntervalForLookupKey(lookupKey);
+  if (interval) return { tier: PLAN_TIER, interval, studioPlan: true };
   for (const plan of Object.values(PLAN_CATALOGUE)) {
     for (const [interval, key] of Object.entries(plan.lookupKeys) as [BillingInterval, string][]) {
-      if (key === lookupKey) return { tier: plan.tier, interval, channelPlan: false };
+      if (key === lookupKey) return { tier: plan.tier, interval, studioPlan: false };
     }
   }
   return undefined;
@@ -367,7 +373,7 @@ export function selfServeTiers(): SelfServeTier[] {
   return TIER_ORDER.filter((t): t is SelfServeTier => PLAN_CATALOGUE[t].selfServe);
 }
 
-/** A legacy tier's lookup key (no longer sold; the ops migration maps it to channels). */
+/** A legacy tier's lookup key (no longer sold). */
 export function lookupKeyFor(tier: SelfServeTier, interval: BillingInterval): string | undefined {
   return PLAN_CATALOGUE[tier].lookupKeys[interval];
 }
@@ -377,12 +383,9 @@ export function legacyLookupKeys(): string[] {
   return TIER_ORDER.flatMap((t) => Object.values(PLAN_CATALOGUE[t].lookupKeys));
 }
 
-/** Every Stripe lookup key Studio sells (the channel prices and the packs), for prices.list. */
+/** Every Stripe lookup key Studio sells (the 9 plan prices and the packs), for prices.list. */
 export function allLookupKeys(): string[] {
-  return [
-    ...CHANNEL_INTERVALS.map((i) => CHANNEL_LOOKUP_KEYS[i]),
-    ...TOP_UP_PACKS.map((p) => p.lookupKey),
-  ];
+  return [...planLookupKeys(), ...TOP_UP_PACKS.map((p) => p.lookupKey)];
 }
 
 // ------------------------------------------------------------------ unit economics (§P.2)
@@ -392,15 +395,26 @@ export function allLookupKeys(): string[] {
 // them; re-run the margin maths in the runbook when you do.
 
 export const REFERENCE_PRICES_PENCE: Readonly<Record<string, number>> = {
-  [CHANNEL_LOOKUP_KEYS.week]: CHANNEL_PRICE_PENCE.week,
-  [CHANNEL_LOOKUP_KEYS.month]: CHANNEL_PRICE_PENCE.month,
-  [CHANNEL_LOOKUP_KEYS.year]: CHANNEL_PRICE_PENCE.year,
-  studio_pack_hd5: 1_500,
-  studio_pack_hd15: 3_900,
+  ...Object.fromEntries(
+    PLAN_IDS.flatMap((plan) =>
+      PLAN_INTERVALS.map((interval) => [
+        planLookupKey(plan, interval),
+        planPricePence(plan, interval),
+      ]),
+    ),
+  ),
+  studio_pack_hd5: 1_700,
+  studio_pack_hd15: 4_500,
 };
 
-/** The 2026-09-30 tier prices (legacy keys; test fixtures and the ops migration only). */
+/**
+ * Earlier prices on legacy keys (test fixtures and the ops migrations only): the 21.5 per-channel
+ * prices (per channel) and the 2026-09-30 tier prices.
+ */
 export const LEGACY_REFERENCE_PRICES_PENCE: Readonly<Record<string, number>> = {
+  [LEGACY_CHANNEL_LOOKUP_KEYS.week]: 950,
+  [LEGACY_CHANNEL_LOOKUP_KEYS.month]: 2_900,
+  [LEGACY_CHANNEL_LOOKUP_KEYS.year]: 29_000,
   studio_basic_monthly: 2_900,
   studio_basic_yearly: 29_000,
   studio_standard_monthly: 9_900,
@@ -485,47 +499,47 @@ export function grossMarginTypical(input: {
   });
 }
 
-/** Invoices a month and the months a price covers, per channel-plan interval. */
-const INVOICES_PER_MONTH: Readonly<Record<ChannelInterval, number>> = {
+/** Invoices a month per plan interval. */
+const INVOICES_PER_MONTH: Readonly<Record<PlanInterval, number>> = {
   week: 52 / 12,
   month: 1,
   year: 1 / 12,
 };
 
-/** A channel plan's price as a monthly figure (weekly × 52 ÷ 12, yearly ÷ 12). */
-export function channelPlanMonthlyEquivalentPence(
-  channels: number,
-  interval: ChannelInterval,
-  unitPence: number = CHANNEL_PRICE_PENCE[interval],
+/** A plan's price as a monthly figure (weekly × 52 ÷ 12, yearly ÷ 12). */
+export function planMonthlyEquivalentPence(
+  plan: PlanId,
+  interval: PlanInterval,
+  pricePence: number = planPricePence(plan, interval),
 ): number {
-  return channels * unitPence * INVOICES_PER_MONTH[interval];
+  return pricePence * INVOICES_PER_MONTH[interval];
 }
 
 /**
- * 21.5 unit economics of a channel subscription (internal; runbooks/billing-stripe.md §5):
- * monthly-equivalent price less worst-case Stripe fees (per invoice), STANDARD infrastructure and
- * the provider spend. `spendPence` defaults to the whole channel cost cap (the worst case).
+ * 26.1 unit economics of a plan (internal; runbooks/billing-stripe.md §5): monthly-equivalent
+ * price less worst-case Stripe fees (per invoice), STANDARD infrastructure and the provider spend.
+ * `spendPence` defaults to the plan's whole monthly cost cap (the worst case).
  */
-export function channelGrossMargin(input: {
-  channels: number;
-  interval: ChannelInterval;
-  unitPence?: number;
+export function planGrossMargin(input: {
+  plan: PlanId;
+  interval: PlanInterval;
+  pricePence?: number;
   spendPence?: number;
 }): number {
-  const price = channelPlanMonthlyEquivalentPence(input.channels, input.interval, input.unitPence);
+  const price = planMonthlyEquivalentPence(input.plan, input.interval, input.pricePence);
   const net =
     price * (1 - STRIPE_FEE_RATE) -
     STRIPE_FIXED_FEE_PENCE * INVOICES_PER_MONTH[input.interval] -
-    INFRA_PENCE_PER_MONTH[CHANNEL_PLAN_TIER];
-  const spend =
-    input.spendPence ?? channelCostCapsPence(input.channels, input.interval).monthlyPence;
+    INFRA_PENCE_PER_MONTH[PLAN_TIER];
+  const spend = input.spendPence ?? planCostCapsPence(input.plan, input.interval).monthlyPence;
   return (net - spend) / price;
 }
 
-/** §P.2 typical use for a channel plan: half the monthly allowance at the STANDARD typical cost. */
-export function channelTypicalSpendPence(channels: number, interval: ChannelInterval): number {
-  const perMonth = interval === 'week' ? (channels * 2 * 52) / 12 : channels * 8;
-  return perMonth * TYPICAL_USE_SHARE * TYPICAL_COST_PENCE_PER_VIDEO[CHANNEL_PLAN_TIER].short;
+/** §P.2 typical use for a plan: half its monthly videos at the STANDARD typical cost. */
+export function planTypicalSpendPence(plan: PlanId, interval: PlanInterval): number {
+  const def = STUDIO_PLANS[plan];
+  const perMonth = interval === 'week' ? (def.videosPerWeek * 52) / 12 : def.videosPerMonth;
+  return perMonth * TYPICAL_USE_SHARE * TYPICAL_COST_PENCE_PER_VIDEO[PLAN_TIER].short;
 }
 
 /** Gross margin (0–1) of a top-up pack when every credit spends its full cap headroom. */

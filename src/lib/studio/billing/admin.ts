@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { UnprocessableError, ValidationError } from '../../errors';
 import type { PlanTier } from '../providers/router';
 import { enterpriseMinimumMonthlyPricePence, PLAN_CATALOGUE, TIER_ORDER } from './catalogue';
-import { MAX_CHANNELS, MIN_CHANNELS } from './channel-plan';
+import { PLAN_IDS, planOfSubscription, type PlanId } from './plans';
 import {
   customLimitsSchema,
   parseOverrides,
@@ -28,8 +28,8 @@ export const adminEntitlementInput = z
   .object({
     tier: z.enum(['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE']).optional(),
     access: z.enum(['full', 'read_only', 'none']).optional(),
-    /** 21.5: the channel count and interval staff give the organisation (allowance, caps, limit). */
-    channels: z.number().int().min(MIN_CHANNELS).max(MAX_CHANNELS).optional(),
+    /** 26.1: the plan and interval staff give the organisation (allowance, caps, seats, businesses). */
+    plan: z.enum(['starter', 'growth', 'pro']).optional(),
     interval: z.enum(['week', 'month', 'year']).optional(),
     limits: customLimitsSchema.optional(),
     monthlyPricePence: z.number().int().min(0).max(100_000_000).nullable().optional(),
@@ -103,7 +103,9 @@ export interface AdminEntitlementView {
     status: string;
     tier: PlanTier | null;
     interval: string | null;
-    /** 21.5: channels on a channel price (the item quantity). */
+    /** 26.1: the plan the price pays for (a 21.5 channel price mapped by its quantity). */
+    plan: PlanId | null;
+    /** The item quantity (1 on a plan price; channels on a 21.5 channel price). */
     quantity: number;
     currentPeriodEnd: string | null;
     cancelAtPeriodEnd: boolean;
@@ -202,6 +204,7 @@ export async function getAdminEntitlements(
       status: s.status,
       tier: tierOfSubscription(s) ?? null,
       interval: s.interval,
+      plan: planOfSubscription(s)?.plan ?? null,
       quantity: s.quantity,
       currentPeriodEnd: s.currentPeriodEnd?.toISOString() ?? null,
       cancelAtPeriodEnd: s.cancelAtPeriodEnd,
@@ -297,7 +300,7 @@ export async function putAdminEntitlements(
     : {
         ...(input.tier && { tier: input.tier }),
         ...(input.access && { access: input.access }),
-        ...(input.channels !== undefined && { channels: input.channels }),
+        ...(input.plan && { plan: input.plan }),
         ...(input.interval && { interval: input.interval }),
         expiresAt: input.expiresAt ?? null,
         reason: input.reason,
@@ -330,7 +333,7 @@ function hasOverrideChange(input: AdminEntitlementInput): boolean {
   return (
     input.tier !== undefined ||
     input.access !== undefined ||
-    input.channels !== undefined ||
+    input.plan !== undefined ||
     input.interval !== undefined ||
     input.limits !== undefined ||
     input.monthlyPricePence != null ||
@@ -423,6 +426,10 @@ export async function listAdminSubscriptions(
   const byTier = Object.fromEntries(
     TIER_ORDER.map((t) => [t, { count: 0, mrrPence: 0 }]),
   ) as Record<PlanTier, { count: number; mrrPence: number }>;
+  const byPlan = Object.fromEntries(PLAN_IDS.map((p) => [p, { count: 0, mrrPence: 0 }])) as Record<
+    PlanId,
+    { count: number; mrrPence: number }
+  >;
   const byStatus: Record<string, number> = {};
   let mrrPence = 0;
   for (const sub of all) {
@@ -430,9 +437,15 @@ export async function listAdminSubscriptions(
     const mrr = monthlyRevenuePence(sub);
     mrrPence += mrr;
     const tier = tierOfSubscription(sub);
-    if (tier && (MRR_STATUSES.has(sub.status) || sub.status === 'trialing')) {
+    const counted = MRR_STATUSES.has(sub.status) || sub.status === 'trialing';
+    if (tier && counted) {
       byTier[tier].count += 1;
       byTier[tier].mrrPence += mrr;
+    }
+    const plan = planOfSubscription(sub)?.plan;
+    if (plan && counted) {
+      byPlan[plan].count += 1;
+      byPlan[plan].mrrPence += mrr;
     }
   }
   const rows = all.filter((s) => !query.status || s.status === query.status).slice(0, query.limit);
@@ -445,13 +458,14 @@ export async function listAdminSubscriptions(
     ).map((o) => [o.id, o.name]),
   );
   return {
-    summary: { mrrPence, currency: 'gbp', byStatus, byTier, total: all.length },
+    summary: { mrrPence, currency: 'gbp', byStatus, byTier, byPlan, total: all.length },
     subscriptions: rows.map((s) => ({
       id: s.id,
       organisationId: s.organisationId,
       organisationName: names.get(s.organisationId) ?? null,
       status: s.status,
       tier: tierOfSubscription(s) ?? null,
+      plan: planOfSubscription(s)?.plan ?? null,
       interval: s.interval,
       mrrPence: monthlyRevenuePence(s),
       currentPeriodEnd: s.currentPeriodEnd?.toISOString() ?? null,

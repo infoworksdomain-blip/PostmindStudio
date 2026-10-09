@@ -12,9 +12,12 @@ describe('Stripe lookup-key batching (prices.list takes at most 10 lookup_keys)'
     expect(lookupKeyBatches([])).toEqual([]);
   });
 
-  it('21.5: the catalogue fits in one request today; batching stays for growth', () => {
-    expect(allLookupKeys().length).toBeLessThanOrEqual(STRIPE_MAX_LOOKUP_KEYS);
-    expect(lookupKeyBatches(allLookupKeys())).toHaveLength(1);
+  it('26.1: the catalogue (9 plan prices + 2 packs) takes two requests', () => {
+    expect(allLookupKeys()).toHaveLength(11);
+    expect(allLookupKeys().length).toBeGreaterThan(STRIPE_MAX_LOOKUP_KEYS);
+    const batches = lookupKeyBatches(allLookupKeys());
+    expect(batches.map((b) => b.length)).toEqual([10, 1]);
+    expect(batches.flat()).toEqual(allLookupKeys());
   });
 
   it('lists every batch and combines the prices, passing params and request options through', async () => {

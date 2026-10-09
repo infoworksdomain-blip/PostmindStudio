@@ -127,7 +127,7 @@ const PHASE_18_GROUP: ScreenGroup = {
       title: 'Pricing',
       href: '#/pricing',
       summary:
-        'One plan, paid per channel: choose 1–6 channels and weekly, monthly or yearly, see the price and the videos included, the HD video packs and the questions. Prices here are the reference amounts; the live page reads them from Stripe.',
+        'Three plans, Starter, Growth (most popular) and Pro, each posting to every platform: choose weekly, monthly or yearly, see the price, the HD videos, businesses and seats included, the HD video packs and the questions. Prices here are the reference amounts; the live page reads them from Stripe.',
       scene: 'market',
     },
     {
@@ -173,18 +173,18 @@ const PHASE_18_GROUP: ScreenGroup = {
       title: 'Your plan',
       href: '#/settings/billing',
       summary:
-        'Channels and how often you pay, renewal date, videos used this week or month, which connected platforms publish, video packs, change the plan (upgrade now with the amount due, downgrade at the end of the period), cancel or keep the plan, and invoices. The plan follows the demo bar’s plan switcher; checkout and the billing portal open a clearly labelled simulated page (no card details), never Stripe.',
+        'The plan and how often you pay, renewal date, videos used this week or month, seats and businesses, video packs, change the plan (upgrade now with the amount due, downgrade at the end of the period), cancel or keep the plan, and invoices. The plan follows the demo bar’s plan switcher; checkout and the billing portal open a clearly labelled simulated page (no card details), never Stripe.',
       scene: 'coffee',
       links: [
         {
           href: '#/settings/billing?demoPlan=no_plan',
           label: 'No plan: the plan picker',
-          note: 'Choose channels and how often to pay, start the 14-day trial (5 videos), then the simulated checkout.',
+          note: 'Choose Starter, Growth or Pro and how often to pay, start the 7-day trial (2 HD videos), then the simulated checkout.',
         },
         {
           href: '#/settings/billing?demoPlan=active_monthly#change',
           label: 'Change your plan',
-          note: 'Add channels (applies now, amount due today) or remove some (applies at the end of the period).',
+          note: 'A higher plan (applies now, amount due today) or a lower one (applies at the end of the period).',
         },
         {
           href: '#/settings/billing?demoPlan=past_due',

@@ -17,34 +17,34 @@ import { useFormat } from '@/lib/client/format';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Section } from '../primitives';
 import { DangerRow, DangerZone } from '../settings/danger-zone';
-import { ChannelPicker, type ChannelChoice } from './channel-picker';
-import type { PlanPreviewResponse, PlanView, PricingView } from './types';
+import { PLAN_NAMES } from '@/lib/studio/billing/plans';
+import { PlanPicker } from './plan-picker';
+import type { PlanChoice, PlanPreviewResponse, PlanView, PricingView } from './types';
 
-// Phase 21.5 "Your plan" — change channels and / or how often you pay, with a plain preview of
-// the new price and when it applies before anything is charged:
-//   - more channels or a longer period: now; the prorated amount due today comes from Stripe
-//     (GET /billing/plan/preview → invoices.createPreview), and that same proration time is sent
-//     with the change so the charge matches what was shown;
-//   - fewer channels or a shorter period: at the end of the current period, nothing to pay now.
+// Phase 21.5 / 26.1 "Your plan" — change the plan (Starter, Growth, Pro) and / or how often you
+// pay, with a plain preview of the new price and when it applies before anything is charged:
+//   - a higher plan, or a longer period on the same plan: now; the prorated amount due today comes
+//     from Stripe (GET /billing/plan/preview → invoices.createPreview), and that same proration
+//     time is sent with the change so the charge matches what was shown;
+//   - a lower plan, or a shorter period on the same plan: at the end of the current period,
+//     nothing to pay now.
 // Cancel (at the end of the period, in the page's danger zone) and resume live here too.
 
 const PREVIEW_DELAY_MS = 300;
 
-function usePreview(choice: ChannelChoice, current: ChannelChoice, enabled: boolean) {
-  const changed = choice.channels !== current.channels || choice.interval !== current.interval;
+const sameChoice = (a: PlanChoice, b: PlanChoice) => a.plan === b.plan && a.interval === b.interval;
+
+function usePreview(choice: PlanChoice, current: PlanChoice, enabled: boolean) {
+  const changed = !sameChoice(choice, current);
   const [debounced, setDebounced] = useState(choice);
   useEffect(() => {
     const id = setTimeout(() => setDebounced(choice), PREVIEW_DELAY_MS);
     return () => clearTimeout(id);
   }, [choice]);
-  const ready =
-    enabled &&
-    changed &&
-    debounced.channels === choice.channels &&
-    debounced.interval === choice.interval;
+  const ready = enabled && changed && sameChoice(debounced, choice);
   return useApi<PlanPreviewResponse>(
     ready ? '/billing/plan/preview' : null,
-    { channels: debounced.channels, interval: debounced.interval },
+    { plan: debounced.plan, interval: debounced.interval },
     { shouldRetryOnError: false },
   );
 }
@@ -61,17 +61,17 @@ export function ChangePlanSection({
   pending: string | null;
   /** Why changes are not possible right now (cancelling, payment problem), or null. */
   disabledReason: string | null;
-  onChange: (next: ChannelChoice, prorationDate: number | null) => Promise<boolean>;
+  onChange: (next: PlanChoice, prorationDate: number | null) => Promise<boolean>;
 }) {
   const t = useTranslations('billing.yourPlan.change');
-  const tPlan = useTranslations('channelPlan');
+  const tPlan = useTranslations('planPicker');
   const f = useFormat();
-  const current: ChannelChoice = { channels: plan.channels, interval: plan.interval };
-  const [choice, setChoice] = useState<ChannelChoice>(current);
+  const current: PlanChoice = { plan: plan.id, interval: plan.interval };
+  const [choice, setChoice] = useState<PlanChoice>(current);
   const [confirming, setConfirming] = useState(false);
   const preview = usePreview(choice, current, disabledReason === null);
   const p = preview.data?.preview;
-  const changed = choice.channels !== current.channels || choice.interval !== current.interval;
+  const changed = !sameChoice(choice, current);
   const effective = p?.effectiveAt ? f.date(p.effectiveAt, { dateStyle: 'long' }) : null;
   const newPrice = p
     ? tPlan(`total.${p.next.interval}`, { amount: f.pence(p.nextPricePence) })
@@ -90,7 +90,7 @@ export function ChangePlanSection({
       <Section title={t('title')} description={t('description')}>
         <div className="grid gap-5">
           {disabledReason && <p className="rounded-md bg-muted p-3 text-sm">{disabledReason}</p>}
-          <ChannelPicker
+          <PlanPicker
             id="change-plan"
             value={choice}
             onChange={setChoice}
@@ -145,11 +145,13 @@ export function ChangePlanSection({
                 <div className="grid gap-2">
                   <p>
                     {t('confirmFrom', {
-                      channels: p.current.channels,
+                      plan: PLAN_NAMES[p.current.plan],
                       period: p.current.interval,
                     })}
                   </p>
-                  <p>{t('confirmTo', { channels: p.next.channels, period: p.next.interval })}</p>
+                  <p>
+                    {t('confirmTo', { plan: PLAN_NAMES[p.next.plan], period: p.next.interval })}
+                  </p>
                   <p className="font-medium">{summary}</p>
                 </div>
               </DialogDescription>

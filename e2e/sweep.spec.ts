@@ -477,7 +477,7 @@ test('an organisation owner can use every workflow that needs no provider', asyn
   await expect(page.getByText(/Deleted “Client sign-off”/).first()).toBeVisible();
   await w.check('/approvals create+delete');
 
-  // Settings: organisation save, Your plan (21.5: channels and how often you pay), members.
+  // Settings: organisation save, Your plan (26.1: Starter / Growth / Pro and how often you pay), members.
   await w.visit('/settings/organisation');
   await page.getByRole('button', { name: 'Save' }).first().click();
   await w.settle();
@@ -490,9 +490,11 @@ test('an organisation owner can use every workflow that needs no provider', asyn
     'aria-checked',
     'true',
   );
-  await page.getByRole('button', { name: 'Add a channel' }).first().click();
+  const plans = page.getByRole('radiogroup', { name: 'Plan' }).first();
+  await plans.getByRole('radio', { name: 'Pro' }).click();
+  await expect(plans.getByRole('radio', { name: 'Pro' })).toHaveAttribute('aria-checked', 'true');
   await w.settle();
-  await w.check('/settings/billing yearly, channels');
+  await w.check('/settings/billing yearly, Pro');
   await w.visit('/settings/members');
 
   // Account: profile save, delete-account section untouched, export page.

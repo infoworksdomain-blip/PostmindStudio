@@ -37,12 +37,12 @@ describe('Your plan summary (25.12)', () => {
     mockFetch([
       { match: '/api/studio/billing/plans', body: { ok: true, pricing: pricingView() } },
       { match: '/api/studio/billing/invoices', body: { ok: true, invoices: [] } },
-      { match: '/api/studio/usage', body: { ok: true, ...usage(8, 8) } },
+      { match: '/api/studio/usage', body: { ok: true, ...usage(20, 20) } },
       { match: /\/api\/studio\/billing$/, body: { ok: true, billing: billing() } },
     ]);
     renderWithSWR(<BillingScreen />);
     const summary = (await screen.findByText('Videos left this month')).closest('dl')!;
-    expect(within(summary).getByText('0 of 8')).toBeInTheDocument();
+    expect(within(summary).getByText('0 of 20')).toBeInTheDocument();
     expect(await screen.findByText('0 left')).toBeInTheDocument();
     expect(within(summary).getByText('Price')).toBeInTheDocument();
     expect(screen.getByText('No invoices yet.')).toBeInTheDocument();
