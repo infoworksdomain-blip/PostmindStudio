@@ -6821,6 +6821,7 @@
       "acceptableUse": "您可以和不可以使用 PostMind Studio 创建或发布哪些内容，以及内容违反规则时会怎样处理。",
       "dpa": "面向企业客户的数据处理协议：PostMind Studio 如何代表您处理个人数据，以及我们采取的保障措施。",
       "subprocessors": "PostMind Studio 用于处理客户数据的第三方服务、各自的职责以及数据的处理地点。"
-    }
+    },
+    "pricing": "PostMind Studio 价格：Starter 每月 £29、Growth 每月 £69、Pro 每月 £149，每个套餐都可发布到所有平台。可按周、按月或按年付费，并享 7 天免费试用。"
   }
 }
