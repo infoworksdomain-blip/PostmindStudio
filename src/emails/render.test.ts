@@ -5,6 +5,7 @@ import { LOCALES, type Locale } from '../lib/i18n/locales';
 import { EMAIL_TEMPLATES, TEMPLATES, isUnsubscribable, type EmailTemplate } from './catalogue';
 import type { EmailParams } from './params';
 import { renderEmail } from './render';
+import { renderUnsubscribePage } from './unsubscribe-page';
 
 // Phase 18 §2.8 (Track B tests): every template renders in all 11 locales with no ICU
 // placeholder left over, ar is RTL, values are escaped, links are http(s) only, and only
@@ -131,6 +132,29 @@ describe('renderEmail', () => {
       messages,
     });
     expect(off.subject).toBe('Two-factor authentication turned off');
+  });
+
+  it('shows the hosted logo by absolute URL with the brand name as alt text (26.2)', async () => {
+    const email = await renderEmail({
+      template: 'invite',
+      params: SAMPLE_PARAMS.invite,
+      locale: 'en-GB',
+      appUrl: `${APP_URL}/`,
+      messages,
+    });
+    expect(email.html).toContain(
+      `<img src="${APP_URL}/brand/logo-light.png" alt="PostMind Studio" width="120" height="40"`,
+    );
+  });
+
+  it('puts the same logo on the unsubscribe page', async () => {
+    const html = renderUnsubscribePage({
+      state: 'invalid',
+      locale: 'en-GB',
+      messages: await messages('en-GB'),
+      appUrl: APP_URL,
+    });
+    expect(html).toContain(`src="${APP_URL}/brand/logo-light.png" alt="PostMind Studio"`);
   });
 
   it('escapes every value in the HTML part', async () => {

@@ -55,6 +55,34 @@ describe('LandingPage', () => {
     expect(screen.getByText(/Crumb Ltd/)).toBeVisible();
   });
 
+  it('heads every page with the brand logo (eager, named once by the home link) on all widths', () => {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    render(
+      <MarketingShell>
+        <p>page</p>
+      </MarketingShell>,
+    );
+    const header = screen.getByRole('banner');
+    const home = within(header).getByRole('link', { name: 'PostMind Studio home' });
+    const logo = home.querySelector('img[data-brand-logo="light"]');
+    expect(logo).toHaveAttribute('loading', 'eager');
+    // 26.2: the lockup is never hidden on phones (no max-sm:sr-only / hidden wrapper).
+    expect(home.innerHTML).not.toMatch(/sr-only|max-sm:hidden/);
+    // The switchers move to the footer below sm, so the phone header fits at 320 px.
+    const footer = screen.getByRole('contentinfo');
+    expect(
+      within(footer).getByRole('combobox', { name: /Interface language/ }),
+    ).toBeInTheDocument();
+    expect(within(footer).getByRole('img', { name: 'PostMind Studio' })).toBeInTheDocument();
+  });
+
   it('has the ten sections in order, each a labelled region with one h2', () => {
     const { container } = render(<LandingPage />);
     const titles = [...container.querySelectorAll('section[aria-labelledby]')].map(

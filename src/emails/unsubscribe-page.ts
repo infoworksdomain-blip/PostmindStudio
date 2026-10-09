@@ -1,7 +1,7 @@
 import { createTranslator } from 'next-intl';
 import { directionOf, type Locale } from '../lib/i18n/locales';
 import type { Messages } from '../lib/i18n/messages';
-import { escapeHtml } from './layout';
+import { brandHtml, escapeHtml } from './layout';
 
 // Phase 18 §2.8 — the small page behind the unsubscribe link (GET shows a confirm button, the
 // POST applies it; RFC 8058 one-click POSTs from mail clients get a plain 200 instead). Server
@@ -56,7 +56,7 @@ export function renderUnsubscribePage(page: UnsubscribePage): string {
     `<title>${escapeHtml(t('email.unsubscribe.pageTitle'))}</title></head>`,
     `<body style="margin:0;padding:32px 16px;background:#f3f4f6;font-family:-apple-system,'Segoe UI',Roboto,'Noto Sans',Arial,sans-serif;color:#1f2933;">`,
     '<main style="max-width:520px;margin:0 auto;padding:28px;background:#fff;border-radius:8px;">',
-    `<p style="margin:0 0 16px;font-size:14px;font-weight:700;">${escapeHtml(t('email.layout.brand'))}</p>`,
+    `<p style="margin:0 0 16px;font-size:14px;font-weight:700;">${brandHtml({ brand: t('email.layout.brand'), logoUrl: `${page.appUrl.replace(/\/+$/, '')}/brand/logo-light.png` })}</p>`,
     `<h1 style="margin:0 0 12px;font-size:22px;">${escapeHtml(heading)}</h1>`,
     `<p style="margin:0 0 20px;font-size:15px;line-height:1.6;">${escapeHtml(body)}</p>`,
     action,
