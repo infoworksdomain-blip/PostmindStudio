@@ -96,7 +96,7 @@ export function FormatRail({ value, onChange, note }: FormatRailProps) {
               onClick={() => onChange(key)}
               data-state={checked ? 'checked' : 'unchecked'}
               className={cn(
-                'group relative flex w-40 shrink-0 snap-start flex-col items-start gap-1.5 rounded-xl border p-3 text-start sm:w-auto',
+                'group relative flex w-40 shrink-0 snap-start flex-col items-start gap-1.5 rounded-lg border p-3 text-start sm:w-auto',
                 'transition-[color,background-color,border-color,box-shadow] duration-(--duration-fast) ease-standard',
                 'outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                 checked

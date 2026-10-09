@@ -112,6 +112,9 @@ describe('ApprovalWorkflowsScreen', () => {
     renderWithSWR(<ApprovalWorkflowsScreen />);
     const list = await screen.findByRole('list', { name: 'Approval workflows' });
     expect(within(list).getByText('Client sign-off')).toBeInTheDocument();
+    // 26.2: each workflow is an h2 under the page h1 (no h1 → h3 jump).
+    expect(within(list).getByRole('heading', { level: 2, name: 'Client sign-off' })).toBeVisible();
+    expect(within(list).queryByRole('heading', { level: 3 })).toBeNull();
     expect(within(list).queryByText(/biz_1/)).not.toBeInTheDocument();
     const steps = within(list).getByRole('list', { name: 'Client sign-off steps' });
     expect(steps).toHaveTextContent(/Step 1:\s*admin/);

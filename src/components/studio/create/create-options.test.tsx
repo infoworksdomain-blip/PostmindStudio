@@ -56,10 +56,11 @@ describe('More options (25.7)', () => {
 
   it('groups every option under one disclosure, by what it decides', () => {
     moreOptions({ showCosts: true });
-    expect(screen.getByRole('button', { name: 'More options' })).toHaveAttribute(
-      'aria-expanded',
-      'true',
-    );
+    const toggle = screen.getByRole('button', { name: 'More options' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    // 26.2: the Button primitive (ghost), like the planner's toggle; not a hand-built button.
+    expect(toggle).toHaveAttribute('data-variant', 'ghost');
+    expect(toggle).toHaveClass('rounded-control');
     for (const name of [
       'Platforms and length',
       'Brand and language',

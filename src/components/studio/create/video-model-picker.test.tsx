@@ -38,6 +38,11 @@ describe('VideoModelPicker (25.8)', () => {
     render(<VideoModelPicker source="BRIEF" models={MODELS} value={null} onChange={vi.fn()} />);
     expect(screen.queryByRole('radio')).not.toBeInTheDocument();
     expect(current()).toHaveTextContent('Automatic (recommended)');
+    // 26.2: "Change model" is the Button primitive (ghost), not a hand-styled button.
+    expect(screen.getByRole('button', { name: 'Change model' })).toHaveAttribute(
+      'data-variant',
+      'ghost',
+    );
     await openList();
     expect(screen.getByRole('button', { name: 'Hide models' })).toHaveAttribute(
       'aria-expanded',
