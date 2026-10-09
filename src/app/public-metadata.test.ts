@@ -19,6 +19,7 @@ const homePage = () => import('./(marketing)/page');
 const signIn = () => import('./(auth)/sign-in/page');
 const signUp = () => import('./(auth)/sign-up/page');
 const forgot = () => import('./(auth)/forgot-password/page');
+const pricing = () => import('./(marketing)/pricing/page');
 const legal = () => import('./(marketing)/legal/[doc]/page');
 
 function images(value: unknown): string[] {
@@ -33,6 +34,7 @@ async function publicPages(): Promise<Array<[string, Metadata]>> {
     ['/sign-in', await (await signIn()).generateMetadata()],
     ['/sign-up', await (await signUp()).generateMetadata()],
     ['/forgot-password', await (await forgot()).generateMetadata()],
+    ['/pricing', await (await pricing()).generateMetadata()],
   ];
   const { generateMetadata } = await legal();
   for (const doc of LEGAL_DOCS) {
