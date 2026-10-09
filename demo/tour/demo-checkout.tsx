@@ -1,14 +1,17 @@
 import { useState, type ReactNode } from 'react';
 import { FlaskConical } from 'lucide-react';
-import { TOP_UP_PACKS } from '@/lib/studio/billing/catalogue';
+import { TOP_UP_PACKS, TRIAL } from '@/lib/studio/billing/catalogue';
 import {
-  CHANNEL_LOOKUP_KEYS,
-  VIDEOS_PER_CHANNEL_PER_PERIOD,
-  type ChannelInterval,
-} from '@/lib/studio/billing/channel-plan';
+  PLAN_NAMES,
+  STUDIO_PLANS,
+  allowancePerWindow,
+  planLookupKey,
+  type PlanInterval,
+} from '@/lib/studio/billing/plans';
 import { Button } from '@/components/ui/button';
 import { useBillingState } from './billing-switcher';
 import {
+  DEMO_TRIAL_DAYS,
   completeCheckout,
   parseCheckoutIntent,
   portalUpdatePayment,
@@ -22,19 +25,19 @@ import { navigate } from '../router';
 // #/demo-checkout — what the demo shows where the live app sends the browser to Stripe Checkout
 // or the Customer Portal. It is plainly a simulation: its own neutral styling (no Stripe branding),
 // no card or bank fields, and one "Complete demo payment" button that does what the paid webhook
-// would (the channel plan starts, or the video-pack credits arrive), then returns to
-// /settings/billing. 21.5: plan changes and cancelling happen on Your plan, so the simulated
+// would (the plan starts, or the video-pack credits arrive), then returns to
+// /settings/billing. 21.5 / 26.1: plan changes and cancelling happen on Your plan, so the simulated
 // portal only covers the payment method and invoices.
 
 const money = (pence: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(pence / 100);
 
-const PER: Readonly<Record<ChannelInterval, string>> = {
+const PER: Readonly<Record<PlanInterval, string>> = {
   week: 'week',
   month: 'month',
   year: 'year',
 };
-const BILLED: Readonly<Record<ChannelInterval, string>> = {
+const BILLED: Readonly<Record<PlanInterval, string>> = {
   week: 'weekly',
   month: 'monthly',
   year: 'yearly, paid upfront',
@@ -42,10 +45,8 @@ const BILLED: Readonly<Record<ChannelInterval, string>> = {
 
 function packName(lookupKey: string): string {
   const pack = TOP_UP_PACKS.find((p) => p.lookupKey === lookupKey);
-  return pack ? `HD video pack: ${pack.quantity} videos, any channel` : lookupKey;
+  return pack ? `HD video pack: ${pack.quantity} videos, any plan` : lookupKey;
 }
-
-const channelsText = (n: number) => `${n} ${n === 1 ? 'channel' : 'channels'}`;
 
 function Frame({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -93,19 +94,27 @@ function checkoutLines(intent: Exclude<DemoCheckoutIntent, { kind: 'portal' }>) 
       ['Videos valid for', `${pack?.validMonths ?? 3} months`],
     ] as Array<[string, string]>;
   }
-  const { channels, interval } = intent;
+  const { plan, interval } = intent;
   const per = PER[interval];
-  const unit = referencePrice(CHANNEL_LOOKUP_KEYS[interval]);
-  const total = money(unit * channels);
-  const videos = VIDEOS_PER_CHANNEL_PER_PERIOD[interval] * channels;
+  const total = money(referencePrice(planLookupKey(plan, interval)));
+  const def = STUDIO_PLANS[plan];
+  // Yearly releases the monthly allowance each calendar month.
+  const videosPer = interval === 'week' ? 'week' : 'month';
   const lines: Array<[string, string]> = [
-    ['Plan', `${channelsText(channels)}, billed ${BILLED[interval]}`],
-    ['Price per channel (excl. VAT)', `${money(unit)} a ${per}`],
-    [`Total per ${per} (excl. VAT)`, total],
-    ['Videos included', `${videos} a ${per}`],
+    ['Plan', `${PLAN_NAMES[plan]}, billed ${BILLED[interval]}`],
+    [`Price per ${per} (excl. VAT)`, total],
+    ['HD videos included', `${allowancePerWindow(plan, interval)} a ${videosPer}`],
+    ['Businesses and seats', `${def.businesses} and ${def.seats}`],
+    ['Platforms', 'All six'],
   ];
   if (startsTrial())
-    lines.push(['Due today', money(0)], ['Trial', `14 days with 5 videos, then ${total} a ${per}`]);
+    lines.push(
+      ['Due today', money(0)],
+      [
+        'Trial',
+        `${DEMO_TRIAL_DAYS} days with ${TRIAL.shortVideos} HD videos, then ${total} a ${per}`,
+      ],
+    );
   return lines;
 }
 
@@ -174,7 +183,7 @@ function Portal() {
         <div className="grid gap-2">
           <h2 className="text-sm font-semibold">Invoices</h2>
           <p className="text-sm text-muted-foreground">
-            Past invoices are listed on Your plan. Channels, how often you pay and cancelling are
+            Past invoices are listed on Your plan. The plan, how often you pay and cancelling are
             changed there too, not in this portal.
           </p>
         </div>
@@ -195,7 +204,7 @@ export function DemoCheckout({ search }: { search: URLSearchParams }) {
     return (
       <Frame title="Demo checkout (simulated)">
         <p className="mt-3 text-sm text-muted-foreground">
-          Nothing to pay for here. Choose your channels or a video pack on{' '}
+          Nothing to pay for here. Choose a plan or a video pack on{' '}
           <a className="underline underline-offset-4" href="#/settings/billing">
             Your plan
           </a>

@@ -1,5 +1,8 @@
 import { P17_PROJECTS, P20_PROJECTS, PROJECTS } from '../api/ids';
 import type { SceneKind } from '../media';
+import { TRIAL } from '@/lib/studio/billing/catalogue';
+import { DEMO_TRIAL_DAYS } from '../api/billing-state';
+import { PRICE_TEXT } from './price-text';
 
 // #/tour/whats-new — every feature added or changed by Phase 16 (languages + RTL), Phase 18
 // (standalone SaaS surfaces), Phase 20.3 (plan a month ahead), 20.9 (plan my month), Phase 17
@@ -404,40 +407,38 @@ export const WHATS_NEW: WhatsNewGroup[] = [
     ],
   },
   {
-    id: 'phase-21-5',
+    id: 'phase-26-1',
     index: '08',
-    title: 'Phase 21.5 — One plan, paid per channel',
+    title: 'Phase 26.1 — Starter, Growth and Pro',
     intro:
-      'The tiers are gone: customers pay £29 per channel a month (1–6 social platforms) with 8 short HD videos per channel, weekly or yearly if they prefer, and buy HD video packs when they need more. Customers never see generation cost.',
+      'Three plans: Starter, Growth (most popular) and Pro, each with a number of HD videos, businesses and seats. Every plan posts to all six platforms. Pay weekly, monthly or yearly, and buy HD video packs when you need more. Customers never see generation cost.',
     scene: 'market',
     items: [
       {
-        ref: '21.5',
-        title: 'Pricing per channel',
-        line: 'Pick 1–6 channels and how often to pay: £29 a month per channel (8 videos), £9.50 a week (2 videos a week) or £290 a year paid upfront (8 videos released each month: 2 months free). Prices exclude VAT; the trial is 14 days with 5 videos.',
+        ref: '26.1',
+        title: 'Three plans',
+        line: `Starter ${PRICE_TEXT.starterMonthly} a month (8 HD videos, 1 business, 1 seat), Growth ${PRICE_TEXT.growthMonthly} (20 videos, 1 business, 3 seats) and Pro ${PRICE_TEXT.proMonthly} (45 videos, 3 businesses, 10 seats). Weekly costs a little more; yearly is paid upfront with 2 months free. Prices exclude VAT; the trial is ${DEMO_TRIAL_DAYS} days with ${TRIAL.shortVideos} HD videos.`,
         see: [{ href: '#/pricing', label: 'Pricing' }],
       },
       {
-        ref: '21.5',
+        ref: '26.1',
+        title: 'Every platform on every plan',
+        line: 'TikTok, Instagram, YouTube, Facebook, LinkedIn and X publish on every plan: there is no channel limit any more.',
+        see: [{ href: '#/connections?demoPlan=allowance_used', label: 'Connections on Starter' }],
+      },
+      {
+        ref: '26.1',
         title: 'Your plan',
-        line: 'Change channels or how often you pay with a preview first: more channels or a longer period apply now and you pay the difference; fewer or shorter apply at the end of the period (“Keep my current plan” undoes it). Cancel at the end of the period and change your mind until then.',
+        line: 'Change the plan or how often you pay with a preview first: a higher plan or a longer period applies now and you pay the difference; a lower plan or a shorter period applies at the end of the period (“Keep my current plan” undoes it). Cancel at the end of the period and change your mind until then.',
         see: [
           { href: '#/settings/billing?demoPlan=active_monthly#change', label: 'Change your plan' },
           { href: '#/settings/billing?demoPlan=active_weekly', label: 'A weekly plan' },
         ],
       },
       {
-        ref: '21.5',
-        title: 'Channel limit',
-        line: 'Connect as many platforms as you like; only the channels you pay for publish (the ones connected first). Publishing to another opens “Add a channel to publish here”.',
-        see: [
-          { href: '#/connections?demoPlan=active_monthly', label: 'Connections on 3 channels' },
-        ],
-      },
-      {
-        ref: '21.5',
+        ref: '26.1',
         title: 'HD video packs',
-        line: 'One-off packs of 5 videos (£15) or 15 videos (£39) for any channel, used after the plan’s videos and valid 3 months.',
+        line: `One-off packs of 5 videos (${PRICE_TEXT.packHd5}) or 15 videos (${PRICE_TEXT.packHd15}) on any plan, used after the plan’s videos and valid 3 months.`,
         see: [
           { href: '#/settings/billing?demoPlan=allowance_used#topups', label: 'Buy a video pack' },
         ],
@@ -454,7 +455,7 @@ export const WHATS_NEW: WhatsNewGroup[] = [
       {
         ref: '23.3',
         title: 'Quick posts count ¼',
-        line: 'Carousels, slideshows, wall of text and hook + demo count as a quarter of a video, so each channel’s 8 videos a month can be up to 32 quick posts (packs count the same way).',
+        line: 'Carousels, slideshows, wall of text and hook + demo count as a quarter of a video, so Starter’s 8 videos a month can be up to 32 quick posts (packs count the same way).',
         see: [
           { href: '#/settings/billing', label: 'Your plan: videos used' },
           { href: '#/pricing', label: 'Pricing' },

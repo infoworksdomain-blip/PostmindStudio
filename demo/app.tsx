@@ -116,7 +116,7 @@ const RENDER: Record<AppPath, Render> = {
   '/settings/organisation': () => <OrganisationSettingsScreen />,
   '/settings/members': () => <MembersScreen />,
   '/settings/audit': () => <AuditScreen />,
-  // Phase 18 Track C / 21.5: Your plan (channels, changes), usage, video packs and invoices (the
+  // Phase 18 Track C / 26.1: Your plan (plan, changes), usage, video packs and invoices (the
   // demo bar's plan switcher drives them).
   '/settings/billing': () => <BillingScreen />,
   '/settings/provider-keys': () => <ProviderKeysScreen />,

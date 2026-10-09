@@ -1,14 +1,14 @@
 // Prices quoted in tour text, derived from the catalogue so the tour never drifts from the price
-// list (catalogue.ts REFERENCE_PRICES_PENCE, channel-plan.ts, ENTERPRISE_LIST_PRICE_PENCE).
-// 21.5: customers see the per-channel prices and the HD video packs; the Enterprise figures are
-// for the staff (Admin Centre) walkthroughs only.
+// list (catalogue.ts REFERENCE_PRICES_PENCE, plans.ts, ENTERPRISE_LIST_PRICE_PENCE).
+// 26.1: customers see the Starter / Growth / Pro prices and the HD video packs; the Enterprise
+// figures are for the staff (Admin Centre) walkthroughs only.
 import {
   ENTERPRISE_LIST_PRICE_PENCE,
   PLAN_CATALOGUE,
   REFERENCE_PRICES_PENCE,
   enterpriseMinimumMonthlyPricePence,
 } from '@/lib/studio/billing/catalogue';
-import { CHANNEL_PRICE_PENCE } from '@/lib/studio/billing/channel-plan';
+import { planPricePence } from '@/lib/studio/billing/plans';
 
 /** Whole pounds, e.g. 141_600 → "£1,416". */
 export const pounds = (pence: number): string =>
@@ -23,9 +23,12 @@ export const money = (pence: number): string =>
 const enterpriseCap = PLAN_CATALOGUE.ENTERPRISE.monthlyCostCapPence;
 
 export const PRICE_TEXT = {
-  channelMonthly: money(CHANNEL_PRICE_PENCE.month),
-  channelWeekly: money(CHANNEL_PRICE_PENCE.week),
-  channelYearly: money(CHANNEL_PRICE_PENCE.year),
+  starterMonthly: money(planPricePence('starter', 'month')),
+  growthMonthly: money(planPricePence('growth', 'month')),
+  growthWeekly: money(planPricePence('growth', 'week')),
+  growthYearly: money(planPricePence('growth', 'year')),
+  proMonthly: money(planPricePence('pro', 'month')),
+  proYearly: money(planPricePence('pro', 'year')),
   packHd5: money(REFERENCE_PRICES_PENCE.studio_pack_hd5 ?? 0),
   packHd15: money(REFERENCE_PRICES_PENCE.studio_pack_hd15 ?? 0),
   enterpriseCap: pounds(enterpriseCap),
