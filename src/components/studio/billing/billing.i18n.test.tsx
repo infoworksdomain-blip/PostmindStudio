@@ -12,7 +12,7 @@ import { PricingScreen } from './pricing-screen';
 import { billing, pricingView, usage } from './test-fixtures';
 import { UpgradeDialogHost } from './upgrade-dialog';
 
-// Phase 18 §3 / 21.5 — pricing, Your plan and the upgrade dialog render from the ar (RTL) and zh-Hans
+// Phase 18 §3 / 26.1 — pricing, Your plan and the upgrade dialog render from the ar (RTL) and zh-Hans
 // catalogues (a missing key throws).
 
 vi.mock('next/navigation', () => ({
@@ -55,8 +55,10 @@ describe.each(['ar', 'zh-Hans'] as const)('billing screens in %s', (locale) => {
     expect(
       screen.getByRole('heading', { level: 1, name: m.pricing.hero.title }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: m.channelPlan.interval.year })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: m.channelPlan.channels.more })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: m.planPicker.interval.year })).toBeInTheDocument();
+    // Plan names are product names: never translated.
+    expect(screen.getByRole('radio', { name: 'Growth' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByText(m.planPicker.mostPopular)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: m.pricing.faq.title })).toBeInTheDocument();
     await waitFor(() =>
       expect(document.documentElement).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr'),

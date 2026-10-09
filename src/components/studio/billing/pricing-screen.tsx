@@ -6,28 +6,22 @@ import { ArrowRight, Check } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { useFormat } from '@/lib/client/format';
-import { ChannelPicker, usePackName, type ChannelChoice } from './channel-picker';
-import type { PricingView } from './types';
+import { videosToQuarters } from '@/lib/studio/billing/allowance-units';
+import { PLAN_NAMES } from '@/lib/studio/billing/plans';
+import { orderedPlans, PlanPicker, usePackName } from './plan-picker';
+import type { PlanChoice, PricingView } from './types';
 
-// Phase 18 §3 / 21.5 — public /pricing: ONE plan. Choose how many channels (social platforms,
-// 1–6) and how often to pay (weekly, monthly, yearly); the page shows the total for the period,
-// "8 videos per channel per month included", what every plan includes, the HD video packs and an
-// FAQ. Amounts come from Stripe through PricingView; when Stripe is unreachable every amount reads
+// Phase 18 §3 / 26.1 — public /pricing: three plans, Starter, Growth (most popular) and Pro, each
+// posting to every platform. Choose a plan and how often to pay (weekly, monthly, yearly); each
+// plan shows its price for the period, its HD videos, businesses and seats; then what every plan
+// includes, the HD video packs and an FAQ. Amounts come from Stripe through PricingView; when Stripe is unreachable every amount reads
 // "Price unavailable". "Start free trial" goes to sign-up, then to Your plan with the same choice.
 // No generation cost or budget is shown.
 
 // 23.3: quick posts (carousels, slideshows, text videos) count as ¼ of a video.
-const INCLUDED = [
-  'videos',
-  'quickPosts',
-  'hd',
-  'platforms',
-  'scheduling',
-  'brand',
-  'library',
-] as const;
+const INCLUDED = ['quickPosts', 'hd', 'platforms', 'scheduling', 'brand', 'library'] as const;
 const FAQ = [
-  'channel',
+  'platforms',
   'period',
   'change',
   'quickPosts',
@@ -37,9 +31,9 @@ const FAQ = [
   'cancel',
 ] as const;
 
-/** Where "Start" goes: sign up, then Your plan with the channels and period already chosen. */
-export function signUpHref(choice: ChannelChoice): string {
-  const next = `/settings/billing?channels=${choice.channels}&interval=${choice.interval}`;
+/** Where "Start" goes: sign up, then Your plan with the plan and period already chosen. */
+export function signUpHref(choice: PlanChoice): string {
+  const next = `/settings/billing?plan=${choice.plan}&interval=${choice.interval}`;
   return `/sign-up?next=${encodeURIComponent(next)}`;
 }
 
@@ -64,7 +58,7 @@ function Included() {
 
 function Packs({ pricing }: { pricing: PricingView }) {
   const t = useTranslations('pricing.packs');
-  const tPlan = useTranslations('channelPlan');
+  const tPlan = useTranslations('planPicker');
   const f = useFormat();
   const name = usePackName();
   return (
@@ -99,13 +93,22 @@ function Packs({ pricing }: { pricing: PricingView }) {
 
 function Faq({ pricing }: { pricing: PricingView }) {
   const t = useTranslations('pricing.faq');
-  const tPlan = useTranslations('channelPlan');
+  const tPlan = useTranslations('planPicker');
   const f = useFormat();
+  // The period and quick-post answers quote the cheapest plan (live prices, its HD videos).
+  const cheapest = orderedPlans(pricing)[0];
+  const planName = cheapest ? PLAN_NAMES[cheapest.plan] : '';
+  const videos = cheapest?.videosPerMonth ?? 0;
   const amount = (interval: 'week' | 'month' | 'year') => {
-    const pence = pricing.intervals.find((i) => i.interval === interval)?.unitAmountPence;
+    const pence = cheapest?.prices[interval].unitAmountPence;
     return pence == null ? tPlan('priceUnavailable') : f.pence(pence);
   };
-  const prices = { weekly: amount('week'), monthly: amount('month'), yearly: amount('year') };
+  const prices = {
+    plan: planName,
+    weekly: amount('week'),
+    monthly: amount('month'),
+    yearly: amount('year'),
+  };
   return (
     <section aria-labelledby="faq-heading" className="grid gap-4">
       <h2 id="faq-heading" className="font-display text-2xl md:text-3xl">
@@ -118,7 +121,15 @@ function Faq({ pricing }: { pricing: PricingView }) {
               {t(`items.${item}.q`)}
             </summary>
             <p className="mt-2 max-w-3xl text-[0.9375rem] leading-relaxed text-muted-foreground">
-              {item === 'period' ? t('items.period.a', prices) : t(`items.${item}.a`)}
+              {item === 'period'
+                ? t('items.period.a', prices)
+                : item === 'quickPosts'
+                  ? t('items.quickPosts.a', {
+                      plan: planName,
+                      videos,
+                      quick: videosToQuarters(videos),
+                    })
+                  : t(`items.${item}.a`)}
             </p>
           </details>
         ))}
@@ -129,7 +140,7 @@ function Faq({ pricing }: { pricing: PricingView }) {
 
 export function PricingScreen({ pricing }: { pricing: PricingView }) {
   const t = useTranslations('pricing');
-  const [choice, setChoice] = useState<ChannelChoice>({ channels: 3, interval: 'month' });
+  const [choice, setChoice] = useState<PlanChoice>({ plan: 'growth', interval: 'month' });
   const trial = pricing.trial.days > 0;
   return (
     <div className="mx-auto grid w-full max-w-5xl grid-cols-[minmax(0,1fr)] gap-16 px-4 py-14 md:px-8 md:py-20">
@@ -158,7 +169,7 @@ export function PricingScreen({ pricing }: { pricing: PricingView }) {
             {t('unavailable')}
           </p>
         )}
-        <ChannelPicker id="pricing" value={choice} onChange={setChoice} pricing={pricing} />
+        <PlanPicker id="pricing" value={choice} onChange={setChoice} pricing={pricing} />
         <div className="grid gap-2">
           <Button asChild size="lg" className="w-full sm:w-auto sm:justify-self-start">
             <Link href={signUpHref(choice)}>

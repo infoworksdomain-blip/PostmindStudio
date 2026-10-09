@@ -14,15 +14,29 @@ vi.mock('next/navigation', () => ({ usePathname: () => '/' }));
 afterEach(() => vi.unstubAllGlobals());
 
 describe('LandingPage', () => {
-  it('teases one price per channel from the channel plan, never budgets, spend or cost caps', () => {
+  it('teases the three plans (Growth highlighted, Pro last) and the packs, never budgets or caps', () => {
     render(<LandingPage />);
     const pricing = screen
-      .getByRole('heading', { name: 'One simple price per channel' })
+      .getByRole('heading', { name: 'Three simple plans' })
       .closest('section') as HTMLElement;
-    expect(pricing).toHaveTextContent('£29');
-    expect(pricing).toHaveTextContent('per channel a month');
-    expect(pricing).toHaveTextContent('8 short HD videos a month, or up to 32 quick posts');
+    const plans = within(pricing)
+      .getAllByRole('listitem')
+      .filter((li) => li.dataset.testid);
+    expect(plans.map((li) => li.dataset.testid)).toEqual([
+      'landing-plan-starter',
+      'landing-plan-growth',
+      'landing-plan-pro',
+    ]);
+    expect(plans[0]).toHaveTextContent('Starter£29a month, excl. VAT8 HD videos a month');
+    expect(plans[1]).toHaveTextContent(
+      'GrowthMost popular£69a month, excl. VAT20 HD videos a month',
+    );
+    expect(plans[2]).toHaveTextContent('Pro£149a month, excl. VAT45 HD videos a month');
+    expect(pricing).toHaveTextContent(
+      'Video packs: 5 HD videos for £17 or 15 for £45, on any plan.',
+    );
     expect(pricing).toHaveTextContent('¼ of a video');
+    expect(pricing).not.toHaveTextContent(/channel/i);
     expect(pricing).not.toHaveTextContent(/budget|spending|cost/i);
     expect(within(pricing).getByRole('link', { name: /See pricing/ })).toHaveAttribute(
       'href',
@@ -69,7 +83,7 @@ describe('LandingPage', () => {
       'One prompt, a month of posts.',
       'See what works, then make more of it.',
       'Your colours, your voice, your sign-off.',
-      'One simple price per channel',
+      'Three simple plans',
       'Make your first post today.',
     ]);
   });

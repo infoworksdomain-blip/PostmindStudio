@@ -9,8 +9,8 @@ import type { PlanTier } from '@/lib/studio/providers/router';
 // bundled into the browser.
 
 export type { PlanTier, PricingView };
-export type { ChannelIntervalView, TopUpPricingView } from '@/lib/studio/billing/pricing';
-export type { ChannelInterval } from '@/lib/studio/billing/channel-plan';
+export type { PlanPricingView, TopUpPricingView } from '@/lib/studio/billing/pricing';
+export type { PlanChoice, PlanId, PlanInterval } from '@/lib/studio/billing/plans';
 export type { PlanChangePreviewView, PlanChangeOutcome } from '@/lib/studio/billing/plan-change';
 export type { PlanView } from '@/lib/studio/billing/overview';
 
@@ -50,6 +50,8 @@ export interface AdminSubscriptionRow {
   organisationName: string | null;
   status: string;
   tier: PlanTier | null;
+  /** 26.1: Starter / Growth / Pro (a 21.5 channel price mapped by quantity); null otherwise. */
+  plan: import('@/lib/studio/billing/plans').PlanId | null;
   interval: string | null;
   mrrPence: number;
   currentPeriodEnd: string | null;
@@ -64,6 +66,10 @@ export interface AdminSubscriptionsResponse {
     currency: string;
     byStatus: Record<string, number>;
     byTier: Record<PlanTier, { count: number; mrrPence: number }>;
+    byPlan: Record<
+      import('@/lib/studio/billing/plans').PlanId,
+      { count: number; mrrPence: number }
+    >;
     total: number;
   };
   subscriptions: AdminSubscriptionRow[];

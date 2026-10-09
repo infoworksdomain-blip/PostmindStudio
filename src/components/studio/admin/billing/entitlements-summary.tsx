@@ -8,14 +8,15 @@ import {
   isSubscriptionStatus,
   PLAN_TIERS,
   type AdminEntitlementsResponse,
-  type ChannelInterval,
+  type PlanInterval,
   type PlanTier,
 } from '../../billing/types';
+import { PLAN_INTERVALS, PLAN_NAMES } from '@/lib/studio/billing/plans';
 
 // Phase 18 §P.3 / 20.27 — what staff see before changing a plan: the effective tier, access and
-// source, the channel plan (21.5: channels, interval, set by staff or Stripe), the trial (state,
+// source, the plan (26.1: Starter / Growth / Pro, interval, set by staff or Stripe), the trial (state,
 // dates, AI cost so far against its £15 total), the stored row, the current override and the
-// subscriptions (with their channels, the item quantity).
+// subscriptions (with their plan).
 
 export type EntitlementView = AdminEntitlementsResponse['entitlements'];
 export type Access = 'full' | 'read_only' | 'none';
@@ -26,28 +27,20 @@ type Source = (typeof SOURCES)[number];
 const isSource = (s: string): s is Source => (SOURCES as readonly string[]).includes(s);
 export const isAccess = (s: string): s is Access => (ACCESS as readonly string[]).includes(s);
 
-/** 21.5: the per-channel plan's billing intervals (staff label them weekly / monthly / yearly). */
-export const CHANNEL_INTERVALS = [
-  'week',
-  'month',
-  'year',
-] as const satisfies readonly ChannelInterval[];
-export const isChannelInterval = (s: string | null | undefined): s is ChannelInterval =>
-  typeof s === 'string' && (CHANNEL_INTERVALS as readonly string[]).includes(s);
+export const isPlanInterval = (s: string | null | undefined): s is PlanInterval =>
+  typeof s === 'string' && (PLAN_INTERVALS as readonly string[]).includes(s);
 
-/** 21.5: "3 channels · monthly", "set by staff" / "from Stripe". */
-type ChannelPlanView = NonNullable<EntitlementView['effective']['channelPlan']>;
+/** 26.1: "Growth · monthly", "set by staff" / "from Stripe". */
+type StudioPlanView = NonNullable<EntitlementView['effective']['plan']>;
 
-function ChannelPlanValue({ plan }: { plan: ChannelPlanView }) {
+function StudioPlanValue({ plan }: { plan: StudioPlanView }) {
   const t = useTranslations('billing.admin.entitlements');
   return (
-    <span data-testid="channel-plan">
+    <span data-testid="studio-plan">
       <span className="font-medium">
-        {t('channelPlanValue', { count: plan.channels, interval: plan.interval })}
+        {t('planValue', { plan: PLAN_NAMES[plan.id], interval: plan.interval })}
       </span>{' '}
-      <span className="text-muted-foreground">
-        {t('channelPlanSource', { source: plan.source })}
-      </span>
+      <span className="text-muted-foreground">{t('planSource', { source: plan.source })}</span>
     </span>
   );
 }
@@ -110,7 +103,7 @@ export function EntitlementsSummary({ view }: { view: EntitlementView }) {
   const tStatus = useTranslations('billing.subscriptionStatus');
   const f = useFormat();
   const intervalName = (interval: string | null) =>
-    isChannelInterval(interval) ? t(`intervalValues.${interval}`) : (interval ?? '—');
+    isPlanInterval(interval) ? t(`intervalValues.${interval}`) : (interval ?? '—');
   const e = view.effective;
   const access = (a: string) => (isAccess(a) ? t(`accessValues.${a}`) : a);
   const source = (s: string) => (isSource(s) ? t(`sourceValues.${s}`) : s);
@@ -127,12 +120,12 @@ export function EntitlementsSummary({ view }: { view: EntitlementView }) {
         <dd>{access(e.access)}</dd>
         <dt className="text-muted-foreground">{t('source')}</dt>
         <dd>{source(e.source)}</dd>
-        <dt className="text-muted-foreground">{t('channelPlan')}</dt>
+        <dt className="text-muted-foreground">{t('studioPlan')}</dt>
         <dd>
-          {e.channelPlan ? (
-            <ChannelPlanValue plan={e.channelPlan} />
+          {e.plan ? (
+            <StudioPlanValue plan={e.plan} />
           ) : (
-            <span className="text-muted-foreground">{t('noChannelPlan')}</span>
+            <span className="text-muted-foreground">{t('noStudioPlan')}</span>
           )}
         </dd>
         {e.graceUntil && (
@@ -162,9 +155,7 @@ export function EntitlementsSummary({ view }: { view: EntitlementView }) {
           <div className="grid gap-0.5 text-muted-foreground">
             <p>{t('overrideReason', { reason: view.admin.reason })}</p>
             <p>{t('overrideSetAt', { when: f.relative(view.admin.setAt) })}</p>
-            {view.admin.channels != null && (
-              <p>{t('overrideChannels', { count: view.admin.channels })}</p>
-            )}
+            {view.admin.plan && <p>{t('overridePlan', { plan: PLAN_NAMES[view.admin.plan] })}</p>}
             {view.admin.interval && (
               <p>{t('overrideInterval', { interval: view.admin.interval })}</p>
             )}
@@ -192,9 +183,8 @@ export function EntitlementsSummary({ view }: { view: EntitlementView }) {
                 <span className="font-medium text-foreground">
                   {isSubscriptionStatus(s.status) ? tStatus(s.status) : s.status}
                 </span>{' '}
-                {t('subscriptionChannelLine', {
-                  tier: tierName(s.tier),
-                  count: s.quantity,
+                {t('subscriptionPlanLine', {
+                  plan: s.plan ? PLAN_NAMES[s.plan] : tierName(s.tier),
                   interval: intervalName(s.interval),
                   date: f.date(s.currentPeriodEnd, { dateStyle: 'medium' }),
                 })}

@@ -196,8 +196,8 @@
       "moreFrom": "自 {date} 起将包含更多视频。",
       "planExceededTitle": "{period, select, week {本周视频已用完} other {本月视频已用完}}",
       "planWarningTitle": "{period, select, week {即将达到本周视频上限} other {即将达到本月视频上限}}",
-      "planBlockedBody": "新视频已暂停，直到 {date}。添加频道或购买视频包即可继续制作。",
-      "planResetBody": "自 {date} 起将包含更多视频。添加频道或购买视频包可获得更多视频。",
+      "planBlockedBody": "新视频暂停至 {date}。升级套餐或购买视频包即可继续创作。",
+      "planResetBody": "自 {date} 起将包含更多视频。升级套餐或购买视频包可获得更多视频。",
       "quickPostsNote": "轮播图、幻灯片视频、文字墙和钩子 + 演示视频各计为 ¼ 个视频。"
     },
     "pageTitle": {
@@ -314,7 +314,7 @@
       "forbidden": "您无权执行此操作。",
       "feature_disabled": "您的组织尚未开通此功能。",
       "plan_tier": "此功能不包含在您的套餐中。",
-      "quota_exceeded": "您的套餐视频暂时已用完。添加频道或购买视频包即可继续制作。",
+      "quota_exceeded": "您暂时已用完套餐内的视频。升级套餐或购买视频包即可继续创作。",
       "not_found": "未找到该内容，可能已被删除。",
       "conflict": "在您操作期间内容已发生变化。请刷新后重试。",
       "validation_error": "部分信息无效，请检查后重试。",
@@ -339,7 +339,6 @@
       "auto_publish_account_required": "请选择要发布到的已连接账号，或关闭自动发布和排期。",
       "auto_publish_account_unavailable": "所选的某个账号已不再连接。请重新连接，或选择其他账号。",
       "queue_unavailable": "发布功能暂时不可用。没有发布或保存任何内容；请稍后再试。",
-      "channel_limit": "您的套餐不包含此平台的频道。请在“我的套餐”中添加频道后在此发布。",
       "no_demo_video": "请先上传产品或应用的演示视频。"
     }
   },
@@ -550,7 +549,7 @@
     },
     "videoAllowanceUsed": {
       "title": "{period, select, week {本周} other {本月}}视频已用完",
-      "body": "{period, select, week {本周} other {本月}}已制作 {used, number} / {limit, number} 个视频。{period, select, week {下周} other {下月}}开始时将包含更多视频。{blocked, select, yes {如需在此之前制作更多视频，请添加频道或购买视频包。} other {}}"
+      "body": "{period, select, week {本周} other {本月}}已制作 {used, number} / {limit, number} 个视频。{period, select, week {下周} other {下月}}开始时将包含更多视频。{blocked, select, yes {如需在此之前制作更多视频，请升级套餐或购买视频包。} other {}}"
     },
     "costPlain": {
       "projectAlert": {
@@ -2732,10 +2731,6 @@
     },
     "notConfigured": "{platform} 暂不可用：Studio 的 {platform} 应用尚未完成设置。请联系你的管理员。",
     "readOnly": "只有所有者和管理员可以连接或断开账号。",
-    "channelLimit": {
-      "body": "{count, plural, other {您的套餐包含 # 个频道，}}因此{blockedCount, plural, other { {blocked} 已连接但不会发布。}}",
-      "action": "添加频道"
-    },
     "tiktokPostMode": {
       "legend": "此账号如何发布到 TikTok",
       "drafts": "发送到 TikTok 草稿",
@@ -4608,15 +4603,17 @@
     },
     "pricing": {
       "eyebrow": "价格",
-      "title": "每个频道一个简单价格",
-      "per": "每个频道每月",
-      "body": "每个频道每月包含 {videos} 条短 HD 视频，或最多 {quick} 条快速帖子：轮播、幻灯片和文字视频各计为 ¼ 条视频。",
+      "title": "三种简单套餐",
+      "body": "每个套餐都可发布到 TikTok、Instagram、YouTube、Facebook、LinkedIn 和 X。轮播、幻灯片和文字视频等快速帖子按 ¼ 个视频计算。",
       "points": {
         "billing": "可按周、按月或按年付费",
         "vat": "价格不含增值税",
         "cancel": "随时可取消"
       },
-      "cta": "查看定价"
+      "cta": "查看定价",
+      "perMonth": "每月，不含增值税",
+      "plansAria": "套餐",
+      "packs": "需要更多？视频包：{small, number} 个 HD 视频 {smallPrice}，或 {large, number} 个 {largePrice}，适用于任意套餐。"
     },
     "closing": {
       "eyebrow": "随时可以开始",
@@ -4641,11 +4638,11 @@
     },
     "hero": {
       "eyebrow": "价格",
-      "title": "一个简单的套餐：按频道付费",
-      "description": "选择您要发布的社交平台数量和付款周期。每个频道每月包含 8 个 HD 短视频，或最多 32 条快速帖子。"
+      "title": "三种套餐，覆盖所有平台。",
+      "description": "选择 Starter、Growth 或 Pro 以及付费周期。每个套餐都可发布到 TikTok、Instagram、YouTube、Facebook、LinkedIn 和 X。"
     },
     "plan": {
-      "title": "定制您的套餐"
+      "title": "选择您的套餐"
     },
     "unavailable": "暂时无法显示价格。请稍后重试。",
     "trialNote": "免费试用 {days, plural, other {# 天}}，含 {videos} 个视频。需要绑定银行卡；在试用期结束前随时取消，无需支付任何费用。",
@@ -4656,18 +4653,17 @@
     "included": {
       "title": "每个套餐均包含",
       "items": {
-        "videos": "每个频道每月 8 个短视频，根据简短需求为您制作",
         "hd": "HD 视频、字幕和音乐",
         "platforms": "发布到 TikTok、Instagram、YouTube Shorts、Facebook、LinkedIn 和 X",
         "scheduling": "内容日历和自动排期",
         "brand": "每个视频都应用您的品牌套件",
         "library": "提供灵感的参考视频库",
-        "quickPosts": "或每个频道每月最多 32 条快速帖子：轮播图、幻灯片视频和文字视频各计为 ¼ 个视频"
+        "quickPosts": "快速帖子按 ¼ 个视频计算：轮播、幻灯片、文字墙和钩子 + 演示视频"
       }
     },
     "packs": {
       "title": "需要更多视频？",
-      "description": "随时购买一次性 HD 视频包。视频包中的视频适用于任意频道，在套餐视频用完后使用，有效期 3 个月。"
+      "description": "随时为任意套餐购买一次性 HD 视频包。视频包中的视频在套餐视频用完后使用，有效期 3 个月。"
     },
     "topUps": {
       "short": "{quantity, plural, other {# 个 HD 视频}}",
@@ -4676,25 +4672,21 @@
     "faq": {
       "title": "常见问题",
       "items": {
-        "channel": {
-          "q": "什么是频道？",
-          "a": "一个频道指您发布内容的一个社交平台，例如 TikTok 或 Instagram。可购买 1 到 6 个频道。您可以连接更多账户，但只有已付费的频道会发布内容。"
-        },
         "period": {
           "q": "按周、按月还是按年？",
-          "a": "按月付费为每个频道 {monthly}。按周付费为每个频道每周 {weekly}，按月累计会更贵。按年付费为每个频道 {yearly}，需预先支付：免费 2 个月。按周套餐每周包含视频，按月和按年套餐每月包含视频。"
+          "a": "{plan} 每月 {monthly}。按周付费为每周 {weekly}，按月累计会更贵。按年付费为 {yearly}，需预先支付：免费 2 个月。每个套餐的规则相同。按周付费每周包含视频，按月和按年付费每个自然月包含视频。"
         },
         "change": {
           "q": "以后可以更改套餐吗？",
-          "a": "可以，在“我的套餐”中更改。增加频道或改为更长周期会立即生效，您只需支付本周期剩余时间的差价。减少频道或改为更短周期将在已付费周期结束时生效。"
+          "a": "可以，在“您的套餐”中更改。升级到更高的套餐，或同一套餐的更长周期，会立即生效；您只需支付本周期剩余时间的差价。降到更低的套餐或更短的周期，会在已付费周期结束时生效。"
         },
         "limit": {
           "q": "视频用完后会怎样？",
-          "a": "新视频将暂停，直到下周或下月开始时包含更多视频。添加频道或购买视频包即可立即继续。"
+          "a": "新视频会暂停，直到下周或下月开始时包含更多视频。升级套餐或购买视频包即可立即继续。"
         },
         "packs": {
           "q": "视频包如何使用？",
-          "a": "5 个或 15 个 HD 视频的视频包为一次性购买。视频包中的视频适用于任意频道，在套餐视频用完后使用，有效期 3 个月。"
+          "a": "5 个或 15 个 HD 视频的视频包为一次性购买，适用于任意套餐。视频包中的视频在套餐视频用完后使用，有效期 3 个月。"
         },
         "vat": {
           "q": "价格含增值税吗？",
@@ -4706,7 +4698,11 @@
         },
         "quickPosts": {
           "q": "轮播图和幻灯片视频算一个完整视频吗？",
-          "a": "不算。轮播图、幻灯片视频、文字墙和钩子 + 演示视频属于快速帖子，各计为 ¼ 个视频，因此一个频道每月的 8 个视频最多可以变成 32 条快速帖子。AI 视频计为 1 个视频，UGC 演员视频计为 2 个。视频包中的视频也按同样方式计算。"
+          "a": "不会。轮播、幻灯片、文字墙和钩子 + 演示视频属于快速帖子，按 ¼ 个视频计算，因此 {plan} 每月的 {videos, number} 个视频最多可用于 {quick, number} 个快速帖子。AI 视频按 1 个视频计算，UGC 演员视频按 2 个计算。视频包中的视频按相同方式计算。"
+        },
+        "platforms": {
+          "q": "我可以发布到哪些平台？",
+          "a": "每个套餐都支持全部六个平台：TikTok、Instagram、YouTube、Facebook、LinkedIn 和 X。连接您的账号后，Studio 会发布到每个平台。"
         }
       }
     }
@@ -5129,7 +5125,7 @@
     "header": {
       "eyebrow": "设置",
       "title": "我的套餐",
-      "description": "您的频道、视频、视频包、付款信息和发票。"
+      "description": "您的套餐、视频、视频包、付款信息和发票。"
     },
     "loading": "正在加载账单",
     "notEnabled": {
@@ -5182,7 +5178,7 @@
     },
     "credits": {
       "title": "视频包",
-      "description": "一次性购买的高清（HD）视频包，适用于任意频道。视频包中的视频在套餐视频用完后使用，有效期 3 个月。",
+      "description": "适用于任意套餐的一次性 HD 视频包。视频包中的视频在套餐视频用完后使用，有效期 3 个月。",
       "buy": "购买",
       "buyAria": "以 {amount} 购买{pack}",
       "noPacks": "请先选择套餐，然后再购买视频包。",
@@ -5212,7 +5208,7 @@
     },
     "picker": {
       "title": "选择套餐",
-      "description": "选择频道数量和付款周期。通过 Stripe 安全付款；价格不含增值税。",
+      "description": "选择套餐和付费周期。通过 Stripe 安全付款；价格不含增值税。",
       "trial": "开始免费试用",
       "redirecting": "正在打开安全结账页面…",
       "subscribe": "继续付款",
@@ -5296,11 +5292,10 @@
           "endTrial": "立即结束试用",
           "endTrialHelp": "试用额度及其每天 {daily} / 总计 {total} 的费用上限将永久停止，即使此覆盖设置到期或被移除也是如此；改为适用套餐上限（以及任何费用上限覆盖设置）。Stripe 不会改变：其试用仍在自己的日期结束并计费。",
           "trialNote": "任何已保存的覆盖设置在生效期间都会暂停试用上限。勾选“立即结束试用”可永久停止这些上限。",
-          "channelPlan": "频道套餐",
-          "channelPlanHelp": "频道数（1 到 6 个社交平台）决定视频额度、费用上限以及可连接的平台数量；周期决定额度的发放频率。“保持当前”使用 Stripe 订阅的值。不适用于 Enterprise。",
-          "channels": "频道",
-          "channelsOption": "{count, plural, other {# 个频道}}",
-          "interval": "计费周期"
+          "interval": "计费周期",
+          "studioPlan": "覆盖套餐",
+          "studioPlanHelp": "套餐决定视频额度、席位、商家数量和成本上限；周期决定额度的发放频率。“保持当前”使用 Stripe 订阅的值。不适用于 Enterprise。",
+          "plan": "套餐"
         },
         "clear": {
           "title": "移除覆盖设置",
@@ -5333,18 +5328,18 @@
           "accessReadOnly": "只读会阻止此组织中除账单、账户设置和导出之外的所有更改。",
           "endTrial": "结束试用无法撤销：其上限将不再适用于此组织。"
         },
-        "channelPlan": "频道套餐",
-        "noChannelPlan": "无频道套餐",
-        "channelPlanValue": "{count, plural, other {# 个频道}} · {interval, select, week {按周} month {按月} year {按年} other {{interval}}}",
-        "channelPlanSource": "{source, select, admin {（由工作人员设置）} other {（来自 Stripe）}}",
         "intervalValues": {
           "week": "按周",
           "month": "按月",
           "year": "按年"
         },
-        "overrideChannels": "频道：{count, plural, other {# 个频道}}",
         "overrideInterval": "{interval, select, week {按周} month {按月} year {按年} other {{interval}}}计费",
-        "subscriptionChannelLine": "{tier} · {count, plural, other {# 个频道}} · {interval} · {date} 结束"
+        "studioPlan": "套餐",
+        "noStudioPlan": "无套餐",
+        "planValue": "{plan} · {interval, select, week {按周} month {按月} year {按年} other {{interval}}}",
+        "overridePlan": "套餐：{plan}",
+        "subscriptionPlanLine": "{plan} · {interval} · {date} 结束",
+        "planSource": "{source, select, admin {（由工作人员设置）} other {（来自 Stripe）}}"
       },
       "subscriptions": {
         "title": "订阅",
@@ -5353,8 +5348,6 @@
         "mrr": "月度经常性收入",
         "mrrHelp": "包括有效和逾期订阅；年付套餐除以 12；不含增值税。",
         "total": "{count, plural, =0 {无订阅} other {# 个订阅}}",
-        "byTier": "按档位",
-        "byTierAria": "按档位统计订阅",
         "tierLine": "{count} · {mrr}",
         "byStatus": "按状态",
         "byStatusAria": "按状态统计订阅",
@@ -5363,24 +5356,26 @@
         "caption": "订阅",
         "columns": {
           "organisation": "组织",
-          "tier": "档位",
           "interval": "计费",
           "mrr": "MRR",
           "periodEnd": "周期结束",
-          "status": "状态"
+          "status": "状态",
+          "plan": "套餐"
         },
         "cancelling": "取消中",
         "unknownOrg": "未知组织",
         "unknownTier": "未知",
-        "empty": "没有匹配的订阅。"
+        "empty": "没有匹配的订阅。",
+        "byPlan": "按套餐",
+        "byPlanAria": "按套餐划分的订阅"
       }
     },
     "yourPlan": {
       "summary": {
         "title": "我的套餐",
-        "headline": "{count, plural, other {# 个频道}}，{period, select, week {按周付费} month {按月付费} other {按年付费}}",
+        "headline": "{plan}，{period, select, week {按周付费} month {按月付费} other {按年付费}}",
         "legacy": "已从您之前的套餐迁移。",
-        "pending": "自 {date} 起：{count, plural, other {# 个频道}}，{period, select, week {按周付费} month {按月付费} other {按年付费}}。",
+        "pending": "自 {date} 起：{plan}，{period, select, week {按周付费} month {按月付费} other {按年付费}}。",
         "keepCurrent": "保留当前套餐",
         "paymentPending": "您的上一次更改正在等待付款。请更新付款方式以使其生效。",
         "price": "价格",
@@ -5396,30 +5391,20 @@
         "packsLeft": "{count, plural, =0 {视频包中没有剩余视频} other {视频包中剩余 # 个视频}}",
         "left": "剩余 {left}"
       },
-      "channels": {
-        "title": "您的频道",
-        "description": "{count, plural, other {您的套餐可发布到 # 个频道。}}",
-        "noneConnected": "尚未连接任何频道。",
-        "connect": "连接账户",
-        "publishing": "正在发布到：{list}。",
-        "blocked": "{count, plural, other {{list} 已连接但不会发布：您的套餐没有剩余频道名额。}}",
-        "addChannel": "添加频道",
-        "spare": "{count, plural, other {您还可以连接 # 个频道。}}"
-      },
       "change": {
         "title": "更改套餐",
-        "description": "添加或移除频道，或更改付款周期。在任何更改生效前，您都会看到新价格及生效时间。",
+        "description": "更换套餐或更改付费周期。在任何更改生效前，您会看到新价格及其生效时间。",
         "previewing": "正在计算新价格…",
         "previewFailed": "无法计算新价格。请稍后重试。",
         "appliesNow": "新价格：{price}。立即生效：今天需为本周期剩余时间支付 {due}。",
         "appliesLater": "新价格：{price}。将于 {date} 生效。现在无需付款。",
-        "nowRule": "增加频道或延长周期会立即生效，您只需支付差价。",
-        "laterRule": "减少频道或缩短周期将在已付费周期结束时生效，在此之前您可继续使用已付费的内容。",
+        "nowRule": "更高的套餐，或同一套餐的更长周期，会立即生效，您只需支付差价。",
+        "laterRule": "更低的套餐，或同一套餐的更短周期，会在已付费周期结束时生效，在此之前您保留已付费的内容。",
         "review": "查看更改",
         "reset": "重新开始",
         "confirmTitle": "确认新套餐",
-        "confirmFrom": "当前：{channels, plural, other {# 个频道}}，{period, select, week {按周付费} month {按月付费} other {按年付费}}",
-        "confirmTo": "新套餐：{channels, plural, other {# 个频道}}，{period, select, week {按周付费} month {按月付费} other {按年付费}}",
+        "confirmFrom": "当前：{plan}，{period, select, week {按周付费} month {按月付费} other {按年付费}}",
+        "confirmTo": "新套餐：{plan}，{period, select, week {按周付费} month {按月付费} other {按年付费}}",
         "cancel": "返回",
         "confirm": "确认更改",
         "confirmPay": "支付 {amount} 并更改",
@@ -5458,7 +5443,7 @@
     },
     "quota": {
       "title": "您的套餐视频暂时已用完",
-      "body": "添加频道可每周或每月获得更多视频，或购买视频包今天就继续制作。",
+      "body": "升级套餐可每周或每月获得更多视频，或购买视频包今天就继续制作。",
       "quickPosts": "快速帖子更省额度：轮播图、幻灯片视频、文字墙和钩子 + 演示视频各计为 ¼ 个视频。"
     },
     "planRequired": {
@@ -5473,10 +5458,10 @@
       "choosePlan": "选择套餐",
       "updatePayment": "更新付款方式",
       "notNow": "暂不",
-      "addChannel": "添加频道",
       "buyPack": "购买视频包",
       "viewPlan": "查看套餐",
-      "manageMembers": "管理成员"
+      "manageMembers": "管理成员",
+      "upgradePlan": "升级套餐"
     },
     "askOwner": "只有组织所有者可以更改套餐或账单。请联系所有者操作。",
     "lock": {
@@ -5486,10 +5471,6 @@
     "seatLimit": {
       "title": "您套餐中的席位已全部占用",
       "body": "您的套餐没有空余席位可再添加成员。请先移除一位成员，或联系客服。"
-    },
-    "channelLimit": {
-      "title": "添加频道即可在此发布",
-      "body": "{count, plural, other {您的套餐包含 # 个频道}}：{list}。添加一个频道，即可同时发布到 {platform}。"
     }
   },
   "email": {
@@ -5607,7 +5588,7 @@
       "topupReceipt": {
         "subject": "您的视频包已就绪：{packName}",
         "heading": "视频包已添加",
-        "body": "感谢您的购买。您的 {packName} 视频包已添加，可在 3 个月内用于任意频道。Stripe 会另行发送收据。",
+        "body": "感谢您的购买。您的 {packName} 视频包已添加，可在 3 个月内使用，适用于任意套餐。Stripe 会另行发送收据。",
         "cta": "打开我的套餐"
       },
       "accountDeletionScheduled": {
@@ -5684,8 +5665,7 @@
       "pagesAria": "组织分页",
       "pageInfo": "第 {from}–{to} 个，共 {total} 个",
       "previous": "上一页",
-      "next": "下一页",
-      "channelPlan": "{count, plural, other {# 个频道}} · {interval, select, week {按周} month {按月} year {按年} other {{interval}}}"
+      "next": "下一页"
     },
     "detail": {
       "back": "全部组织",
@@ -6179,45 +6159,37 @@
       "close": "关闭"
     }
   },
-  "channelPlan": {
+  "planPicker": {
+    "label": "套餐",
     "interval": {
       "label": "付款周期",
       "week": "按周",
       "month": "按月",
-      "year": "按年"
+      "year": "按年",
+      "yearlyHint": "按年付费，免费 2 个月。"
     },
-    "channels": {
-      "label": "频道",
-      "fewer": "减少一个频道",
-      "more": "添加一个频道",
-      "value": "{count, plural, other {# 个频道}}",
-      "hint": "一个频道指您发布内容的一个社交平台：TikTok、Instagram、YouTube Shorts、Facebook、LinkedIn 或 X。"
-    },
+    "mostPopular": "最受欢迎",
     "total": {
       "week": "每周 {amount}",
       "month": "每月 {amount}",
       "year": "每年 {amount}"
     },
-    "perChannel": {
-      "week": "每个频道每周 {amount}",
-      "month": "每个频道每月 {amount}",
-      "year": "每个频道每年 {amount}"
-    },
-    "included": {
-      "week": "每周包含 {count, plural, other {# 个视频}}（每个频道 {perChannel} 个）",
-      "month": "每月包含 {count, plural, other {# 个视频}}（每个频道 {perChannel} 个）",
-      "year": "每年包含 {count, plural, other {# 个视频}}（每个频道每月 {perChannel} 个）"
-    },
-    "hd": "高清（HD）短视频",
     "exclVat": "不含增值税",
+    "videos": {
+      "week": "每周 {count, plural, other {# 个 HD 视频}}",
+      "month": "每月 {count, plural, other {# 个 HD 视频}}"
+    },
+    "quickPosts": "或最多 {count, number} 条快速帖子：轮播图、幻灯片视频和文字视频各计为 ¼",
+    "businesses": "{count, plural, other {# 个商家}}",
+    "seats": "{count, plural, other {# 个席位}}",
+    "platforms": "发布到所有平台",
     "yearlySaving": "免费 2 个月：每年节省 {amount}",
     "weeklyNote": "按周付费比按月更贵。按月或按年付费更划算。",
     "priceUnavailable": "暂无价格",
     "packs": {
       "name": "{quantity, plural, other {# 个 HD 视频}}",
-      "validity": "可在 {months, plural, other {# 个月}}内用于任意频道"
-    },
-    "quickPosts": "或最多 {count, number} 条快速帖子：轮播图、幻灯片视频和文字视频各计为 ¼"
+      "validity": "可在 {months, plural, other {# 个月}}内使用，适用于任意套餐"
+    }
   },
   "carousel": {
     "editor": {
@@ -6532,7 +6504,7 @@
         "summary": "汇总"
       },
       "channelsTitle": "发布到哪里？",
-      "channelsHint": "在你套餐的渠道数量内选择要发布的平台。",
+      "channelsHint": "选择要发布到的平台。每个套餐都可发布到所有平台。",
       "noAccount": "{platform} 未连接：其帖子会先保存以供审核。",
       "cadenceTitle": "多久发一次？",
       "mode": {
@@ -6577,7 +6549,7 @@
       "cancelConfirm": "要取消这个自动化吗？尚未发布的帖子将被取消。",
       "pauseReason": {
         "owner": "由你暂停。已制作好的帖子仍会照常发布。",
-        "allowance": "你套餐中的视频已用完。添加渠道或购买视频包后即可恢复。",
+        "allowance": "您套餐内的视频已用完。请升级套餐或购买视频包，然后继续。",
         "billing": "因账单需要处理而暂停。",
         "owner_left": "因设置它的人已离开组织而暂停。",
         "plan_missing": "已暂停：找不到当前这一期。",

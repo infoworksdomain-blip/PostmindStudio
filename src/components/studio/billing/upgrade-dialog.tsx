@@ -15,7 +15,6 @@ import {
 import { useApi } from '@/lib/client/api';
 import { StudioCapability } from '@/lib/rbac';
 import { subscribeUpgrade, type UpgradeEvent } from '@/lib/client/upgrade-events';
-import { channelLabel, channelList } from './channel-labels';
 import type { BillingResponse } from './types';
 import { useBillingActions } from './use-billing-actions';
 import { useCan } from '../use-can';
@@ -23,10 +22,10 @@ import { useMe } from '../account/use-me';
 
 // Phase 18 §3 / §P.4 / 21.5 — the global upgrade dialog. api() emits every plan / billing block
 // on the upgrade bus (src/lib/client/upgrade-events.ts); this host (mounted once in AppShell)
-// opens. 21.5: there is one per-channel plan, so no tier is ever named:
+// opens. 26.1: plans are Starter / Growth / Pro and every plan posts to every platform; no
+// internal tier is ever named:
 //   403 plan_tier        → "not included in your plan" (an internal-tier feature)
-//   403 quota_exceeded   → add a channel (Your plan) or buy a video pack
-//   403 channel_limit    → add a channel to publish to this platform
+//   403 quota_exceeded   → upgrade your plan (Your plan) or buy a video pack
 //   402 plan_required    → choose a plan (/settings/billing)
 //   402 billing_required → "Update payment method" (Customer Portal)
 // Only owners (canManage) get the Stripe button; everyone else is asked to find an owner.
@@ -61,9 +60,9 @@ function UpgradeActions({
       {event.code === 'quota_exceeded' &&
         !isSeatLimit(event) &&
         link('/settings/billing#topups', t('actions.buyPack'), 'outline')}
-      {(event.code === 'quota_exceeded' || event.code === 'channel_limit') &&
+      {event.code === 'quota_exceeded' &&
         !isSeatLimit(event) &&
-        link('/settings/billing#change', t('actions.addChannel'))}
+        link('/settings/billing#change', t('actions.upgradePlan'))}
       {isSeatLimit(event) && link('/settings/members', t('actions.manageMembers'))}
       {event.code === 'plan_tier' && link('/pricing', t('actions.viewPlan'), 'outline')}
       {event.code === 'billing_required' && owner && (
@@ -87,28 +86,9 @@ function isSeatLimit(event: UpgradeEvent): boolean {
 const COPY = {
   plan_tier: 'planTier',
   quota_exceeded: 'quota',
-  channel_limit: 'channelLimit',
   plan_required: 'planRequired',
   billing_required: 'billingRequired',
 } as const;
-
-function ChannelLimitBody({ event }: { event: UpgradeEvent }) {
-  const t = useTranslations('upgrade.channelLimit');
-  const channels = Number(event.details?.channels ?? 0);
-  const platform = typeof event.details?.platform === 'string' ? event.details.platform : '';
-  const allowed = Array.isArray(event.details?.allowedPlatforms)
-    ? event.details.allowedPlatforms.filter((p): p is string => typeof p === 'string')
-    : [];
-  return (
-    <p>
-      {t('body', {
-        count: channels,
-        list: channelList(allowed),
-        platform: channelLabel(platform),
-      })}
-    </p>
-  );
-}
 
 export function UpgradeDialog({ event, onClose }: { event: UpgradeEvent; onClose: () => void }) {
   const t = useTranslations('upgrade');
@@ -128,11 +108,7 @@ export function UpgradeDialog({ event, onClose }: { event: UpgradeEvent; onClose
           <DialogTitle>{t(`${copy}.title`)}</DialogTitle>
           <DialogDescription asChild>
             <div className="grid gap-2">
-              {copy === 'channelLimit' ? (
-                <ChannelLimitBody event={event} />
-              ) : (
-                <p>{t(`${copy}.body`)}</p>
-              )}
+              <p>{t(`${copy}.body`)}</p>
               {copy === 'quota' && <p>{t('quota.quickPosts')}</p>}
               {((data && !data.canManage) || (meKnown && !mayReadBilling)) &&
                 event.code !== 'plan_required' && <p>{t('askOwner')}</p>}
@@ -151,14 +127,14 @@ export function UpgradeDialogHost() {
   if (!event) return null;
   return (
     <UpgradeDialog
-      key={`${event.code}-${String(event.details?.requiredTier ?? event.details?.platform ?? '')}`}
+      key={`${event.code}-${String(event.details?.requiredTier ?? '')}`}
       event={event}
       onClose={() => setEvent(null)}
     />
   );
 }
 
-/** "Add a channel" and "Buy a video pack" on the usage banner (usage-meter.tsx). */
+/** "Upgrade your plan" and "Buy a video pack" on the usage banner (usage-meter.tsx). */
 export function UsageBannerActions({ compact = false }: { compact?: boolean }) {
   const t = useTranslations('upgrade.actions');
   // compact: the app shell's one-line notice strip (25.4), smaller buttons and no top margin.
@@ -167,7 +143,7 @@ export function UsageBannerActions({ compact = false }: { compact?: boolean }) {
     <div className={compact ? 'flex flex-wrap gap-2' : 'mt-3 flex flex-wrap gap-2'}>
       {/* In the calm strip both actions are quiet; the full banner keeps the primary one. */}
       <Button asChild size={size} variant={compact ? 'outline' : 'default'}>
-        <Link href="/settings/billing#change">{t('addChannel')}</Link>
+        <Link href="/settings/billing#change">{t('upgradePlan')}</Link>
       </Button>
       <Button asChild size={size} variant="outline">
         <Link href="/settings/billing#topups">{t('buyPack')}</Link>

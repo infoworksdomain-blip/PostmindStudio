@@ -8,9 +8,9 @@ export interface AdminOrgTrial {
   endsAt: string | null;
 }
 
-/** 21.5: the per-channel plan in force (staff override or Stripe), null when there is none. */
-export interface AdminOrgChannelPlan {
-  channels: number;
+/** 26.1: the plan in force (staff override or Stripe), null when there is none. */
+export interface AdminOrgStudioPlan {
+  id: 'starter' | 'growth' | 'pro';
   interval: 'week' | 'month' | 'year';
   source: 'stripe' | 'admin';
 }
@@ -27,8 +27,8 @@ export interface AdminOrgRow {
   access: string | null;
   source: string | null;
   trial: AdminOrgTrial | null;
-  /** Optional: absent from responses written before 21.5. */
-  channelPlan?: AdminOrgChannelPlan | null;
+  /** Optional: absent from responses written before 26.1. */
+  studioPlan?: AdminOrgStudioPlan | null;
   subscriptionStatus: string | null;
   costThisMonthPence: number;
 }
@@ -80,7 +80,7 @@ export interface AdminOrgDetail {
     access: string;
     source: string;
     trial: AdminOrgTrial | null;
-    channelPlan?: AdminOrgChannelPlan | null;
+    studioPlan?: AdminOrgStudioPlan | null;
     graceUntil: string | null;
     trialStartedAt: string | null;
     everPaidAt: string | null;

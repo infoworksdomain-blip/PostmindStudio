@@ -15,7 +15,7 @@ import {
 import { BillingMock, dueNowPence, gbp, longDate, PRORATION_DATE } from './billing.mocks';
 import { baseURL, noHorizontalScroll, staffPage, watch } from './pass2.support';
 
-// 20.31 (QA pass 2) / 21.5 — the per-channel plan: /pricing (channel stepper, how often you pay,
+// 20.31 (QA pass 2) / 26.1 — the three plans: /pricing (Starter / Growth / Pro, how often you pay,
 // the free-trial link) and Your plan (headline, change with a preview applied now or at the end
 // of the period, video packs, cancel and keep, the Stripe portal link, 375 px), the calendar's
 // drip queue, and the Admin Centre (every section loads; Organisations -> Open -> plan override and
@@ -74,11 +74,11 @@ test.afterAll(async () => {
 // ------------------------------------------------------------------------- pricing (public)
 
 test.describe('public pricing', () => {
-  test('/pricing: the channel stepper, the period switch and the free-trial link', async ({
+  test('/pricing: three plans (Pro last, Growth most popular), the period switch and the free-trial link', async ({
     browser,
   }) => {
     // Server-rendered from the pricing source: with the placeholder Stripe key every amount reads
-    // "Price unavailable"; the stepper, period, videos included and the link do not need prices.
+    // "Price unavailable"; the plans, videos, businesses, seats and the link do not need prices.
     const context = await browser.newContext({ baseURL, locale: 'en-GB' });
     const page = await context.newPage();
     const w = watch(page);
@@ -87,69 +87,60 @@ test.describe('public pricing', () => {
     w.expect4xx(/\/api\/auth\/get-session/, 401);
     await w.visit('/pricing');
     await expect(
-      page.getByRole('heading', { name: 'One simple plan: pay per channel', level: 1 }),
+      page.getByRole('heading', { name: 'Three plans. Every platform.', level: 1 }),
     ).toBeVisible();
-    // One plan: no tier cards and no tier names.
-    await expect(page.getByRole('button', { name: /^Choose (Basic|Standard|Plus)/ })).toHaveCount(
-      0,
-    );
+    // 26.1: no channels anywhere, and no internal tier names.
+    await expect(page.locator('main').getByText(/channel/i)).toHaveCount(0);
     await expect(page.getByText(/^(Basic|Standard|Plus|Enterprise)( plan)?$/)).toHaveCount(0);
 
     const plan = page
       .locator('section')
-      .filter({ has: page.getByRole('heading', { name: 'Build your plan' }) })
+      .filter({ has: page.getByRole('heading', { name: 'Choose your plan' }) })
       .last();
-    const more = plan.getByRole('button', { name: 'Add a channel' });
-    const fewer = plan.getByRole('button', { name: 'Remove a channel' });
     const period = plan.getByRole('radiogroup', { name: 'How often you pay' });
-    // Default: 3 channels, monthly.
-    await expect(plan.getByText('3 channels', { exact: true })).toBeVisible();
+    const plans = plan.getByRole('radiogroup', { name: 'Plan' });
+    // Cheapest first, Pro last; Growth chosen and marked "Most popular".
+    await expect(plans.getByRole('radio')).toHaveCount(3);
+    expect(
+      await plans.getByRole('radio').evaluateAll((els) => els.map((e) => e.dataset.testid)),
+    ).toEqual(['plan-option-starter', 'plan-option-growth', 'plan-option-pro']);
+    await expect(plans.getByRole('radio', { name: 'Growth' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await expect(plan.getByTestId('plan-option-growth').getByText('Most popular')).toBeVisible();
+    await expect(plan.getByTestId('plan-option-pro').getByText('Most popular')).toHaveCount(0);
     await expect(period.getByRole('radio', { name: 'Monthly' })).toHaveAttribute(
       'aria-checked',
       'true',
     );
-    await expect(plan.getByText('24 videos a month included (8 per channel)')).toBeVisible();
+    const growth = plan.getByTestId('plan-option-growth');
+    await expect(growth.getByText('20 HD videos a month')).toBeVisible();
+    await expect(growth.getByText('3 seats')).toBeVisible();
+    await expect(growth.getByText('Posts to every platform')).toBeVisible();
+    await expect(plan.getByTestId('plan-option-pro').getByText('3 businesses')).toBeVisible();
     await expect(
-      plan
+      growth
         .getByText(/^£\d+\.\d{2} a month$/)
-        .or(plan.getByText('Price unavailable'))
+        .or(growth.getByText('Price unavailable'))
         .first(),
     ).toBeVisible();
-    if (await plan.getByText(/^£\d+\.\d{2} a month$/).count()) {
-      // With Stripe prices: the total is the per-channel price times the channels.
-      const totalText = await plan.getByText(/^£\d+\.\d{2} a month$/).innerText();
-      const perText = await plan.getByText(/per channel a month/).innerText();
-      const pounds = (s: string) => Number(/£([\d,.]+)/.exec(s)?.[1]?.replace(/,/g, '') ?? NaN);
-      expect(pounds(totalText)).toBeCloseTo(pounds(perText) * 3, 2);
-    }
 
-    // The stepper stops at 1 and 6.
-    await more.click();
-    await expect(plan.getByText('4 channels', { exact: true })).toBeVisible();
-    await expect(plan.getByText('32 videos a month included (8 per channel)')).toBeVisible();
-    // 4 → 6: two more clicks; a third would hit the (correctly) disabled button at the maximum.
-    for (let i = 0; i < 2; i += 1) await more.click();
-    await expect(plan.getByText('6 channels', { exact: true })).toBeVisible();
-    await expect(more).toBeDisabled();
-    for (let i = 0; i < 5; i += 1) await fewer.click();
-    await expect(plan.getByText('1 channel', { exact: true })).toBeVisible();
-    await expect(fewer).toBeDisabled();
-    await more.click();
-    await expect(plan.getByText('2 channels', { exact: true })).toBeVisible();
-
-    // Weekly costs more and says so; yearly counts the year's videos.
+    // Weekly costs more and says so; yearly keeps the monthly videos each month.
     await period.getByRole('radio', { name: 'Weekly' }).click();
     await expect(period.getByRole('radio', { name: 'Weekly' })).toHaveAttribute(
       'aria-checked',
       'true',
     );
-    await expect(plan.getByText('4 videos a week included (2 per channel)')).toBeVisible();
+    await expect(growth.getByText('5 HD videos a week')).toBeVisible();
     await expect(plan.getByText(/Weekly costs more than monthly/)).toBeVisible();
     await period.getByRole('radio', { name: 'Yearly' }).click();
-    await expect(
-      plan.getByText('192 videos a year included (8 per channel each month)'),
-    ).toBeVisible();
+    await expect(growth.getByText('20 HD videos a month')).toBeVisible();
     await expect(plan.getByText(/Weekly costs more than monthly/)).toHaveCount(0);
+    // The keyboard moves between plans (a radio group).
+    await plans.getByRole('radio', { name: 'Growth' }).focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(plans.getByRole('radio', { name: 'Pro' })).toHaveAttribute('aria-checked', 'true');
 
     // The HD video packs.
     const packs = page
@@ -161,12 +152,12 @@ test.describe('public pricing', () => {
 
     // "Start free trial" (or "Get started" without a trial) carries the choice through sign-up.
     const start = plan.getByRole('link', { name: /Start free trial|Get started/ });
-    const next = encodeURIComponent('/settings/billing?channels=2&interval=year');
+    const next = encodeURIComponent('/settings/billing?plan=pro&interval=year');
     await expect(start).toHaveAttribute('href', `/sign-up?next=${next}`);
     await start.click();
     await expect(page).toHaveURL(/\/sign-up\?next=/);
     expect(new URL(page.url()).searchParams.get('next')).toBe(
-      '/settings/billing?channels=2&interval=year',
+      '/settings/billing?plan=pro&interval=year',
     );
     await w.check('/pricing');
     expect(w.issues).toEqual([]);
@@ -185,26 +176,26 @@ test.describe('Your plan', () => {
     toast: (text: string | RegExp) => page.locator('[data-sonner-toast]').filter({ hasText: text }),
   });
 
-  test('3 channels monthly: the headline, videos, channels, packs and no cost figures', async () => {
+  test('Growth monthly: the headline, videos, packs and no channels or cost figures', async () => {
     test.setTimeout(120_000);
-    const mock = new BillingMock({ channels: 3, interval: 'month' }, baseURL);
+    const mock = new BillingMock({ plan: 'growth', interval: 'month' }, baseURL);
     await mock.install(owner);
     const w = watch(owner);
     await w.visit('/settings/billing');
     await expect(owner.getByRole('heading', { name: 'Your plan', level: 1 })).toBeVisible();
-    await expect(owner.getByText('3 channels, monthly', { exact: true })).toBeVisible({
+    await expect(owner.getByTestId('plan-headline')).toHaveText('Growth, monthly', {
       timeout: 60_000,
     });
     await expect(owner.getByText('Active', { exact: true })).toBeVisible();
     // The plan summary's price fact (25.12: the VAT note sits beside the total).
-    const price = owner.locator('dd').filter({ hasText: `${gbp(8_700)} a month` });
+    const price = owner.locator('dd').filter({ hasText: `${gbp(6_900)} a month` });
     await expect(price).toBeVisible();
     await expect(price).toContainText('excl. VAT');
     await expect(owner.getByText(`Renews on ${longDate(mock.periodEnd)}.`)).toBeVisible();
     await expect(owner.getByRole('heading', { name: 'Videos this month' })).toBeVisible();
-    await expect(owner.getByRole('heading', { name: 'Your channels' })).toBeVisible();
-    await expect(owner.getByText('Your plan publishes to 3 channels.')).toBeVisible();
-    await expect(owner.getByText('Publishing to: TikTok.')).toBeVisible();
+    // 26.1: every plan posts to every platform: no channels section.
+    await expect(owner.getByRole('heading', { name: 'Your channels' })).toHaveCount(0);
+    await expect(owner.locator('main').getByText(/channel/i)).toHaveCount(0);
     await expect(owner.getByRole('heading', { name: 'Change your plan' })).toBeVisible();
     await expect(owner.getByRole('heading', { name: 'Video packs' })).toBeVisible();
     await expect(owner.getByRole('heading', { name: 'Team and storage' })).toBeVisible();
@@ -221,74 +212,78 @@ test.describe('Your plan', () => {
     expect(w.issues).toEqual([]);
   });
 
-  test('add a channel: the preview applies now, and confirming posts the change', async () => {
-    const mock = new BillingMock({ channels: 3, interval: 'month' }, baseURL);
+  test('a higher plan: the preview applies now, and confirming posts the change', async () => {
+    const mock = new BillingMock({ plan: 'growth', interval: 'month' }, baseURL);
     await mock.install(owner);
     await owner.goto('/settings/billing');
     const { change, toast } = plan(owner);
     const review = change.getByRole('button', { name: 'Review change' });
     await expect(review).toBeDisabled();
-    await change.getByRole('button', { name: 'Add a channel' }).click();
-    await expect(change.getByText('4 channels', { exact: true })).toBeVisible();
+    await expect(change.getByRole('radio', { name: 'Growth' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await change.getByRole('radio', { name: 'Pro' }).click();
     const due = gbp(
-      dueNowPence({ channels: 3, interval: 'month' }, { channels: 4, interval: 'month' }),
+      dueNowPence({ plan: 'growth', interval: 'month' }, { plan: 'pro', interval: 'month' }),
     );
     await expect(
       change.getByText(
-        `New price: ${gbp(11_600)} a month. Applies now: you pay ${due} today for the rest of this period.`,
+        `New price: ${gbp(14_900)} a month. Applies now: you pay ${due} today for the rest of this period.`,
       ),
     ).toBeVisible();
     expect(mock.sent('GET', '/billing/plan/preview').at(-1)?.query).toEqual({
-      channels: '4',
+      plan: 'pro',
       interval: 'month',
     });
     await review.click();
     const dialog = owner.getByRole('dialog', { name: 'Confirm your new plan' });
-    await expect(dialog.getByText('Now: 3 channels, monthly')).toBeVisible();
-    await expect(dialog.getByText('New: 4 channels, monthly')).toBeVisible();
+    await expect(dialog.getByText('Now: Growth, monthly')).toBeVisible();
+    await expect(dialog.getByText('New: Pro, monthly')).toBeVisible();
     await dialog.getByRole('button', { name: `Pay ${due} and change` }).click();
     await expect(toast('Your plan has been changed.')).toBeVisible();
     expect(mock.sent('POST', '/billing/plan')).toHaveLength(1);
     expect(mock.sent('POST', '/billing/plan')[0]?.body).toEqual({
-      channels: 4,
+      plan: 'pro',
       interval: 'month',
       prorationDate: PRORATION_DATE,
     });
-    await expect(owner.getByText('4 channels, monthly', { exact: true })).toBeVisible();
-    await expect(owner.locator('dd').filter({ hasText: `${gbp(11_600)} a month` })).toContainText(
+    await expect(owner.getByTestId('plan-headline')).toHaveText('Pro, monthly');
+    await expect(owner.locator('dd').filter({ hasText: `${gbp(14_900)} a month` })).toContainText(
       'excl. VAT',
     );
   });
 
-  test('fewer channels: the preview says nothing to pay now; the change waits, then is undone', async () => {
-    const mock = new BillingMock({ channels: 3, interval: 'month' }, baseURL);
+  test('a lower plan: the preview says nothing to pay now; the change waits, then is undone', async () => {
+    const mock = new BillingMock({ plan: 'growth', interval: 'month' }, baseURL);
     await mock.install(owner);
     await owner.goto('/settings/billing');
     const { change, toast } = plan(owner);
-    await change.getByRole('button', { name: 'Remove a channel' }).click();
+    await change.getByRole('radio', { name: 'Starter' }).click();
     const date = longDate(mock.periodEnd);
     await expect(
-      change.getByText(`New price: ${gbp(5_800)} a month. Applies on ${date}. Nothing to pay now.`),
+      change.getByText(`New price: ${gbp(2_900)} a month. Applies on ${date}. Nothing to pay now.`),
     ).toBeVisible();
     await change.getByRole('button', { name: 'Review change' }).click();
     const dialog = owner.getByRole('dialog', { name: 'Confirm your new plan' });
-    await expect(dialog.getByText('New: 2 channels, monthly')).toBeVisible();
+    await expect(dialog.getByText('New: Starter, monthly')).toBeVisible();
     await dialog.getByRole('button', { name: 'Confirm change' }).click();
     await expect(toast('Done. Your plan changes at the end of this period.')).toBeVisible();
     expect(mock.sent('POST', '/billing/plan')[0]?.body).toEqual({
-      channels: 2,
+      plan: 'starter',
       interval: 'month',
       prorationDate: null,
     });
-    // Still 3 channels until then; the waiting change is shown and can be dropped.
-    await expect(owner.getByText('3 channels, monthly', { exact: true })).toBeVisible();
-    await expect(owner.getByText(`From ${date}: 2 channels, monthly.`)).toBeVisible();
+    // Still Growth until then; the waiting change is shown and can be dropped.
+    await expect(owner.getByTestId('plan-headline')).toHaveText('Growth, monthly');
+    await expect(owner.getByText(`From ${date}: Starter, monthly.`)).toBeVisible();
     await owner.getByRole('button', { name: 'Keep my current plan' }).click();
     await expect(toast('You’ll stay on your current plan.')).toBeVisible();
     expect(mock.sent('DELETE', '/billing/plan/scheduled')).toHaveLength(1);
-    await expect(owner.getByText(`From ${date}: 2 channels, monthly.`)).toHaveCount(0);
+    await expect(owner.getByText(`From ${date}: Starter, monthly.`)).toHaveCount(0);
 
-    // A shorter period waits for the end of the period too.
+    // A shorter period on the same plan waits for the end of the period too.
+    await change.getByRole('radio', { name: 'Growth' }).click();
     await change.getByRole('radio', { name: 'Weekly' }).click();
     await expect(change.getByText(/Applies on .*\. Nothing to pay now\./)).toBeVisible();
     await change.getByRole('button', { name: 'Start again' }).click();
@@ -296,16 +291,16 @@ test.describe('Your plan', () => {
   });
 
   test('buy a video pack: checkout for the pack, back with a thank-you', async () => {
-    const mock = new BillingMock({ channels: 3, interval: 'month' }, baseURL);
+    const mock = new BillingMock({ plan: 'growth', interval: 'month' }, baseURL);
     await mock.install(owner);
     await owner.goto('/settings/billing');
     const { packs } = plan(owner);
     await expect(packs.getByText('5 HD videos', { exact: true })).toBeVisible();
     await expect(packs.getByText('15 HD videos', { exact: true })).toBeVisible();
     await expect(
-      packs.getByRole('button', { name: `Buy 15 HD videos for ${gbp(3_900)}` }),
+      packs.getByRole('button', { name: `Buy 15 HD videos for ${gbp(4_500)}` }),
     ).toBeEnabled();
-    await packs.getByRole('button', { name: `Buy 5 HD videos for ${gbp(1_500)}` }).click();
+    await packs.getByRole('button', { name: `Buy 5 HD videos for ${gbp(1_700)}` }).click();
     await expect(owner).toHaveURL(/topup=success/);
     expect(mock.sent('POST', '/billing/checkout')[0]?.body).toMatchObject({
       kind: 'topup',
@@ -319,7 +314,7 @@ test.describe('Your plan', () => {
   });
 
   test('cancel the plan, then keep it', async () => {
-    const mock = new BillingMock({ channels: 3, interval: 'month' }, baseURL);
+    const mock = new BillingMock({ plan: 'growth', interval: 'month' }, baseURL);
     await mock.install(owner);
     await owner.goto('/settings/billing');
     const { cancel, change, toast } = plan(owner);
@@ -354,7 +349,7 @@ test.describe('Your plan', () => {
   });
 
   test('"Open billing portal" goes to the Stripe portal address the server returns', async () => {
-    const mock = new BillingMock({ channels: 3, interval: 'month' }, baseURL);
+    const mock = new BillingMock({ plan: 'growth', interval: 'month' }, baseURL);
     await mock.install(owner);
     await owner.goto('/settings/billing');
     await owner.getByRole('button', { name: 'Open billing portal' }).click();
@@ -368,16 +363,16 @@ test.describe('Your plan', () => {
     const phone = await signedInPage(browser, baseURL, emailFor('p2-billing'), {
       viewport: { width: 375, height: 812 },
     });
-    const mock = new BillingMock({ channels: 3, interval: 'month' }, baseURL);
+    const mock = new BillingMock({ plan: 'growth', interval: 'month' }, baseURL);
     await mock.install(phone);
     const w = watch(phone);
     await w.visit('/settings/billing');
-    await expect(phone.getByText('3 channels, monthly', { exact: true })).toBeVisible({
+    await expect(phone.getByTestId('plan-headline')).toHaveText('Growth, monthly', {
       timeout: 60_000,
     });
     expect(await noHorizontalScroll(phone), '/settings/billing scrolls sideways').toBe(true);
     const { change, packs, cancel } = plan(phone);
-    await change.getByRole('button', { name: 'Add a channel' }).click();
+    await change.getByRole('radio', { name: 'Pro' }).click();
     await expect(change.getByText(/Applies now: you pay/)).toBeVisible();
     const review = change.getByRole('button', { name: 'Review change' });
     await review.scrollIntoViewIfNeeded();
@@ -531,14 +526,24 @@ test.describe('Admin Centre', () => {
     await staff.getByRole('button', { name: `Open P2 Trial ${run}` }).click();
     await expect(staff.getByText('Running: the trial’s caps apply now.')).toBeVisible();
     const form = staff.getByRole('form', { name: 'Set an override' });
+    // 26.1: staff set a plan (Starter / Growth / Pro) and interval, not channels.
+    await expect(form.getByLabel('Plan').locator('option')).toHaveText([
+      'Keep current',
+      'Starter',
+      'Growth',
+      'Pro',
+    ]);
+    await form.getByLabel('Plan').selectOption('pro');
+    await form.getByLabel('Billing interval').selectOption('year');
     // Save stays disabled until a reason is given.
-    await form.getByLabel('Tier').selectOption('PLUS');
     await form.getByRole('checkbox', { name: 'End the trial now' }).check();
     await expect(form.getByRole('button', { name: 'Save override' })).toBeDisabled();
     await form.getByLabel('Reason (required)').fill('QA pass 2: end the trial');
     await form.getByRole('button', { name: 'Save override' }).click();
     await staff.getByRole('alertdialog').getByRole('button', { name: 'Yes, save' }).click();
     await expect(staff.getByText(/Ended by staff on/)).toBeVisible();
+    await expect(staff.getByTestId('studio-plan')).toHaveText('Pro · yearly (set by staff)');
+    await expect(staff.getByText('Plan: Pro')).toBeVisible();
     await expect
       .poll(
         async () =>
@@ -546,7 +551,7 @@ test.describe('Admin Centre', () => {
       )
       .toBe('admin');
     const stored = await db.orgEntitlement.findUniqueOrThrow({ where: { organisationId: orgId } });
-    expect(stored.tier).toBe('PLUS');
+    expect(stored.overrides).toMatchObject({ admin: { plan: 'pro', interval: 'year' } });
     await w.settle();
     await w.check();
     expect(w.issues).toEqual([]);

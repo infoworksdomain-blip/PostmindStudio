@@ -5,11 +5,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
 import type { CustomLimits } from '@/lib/studio/billing/entitlements';
-import type { ChannelInterval } from '../../billing/types';
-import { CHANNEL_INTERVALS, isChannelInterval, type Access } from './entitlements-summary';
+import {
+  isPlanId,
+  isPlanInterval,
+  PLAN_IDS,
+  PLAN_INTERVALS,
+  PLAN_NAMES,
+} from '@/lib/studio/billing/plans';
+import type { PlanId, PlanInterval } from '../../billing/types';
+import type { Access } from './entitlements-summary';
 
 // Phase 18 §P.3 / 21.5 — the field groups of the staff entitlement override form (split out of
-// entitlements-panel.tsx in 25.13): custom limits, the channel plan, and what the confirmation
+// entitlements-panel.tsx in 25.13): custom limits, the plan (26.1), and what the confirmation
 // says before a change that locks people out or ends a trial.
 
 const LIMIT_KEYS = [
@@ -26,8 +33,6 @@ export type LimitKey = (typeof LIMIT_KEYS)[number];
 /** generatedImagesPerBusinessPerMonth cannot be unlimited (the schema has no null for it). */
 const NO_UNLIMITED: ReadonlySet<LimitKey> = new Set(['generatedImagesPerBusinessPerMonth']);
 export const MIN_REASON = 3;
-/** 21.5: the channel plan's range (MIN_CHANNELS / MAX_CHANNELS in billing/channel-plan.ts). */
-const CHANNEL_COUNTS = [1, 2, 3, 4, 5, 6] as const;
 
 export interface LimitDraft {
   value: string;
@@ -104,39 +109,39 @@ export function LimitsFieldset({
   );
 }
 
-/** 21.5: the channel count (1–6) and billing interval staff give the organisation. */
-export function ChannelPlanFields({
-  channels,
+/** 26.1: the plan (Starter, Growth, Pro) and billing interval staff give the organisation. */
+export function StudioPlanFields({
+  plan,
   interval,
-  onChannels,
+  onPlan,
   onInterval,
 }: {
-  channels: string;
-  interval: ChannelInterval | '';
-  onChannels: (value: string) => void;
-  onInterval: (value: ChannelInterval | '') => void;
+  plan: PlanId | '';
+  interval: PlanInterval | '';
+  onPlan: (value: PlanId | '') => void;
+  onInterval: (value: PlanInterval | '') => void;
 }) {
   const t = useTranslations('billing.admin.entitlements.form');
   const ta = useTranslations('billing.admin.entitlements');
   return (
     <fieldset className="grid gap-3">
-      <legend className="font-medium">{t('channelPlan')}</legend>
-      <p id="ent-channel-plan-help" className="text-xs text-muted-foreground">
-        {t('channelPlanHelp')}
+      <legend className="font-medium">{t('studioPlan')}</legend>
+      <p id="ent-studio-plan-help" className="text-xs text-muted-foreground">
+        {t('studioPlanHelp')}
       </p>
       <div className="flex flex-wrap gap-4">
         <div className="grid gap-1.5">
-          <Label htmlFor="ent-channels">{t('channels')}</Label>
+          <Label htmlFor="ent-plan">{t('plan')}</Label>
           <NativeSelect
-            id="ent-channels"
-            value={channels}
-            aria-describedby="ent-channel-plan-help"
-            onChange={(e) => onChannels(e.target.value)}
+            id="ent-plan"
+            value={plan}
+            aria-describedby="ent-studio-plan-help"
+            onChange={(e) => onPlan(isPlanId(e.target.value) ? e.target.value : '')}
           >
             <option value="">{t('keep')}</option>
-            {CHANNEL_COUNTS.map((n) => (
-              <option key={n} value={String(n)}>
-                {t('channelsOption', { count: n })}
+            {PLAN_IDS.map((id) => (
+              <option key={id} value={id}>
+                {PLAN_NAMES[id]}
               </option>
             ))}
           </NativeSelect>
@@ -146,11 +151,11 @@ export function ChannelPlanFields({
           <NativeSelect
             id="ent-interval"
             value={interval}
-            aria-describedby="ent-channel-plan-help"
-            onChange={(e) => onInterval(isChannelInterval(e.target.value) ? e.target.value : '')}
+            aria-describedby="ent-studio-plan-help"
+            onChange={(e) => onInterval(isPlanInterval(e.target.value) ? e.target.value : '')}
           >
             <option value="">{t('keep')}</option>
-            {CHANNEL_INTERVALS.map((i) => (
+            {PLAN_INTERVALS.map((i) => (
               <option key={i} value={i}>
                 {ta(`intervalValues.${i}`)}
               </option>

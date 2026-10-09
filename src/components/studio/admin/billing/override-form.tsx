@@ -14,15 +14,16 @@ import { useFormat } from '@/lib/client/format';
 import {
   PLAN_TIERS,
   type AdminEntitlementsResponse,
-  type ChannelInterval,
+  type PlanId,
+  type PlanInterval,
   type PlanTier,
 } from '../../billing/types';
 import {
-  ChannelPlanFields,
   emptyLimits,
   LimitsFieldset,
   limitsFromDraft,
   MIN_REASON,
+  StudioPlanFields,
   toPence,
   useConfirmText,
   type LimitDraft,
@@ -58,8 +59,8 @@ export function OverrideForm({
   const confirmText = useConfirmText();
   const [tier, setTier] = useState<PlanTier | ''>('');
   const [access, setAccess] = useState<Access | ''>('');
-  const [channels, setChannels] = useState('');
-  const [billingInterval, setBillingInterval] = useState<ChannelInterval | ''>('');
+  const [plan, setPlan] = useState<PlanId | ''>('');
+  const [billingInterval, setBillingInterval] = useState<PlanInterval | ''>('');
   const [limits, setLimits] = useState(emptyLimits);
   const [price, setPrice] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
@@ -91,8 +92,8 @@ export function OverrideForm({
         body: {
           ...(tier && { tier }),
           ...(access && { access }),
-          // ENTERPRISE has no channel plan (custom limits instead), so none is sent with it.
-          ...(!enterprise && channels && { channels: Number(channels) }),
+          // ENTERPRISE has no plan (custom limits instead), so none is sent with it.
+          ...(!enterprise && plan && { plan }),
           ...(!enterprise && billingInterval && { interval: billingInterval }),
           ...(limitsBody && { limits: limitsBody }),
           ...(enterprise && { monthlyPricePence: pricePence }),
@@ -161,10 +162,10 @@ export function OverrideForm({
           </div>
         </div>
         {!enterprise && (
-          <ChannelPlanFields
-            channels={channels}
+          <StudioPlanFields
+            plan={plan}
             interval={billingInterval}
-            onChannels={setChannels}
+            onPlan={setPlan}
             onInterval={setBillingInterval}
           />
         )}

@@ -346,8 +346,8 @@ export async function setActiveOrg(db: Db, userId: string, orgId: string | null)
 
 /**
  * A plan for the organisation (read by the app within 30 s of its first read: set it first).
- * `tier` is the internal tier (routing, gates); customers never see it. 21.5: pass `channels`
- * (and `interval`) for a per-channel plan — a staff override when the source is admin, otherwise
+ * `tier` is the internal tier (routing, gates); customers never see it. 26.1: pass `plan`
+ * (Starter / Growth / Pro, and `interval`) — a staff override when the source is admin, otherwise
  * what a Stripe subscription would have stored (status active, or past_due with `graceUntil`).
  */
 export async function givePlan(
@@ -358,15 +358,13 @@ export async function givePlan(
     access?: 'full' | 'read_only';
     source?: string;
     graceUntil?: Date;
-    channels?: number;
+    plan?: 'starter' | 'growth' | 'pro';
     interval?: 'week' | 'month' | 'year';
   } = {},
 ): Promise<void> {
   const access = extra.access ?? 'full';
   const source = extra.source ?? 'admin';
-  const plan = extra.channels
-    ? { channels: extra.channels, interval: extra.interval ?? 'month' }
-    : undefined;
+  const plan = extra.plan ? { plan: extra.plan, interval: extra.interval ?? 'month' } : undefined;
   const overrides = !plan
     ? undefined
     : source === 'admin'

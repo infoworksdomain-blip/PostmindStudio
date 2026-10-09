@@ -28,10 +28,10 @@ export interface UsageResponse {
     planTier: 'BASIC' | 'STANDARD' | 'PLUS' | 'ENTERPRISE';
     mode: 'warn' | 'enforce';
     month: string;
-    /** 21.5: the allowance window (a weekly channel plan counts per ISO week). */
+    /** 21.5: the allowance window (a weekly plan counts per ISO week). */
     period?: 'week' | 'month';
-    /** 21.5: a per-channel plan (no tier names, no long videos). */
-    channelPlan?: boolean;
+    /** 26.1: a Starter / Growth / Pro plan (no tier names, no long videos). */
+    studioPlan?: boolean;
     periodStart: string;
     resetsAt: string;
     thresholds: number[];
@@ -101,8 +101,8 @@ export function UsageMeters({ usage }: { usage: UsageResponse['usage'] }) {
   const short = usage.videos.short.maxDurationSec;
   const long = usage.videos.long.maxDurationSec;
   const tier = t(`tiers.${usage.planTier}`);
-  // 21.5: a per-channel plan shows videos per week or month, never a tier name or long videos.
-  if (usage.channelPlan)
+  // 26.1: a plan shows videos per week or month, never a tier name or long videos.
+  if (usage.studioPlan)
     return (
       <div className="grid gap-4">
         <MeterRow
@@ -158,7 +158,7 @@ export function UsageBanner() {
     >
       <Gauge className="size-6 text-muted-foreground" strokeWidth={1.5} aria-hidden />
       <div className="text-sm">
-        {usage.channelPlan ? (
+        {usage.studioPlan ? (
           <>
             <p className="font-medium">
               {exceeded
@@ -185,15 +185,15 @@ export function UsageBanner() {
             </p>
           </>
         )}
-        {usage.channelPlan && <p className="text-muted-foreground">{t('quickPostsNote')}</p>}
+        {usage.studioPlan && <p className="text-muted-foreground">{t('quickPostsNote')}</p>}
         <UsageBannerActions />
       </div>
       <div className="grid gap-3">
         <MeterRow
-          label={usage.channelPlan ? t('videos') : t('shortVideos')}
+          label={usage.studioPlan ? t('videos') : t('shortVideos')}
           meter={usage.videos.short}
         />
-        {usage.videos.long.limit !== 0 && !usage.channelPlan && (
+        {usage.videos.long.limit !== 0 && !usage.studioPlan && (
           <MeterRow label={t('longVideos')} meter={usage.videos.long} />
         )}
       </div>
@@ -216,7 +216,7 @@ export function UsageNotice({ usage }: { usage: UsageResponse['usage'] }) {
   const exceeded = usage.status === 'exceeded';
   const blocked = exceeded && usage.mode === 'enforce';
   const period = usage.period ?? 'month';
-  const title = usage.channelPlan
+  const title = usage.studioPlan
     ? exceeded
       ? t('planExceededTitle', { period })
       : t('planWarningTitle', { period })
@@ -224,7 +224,7 @@ export function UsageNotice({ usage }: { usage: UsageResponse['usage'] }) {
       ? t('exceededTitle', { tier: t(`tiers.${usage.planTier}`) })
       : t('warningTitle', { tier: t(`tiers.${usage.planTier}`) });
   const date = resetDate(usage.resetsAt);
-  const body = usage.channelPlan
+  const body = usage.studioPlan
     ? blocked
       ? t('planBlockedBody', { date })
       : t('planResetBody', { date })
