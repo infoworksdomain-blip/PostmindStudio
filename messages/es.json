@@ -1764,7 +1764,8 @@
       },
       "emptyFiltered": {
         "title": "No hay nada aquí",
-        "body": "Ningún proyecto coincide con este filtro."
+        "body": "Ningún proyecto coincide con este filtro.",
+        "clear": "Ver todos los proyectos"
       },
       "noFormats": "Sin formatos",
       "rowMeta": "{platforms} — actualizado {updated}",
@@ -1821,7 +1822,8 @@
       },
       "emptyFiltered": {
         "title": "No hay nada aquí",
-        "body": "Ninguna publicación coincide con estos filtros."
+        "body": "Ninguna publicación coincide con estos filtros.",
+        "clear": "Ver todas las publicaciones"
       },
       "columns": {
         "video": "Vídeo",

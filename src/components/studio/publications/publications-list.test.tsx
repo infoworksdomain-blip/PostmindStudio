@@ -63,6 +63,17 @@ describe('PublicationsList', () => {
     expect(await screen.findByText('Nothing published yet')).toBeInTheDocument();
   });
 
+  it('offers "Show all publications" when the filters match nothing (26.2)', async () => {
+    setTestUrl('/publications?filter=failed&platform=youtube');
+    mockFetch(() => ok({ data: [], nextCursor: null }));
+    const user = userEvent.setup();
+    renderScreen(<PublicationsList />);
+    expect(await screen.findByText('Nothing here')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Show all publications' }));
+    await waitFor(() => expect(testUrl().searchParams.get('filter')).toBeNull());
+    expect(testUrl().searchParams.get('platform')).toBeNull();
+  });
+
   it('shows the error state', async () => {
     mockFetch(() => fail(500, 'Database unavailable'));
     renderScreen(<PublicationsList />);

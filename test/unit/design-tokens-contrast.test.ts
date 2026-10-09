@@ -150,6 +150,10 @@ describe('globals.css', () => {
     expect(css).toMatch(/\[dir='rtl'\] \.cn-rtl-flip/);
   });
 
+  it('wraps long unbroken user text (names, emails, URLs) instead of overflowing', () => {
+    expect(css).toMatch(/body \{[^}]*overflow-wrap: break-word;/);
+  });
+
   it('uses Geist for UI and display and Geist Mono for data', () => {
     expect(css).toMatch(/--font-sans: 'Geist Variable'/);
     expect(css).toMatch(/--font-display: 'Geist Variable'/);

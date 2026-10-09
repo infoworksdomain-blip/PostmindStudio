@@ -88,6 +88,16 @@ describe('ProjectsList search and filters', () => {
     expect(screen.queryByText('No videos yet')).not.toBeInTheDocument();
   });
 
+  it('offers "Show all projects" to clear the search and filter (26.2)', async () => {
+    nav.params = 'q=zzz&filter=archived';
+    nav.replace.mockClear();
+    serve([]);
+    const user = userEvent.setup();
+    renderScreen(<ProjectsList />);
+    await user.click(await screen.findByRole('button', { name: 'Show all projects' }));
+    expect(nav.replace).toHaveBeenCalledWith('/projects', { scroll: false });
+  });
+
   it('the Archived filter goes into the URL', async () => {
     serve([project()]);
     const user = userEvent.setup();

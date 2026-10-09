@@ -105,6 +105,14 @@ describe('PublicPreview', () => {
     expect(post?.body).toEqual({ authorName: 'Amal', body: 'جميل' });
   });
 
+  it('shows a skeleton of the page while loading, not a lone spinner (26.2)', () => {
+    vi.stubGlobal('fetch', () => new Promise(() => undefined));
+    const { container } = renderScreen(<PublicPreview token="slow" />);
+    expect(screen.getByRole('main', { name: 'Loading preview' })).toHaveAttribute('aria-busy');
+    expect(container.querySelector('.animate-spin')).toBeNull();
+    expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(3);
+  });
+
   it('shows the unavailable page for a dead link', async () => {
     mockFetch(() => fail(404, 'This preview link is invalid or has expired'));
     renderScreen(<PublicPreview token="dead" />);

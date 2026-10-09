@@ -1764,7 +1764,8 @@
       },
       "emptyFiltered": {
         "title": "Nothing here",
-        "body": "No projects match this filter."
+        "body": "No projects match this filter.",
+        "clear": "Show all projects"
       },
       "noFormats": "No formats",
       "rowMeta": "{platforms} — updated {updated}",
@@ -1821,7 +1822,8 @@
       },
       "emptyFiltered": {
         "title": "Nothing here",
-        "body": "No publications match these filters."
+        "body": "No publications match these filters.",
+        "clear": "Show all publications"
       },
       "columns": {
         "video": "Video",

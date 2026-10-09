@@ -239,9 +239,14 @@ export function PublicationsList() {
           title={unfiltered ? t('empty.title') : t('emptyFiltered.title')}
           description={unfiltered ? t('empty.body') : t('emptyFiltered.body')}
           action={
-            unfiltered && (
+            unfiltered ? (
               <Button asChild>
                 <Link href="/projects">{t('empty.action')}</Link>
+              </Button>
+            ) : (
+              // 26.2: a filtered empty list says how to get back to everything.
+              <Button variant="outline" onClick={() => update({ filter: 'all', platform: '' })}>
+                {t('emptyFiltered.clear')}
               </Button>
             )
           }

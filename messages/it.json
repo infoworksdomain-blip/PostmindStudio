@@ -1764,7 +1764,8 @@
       },
       "emptyFiltered": {
         "title": "Niente da mostrare",
-        "body": "Nessun progetto corrisponde a questo filtro."
+        "body": "Nessun progetto corrisponde a questo filtro.",
+        "clear": "Mostra tutti i progetti"
       },
       "noFormats": "Nessun formato",
       "rowMeta": "{platforms} — aggiornato {updated}",
@@ -1821,7 +1822,8 @@
       },
       "emptyFiltered": {
         "title": "Niente da mostrare",
-        "body": "Nessuna pubblicazione corrisponde a questi filtri."
+        "body": "Nessuna pubblicazione corrisponde a questi filtri.",
+        "clear": "Mostra tutte le pubblicazioni"
       },
       "columns": {
         "video": "Video",

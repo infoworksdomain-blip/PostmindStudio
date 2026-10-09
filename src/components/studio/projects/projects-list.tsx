@@ -364,12 +364,16 @@ export function ProjectsList() {
                 : t('emptyFiltered.body')
           }
           action={
-            filter === 'all' &&
-            !q && (
+            filter === 'all' && !q ? (
               <Button asChild>
                 <Link href="/new">
                   <Plus /> {t('empty.action')}
                 </Link>
+              </Button>
+            ) : (
+              // 26.2: a filtered empty list says how to get back to everything.
+              <Button variant="outline" onClick={() => update({ filter: 'all', q: '' })}>
+                {t('emptyFiltered.clear')}
               </Button>
             )
           }

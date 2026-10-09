@@ -310,6 +310,8 @@
       'kern' 1,
       'calt' 1;
     font-optical-sizing: auto;
+    /* 26.2: a long unbroken name, email or URL wraps instead of pushing the layout sideways. */
+    overflow-wrap: break-word;
   }
   h1,
   h2,

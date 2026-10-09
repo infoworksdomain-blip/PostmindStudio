@@ -1764,7 +1764,8 @@
       },
       "emptyFiltered": {
         "title": "这里没有内容",
-        "body": "没有符合此筛选条件的项目。"
+        "body": "没有符合此筛选条件的项目。",
+        "clear": "显示全部项目"
       },
       "noFormats": "无格式",
       "rowMeta": "{platforms} — 更新于 {updated}",
@@ -1821,7 +1822,8 @@
       },
       "emptyFiltered": {
         "title": "这里没有内容",
-        "body": "没有符合这些筛选条件的发布。"
+        "body": "没有符合这些筛选条件的发布。",
+        "clear": "显示全部发布"
       },
       "columns": {
         "video": "视频",

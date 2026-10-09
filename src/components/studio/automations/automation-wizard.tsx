@@ -9,6 +9,7 @@ import { ArrowLeft, ArrowRight, Check, Leaf, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ChoiceChips } from '@/components/ui/choice-chips';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import type { PlatformConnection } from '@/lib/client/types';
@@ -126,9 +127,13 @@ export function AutomationWizard() {
     return (
       <>
         {header}
-        <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" /> {t('list.loading')}
-        </p>
+        {/* 26.2: a skeleton of the wizard (step bar, then the step's fields), not a spinner. */}
+        <div role="status" aria-label={t('list.loading')} aria-busy className="grid gap-6">
+          <Skeleton className="h-2 w-full rounded-full" />
+          <Skeleton className="h-10 w-full max-w-md" />
+          <Skeleton className="h-28 w-full rounded-panel" />
+          <Skeleton className="h-9 w-32" />
+        </div>
       </>
     );
 
