@@ -206,7 +206,27 @@ describe.skipIf(!hasDb)('billing service (Stripe fake, real Postgres)', { timeou
 
   it('a plan price missing in Stripe is not sold', async () => {
     fake.prices = fake.prices.filter((p) => p.lookupKey !== 'studio_pro_weekly');
-    await expect(subscribe('pro', 'week')).rejects.toBeInstanceOf(NotFoundError);
+    const logged: string[] = [];
+    const err = await createBillingService({
+      db,
+      gateway: fake,
+      logger: pino({ level: 'warn' }, { write: (line: string) => logged.push(line) }),
+      audit: () => undefined,
+      now: () => Date.parse('2026-09-29T00:00:00Z'),
+      appUrl: 'https://studio.test',
+      env: {},
+    })
+      .createCheckout({
+        organisationId: org,
+        userId: 'u1',
+        intent: { kind: 'plan', plan: 'pro', interval: 'week' },
+        locale: 'en-GB',
+      })
+      .catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(NotFoundError);
+    // 26.3: customers never see the Stripe lookup key; the operator finds it in the log.
+    expect((err as Error).message).toBe("This isn't available right now. Please try again later.");
+    expect(logged.join('\n')).toContain('studio_pro_weekly');
   });
 
   it('refuses a second subscription (plan changes happen on Your plan)', async () => {

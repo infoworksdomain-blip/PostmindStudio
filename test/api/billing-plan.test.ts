@@ -195,6 +195,21 @@ describe.skipIf(!hasDb)('Your plan API (26.1)', { timeout: 120_000 }, () => {
     ).toBe(403);
   });
 
+  it('change: a proration time in the future or too old is refused (400) before Stripe is called (26.3)', async () => {
+    await subscribe('studio_growth_monthly');
+    const nowSec = Math.floor(Date.now() / 1000);
+    for (const prorationDate of [nowSec + 3_600, nowSec - 2 * 3_600]) {
+      const res = await post(planRoute, '/api/studio/billing/plan', {
+        plan: 'pro',
+        interval: 'month',
+        prorationDate,
+      });
+      expect(res.status, String(prorationDate)).toBe(400);
+      expect(res.json.details).toMatchObject({ reason: 'proration_date_out_of_range' });
+    }
+    expect(fake.calls.filter((c) => c.method === 'changePlanNow')).toHaveLength(0);
+  });
+
   it('cancel and resume', async () => {
     await subscribe('studio_pro_yearly');
     const cancel = await post(cancelRoute, '/api/studio/billing/plan/cancel', {});
