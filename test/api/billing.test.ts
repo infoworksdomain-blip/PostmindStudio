@@ -514,7 +514,7 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
             action: 'entitlement.override_set',
             metadata: expect.objectContaining({
               trialEnded: { endedAt: expect.any(String) },
-              after: { tier: 'PLUS', access: 'full' },
+              after: expect.objectContaining({ tier: 'PLUS', access: 'full' }),
             }),
           }),
         );

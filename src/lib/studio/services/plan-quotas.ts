@@ -16,11 +16,16 @@ import {
   ALLOWANCE_WINDOW,
   allowancePerWindow,
   allowanceWindowFor,
+  blendedAllowance,
   isoWeekWindow,
   isWeekWindowKey,
 } from '../billing/plans';
 import { consumeCredit } from '../billing/credits';
-import type { Entitlements, EntitlementsReader } from '../billing/entitlements-reader';
+import type {
+  Entitlements,
+  EntitlementsReader,
+  PlanEntitlement,
+} from '../billing/entitlements-reader';
 import { withQuotaLock } from '../billing/quota-lock';
 import { businessIdParam } from './businesses';
 import { toPlanTier, type Platform } from './catalog';
@@ -125,7 +130,26 @@ export function quotaMode(env: Env = process.env, fallback: QuotaMode = 'warn'):
  * Phase 18 §P.3: the organisation's own allowance — the trial's 5 short + 1 long while trialing,
  * or ENTERPRISE / staff custom limits — on top of the tier's quota.
  */
-export function entitlementQuota(base: TierQuota, entitlements?: Entitlements): TierQuota {
+/**
+ * 26.3: a plan's allowance in the window holding `now`: the whole allowance, or, in the window
+ * of an upgrade applied mid-period, the blend (plans.ts blendedAllowance). The old plan is
+ * measured in the new plan's window (a weekly -> monthly change compares months).
+ */
+function planAllowance(plan: PlanEntitlement, now: number | undefined): number {
+  const full = allowancePerWindow(plan.id, plan.interval);
+  const from = plan.changedFrom;
+  if (!from || now === undefined) return full;
+  const window = allowanceWindowFor(ALLOWANCE_WINDOW[plan.interval], now);
+  const old = allowancePerWindow(from.plan, plan.interval);
+  return blendedAllowance(old, full, window, Date.parse(from.at));
+}
+
+/** `now`: the time the allowance is counted at (blends the window of a mid-period upgrade). */
+export function entitlementQuota(
+  base: TierQuota,
+  entitlements?: Entitlements,
+  now?: number,
+): TierQuota {
   if (!entitlements) return base;
   if (entitlements.trial) {
     return {
@@ -141,7 +165,7 @@ export function entitlementQuota(base: TierQuota, entitlements?: Entitlements): 
   const withPlan: TierQuota = plan
     ? {
         ...base,
-        shortVideos: allowancePerWindow(plan.id, plan.interval),
+        shortVideos: planAllowance(plan, now),
         longVideos: 0,
         longMaxSec: 0,
         studioPlan: true,
@@ -512,8 +536,8 @@ async function checkGenerateQuotaLocked(
   const mode = quotaMode(env, 'enforce');
   const tier = toPlanTier(tenant.organisation.planTier);
   const entitlements = await reader.forOrganisation(tenant.organisationId);
-  const quota = entitlementQuota(tierQuota(tier, env), entitlements);
   const now = deps.now();
+  const quota = entitlementQuota(tierQuota(tier, env), entitlements, now);
   // 21.5: the allowance window (ISO week for weekly plans); top-up credit uses stay keyed by the
   // calendar month, where their cost-cap headroom is counted (credits.ts creditHeadroomPence).
   const month = allowanceWindow(entitlements, now);
@@ -770,8 +794,9 @@ export async function usageView(
   entitlements?: Entitlements,
 ): Promise<UsageView> {
   const env = deps.env ?? process.env;
-  const quota = entitlementQuota(tierQuota(tier, env), entitlements);
-  const month = allowanceWindow(entitlements, deps.now());
+  const now = deps.now();
+  const quota = entitlementQuota(tierQuota(tier, env), entitlements, now);
+  const month = allowanceWindow(entitlements, now);
   const [usage, businessesScanned, imageGeneration] = await Promise.all([
     monthlyQuarterUsage(deps.db, organisationId, quota, month),
     scannedBusinessCount(deps.db, organisationId),

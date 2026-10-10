@@ -5,6 +5,7 @@ import {
   entitlementsFromSubscription,
   graceDays,
   graceEndsAt,
+  nextPlanChange,
   parseOverrides,
   resolveStoredEntitlements,
   tierOfSubscription,
@@ -387,5 +388,104 @@ describe('26.1 plan entitlements (Starter / Growth / Pro)', () => {
         now,
       ).plan,
     ).toBeUndefined();
+  });
+});
+
+describe('the upgrade record behind the blended allowance (26.3)', () => {
+  type Plan = 'starter' | 'growth' | 'pro';
+  type Interval = 'week' | 'month' | 'year';
+  const at = new Date('2026-10-20T12:00:00Z');
+  const stripe = (plan: Plan, interval: Interval) =>
+    ({
+      tier: 'STANDARD',
+      access: 'full',
+      source: 'stripe',
+      status: 'active',
+      plan,
+      interval,
+    }) as const;
+  const word: Record<Interval, string> = { week: 'weekly', month: 'monthly', year: 'yearly' };
+  const next = (plan: Plan, interval: Interval = 'month') =>
+    entitlementsFromSubscription({
+      subscription: {
+        status: 'active',
+        lookupKey: `studio_${plan}_${word[interval]}`,
+        productTier: null,
+        trialEnd: null,
+      },
+      now: at,
+      graceUntil: null,
+      everPaid: true,
+    });
+
+  it('an upgrade applied now records when and from which plan', () => {
+    expect(nextPlanChange(stripe('starter', 'month'), next('pro'), at)).toEqual({
+      at: at.toISOString(),
+      previousPlan: 'starter',
+      previousInterval: 'month',
+    });
+  });
+
+  it('the same plan keeps the record; a downgrade or a first plan has none', () => {
+    const record = {
+      at: '2026-10-05T00:00:00.000Z',
+      previousPlan: 'starter',
+      previousInterval: 'month',
+    } as const;
+    expect(
+      nextPlanChange({ ...stripe('pro', 'month'), planChange: record }, next('pro'), at),
+    ).toEqual(record);
+    expect(nextPlanChange(stripe('pro', 'month'), next('starter'), at)).toBeUndefined();
+    expect(nextPlanChange(undefined, next('pro'), at)).toBeUndefined();
+  });
+
+  it('a trial that becomes paid is not an upgrade (no proration was paid)', () => {
+    const trial = { ...stripe('starter', 'month'), source: 'trial', status: 'trialing' } as const;
+    expect(nextPlanChange(trial, next('pro'), at)).toBeUndefined();
+  });
+
+  it('a second upgrade in the same window keeps the first plan of the window and the latest time', () => {
+    const first = {
+      at: '2026-10-05T00:00:00.000Z',
+      previousPlan: 'starter',
+      previousInterval: 'month',
+    } as const;
+    expect(
+      nextPlanChange({ ...stripe('growth', 'month'), planChange: first }, next('pro'), at),
+    ).toEqual({ at: at.toISOString(), previousPlan: 'starter', previousInterval: 'month' });
+    const lastMonth = { ...first, at: '2026-09-25T00:00:00.000Z' };
+    expect(
+      nextPlanChange({ ...stripe('growth', 'month'), planChange: lastMonth }, next('pro'), at),
+    ).toMatchObject({ previousPlan: 'growth' });
+  });
+
+  it('the effective Stripe plan carries the record; a staff plan does not', () => {
+    const planChange = {
+      at: at.toISOString(),
+      previousPlan: 'starter',
+      previousInterval: 'month',
+    } as const;
+    const row = (overrides: unknown): StoredEntitlement => ({
+      organisationId: 'org-1',
+      tier: 'STANDARD',
+      access: 'full',
+      source: 'stripe',
+      graceUntil: null,
+      overrides,
+      everPaidAt: at,
+    });
+    const derived = { ...stripe('pro', 'month'), planChange };
+    expect(resolveStoredEntitlements(row({ derived }), at).plan).toEqual({
+      id: 'pro',
+      interval: 'month',
+      source: 'stripe',
+      changedFrom: { plan: 'starter', interval: 'month', at: at.toISOString() },
+    });
+    const admin = { plan: 'growth', reason: 'pilot', setByUserId: 's', setAt: at.toISOString() };
+    expect(resolveStoredEntitlements(row({ derived, admin }), at).plan).toEqual({
+      id: 'growth',
+      interval: 'month',
+      source: 'admin',
+    });
   });
 });

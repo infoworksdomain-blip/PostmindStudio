@@ -41,6 +41,11 @@ export interface PlanEntitlement {
   id: PlanId;
   interval: PlanInterval;
   source: 'stripe' | 'admin';
+  /**
+   * 26.3: this Stripe plan is an upgrade applied mid-period: the plan before it and when it
+   * changed, so the allowance window of the change is blended (plans.ts blendedAllowance).
+   */
+  changedFrom?: { plan: PlanId; interval: PlanInterval; at: string };
 }
 
 export interface EntitlementsReader {

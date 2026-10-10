@@ -170,6 +170,8 @@ describe.skipIf(!hasDb)('billing lifecycle (scripted test clock)', { timeout: 90
       id: 'pro',
       interval: 'month',
       source: 'stripe',
+      // 26.3: an upgrade applied mid-period: that month's allowance is blended.
+      changedFrom: expect.objectContaining({ at: new Date(clock).toISOString() }),
     });
 
     // Cancelled at period end → after a paid period, read-only (export and downloads stay).

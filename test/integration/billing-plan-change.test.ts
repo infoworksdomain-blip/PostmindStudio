@@ -16,6 +16,7 @@ import {
 } from '../../src/lib/studio/billing/plan-change';
 import type { PlanId, PlanInterval } from '../../src/lib/studio/billing/plans';
 import { syncSubscription } from '../../src/lib/studio/billing/sync';
+import { usageView } from '../../src/lib/studio/services/plan-quotas';
 import { createFakeStripe, type FakeStripe } from '../helpers/fake-stripe';
 
 // 21.5 / 26.1 Your plan (Starter / Growth / Pro) on real Postgres with a scripted Stripe: previews, upgrades now with proration
@@ -116,7 +117,12 @@ describe.skipIf(!hasDb)('plan changes (Stripe fake, real Postgres)', { timeout: 
       prorationDate: Math.floor(NOW / 1000),
     });
     const ent = await entitlements().forOrganisation(org);
-    expect(ent.plan).toEqual({ id: 'growth', interval: 'month', source: 'stripe' });
+    expect(ent.plan).toEqual({
+      id: 'growth',
+      interval: 'month',
+      source: 'stripe',
+      changedFrom: { plan: 'starter', interval: 'month', at: new Date(NOW).toISOString() },
+    });
     expect(ent.limits).toMatchObject({ seats: 3, businesses: 1 });
     expect(audits).toContainEqual(
       expect.objectContaining({
@@ -129,6 +135,33 @@ describe.skipIf(!hasDb)('plan changes (Stripe fake, real Postgres)', { timeout: 
         }),
       }),
     );
+  });
+
+  it('26.3: an upgrade applied now is stored with its time and old plan; that month is blended, the next is whole', async () => {
+    await subscribe('studio_starter_monthly');
+    const preview = await previewPlanChange(deps(), org, { plan: 'pro', interval: 'month' });
+    await changePlan(deps(), {
+      ...who(),
+      next: { plan: 'pro', interval: 'month' },
+      prorationDate: preview.prorationDate,
+    });
+    const ent = await entitlements().forOrganisation(org);
+    expect(ent.plan).toEqual({
+      id: 'pro',
+      interval: 'month',
+      source: 'stripe',
+      changedFrom: { plan: 'starter', interval: 'month', at: new Date(NOW).toISOString() },
+    });
+    // 21.5 of October's 31 days left: 8 + floor(37 × 21.5 / 31) = 33; November: Pro's 45.
+    const limitOn = async (now: number) =>
+      (await usageView({ db, now: () => now, env: {} }, org, 'STANDARD', undefined, ent)).videos
+        .short.limit;
+    expect(await limitOn(NOW)).toBe(33);
+    expect(await limitOn(Date.parse('2026-11-03T00:00:00Z'))).toBe(45);
+    // A webhook re-sync of the same state keeps the record.
+    const state = await fake.retrieveSubscription(subId);
+    if (state) await syncSubscription(deps(), state, 'webhook');
+    expect((await entitlements().forOrganisation(org)).plan?.changedFrom).toBeDefined();
   });
 
   it('a higher plan on a shorter interval still applies now', async () => {

@@ -267,6 +267,27 @@ export function allowanceWindowFor(kind: AllowanceWindowKind, now: number): Allo
   return kind === 'week' ? isoWeekWindow(now) : calendarMonthWindow(now);
 }
 
+/**
+ * 26.3 (security review): an upgrade applies now with Stripe proration, so without this a
+ * customer could upgrade on the last day of a window, pay a few pence and get the whole new
+ * allowance. In the window of the change the allowance is the old one plus the difference times
+ * the share of THIS allowance window still to run at the change, rounded down to whole videos
+ * (so the quarter-video accounting stays exact); from the next window it is the new one. A lower
+ * allowance is never blended (downgrades apply at the end of the period).
+ */
+export function blendedAllowance(
+  oldPerWindow: number,
+  newPerWindow: number,
+  window: AllowanceWindow,
+  changedAt: number,
+): number {
+  const start = window.start.getTime();
+  const end = window.end.getTime();
+  if (newPerWindow <= oldPerWindow || changedAt <= start || changedAt >= end) return newPerWindow;
+  const remaining = (end - changedAt) / (end - start);
+  return oldPerWindow + Math.floor((newPerWindow - oldPerWindow) * remaining);
+}
+
 /** Whether `key` is an ISO-week window key ('2026-W40'). */
 export function isWeekWindowKey(key: string): boolean {
   return /^\d{4}-W\d{2}$/.test(key);
