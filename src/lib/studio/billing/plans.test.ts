@@ -4,6 +4,7 @@ import {
   allowancePerWindow,
   allowanceWindowFor,
   assertPlanChoice,
+  blendedAllowance,
   calendarMonthWindow,
   isoWeekWindow,
   isPlanId,
@@ -238,5 +239,32 @@ describe('plan change timing (upgrades now, downgrades at period end)', () => {
     expect(planChangeTiming(at('pro', 'month'), at('pro', 'year'))).toBe('now');
     expect(planChangeTiming(at('starter', 'year'), at('starter', 'month'))).toBe('period_end');
     expect(planChangeTiming(at('pro', 'month'), at('pro', 'week'))).toBe('period_end');
+  });
+});
+
+describe('blendedAllowance: an upgrade mid-window adds only the remaining share (26.3)', () => {
+  const october = calendarMonthWindow(Date.parse('2026-10-10T00:00:00Z'));
+
+  it('Starter -> Pro on the last day of a 31-day month adds 1/31 of the difference, rounded down', () => {
+    expect(blendedAllowance(8, 45, october, Date.parse('2026-10-31T00:00:00Z'))).toBe(9);
+    expect(blendedAllowance(8, 45, october, Date.parse('2026-10-31T23:00:00Z'))).toBe(8);
+  });
+
+  it('half way through the window adds half the difference', () => {
+    // 15.5 of 31 days left: 8 + floor(37 / 2) = 26.
+    expect(blendedAllowance(8, 45, october, Date.parse('2026-10-16T12:00:00Z'))).toBe(26);
+  });
+
+  it('at the start of the window (or a change in an earlier window) the new allowance is whole', () => {
+    expect(blendedAllowance(8, 45, october, october.start.getTime())).toBe(45);
+    expect(blendedAllowance(8, 45, october, Date.parse('2026-09-30T23:59:00Z'))).toBe(45);
+    expect(blendedAllowance(8, 45, october, october.end.getTime())).toBe(45);
+  });
+
+  it('never lowers the allowance (a lower plan is not blended) and works on ISO weeks', () => {
+    expect(blendedAllowance(45, 8, october, Date.parse('2026-10-20T00:00:00Z'))).toBe(8);
+    const week = isoWeekWindow(Date.parse('2026-10-07T00:00:00Z'));
+    // Monday 5 Oct to Monday 12 Oct; Friday 00:00 leaves 3 of 7 days: 2 + floor(9 * 3 / 7) = 5.
+    expect(blendedAllowance(2, 11, week, Date.parse('2026-10-09T00:00:00Z'))).toBe(5);
   });
 });

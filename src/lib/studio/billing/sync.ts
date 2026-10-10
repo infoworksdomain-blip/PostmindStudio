@@ -7,6 +7,7 @@ import {
   ENDED_STATUSES,
   entitlementsFromSubscription,
   graceEndsAt,
+  nextPlanChange,
   parseOverrides,
   resolveStoredEntitlements,
   trialStateFor,
@@ -185,6 +186,8 @@ export async function recomputeEntitlements(
   const ended =
     Boolean(existing?.everPaidAt) && (!governing || ENDED_STATUSES.has(governing.status));
   const { retention: previousRetention, ...rest } = overrides;
+  // 26.3: an upgrade applied now blends the allowance of its window (plans.ts blendedAllowance).
+  const planChange = nextPlanChange(overrides.derived, derived, now);
   const nextOverrides: EntitlementOverrides = {
     ...rest,
     ...(ended && {
@@ -196,6 +199,7 @@ export async function recomputeEntitlements(
       source: derived.source,
       status: derived.status,
       ...(derived.plan && { plan: derived.plan.plan, interval: derived.plan.interval }),
+      ...(planChange && { planChange }),
     },
     ...(trialing &&
       trialStartedAt && {
