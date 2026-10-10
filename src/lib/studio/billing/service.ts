@@ -176,9 +176,16 @@ export function checkoutParams(input: {
   };
 }
 
-async function priceIdFor(gateway: StripeGateway, lookupKey: string): Promise<string> {
-  const [price] = (await gateway.listPrices([lookupKey])).filter((p) => p.active);
-  if (!price) throw new NotFoundError(`No active Stripe price has the lookup key ${lookupKey}`);
+/** 26.3: customers never see Stripe lookup keys; the key is logged for the operator. */
+async function priceIdFor(
+  deps: Pick<BillingServiceDeps, 'gateway' | 'logger'>,
+  lookupKey: string,
+): Promise<string> {
+  const [price] = (await deps.gateway.listPrices([lookupKey])).filter((p) => p.active);
+  if (!price) {
+    deps.logger.warn({ lookupKey }, 'no active Stripe price for a lookup key');
+    throw new NotFoundError("This isn't available right now. Please try again later.");
+  }
   return price.id;
 }
 
@@ -223,7 +230,7 @@ export function createBillingService(deps: BillingServiceDeps): BillingService {
       const params = checkoutParams({
         request,
         customer: stripeCustomerId,
-        priceLookup: { priceId: await priceIdFor(deps.gateway, lookupKey) },
+        priceLookup: { priceId: await priceIdFor(deps, lookupKey) },
         trialPeriodDays,
         appUrl: deps.appUrl,
       });

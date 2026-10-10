@@ -3,6 +3,9 @@ import type { TenantAccess } from '../../tenant';
 import type { PlanTier } from '../providers/router';
 import { PLAN_CATALOGUE, planForLookupKey, TIER_ORDER, TRIAL } from './catalogue';
 import {
+  ALLOWANCE_WINDOW,
+  allowanceWindowFor,
+  planChangeTiming,
   planForChannelCount,
   planOfSubscription,
   STUDIO_PLANS,
@@ -214,6 +217,13 @@ export const trialStateSchema = z.object({
   endedByUserId: z.string().optional(),
 });
 
+/** 26.3: an upgrade applied now (Stripe proration): when, and the plan before it. */
+const planChangeSchema = z.object({
+  at: z.string(),
+  previousPlan: planIdSchema,
+  previousInterval: intervalSchema,
+});
+
 export const overridesSchema = z.object({
   derived: z
     .object({
@@ -226,6 +236,8 @@ export const overridesSchema = z.object({
       /** 21.5 rows: the quantity on a channel price (read as a plan; no longer written). */
       channels: channelsSchema.optional(),
       interval: intervalSchema.optional(),
+      /** 26.3: the last upgrade applied now (blends that window's allowance). */
+      planChange: planChangeSchema.optional(),
     })
     .optional(),
   admin: adminOverrideSchema.optional(),
@@ -248,6 +260,8 @@ export const overridesSchema = z.object({
 export const ENDED_STATUSES: ReadonlySet<string> = new Set(['canceled', 'incomplete_expired']);
 
 export type EntitlementOverrides = z.infer<typeof overridesSchema>;
+export type PlanChangeRecord = z.infer<typeof planChangeSchema>;
+type StoredDerived = NonNullable<EntitlementOverrides['derived']>;
 export type AdminOverride = z.infer<typeof adminOverrideSchema>;
 export type TrialState = z.infer<typeof trialStateSchema>;
 
@@ -348,6 +362,37 @@ export function resolveStoredEntitlements(row: StoredEntitlement, now: Date): En
   };
 }
 
+/**
+ * 26.3: the upgrade record to store with a freshly derived Stripe plan. A paid plan that moves
+ * UP now (plans.ts planChangeTiming) records when and from which plan; the same plan keeps the
+ * record it had; anything else (a downgrade, a first plan, a trial becoming paid: no proration
+ * was paid) has none. A second upgrade in the same allowance window keeps the window's first
+ * plan with the latest time, so chained upgrades never add more than was paid for.
+ */
+export function nextPlanChange(
+  previous: StoredDerived | undefined,
+  next: DerivedEntitlement,
+  now: Date,
+): PlanChangeRecord | undefined {
+  if (next.source !== 'stripe' || !next.plan || previous?.source !== 'stripe') return undefined;
+  const before = storedPlan(previous);
+  if (!before) return undefined;
+  const from: PlanChoice = { plan: before, interval: previous.interval ?? 'month' };
+  if (from.plan === next.plan.plan && from.interval === next.plan.interval)
+    return previous.planChange;
+  if (planChangeTiming(from, next.plan) !== 'now') return undefined;
+  const window = allowanceWindowFor(ALLOWANCE_WINDOW[next.plan.interval], now.getTime());
+  const earlier =
+    previous.planChange && Date.parse(previous.planChange.at) >= window.start.getTime()
+      ? previous.planChange
+      : undefined;
+  return {
+    at: now.toISOString(),
+    previousPlan: earlier?.previousPlan ?? from.plan,
+    previousInterval: earlier?.previousInterval ?? from.interval,
+  };
+}
+
 /** A stored plan id, or a 21.5 channel count read as a plan. */
 function storedPlan(stored: { plan?: PlanId; channels?: number } | undefined): PlanId | undefined {
   if (!stored) return undefined;
@@ -361,7 +406,12 @@ function storedPlan(stored: { plan?: PlanId; channels?: number } | undefined): P
  * month). ENTERPRISE has no plan (custom limits instead).
  */
 function resolvePlan(
-  derived: { plan?: PlanId; channels?: number; interval?: PlanChoice['interval'] },
+  derived: {
+    plan?: PlanId;
+    channels?: number;
+    interval?: PlanChoice['interval'];
+    planChange?: PlanChangeRecord;
+  },
   admin: AdminOverride | undefined,
   tier: PlanTier,
 ): PlanEntitlement | undefined {
@@ -371,5 +421,14 @@ function resolvePlan(
   if (id === undefined) return undefined;
   const interval = admin?.interval ?? derived.interval ?? 'month';
   const fromAdmin = adminPlan !== undefined || admin?.interval !== undefined;
-  return { id, interval, source: fromAdmin ? 'admin' : 'stripe' };
+  if (fromAdmin) return { id, interval, source: 'admin' };
+  const change = derived.planChange;
+  return {
+    id,
+    interval,
+    source: 'stripe',
+    ...(change && {
+      changedFrom: { plan: change.previousPlan, interval: change.previousInterval, at: change.at },
+    }),
+  };
 }

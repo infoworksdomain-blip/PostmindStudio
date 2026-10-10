@@ -8,6 +8,7 @@ import {
   getAdminEntitlements,
   putAdminEntitlements,
 } from '@/lib/studio/billing/admin';
+import type { Entitlements } from '@/lib/studio/billing/entitlements-reader';
 
 // Phase 18 §P.3 / §P.4 — staff entitlement overrides (studio:admin:billing + platform staff).
 // GET  → effective entitlements, the stored row, the override, subscriptions, and the ENTERPRISE
@@ -17,6 +18,17 @@ import {
 // DELETE { reason } → the override removed (the Stripe-derived value applies again).
 // Every change is audited (entitlement.override_set) with before / after and the reason; the
 // cache is invalidated in this process, other processes follow within 30 s.
+/** What the audit keeps of an entitlement: tier, access, source and (26.3) plan and interval. */
+function auditView(e: Entitlements) {
+  return {
+    tier: e.tier,
+    access: e.access,
+    source: e.source,
+    plan: e.plan?.id ?? null,
+    interval: e.plan?.interval ?? null,
+  };
+}
+
 export const GET = withStudioRoute(
   StudioCapability.AdminBilling,
   async ({ deps, tenant, params }) => {
@@ -45,8 +57,8 @@ export const PUT = withStudioRoute(
       AuditAction.EntitlementOverrideSet,
       { type: 'organisation', id: after.organisationId },
       {
-        before: { tier: before.tier, access: before.access, source: before.source },
-        after: { tier: after.effective.tier, access: after.effective.access },
+        before: auditView(before),
+        after: auditView(after.effective),
         limits: input.limits ?? null,
         monthlyPricePence: input.monthlyPricePence ?? null,
         expiresAt: input.expiresAt ?? null,
@@ -76,8 +88,8 @@ export const DELETE = withStudioRoute(
       { type: 'organisation', id: after.organisationId },
       {
         cleared: true,
-        before: { tier: before.tier, access: before.access, source: before.source },
-        after: { tier: after.effective.tier, access: after.effective.access },
+        before: auditView(before),
+        after: auditView(after.effective),
         reason: input.reason,
       },
     );

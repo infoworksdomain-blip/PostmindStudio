@@ -403,6 +403,36 @@ describe('26.1 plan allowance (Starter 8 / Growth 20 / Pro 45 a month; 2 / 5 / 1
     expect(entitlementQuota(base, planEnt('growth', 'week')).shortVideos).toBe(5);
   });
 
+  it('26.3: an upgrade mid-window gets the blended allowance in that window, the full one after', async () => {
+    const upgraded: Entitlements = {
+      ...planEnt('pro', 'month'),
+      plan: {
+        id: 'pro',
+        interval: 'month',
+        source: 'stripe',
+        changedFrom: { plan: 'starter', interval: 'month', at: '2026-10-31T00:00:00.000Z' },
+      },
+    };
+    const lastDay = Date.parse('2026-10-31T12:00:00Z');
+    expect(entitlementQuota(base, upgraded, lastDay).shortVideos).toBe(9);
+    expect(entitlementQuota(base, upgraded, Date.parse('2026-11-01T00:00:00Z')).shortVideos).toBe(
+      45,
+    );
+    // The usage meter (and so its notices) shows the same limit.
+    const meterOn = async (now: number) =>
+      (
+        await usageView(
+          { db: fakeDb([]) as never, now: () => now, env: {} },
+          'org-1',
+          'STANDARD',
+          undefined,
+          upgraded,
+        )
+      ).videos.short;
+    expect(await meterOn(lastDay)).toMatchObject({ limit: 9, limitQuarters: 36 });
+    expect(await meterOn(Date.parse('2026-11-02T00:00:00Z'))).toMatchObject({ limit: 45 });
+  });
+
   it('a Create default video (every platform, Short) counts as short and is allowed', () => {
     // Regression: YouTube Shorts defaulted to 45 s, over the 30 s short limit, so the video
     // counted as long and a plan with no long videos refused it (long_not_included).

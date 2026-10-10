@@ -17,6 +17,7 @@ const hasDb = Boolean(process.env.DATABASE_URL);
 describe.skipIf(!hasDb)('admin plan override API', { timeout: 90_000 }, () => {
   const db = hasDb ? new PrismaClient() : (undefined as unknown as PrismaClient);
   let org: string;
+  let api: ReturnType<typeof installApi>;
   const path = () => `/api/studio/admin/organisations/${org}/entitlements`;
 
   async function seed(derived: Prisma.InputJsonObject) {
@@ -34,7 +35,7 @@ describe.skipIf(!hasDb)('admin plan override API', { timeout: 90_000 }, () => {
 
   beforeEach(async () => {
     org = `api-plan-admin-${randomUUID()}`;
-    const api = installApi(db, {
+    api = installApi(db, {
       owner: tenant(org, ALL_CAPABILITIES),
       staff: tenant('platform-staff', [StudioCapability.AdminBilling], 'staff-1'),
     });
@@ -98,6 +99,31 @@ describe.skipIf(!hasDb)('admin plan override API', { timeout: 90_000 }, () => {
     expect((await get()).json.entitlements).toMatchObject({
       effective: { plan: { id: 'pro', interval: 'week', source: 'admin' } },
     });
+  });
+
+  it('the override audit records the plan and interval before and after (26.3)', async () => {
+    await seed({ ...base, plan: 'growth', interval: 'month' });
+    expect((await put({ plan: 'pro', interval: 'week', reason: 'Agency pilot' })).status).toBe(200);
+    const cleared = await call(entitlementsRoute.DELETE, {
+      token: 'staff',
+      method: 'DELETE',
+      path: path(),
+      params: { id: org },
+      body: { reason: 'Pilot over' },
+    });
+    expect(cleared.status).toBe(200);
+    const audits = api.audits.filter((a) => a.action === 'entitlement.override_set');
+    expect(audits.map((a) => a.metadata)).toEqual([
+      expect.objectContaining({
+        before: expect.objectContaining({ plan: 'growth', interval: 'month' }),
+        after: expect.objectContaining({ plan: 'pro', interval: 'week' }),
+      }),
+      expect.objectContaining({
+        cleared: true,
+        before: expect.objectContaining({ plan: 'pro', interval: 'week' }),
+        after: expect.objectContaining({ plan: 'growth', interval: 'month' }),
+      }),
+    ]);
   });
 
   it('refuses an unknown plan, a channel count and an unknown interval (400)', async () => {

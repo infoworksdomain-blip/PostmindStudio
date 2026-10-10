@@ -236,7 +236,7 @@ export async function loadPlanAllowance(
     usageView(deps, organisationId, tier, undefined, entitlements),
     availableCreditQuarters(deps.db, organisationId, at),
   ]);
-  const quota = entitlementQuota(tierQuota(tier, env), entitlements);
+  const quota = entitlementQuota(tierQuota(tier, env), entitlements, at.getTime());
   const mode = quotaMode(env, entitlements ? 'enforce' : 'warn');
   // 23.3: counted in quarters of a video; the video fields are for display.
   const usedQ = usage.videos.short.usedQuarters;

@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import { AuditAction } from '../../audit-sink';
-import { ConflictError, NotFoundError } from '../../errors';
+import { ConflictError, NotFoundError, ValidationError } from '../../errors';
 import { planForLookupKey } from './catalogue';
 import {
   assertPlanChoice,
@@ -55,6 +55,7 @@ export interface CurrentPlan {
   legacy: boolean;
   scheduleId: string | null;
   cancelAtPeriodEnd: boolean;
+  currentPeriodStart: Date | null;
   currentPeriodEnd: Date | null;
   trialEnd: Date | null;
 }
@@ -81,15 +82,30 @@ export type PlanChangeOutcome =
   | { status: 'payment_required'; timing: 'now' };
 
 /**
- * A fresh Stripe Idempotency-Key per write (the route's own Idempotency-Key replays a double
- * click); the same shape as service.ts idempotencyKey: studio-<intent>-<digest>.
+ * A Stripe Idempotency-Key; the same shape as service.ts idempotencyKey: studio-<intent>-<digest>.
+ * With `parts` (26.3, plan changes) it is derived from the change itself, so a double submit
+ * (two tabs, a retry without the route's Idempotency-Key) is ONE Stripe write: Stripe answers the
+ * second with the first's result for 24 hours. Without `parts` it is fresh per call (cancel and
+ * resume may be repeated on purpose).
  */
-function stripeKey(organisationId: string, intent: string): string {
+function stripeKey(
+  organisationId: string,
+  intent: string,
+  parts: ReadonlyArray<string | number> = [randomBytes(12).toString('hex')],
+): string {
   const digest = createHash('sha256')
-    .update(`${organisationId}|${intent}|${randomBytes(12).toString('hex')}`)
+    .update([organisationId, intent, ...parts].join('|'))
     .digest('hex');
   return `studio-${intent}-${digest.slice(0, 40)}`;
 }
+
+/**
+ * The time part of a change's key when there is no proration time: the minute, so a double
+ * submit collapses while the same change made again on purpose later still reaches Stripe.
+ * shortcut: a deliberate repeat within the same minute (schedule, keep, schedule) is answered
+ * from Stripe's cache; put the live schedule id in the key if that ever matters.
+ */
+const KEY_BUCKET_SEC = 60;
 
 /** The plan a subscription row pays for: a plan price, or a legacy price mapped to a plan. */
 function planOfRow(sub: {
@@ -122,6 +138,7 @@ export async function currentPlan(
     legacy: found.legacy,
     scheduleId: sub.scheduleId,
     cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
+    currentPeriodStart: sub.currentPeriodStart,
     currentPeriodEnd: sub.currentPeriodEnd,
     trialEnd: sub.trialEnd,
   };
@@ -140,14 +157,37 @@ async function changeablePlan(deps: PlanChangeDeps, organisationId: string) {
   // The item id is not stored: re-fetch the subscription (also the freshest state to act on).
   const live = await deps.gateway.retrieveSubscription(plan.subscriptionId);
   if (!live?.itemId) throw new NotFoundError('Stripe no longer has this subscription');
-  return { plan: { ...plan, itemId: live.itemId, scheduleId: live.scheduleId }, live };
+  // 26.3: the plan as Stripe has it NOW (a concurrent request may have changed it since our row
+  // was stored), so a change that is no longer needed is refused before any write.
+  const livePlan = live.lookupKey
+    ? planOfRow({ lookupKey: live.lookupKey, quantity: live.quantity })
+    : null;
+  return {
+    plan: {
+      ...plan,
+      ...(livePlan && {
+        plan: livePlan.plan,
+        interval: livePlan.interval,
+        legacy: livePlan.legacy,
+      }),
+      itemId: live.itemId,
+      scheduleId: live.scheduleId,
+      currentPeriodStart: live.currentPeriodStart ?? plan.currentPeriodStart,
+    },
+    live,
+  };
 }
 
-async function planPrice(gateway: StripeGateway, next: PlanChoice) {
+/** Customers never see Stripe lookup keys (26.3); the key is logged for the operator. */
+const PLAN_UNAVAILABLE = "This plan isn't available right now. Please try again later.";
+
+async function planPrice(deps: Pick<PlanChangeDeps, 'gateway' | 'logger'>, next: PlanChoice) {
   const lookupKey = planLookupKey(next.plan, next.interval);
-  const [price] = (await gateway.listPrices([lookupKey])).filter((p) => p.active);
-  if (!price || price.unitAmountPence === null)
-    throw new NotFoundError(`No active Stripe price has the lookup key ${lookupKey}`);
+  const [price] = (await deps.gateway.listPrices([lookupKey])).filter((p) => p.active);
+  if (!price || price.unitAmountPence === null) {
+    deps.logger.warn({ lookupKey }, 'no active Stripe price for a plan lookup key');
+    throw new NotFoundError(PLAN_UNAVAILABLE);
+  }
   return { id: price.id, unitAmountPence: price.unitAmountPence, currency: price.currency };
 }
 
@@ -166,7 +206,7 @@ export async function previewPlanChange(
   const next = assertPlanChoice(choice);
   const { plan } = await changeablePlan(deps, organisationId);
   const timing = timingFor(plan, next);
-  const price = await planPrice(deps.gateway, next);
+  const price = await planPrice(deps, next);
   const base = {
     timing,
     current: { plan: plan.plan, interval: plan.interval },
@@ -206,6 +246,33 @@ export async function previewPlanChange(
 
 /** The previewed proration time is used only while it is recent (it must lie in the period). */
 const PRORATION_DATE_MAX_AGE_SEC = 30 * 60;
+/** Clock skew allowed between the preview's server and this one. */
+const PRORATION_DATE_MAX_SKEW_SEC = 60;
+
+/**
+ * 26.3 (security review): the client echoes the previewed proration time; it is used only when
+ * it is not in the future (beyond a minute of skew), at most 30 minutes old and inside the
+ * current period. Anything else is REFUSED (400) rather than silently replaced by now: a future
+ * time would prorate an upgrade as if the period were almost over, and a silent substitute would
+ * charge a different amount from the one the customer confirmed. Absent = now.
+ */
+export function confirmedProrationDate(
+  given: number | null | undefined,
+  nowSec: number,
+  periodStart: Date | null,
+): number {
+  if (given === null || given === undefined) return nowSec;
+  const startSec = periodStart ? Math.floor(periodStart.getTime() / 1000) : null;
+  if (
+    given > nowSec + PRORATION_DATE_MAX_SKEW_SEC ||
+    nowSec - given > PRORATION_DATE_MAX_AGE_SEC ||
+    (startSec !== null && given < startSec)
+  )
+    throw new ValidationError('This price has expired. Review the change and confirm it again.', {
+      reason: 'proration_date_out_of_range',
+    });
+  return given;
+}
 
 export async function changePlan(
   deps: PlanChangeDeps,
@@ -222,7 +289,20 @@ export async function changePlan(
   const { plan } = await changeablePlan(deps, organisationId);
   const timing = timingFor(plan, next);
   if (timing === 'none') throw new ConflictError('That is already your plan', { reason: 'same' });
-  const price = await planPrice(deps.gateway, next);
+  const nowSec = Math.floor(deps.now() / 1000);
+  const prorationDate =
+    timing === 'now' && plan.status !== 'trialing'
+      ? confirmedProrationDate(input.prorationDate, nowSec, plan.currentPeriodStart)
+      : null;
+  const price = await planPrice(deps, next);
+  // The same change -> the same Stripe key (see stripeKey).
+  const changeKey = (intent: string) =>
+    stripeKey(organisationId, intent, [
+      plan.subscriptionId,
+      price.id,
+      timing,
+      prorationDate ?? Math.floor(nowSec / KEY_BUCKET_SEC),
+    ]);
   const change = {
     subscriptionId: plan.subscriptionId,
     itemId: plan.itemId,
@@ -233,7 +313,7 @@ export async function changePlan(
   if (timing === 'period_end') {
     await deps.gateway.schedulePlanChange(
       { ...change, scheduleId: plan.scheduleId, interval: next.interval, organisationId },
-      stripeKey(organisationId, 'plan_schedule'),
+      changeKey('plan_schedule'),
     );
     outcome = {
       status: 'scheduled',
@@ -244,16 +324,11 @@ export async function changePlan(
     if (plan.scheduleId)
       await deps.gateway.releaseSchedule(
         plan.scheduleId,
-        stripeKey(organisationId, 'plan_release'),
+        stripeKey(organisationId, 'plan_release', [plan.scheduleId]),
       );
-    const nowSec = Math.floor(deps.now() / 1000);
-    const confirmed =
-      input.prorationDate && nowSec - input.prorationDate <= PRORATION_DATE_MAX_AGE_SEC
-        ? input.prorationDate
-        : nowSec;
     const state = await deps.gateway.changePlanNow(
-      { ...change, prorationDate: plan.status === 'trialing' ? null : confirmed },
-      stripeKey(organisationId, 'plan_now'),
+      { ...change, prorationDate },
+      changeKey('plan_now'),
     );
     outcome = state.hasPendingUpdate
       ? { status: 'payment_required', timing }
