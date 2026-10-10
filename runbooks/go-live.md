@@ -162,6 +162,15 @@ read -rs CR_PAT && echo "$CR_PAT" | docker login ghcr.io -u <your github user> -
   (after the first line, paste the token and press Enter; nothing is shown while you paste).
 - **Check:** it prints `Login Succeeded`.
 
+### 4.4 Docker Hub login for CI (stops "toomanyrequests" failures)
+
+CI pulls public images (Node, Postgres, Redis, Caddy, Prometheus) from Docker Hub, which limits anonymous pulls from GitHub's shared runners. Signed-in pulls get a higher limit. CI already logs in when these two secrets exist and pulls anonymously when they don't.
+
+- **Click:** hub.docker.com → sign up (free) → your avatar → **Account settings** → **Personal access tokens** → **Generate new token**. Description: `postmind-studio CI`; access: **Public Repo Read-only**; **Generate**.
+- **Copy:** the token (shown once) and your Docker Hub username.
+- **Paste into:** GitHub → the repository → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**: `DOCKERHUB_USERNAME` (your username) and `DOCKERHUB_TOKEN` (the token).
+- **Check:** the next CI run's "Docker Hub login" step prints `Login Succeeded` in the ops-config, docker, vps-config and publish-image jobs. (Service containers in the database and e2e jobs still pull anonymously.)
+
 ## 5. Cloudflare R2: file storage
 
 Details: [r2-setup.md](r2-setup.md). All buckets use the **EU jurisdiction**. The jurisdiction cannot be changed after a bucket is created, and EU buckets are reached at `https://<account id>.eu.r2.cloudflarestorage.com`.
